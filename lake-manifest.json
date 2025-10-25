@@ -1,0 +1,15 @@
+{"version": "1.1.0",
+ "packagesDir": ".lake/packages",
+ "packages":
+ [{"url": "https://github.com/leanprover-community/quote4",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "917bfa5064b812b7fbd7112d018ea0b4def25ab3",
+   "name": "Qq",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "v4.22.0",
+   "inherited": false,
+   "configFile": "lakefile.toml"}],
+ "name": "HouLean",
+ "lakeDir": ".lake"}

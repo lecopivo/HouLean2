@@ -1,0 +1,20 @@
+name = "HouLean"
+version = "0.1.0"
+defaultTargets = ["houlean"]
+
+[[lean_lib]]
+name = "HouLean"
+
+[[lean_exe]]
+name = "houlean"
+root = "Main"
+
+[[lean_exe]]
+name = "compileToApexGraph"
+root = "CompileToApexGraph"
+supportInterpreter = true
+
+[[require]]
+name = "Qq"
+git = "https://github.com/leanprover-community/quote4"
+rev = "v4.22.0"

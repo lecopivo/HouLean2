@@ -1,0 +1,82 @@
+{
+  "layer": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "layer"
+  },
+  "bright": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "bright"
+  },
+  "hsv": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "hsv"
+  },
+  "invert": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "invert"
+  },
+  "blur": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "blur"
+  },
+  "blend": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "blend"
+  },
+  "channelextract": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "channelextract"
+  },
+  "channelsplit": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "channelsplit"
+  },
+  "channeljoin": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "channeljoin"
+  },
+  "xform": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "xform"
+  },
+  "crop": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "crop"
+  },
+  "geotolayer": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "geotolayer"
+  },
+  "layertogeo": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "layertogeo"
+  },
+  "constant": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "constant"
+  },
+  "clamp": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "clamp"
+  },
+  "flip": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "flip"
+  },
+  "mono": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "mono"
+  },
+  "remap": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "remap"
+  },
+  "premult": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "premult"
+  },
+  "resample": {
+    "error": "The attempted operation failed.\nInvalid node type name",
+    "node_type": "resample"
+  }
+}

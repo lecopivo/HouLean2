@@ -1,0 +1,822 @@
+@[apex_node "Abs<Float>"]
+opaque AbsFloat (value : Float) : Float
+@[apex_node "Abs<Int>"]
+opaque AbsInt (value : Int) : Int
+@[apex_node "Abs<Vector2>"]
+opaque AbsVector2 (value : Vector2) : Vector2
+@[apex_node "Abs<Vector3>"]
+opaque AbsVector3 (value : Vector3) : Vector3
+@[apex_node "Abs<Vector4>"]
+opaque AbsVector4 (value : Vector4) : Vector4
+@[apex_node "Acos"]
+opaque Acos (radians : Float) : Float
+@[apex_node "Add<Float,Int>"]
+opaque AddFloatInt (a : Float) {numb: Nat} (b : VariadicArg Int numb) : Float
+@[apex_node "Add<Float>"]
+opaque AddFloat (a : Float) {numb: Nat} (b : VariadicArg Float numb) : Float
+@[apex_node "Add<Int,Float>"]
+opaque AddIntFloat (a : Int) {numb: Nat} (b : VariadicArg Float numb) : Int
+@[apex_node "Add<Int>"]
+opaque AddInt (a : Int) {numb: Nat} (b : VariadicArg Int numb) : Int
+@[apex_node "Add<Matrix3>"]
+opaque AddMatrix3 (a : Matrix3) {numb: Nat} (b : VariadicArg Matrix3 numb) : Matrix3
+@[apex_node "Add<Matrix4>"]
+opaque AddMatrix4 (a : Matrix4) {numb: Nat} (b : VariadicArg Matrix4 numb) : Matrix4
+@[apex_node "Add<String>"]
+opaque AddString (a : String) {numb: Nat} (b : VariadicArg String numb) : String
+@[apex_node "Add<Vector2>"]
+opaque AddVector2 (a : Vector2) {numb: Nat} (b : VariadicArg Vector2 numb) : Vector2
+@[apex_node "Add<Vector3,Float>"]
+opaque AddVector3Float (a : Vector3) {numb: Nat} (b : VariadicArg Float numb) : Vector3
+@[apex_node "Add<Vector3,Int>"]
+opaque AddVector3Int (a : Vector3) {numb: Nat} (b : VariadicArg Int numb) : Vector3
+@[apex_node "Add<Vector3>"]
+opaque AddVector3 (a : Vector3) {numb: Nat} (b : VariadicArg Vector3 numb) : Vector3
+@[apex_node "AlmostEquals<Float>"]
+opaque AlmostEqualsFloat (a : Float) (b : Float) (tolerance : Float) : Bool
+@[apex_node "AlmostEquals<Matrix3>"]
+opaque AlmostEqualsMatrix3 (a : Matrix3) (b : Matrix3) (tolerance : Float) : Bool
+@[apex_node "AlmostEquals<Matrix4>"]
+opaque AlmostEqualsMatrix4 (a : Matrix4) (b : Matrix4) (tolerance : Float) : Bool
+@[apex_node "And"]
+opaque And {numinputs: Nat} (inputs : VariadicArg Bool numinputs) : Bool
+@[apex_node "Asin"]
+opaque Asin (radians : Float) : Float
+@[apex_node "Atan"]
+opaque Atan (radians : Float) : Float
+@[apex_node "Atan2"]
+opaque Atan2 (x : Float) (y : Float) : Float
+@[apex_node "Average<Float>"]
+opaque AverageFloat {numvalues: Nat} (values : VariadicArg Float numvalues) : Float
+@[apex_node "BitwiseAnd"]
+opaque BitwiseAnd {numinputs: Nat} (inputs : VariadicArg Int numinputs) : Int
+@[apex_node "BitwiseNot"]
+opaque BitwiseNot (input : Int) : Int
+@[apex_node "BitwiseOr"]
+opaque BitwiseOr {numinputs: Nat} (inputs : VariadicArg Int numinputs) : Int
+@[apex_node "BitwiseXor"]
+opaque BitwiseXor {numinputs: Nat} (inputs : VariadicArg Int numinputs) : Int
+@[apex_node "CartesianToGeodetic"]
+opaque CartesianToGeodetic (cartesian : Vector3) : Vector3
+@[apex_node "CartesianToPolar"]
+opaque CartesianToPolar (cartesian : Vector2) : Vector2
+@[apex_node "CartesianToSpherical"]
+opaque CartesianToSpherical (cartesian : Vector3) : Vector3
+@[apex_node "Ceil"]
+opaque Ceil (val : Float) : Float
+@[apex_node "Clamp<Float>"]
+opaque ClampFloat (val : Float) (min : Float) (max : Float) : Float
+@[apex_node "Clamp<Int>"]
+opaque ClampInt (val : Int) (min : Int) (max : Int) : Int
+@[apex_node "Complement"]
+opaque Complement (val : Float) : Float
+@[apex_node "ComponentBoolsToInt"]
+opaque ComponentBoolsToInt {numentries: Nat} (entries : VariadicArg Bool numentries) (entries0 : Bool) (entries1 : Bool) (entries2 : Bool) (components : Int) (use_t : Bool) (use_r : Bool) (use_s : Bool) : Int×Bool×Bool×Bool×Int
+@[apex_node "Convert<ApexNodeID,Bool>"]
+opaque ConvertApexNodeIDBool (a : ApexNodeID) : Bool
+@[apex_node "Convert<ApexNodeID,Int>"]
+opaque ConvertApexNodeIDInt (a : ApexNodeID) : Int
+@[apex_node "Convert<ApexPortID,Bool>"]
+opaque ConvertApexPortIDBool (a : ApexPortID) : Bool
+@[apex_node "Convert<ApexPortID,Int>"]
+opaque ConvertApexPortIDInt (a : ApexPortID) : Int
+@[apex_node "Convert<Bool,Int>"]
+opaque ConvertBoolInt (a : Bool) : Int
+@[apex_node "Convert<ColorRamp,FloatRamp>"]
+opaque ConvertColorRampFloatRamp (a : ColorRamp) : FloatRamp
+@[apex_node "Convert<Float,Int>"]
+opaque ConvertFloatInt (a : Float) : Int
+@[apex_node "Convert<FloatRamp,ColorRamp>"]
+opaque ConvertFloatRampColorRamp (a : FloatRamp) : ColorRamp
+@[apex_node "Convert<Int,Bool>"]
+opaque ConvertIntBool (a : Int) : Bool
+@[apex_node "Convert<Int,Float>"]
+opaque ConvertIntFloat (a : Int) : Float
+@[apex_node "Convert<Matrix3,Matrix4>"]
+opaque ConvertMatrix3Matrix4 (a : Matrix3) : Matrix4
+@[apex_node "Convert<Matrix4,Matrix3>"]
+opaque ConvertMatrix4Matrix3 (a : Matrix4) : Matrix3
+@[apex_node "Convert<Matrix4,Vector4>"]
+opaque ConvertMatrix4Vector4 (a : Matrix4) : Vector4
+@[apex_node "Convert<Vector4,Matrix3>"]
+opaque ConvertVector4Matrix3 (a : Vector4) : Matrix3
+@[apex_node "Cosine"]
+opaque Cosine (radians : Float) : Float
+@[apex_node "CrossProduct"]
+opaque CrossProduct (a : Vector3) (b : Vector3) : Vector3
+@[apex_node "DegreesToRadians<Float>"]
+opaque DegreesToRadiansFloat (degrees : Float) : Float
+@[apex_node "DegreesToRadians<Vector3>"]
+opaque DegreesToRadiansVector3 (degrees : Vector3) : Vector3
+@[apex_node "Distance<Vector2>"]
+opaque DistanceVector2 (a : Vector2) (b : Vector2) : Float
+@[apex_node "Distance<Vector3>"]
+opaque DistanceVector3 (a : Vector3) (b : Vector3) : Float
+@[apex_node "Distance<Vector4>"]
+opaque DistanceVector4 (a : Vector4) (b : Vector4) : Float
+@[apex_node "Divide<Float,Int>"]
+opaque DivideFloatInt (a : Float) {numb: Nat} (b : VariadicArg Int numb) : Float
+@[apex_node "Divide<Float>"]
+opaque DivideFloat (a : Float) {numb: Nat} (b : VariadicArg Float numb) : Float
+@[apex_node "Divide<Int,Float>"]
+opaque DivideIntFloat (a : Int) {numb: Nat} (b : VariadicArg Float numb) : Int
+@[apex_node "Divide<Int>"]
+opaque DivideInt (a : Int) {numb: Nat} (b : VariadicArg Int numb) : Int
+@[apex_node "Divide<Vector3,Float>"]
+opaque DivideVector3Float (a : Vector3) {numb: Nat} (b : VariadicArg Float numb) : Vector3
+@[apex_node "Divide<Vector3,Int>"]
+opaque DivideVector3Int (a : Vector3) {numb: Nat} (b : VariadicArg Int numb) : Vector3
+@[apex_node "Divide<Vector3>"]
+opaque DivideVector3 (a : Vector3) {numb: Nat} (b : VariadicArg Vector3 numb) : Vector3
+@[apex_node "DotProduct<Vector2>"]
+opaque DotProductVector2 (a : Vector2) (b : Vector2) : Float
+@[apex_node "DotProduct<Vector3>"]
+opaque DotProductVector3 (a : Vector3) (b : Vector3) : Float
+@[apex_node "DotProduct<Vector4>"]
+opaque DotProductVector4 (a : Vector4) (b : Vector4) : Float
+@[apex_node "DragPlane"]
+opaque DragPlane (startpos : Vector3) (raypos : Vector3) (raydir : Vector3) (planeorigin : Vector3) (planenormal : Vector3) : Vector3×Vector3×Bool
+@[apex_node "Efit"]
+opaque Efit (val : Float) (srcmin : Float) (srcmax : Float) (destmin : Float) (destmax : Float) : Float
+@[apex_node "Equals<ApexNodeID>"]
+opaque EqualsApexNodeID (a : ApexNodeID) (b : ApexNodeID) : Bool
+@[apex_node "Equals<ApexPortID>"]
+opaque EqualsApexPortID (a : ApexPortID) (b : ApexPortID) : Bool
+@[apex_node "Equals<Bool>"]
+opaque EqualsBool (a : Bool) (b : Bool) : Bool
+@[apex_node "Equals<Float>"]
+opaque EqualsFloat (a : Float) (b : Float) : Bool
+@[apex_node "Equals<Int>"]
+opaque EqualsInt (a : Int) (b : Int) : Bool
+@[apex_node "Equals<String>"]
+opaque EqualsString (a : String) (b : String) : Bool
+@[apex_node "Equals<Vector2>"]
+opaque EqualsVector2 (a : Vector2) (b : Vector2) : Bool
+@[apex_node "Equals<Vector3>"]
+opaque EqualsVector3 (a : Vector3) (b : Vector3) : Bool
+@[apex_node "Equals<Vector4>"]
+opaque EqualsVector4 (a : Vector4) (b : Vector4) : Bool
+@[apex_node "Exponent"]
+opaque Exponent (val : Float) (exponent : Float) : Float
+@[apex_node "Fit"]
+opaque Fit (val : Float) (srcmin : Float) (srcmax : Float) (destmin : Float) (destmax : Float) : Float
+@[apex_node "Fit01"]
+opaque Fit01 (val : Float) (destmin : Float) (destmax : Float) : Float
+@[apex_node "Fit10"]
+opaque Fit10 (val : Float) (destmin : Float) (destmax : Float) : Float
+@[apex_node "Fit11"]
+opaque Fit11 (val : Float) (destmin : Float) (destmax : Float) : Float
+@[apex_node "FloatToVector2"]
+opaque FloatToVector2 (x : Float) (y : Float) : Vector2
+@[apex_node "FloatToVector3"]
+opaque FloatToVector3 (x : Float) (y : Float) (z : Float) : Vector3
+@[apex_node "FloatToVector4"]
+opaque FloatToVector4 (x : Float) (y : Float) (z : Float) (w : Float) : Vector4
+@[apex_node "Floor"]
+opaque Floor (val : Float) : Float
+@[apex_node "Frac"]
+opaque Frac (val : Float) : Float
+@[apex_node "GeodeticToCartesian"]
+opaque GeodeticToCartesian (geodetic : Vector3) : Vector3
+@[apex_node "GetComponent<Matrix3>" has_rundata]
+opaque GetComponentMatrix3 (matrix : Matrix3) (row : Int) (col : Int) : Float
+@[apex_node "GetComponent<Matrix4>" has_rundata]
+opaque GetComponentMatrix4 (matrix : Matrix4) (row : Int) (col : Int) : Float
+@[apex_node "GetComponent<Vector2>" has_rundata]
+opaque GetComponentVector2 (vector : Vector2) (index : Int) : Float
+@[apex_node "GetComponent<Vector3>" has_rundata]
+opaque GetComponentVector3 (vector : Vector3) (index : Int) : Float
+@[apex_node "GetComponent<Vector4>" has_rundata]
+opaque GetComponentVector4 (vector : Vector4) (index : Int) : Float
+@[apex_node "GreaterThan<Bool>"]
+opaque GreaterThanBool (a : Bool) (b : Bool) : Bool
+@[apex_node "GreaterThan<Float>"]
+opaque GreaterThanFloat (a : Float) (b : Float) : Bool
+@[apex_node "GreaterThan<Int>"]
+opaque GreaterThanInt (a : Int) (b : Int) : Bool
+@[apex_node "GreaterThan<Vector2>"]
+opaque GreaterThanVector2 (a : Vector2) (b : Vector2) : Bool
+@[apex_node "GreaterThan<Vector3>"]
+opaque GreaterThanVector3 (a : Vector3) (b : Vector3) : Bool
+@[apex_node "GreaterThan<Vector4>"]
+opaque GreaterThanVector4 (a : Vector4) (b : Vector4) : Bool
+@[apex_node "GreaterThanOrEqual<Bool>"]
+opaque GreaterThanOrEqualBool (a : Bool) (b : Bool) : Bool
+@[apex_node "GreaterThanOrEqual<Float>"]
+opaque GreaterThanOrEqualFloat (a : Float) (b : Float) : Bool
+@[apex_node "GreaterThanOrEqual<Int>"]
+opaque GreaterThanOrEqualInt (a : Int) (b : Int) : Bool
+@[apex_node "GreaterThanOrEqual<Vector2>"]
+opaque GreaterThanOrEqualVector2 (a : Vector2) (b : Vector2) : Bool
+@[apex_node "GreaterThanOrEqual<Vector3>"]
+opaque GreaterThanOrEqualVector3 (a : Vector3) (b : Vector3) : Bool
+@[apex_node "GreaterThanOrEqual<Vector4>"]
+opaque GreaterThanOrEqualVector4 (a : Vector4) (b : Vector4) : Bool
+@[apex_node "Invert<Matrix3>"]
+opaque InvertMatrix3 (a : Matrix3) : Matrix3
+@[apex_node "Invert<Matrix4>"]
+opaque InvertMatrix4 (a : Matrix4) : Matrix4
+@[apex_node "Length<Vector2>"]
+opaque LengthVector2 (vec : Vector2) : Float
+@[apex_node "Length<Vector3>"]
+opaque LengthVector3 (vec : Vector3) : Float
+@[apex_node "Length<Vector4>"]
+opaque LengthVector4 (vec : Vector4) : Float
+@[apex_node "Lerp<Float>"]
+opaque LerpFloat (a : Float) (b : Float) (bias : Float) : Float
+@[apex_node "Lerp<Matrix3>"]
+opaque LerpMatrix3 (a : Matrix3) (b : Matrix3) (bias : Float) : Matrix3
+@[apex_node "Lerp<Matrix4>"]
+opaque LerpMatrix4 (a : Matrix4) (b : Matrix4) (bias : Float) : Matrix4
+@[apex_node "Lerp<Vector2>"]
+opaque LerpVector2 (a : Vector2) (b : Vector2) (bias : Float) : Vector2
+@[apex_node "Lerp<Vector3>"]
+opaque LerpVector3 (a : Vector3) (b : Vector3) (bias : Float) : Vector3
+@[apex_node "Lerp<Vector4>"]
+opaque LerpVector4 (a : Vector4) (b : Vector4) (bias : Float) : Vector4
+@[apex_node "LessThan<Bool>"]
+opaque LessThanBool (a : Bool) (b : Bool) : Bool
+@[apex_node "LessThan<Float>"]
+opaque LessThanFloat (a : Float) (b : Float) : Bool
+@[apex_node "LessThan<Int>"]
+opaque LessThanInt (a : Int) (b : Int) : Bool
+@[apex_node "LessThan<Vector2>"]
+opaque LessThanVector2 (a : Vector2) (b : Vector2) : Bool
+@[apex_node "LessThan<Vector3>"]
+opaque LessThanVector3 (a : Vector3) (b : Vector3) : Bool
+@[apex_node "LessThan<Vector4>"]
+opaque LessThanVector4 (a : Vector4) (b : Vector4) : Bool
+@[apex_node "LessThanOrEqual<Bool>"]
+opaque LessThanOrEqualBool (a : Bool) (b : Bool) : Bool
+@[apex_node "LessThanOrEqual<Float>"]
+opaque LessThanOrEqualFloat (a : Float) (b : Float) : Bool
+@[apex_node "LessThanOrEqual<Int>"]
+opaque LessThanOrEqualInt (a : Int) (b : Int) : Bool
+@[apex_node "LessThanOrEqual<Vector2>"]
+opaque LessThanOrEqualVector2 (a : Vector2) (b : Vector2) : Bool
+@[apex_node "LessThanOrEqual<Vector3>"]
+opaque LessThanOrEqualVector3 (a : Vector3) (b : Vector3) : Bool
+@[apex_node "LessThanOrEqual<Vector4>"]
+opaque LessThanOrEqualVector4 (a : Vector4) (b : Vector4) : Bool
+@[apex_node "Matrix3ToVector3"]
+opaque Matrix3ToVector3 (m : Matrix3) : Vector3×Vector3×Vector3
+@[apex_node "Matrix4ToVector4"]
+opaque Matrix4ToVector4 (m : Matrix4) : Vector4×Vector4×Vector4×Vector4
+@[apex_node "Max<Float>"]
+opaque MaxFloat (a : Float) {numb: Nat} (b : VariadicArg Float numb) : Float
+@[apex_node "Max<Int>"]
+opaque MaxInt (a : Int) {numb: Nat} (b : VariadicArg Int numb) : Int
+@[apex_node "Min<Float>"]
+opaque MinFloat (a : Float) {numb: Nat} (b : VariadicArg Float numb) : Float
+@[apex_node "Min<Int>"]
+opaque MinInt (a : Int) {numb: Nat} (b : VariadicArg Int numb) : Int
+@[apex_node "Modulo"]
+opaque Modulo (a : Int) (b : Int) : Int
+@[apex_node "Multiply<Float,Int>"]
+opaque MultiplyFloatInt (a : Float) {numb: Nat} (b : VariadicArg Int numb) : Float
+@[apex_node "Multiply<Float>"]
+opaque MultiplyFloat (a : Float) {numb: Nat} (b : VariadicArg Float numb) : Float
+@[apex_node "Multiply<Int,Float>"]
+opaque MultiplyIntFloat (a : Int) {numb: Nat} (b : VariadicArg Float numb) : Int
+@[apex_node "Multiply<Int>"]
+opaque MultiplyInt (a : Int) {numb: Nat} (b : VariadicArg Int numb) : Int
+@[apex_node "Multiply<Matrix3,Float>"]
+opaque MultiplyMatrix3Float (a : Matrix3) {numb: Nat} (b : VariadicArg Float numb) : Matrix3
+@[apex_node "Multiply<Matrix3>"]
+opaque MultiplyMatrix3 (a : Matrix3) {numb: Nat} (b : VariadicArg Matrix3 numb) : Matrix3
+@[apex_node "Multiply<Matrix4,Float>"]
+opaque MultiplyMatrix4Float (a : Matrix4) {numb: Nat} (b : VariadicArg Float numb) : Matrix4
+@[apex_node "Multiply<Matrix4,Matrix3>"]
+opaque MultiplyMatrix4Matrix3 (a : Matrix4) {numb: Nat} (b : VariadicArg Matrix3 numb) : Matrix4
+@[apex_node "Multiply<Matrix4>"]
+opaque MultiplyMatrix4 (a : Matrix4) {numb: Nat} (b : VariadicArg Matrix4 numb) : Matrix4
+@[apex_node "Multiply<Vector2,Float>"]
+opaque MultiplyVector2Float (a : Vector2) {numb: Nat} (b : VariadicArg Float numb) : Vector2
+@[apex_node "Multiply<Vector3,Float>"]
+opaque MultiplyVector3Float (a : Vector3) {numb: Nat} (b : VariadicArg Float numb) : Vector3
+@[apex_node "Multiply<Vector3,Matrix3>"]
+opaque MultiplyVector3Matrix3 (a : Vector3) {numb: Nat} (b : VariadicArg Matrix3 numb) : Vector3
+@[apex_node "Multiply<Vector3,Matrix4>"]
+opaque MultiplyVector3Matrix4 (a : Vector3) {numb: Nat} (b : VariadicArg Matrix4 numb) : Vector3
+@[apex_node "Multiply<Vector3>"]
+opaque MultiplyVector3 (a : Vector3) {numb: Nat} (b : VariadicArg Vector3 numb) : Vector3
+@[apex_node "Multiply<Vector4,Float>"]
+opaque MultiplyVector4Float (a : Vector4) {numb: Nat} (b : VariadicArg Float numb) : Vector4
+@[apex_node "Multiply<Vector4,Matrix4>"]
+opaque MultiplyVector4Matrix4 (a : Vector4) {numb: Nat} (b : VariadicArg Matrix4 numb) : Vector4
+@[apex_node "NLerp<Vector4>"]
+opaque NLerpVector4 (a : Vector4) (b : Vector4) (bias : Float) : Vector4
+@[apex_node "Negate<Float>"]
+opaque NegateFloat (val : Float) : Float
+@[apex_node "Negate<Int>"]
+opaque NegateInt (val : Int) : Int
+@[apex_node "Negate<Vector2>"]
+opaque NegateVector2 (val : Vector2) : Vector2
+@[apex_node "Negate<Vector3>"]
+opaque NegateVector3 (val : Vector3) : Vector3
+@[apex_node "Noise<Float,Float>"]
+opaque NoiseFloatFloat (in' : Float) : Float
+@[apex_node "Normalize<Vector2>"]
+opaque NormalizeVector2 (vec : Vector2) : Vector2×Float
+@[apex_node "Normalize<Vector3>"]
+opaque NormalizeVector3 (vec : Vector3) : Vector3×Float
+@[apex_node "Normalize<Vector4>"]
+opaque NormalizeVector4 (vec : Vector4) : Vector4×Float
+@[apex_node "Not"]
+opaque Not (input : Bool) : Bool
+@[apex_node "Null<AnimChannel>"]
+opaque NullAnimChannel (value : AnimChannel) : AnimChannel
+@[apex_node "Null<AnimChannelCollection>"]
+opaque NullAnimChannelCollection (value : AnimChannelCollection) : AnimChannelCollection
+@[apex_node "Null<AnimStack>"]
+opaque NullAnimStack (value : AnimStack) : AnimStack
+@[apex_node "Null<ApexGraphHandle>"]
+opaque NullApexGraphHandle (value : ApexGraphHandle) : ApexGraphHandle
+@[apex_node "Null<ApexNodeID>"]
+opaque NullApexNodeID (value : ApexNodeID) : ApexNodeID
+@[apex_node "Null<ApexNodeIDArray>"]
+opaque NullApexNodeIDArray (value : ApexNodeIDArray) : ApexNodeIDArray
+@[apex_node "Null<ApexPortID>"]
+opaque NullApexPortID (value : ApexPortID) : ApexPortID
+@[apex_node "Null<ApexPortIDArray>"]
+opaque NullApexPortIDArray (value : ApexPortIDArray) : ApexPortIDArray
+@[apex_node "Null<Bool>"]
+opaque NullBool (value : Bool) : Bool
+@[apex_node "Null<BoolArray>"]
+opaque NullBoolArray (value : BoolArray) : BoolArray
+@[apex_node "Null<ColorRamp>"]
+opaque NullColorRamp (value : ColorRamp) : ColorRamp
+@[apex_node "Null<DataItem>"]
+opaque NullDataItem (value : DataItem) : DataItem
+@[apex_node "Null<Dict>"]
+opaque NullDict (value : Dict) : Dict
+@[apex_node "Null<DictArray>"]
+opaque NullDictArray (value : DictArray) : DictArray
+@[apex_node "Null<DynamicPath>"]
+opaque NullDynamicPath (value : DynamicPath) : DynamicPath
+@[apex_node "Null<DynamicPathArray>"]
+opaque NullDynamicPathArray (value : DynamicPathArray) : DynamicPathArray
+@[apex_node "Null<FBIKSkeleton>"]
+opaque NullFBIKSkeleton (value : FBIKSkeleton) : FBIKSkeleton
+@[apex_node "Null<FBIKSkeletonArray>"]
+opaque NullFBIKSkeletonArray (value : FBIKSkeletonArray) : FBIKSkeletonArray
+@[apex_node "Null<FBIKSolver>"]
+opaque NullFBIKSolver (value : FBIKSolver) : FBIKSolver
+@[apex_node "Null<FBIKSolverArray>"]
+opaque NullFBIKSolverArray (value : FBIKSolverArray) : FBIKSolverArray
+@[apex_node "Null<FBIKTarget>"]
+opaque NullFBIKTarget (value : FBIKTarget) : FBIKTarget
+@[apex_node "Null<FBIKTargetArray>"]
+opaque NullFBIKTargetArray (value : FBIKTargetArray) : FBIKTargetArray
+@[apex_node "Null<Float>"]
+opaque NullFloat (value : Float) : Float
+@[apex_node "Null<FloatArray>"]
+opaque NullFloatArray (value : FloatArray) : FloatArray
+@[apex_node "Null<FloatRamp>"]
+opaque NullFloatRamp (value : FloatRamp) : FloatRamp
+@[apex_node "Null<Geometry>"]
+opaque NullGeometry (value : Geometry) : Geometry
+@[apex_node "Null<GeometryArray>"]
+opaque NullGeometryArray (value : GeometryArray) : GeometryArray
+@[apex_node "Null<Int>"]
+opaque NullInt (value : Int) : Int
+@[apex_node "Null<IntArray>"]
+opaque NullIntArray (value : IntArray) : IntArray
+@[apex_node "Null<Matrix3>"]
+opaque NullMatrix3 (value : Matrix3) : Matrix3
+@[apex_node "Null<Matrix3Array>"]
+opaque NullMatrix3Array (value : Matrix3Array) : Matrix3Array
+@[apex_node "Null<Matrix4>"]
+opaque NullMatrix4 (value : Matrix4) : Matrix4
+@[apex_node "Null<Matrix4Array>"]
+opaque NullMatrix4Array (value : Matrix4Array) : Matrix4Array
+@[apex_node "Null<SimRootDataId>"]
+opaque NullSimRootDataId (value : SimRootDataId) : SimRootDataId
+@[apex_node "Null<SimRootDataIdArray>"]
+opaque NullSimRootDataIdArray (value : SimRootDataIdArray) : SimRootDataIdArray
+@[apex_node "Null<String>"]
+opaque NullString (value : String) : String
+@[apex_node "Null<StringArray>"]
+opaque NullStringArray (value : StringArray) : StringArray
+@[apex_node "Null<Vector2>"]
+opaque NullVector2 (value : Vector2) : Vector2
+@[apex_node "Null<Vector2Array>"]
+opaque NullVector2Array (value : Vector2Array) : Vector2Array
+@[apex_node "Null<Vector3>"]
+opaque NullVector3 (value : Vector3) : Vector3
+@[apex_node "Null<Vector3Array>"]
+opaque NullVector3Array (value : Vector3Array) : Vector3Array
+@[apex_node "Null<Vector4>"]
+opaque NullVector4 (value : Vector4) : Vector4
+@[apex_node "Null<Vector4Array>"]
+opaque NullVector4Array (value : Vector4Array) : Vector4Array
+@[apex_node "Or"]
+opaque Or {numinputs: Nat} (inputs : VariadicArg Bool numinputs) : Bool
+@[apex_node "PolarToCartesian"]
+opaque PolarToCartesian (polar : Vector2) : Vector2
+@[apex_node "Quantize<Float>"]
+opaque QuantizeFloat (val : Float) (step : Float) : Float
+@[apex_node "Quantize<Vector2>"]
+opaque QuantizeVector2 (val : Vector2) (step : Float) : Vector2
+@[apex_node "Quantize<Vector3>"]
+opaque QuantizeVector3 (val : Vector3) (step : Float) : Vector3
+@[apex_node "RadiansToDegrees<Float>"]
+opaque RadiansToDegreesFloat (radians : Float) : Float
+@[apex_node "RadiansToDegrees<Vector3>"]
+opaque RadiansToDegreesVector3 (radians : Vector3) : Vector3
+@[apex_node "RampLookup<ColorRamp>"]
+opaque RampLookupColorRamp (ramp : ColorRamp) (position : Float) : Vector3
+@[apex_node "RampLookup<FloatRamp>"]
+opaque RampLookupFloatRamp (ramp : FloatRamp) (position : Float) : Float
+@[apex_node "Round"]
+opaque Round (val : Float) (ndigits : Int) : Float
+@[apex_node "SetComponent<Matrix3>" has_rundata]
+opaque SetComponentMatrix3 (matrix : Matrix3) (value : Float) (row : Int) (col : Int) : Matrix3
+@[apex_node "SetComponent<Matrix4>" has_rundata]
+opaque SetComponentMatrix4 (matrix : Matrix4) (value : Float) (row : Int) (col : Int) : Matrix4
+@[apex_node "SetComponent<Vector2>" has_rundata]
+opaque SetComponentVector2 (vector : Vector2) (value : Float) (index : Int) : Vector2
+@[apex_node "SetComponent<Vector3>" has_rundata]
+opaque SetComponentVector3 (vector : Vector3) (value : Float) (index : Int) : Vector3
+@[apex_node "SetComponent<Vector4>" has_rundata]
+opaque SetComponentVector4 (vector : Vector4) (value : Float) (index : Int) : Vector4
+@[apex_node "Sine"]
+opaque Sine (radians : Float) : Float
+@[apex_node "SmoothIk"]
+opaque SmoothIk (a : Float) {numb: Nat} (b : VariadicArg Float numb) (x : Float) (y : Float) (z : Float) (t : Vector3) (r : Vector3) (s : Vector3) (sh : Vector3) (p : Vector3) (pr : Vector3) (xOrd : Int) (rOrd : Int) (local' : Matrix4) (restlocal : Matrix4) (parent : Matrix4) (parentlocal : Matrix4) (scaleinheritance : Int) (local' : Matrix4) (restlocal : Matrix4) (parent : Matrix4) (parentlocal : Matrix4) (scaleinheritance : Int) (local' : Matrix4) (restlocal : Matrix4) (parent : Matrix4) (parentlocal : Matrix4) (scaleinheritance : Int) (m : Matrix4) (xOrd : Int) (rOrd : Int) (p : Vector3) (pr : Vector3) (m : Matrix4) (xOrd : Int) (rOrd : Int) (p : Vector3) (pr : Vector3) (a : Vector3) (b : Vector3) (m : Matrix4) (xOrd : Int) (rOrd : Int) (p : Vector3) (pr : Vector3) (m : Matrix4) (xOrd : Int) (rOrd : Int) (p : Vector3) (pr : Vector3) (m : Matrix4) (xOrd : Int) (rOrd : Int) (p : Vector3) (pr : Vector3) (a : Vector3) (b : Vector3) (a : Vector3) (b : Vector3) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (val : Float) (exponent : Float) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (parm : Float) (parm : Float) (val : Float) (exponent : Float) (val : Float) (exponent : Float) (val : Float) (exponent : Float) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (val : Float) (exponent : Float) (val : Float) (exponent : Float) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (a : Float) (b : Float) (a : Float) (b : Float) (a : Float) (b : Float) (index : Bool) (val : Float) (exponent : Float) (val : Float) (exponent : Float) (val : Float) (exponent : Float) (a : Float) {numb: Nat} (b : VariadicArg Float numb) (a : Float) (b : Float) (a : Float) (b : Float) (index : Bool) (root : Matrix4) (mid : Matrix4) (tip : Matrix4) (rootdriver : Matrix4) (twist : Matrix4) (goal : Matrix4) (stretch : Bool) (blend : Float) (xform : Matrix4) (parent : Matrix4) (parentlocal : Matrix4) (scaleinheritance : Int) (local' : Matrix4) (restlocal : Matrix4) (parent : Matrix4) (parentlocal : Matrix4) (scaleinheritance : Int) (local' : Matrix4) (restlocal : Matrix4) (parent : Matrix4) (parentlocal : Matrix4) (scaleinheritance : Int) (xform : Matrix4) (parent : Matrix4) (parentlocal : Matrix4) (scaleinheritance : Int) {numinput: Nat} (input : VariadicArg Vector3 numinput) (index : Int) (x : Float) (y : Float) (z : Float) (x : Float) (y : Float) (z : Float) (m : Matrix4) (xOrd : Int) (rOrd : Int) (p : Vector3) (pr : Vector3) {numinputs: Nat} (inputs : VariadicArg Bool numinputs) (restlocal : Matrix4) (t : Vector3) (r : Vector3) (s : Vector3) (sh : Vector3) (p : Vector3) (pr : Vector3) (xord : Int) (rord : Int) (mode : Int) (restlocal : Matrix4) (t : Vector3) (r : Vector3) (s : Vector3) (sh : Vector3) (p : Vector3) (pr : Vector3) (xord : Int) (rord : Int) (mode : Int) (rootout : Matrix4) (midout : Matrix4) (tipout : Matrix4) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (b2 : Float) (input2 : Vector3) (input3 : Vector3) (input4 : Vector3) (out : Vector3) (inputs0 : Bool) (inputs1 : Bool) (driver_target : Matrix4) (driver_root : Matrix4) (rest_root : Matrix4) (rest_mid : Matrix4) (rest_tip : Matrix4) (falloff : Float) (driver_twist : Matrix4) (axis : Int) : Float×Vector3×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Float×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Float×Bool×Bool×Float×Float×Float×Float×Float×Bool×Float×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Vector3×Bool×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Matrix4×Float×Matrix4×Int×Matrix4×Matrix4×Matrix4×Vector3
+@[apex_node "SphericalToCartesian"]
+opaque SphericalToCartesian (spherical : Vector3) : Vector3
+@[apex_node "Subtract<Float,Int>"]
+opaque SubtractFloatInt (a : Float) {numb: Nat} (b : VariadicArg Int numb) : Float
+@[apex_node "Subtract<Float>"]
+opaque SubtractFloat (a : Float) {numb: Nat} (b : VariadicArg Float numb) : Float
+@[apex_node "Subtract<Int,Float>"]
+opaque SubtractIntFloat (a : Int) {numb: Nat} (b : VariadicArg Float numb) : Int
+@[apex_node "Subtract<Int>"]
+opaque SubtractInt (a : Int) {numb: Nat} (b : VariadicArg Int numb) : Int
+@[apex_node "Subtract<Matrix3>"]
+opaque SubtractMatrix3 (a : Matrix3) {numb: Nat} (b : VariadicArg Matrix3 numb) : Matrix3
+@[apex_node "Subtract<Matrix4>"]
+opaque SubtractMatrix4 (a : Matrix4) {numb: Nat} (b : VariadicArg Matrix4 numb) : Matrix4
+@[apex_node "Subtract<Vector2>"]
+opaque SubtractVector2 (a : Vector2) {numb: Nat} (b : VariadicArg Vector2 numb) : Vector2
+@[apex_node "Subtract<Vector3,Float>"]
+opaque SubtractVector3Float (a : Vector3) {numb: Nat} (b : VariadicArg Float numb) : Vector3
+@[apex_node "Subtract<Vector3,Int>"]
+opaque SubtractVector3Int (a : Vector3) {numb: Nat} (b : VariadicArg Int numb) : Vector3
+@[apex_node "Subtract<Vector3>"]
+opaque SubtractVector3 (a : Vector3) {numb: Nat} (b : VariadicArg Vector3 numb) : Vector3
+@[apex_node "Switch<AnimChannel>"]
+opaque SwitchAnimChannel {numinput: Nat} (input : VariadicArg AnimChannel numinput) (index : Int) : AnimChannel
+@[apex_node "Switch<AnimChannelCollection>"]
+opaque SwitchAnimChannelCollection {numinput: Nat} (input : VariadicArg AnimChannelCollection numinput) (index : Int) : AnimChannelCollection
+@[apex_node "Switch<AnimStack>"]
+opaque SwitchAnimStack {numinput: Nat} (input : VariadicArg AnimStack numinput) (index : Int) : AnimStack
+@[apex_node "Switch<ApexNodeID>"]
+opaque SwitchApexNodeID {numinput: Nat} (input : VariadicArg ApexNodeID numinput) (index : Int) : ApexNodeID
+@[apex_node "Switch<ApexNodeIDArray>"]
+opaque SwitchApexNodeIDArray {numinput: Nat} (input : VariadicArg ApexNodeIDArray numinput) (index : Int) : ApexNodeIDArray
+@[apex_node "Switch<ApexPortID>"]
+opaque SwitchApexPortID {numinput: Nat} (input : VariadicArg ApexPortID numinput) (index : Int) : ApexPortID
+@[apex_node "Switch<ApexPortIDArray>"]
+opaque SwitchApexPortIDArray {numinput: Nat} (input : VariadicArg ApexPortIDArray numinput) (index : Int) : ApexPortIDArray
+@[apex_node "Switch<Bool>"]
+opaque SwitchBool {numinput: Nat} (input : VariadicArg Bool numinput) (index : Int) : Bool
+@[apex_node "Switch<BoolArray>"]
+opaque SwitchBoolArray {numinput: Nat} (input : VariadicArg BoolArray numinput) (index : Int) : BoolArray
+@[apex_node "Switch<ColorRamp>"]
+opaque SwitchColorRamp {numinput: Nat} (input : VariadicArg ColorRamp numinput) (index : Int) : ColorRamp
+@[apex_node "Switch<DataItem>"]
+opaque SwitchDataItem {numinput: Nat} (input : VariadicArg DataItem numinput) (index : Int) : DataItem
+@[apex_node "Switch<Dict>"]
+opaque SwitchDict {numinput: Nat} (input : VariadicArg Dict numinput) (index : Int) : Dict
+@[apex_node "Switch<DictArray>"]
+opaque SwitchDictArray {numinput: Nat} (input : VariadicArg DictArray numinput) (index : Int) : DictArray
+@[apex_node "Switch<DynamicPath>"]
+opaque SwitchDynamicPath {numinput: Nat} (input : VariadicArg DynamicPath numinput) (index : Int) : DynamicPath
+@[apex_node "Switch<DynamicPathArray>"]
+opaque SwitchDynamicPathArray {numinput: Nat} (input : VariadicArg DynamicPathArray numinput) (index : Int) : DynamicPathArray
+@[apex_node "Switch<FBIKSkeleton>"]
+opaque SwitchFBIKSkeleton {numinput: Nat} (input : VariadicArg FBIKSkeleton numinput) (index : Int) : FBIKSkeleton
+@[apex_node "Switch<FBIKSkeletonArray>"]
+opaque SwitchFBIKSkeletonArray {numinput: Nat} (input : VariadicArg FBIKSkeletonArray numinput) (index : Int) : FBIKSkeletonArray
+@[apex_node "Switch<FBIKSolver>"]
+opaque SwitchFBIKSolver {numinput: Nat} (input : VariadicArg FBIKSolver numinput) (index : Int) : FBIKSolver
+@[apex_node "Switch<FBIKSolverArray>"]
+opaque SwitchFBIKSolverArray {numinput: Nat} (input : VariadicArg FBIKSolverArray numinput) (index : Int) : FBIKSolverArray
+@[apex_node "Switch<FBIKTarget>"]
+opaque SwitchFBIKTarget {numinput: Nat} (input : VariadicArg FBIKTarget numinput) (index : Int) : FBIKTarget
+@[apex_node "Switch<FBIKTargetArray>"]
+opaque SwitchFBIKTargetArray {numinput: Nat} (input : VariadicArg FBIKTargetArray numinput) (index : Int) : FBIKTargetArray
+@[apex_node "Switch<Float>"]
+opaque SwitchFloat {numinput: Nat} (input : VariadicArg Float numinput) (index : Int) : Float
+@[apex_node "Switch<FloatArray>"]
+opaque SwitchFloatArray {numinput: Nat} (input : VariadicArg FloatArray numinput) (index : Int) : FloatArray
+@[apex_node "Switch<FloatRamp>"]
+opaque SwitchFloatRamp {numinput: Nat} (input : VariadicArg FloatRamp numinput) (index : Int) : FloatRamp
+@[apex_node "Switch<Geometry>"]
+opaque SwitchGeometry {numinput: Nat} (input : VariadicArg Geometry numinput) (index : Int) : Geometry
+@[apex_node "Switch<GeometryArray>"]
+opaque SwitchGeometryArray {numinput: Nat} (input : VariadicArg GeometryArray numinput) (index : Int) : GeometryArray
+@[apex_node "Switch<Int>"]
+opaque SwitchInt {numinput: Nat} (input : VariadicArg Int numinput) (index : Int) : Int
+@[apex_node "Switch<IntArray>"]
+opaque SwitchIntArray {numinput: Nat} (input : VariadicArg IntArray numinput) (index : Int) : IntArray
+@[apex_node "Switch<Matrix3>"]
+opaque SwitchMatrix3 {numinput: Nat} (input : VariadicArg Matrix3 numinput) (index : Int) : Matrix3
+@[apex_node "Switch<Matrix3Array>"]
+opaque SwitchMatrix3Array {numinput: Nat} (input : VariadicArg Matrix3Array numinput) (index : Int) : Matrix3Array
+@[apex_node "Switch<Matrix4>"]
+opaque SwitchMatrix4 {numinput: Nat} (input : VariadicArg Matrix4 numinput) (index : Int) : Matrix4
+@[apex_node "Switch<Matrix4Array>"]
+opaque SwitchMatrix4Array {numinput: Nat} (input : VariadicArg Matrix4Array numinput) (index : Int) : Matrix4Array
+@[apex_node "Switch<SimRootDataId>"]
+opaque SwitchSimRootDataId {numinput: Nat} (input : VariadicArg SimRootDataId numinput) (index : Int) : SimRootDataId
+@[apex_node "Switch<SimRootDataIdArray>"]
+opaque SwitchSimRootDataIdArray {numinput: Nat} (input : VariadicArg SimRootDataIdArray numinput) (index : Int) : SimRootDataIdArray
+@[apex_node "Switch<String>"]
+opaque SwitchString {numinput: Nat} (input : VariadicArg String numinput) (index : Int) : String
+@[apex_node "Switch<StringArray>"]
+opaque SwitchStringArray {numinput: Nat} (input : VariadicArg StringArray numinput) (index : Int) : StringArray
+@[apex_node "Switch<Vector2>"]
+opaque SwitchVector2 {numinput: Nat} (input : VariadicArg Vector2 numinput) (index : Int) : Vector2
+@[apex_node "Switch<Vector2Array>"]
+opaque SwitchVector2Array {numinput: Nat} (input : VariadicArg Vector2Array numinput) (index : Int) : Vector2Array
+@[apex_node "Switch<Vector3>"]
+opaque SwitchVector3 {numinput: Nat} (input : VariadicArg Vector3 numinput) (index : Int) : Vector3
+@[apex_node "Switch<Vector3Array>"]
+opaque SwitchVector3Array {numinput: Nat} (input : VariadicArg Vector3Array numinput) (index : Int) : Vector3Array
+@[apex_node "Switch<Vector4>"]
+opaque SwitchVector4 {numinput: Nat} (input : VariadicArg Vector4 numinput) (index : Int) : Vector4
+@[apex_node "Switch<Vector4Array>"]
+opaque SwitchVector4Array {numinput: Nat} (input : VariadicArg Vector4Array numinput) (index : Int) : Vector4Array
+@[apex_node "SwitchByName<AnimChannel>"]
+opaque SwitchByNameAnimChannel {numinput: Nat} (input : VariadicArg AnimChannel numinput) (name : String) : AnimChannel
+@[apex_node "SwitchByName<AnimChannelCollection>"]
+opaque SwitchByNameAnimChannelCollection {numinput: Nat} (input : VariadicArg AnimChannelCollection numinput) (name : String) : AnimChannelCollection
+@[apex_node "SwitchByName<AnimStack>"]
+opaque SwitchByNameAnimStack {numinput: Nat} (input : VariadicArg AnimStack numinput) (name : String) : AnimStack
+@[apex_node "SwitchByName<ApexNodeID>"]
+opaque SwitchByNameApexNodeID {numinput: Nat} (input : VariadicArg ApexNodeID numinput) (name : String) : ApexNodeID
+@[apex_node "SwitchByName<ApexNodeIDArray>"]
+opaque SwitchByNameApexNodeIDArray {numinput: Nat} (input : VariadicArg ApexNodeIDArray numinput) (name : String) : ApexNodeIDArray
+@[apex_node "SwitchByName<ApexPortID>"]
+opaque SwitchByNameApexPortID {numinput: Nat} (input : VariadicArg ApexPortID numinput) (name : String) : ApexPortID
+@[apex_node "SwitchByName<ApexPortIDArray>"]
+opaque SwitchByNameApexPortIDArray {numinput: Nat} (input : VariadicArg ApexPortIDArray numinput) (name : String) : ApexPortIDArray
+@[apex_node "SwitchByName<Bool>"]
+opaque SwitchByNameBool {numinput: Nat} (input : VariadicArg Bool numinput) (name : String) : Bool
+@[apex_node "SwitchByName<BoolArray>"]
+opaque SwitchByNameBoolArray {numinput: Nat} (input : VariadicArg BoolArray numinput) (name : String) : BoolArray
+@[apex_node "SwitchByName<ColorRamp>"]
+opaque SwitchByNameColorRamp {numinput: Nat} (input : VariadicArg ColorRamp numinput) (name : String) : ColorRamp
+@[apex_node "SwitchByName<DataItem>"]
+opaque SwitchByNameDataItem {numinput: Nat} (input : VariadicArg DataItem numinput) (name : String) : DataItem
+@[apex_node "SwitchByName<Dict>"]
+opaque SwitchByNameDict {numinput: Nat} (input : VariadicArg Dict numinput) (name : String) : Dict
+@[apex_node "SwitchByName<DictArray>"]
+opaque SwitchByNameDictArray {numinput: Nat} (input : VariadicArg DictArray numinput) (name : String) : DictArray
+@[apex_node "SwitchByName<DynamicPath>"]
+opaque SwitchByNameDynamicPath {numinput: Nat} (input : VariadicArg DynamicPath numinput) (name : String) : DynamicPath
+@[apex_node "SwitchByName<DynamicPathArray>"]
+opaque SwitchByNameDynamicPathArray {numinput: Nat} (input : VariadicArg DynamicPathArray numinput) (name : String) : DynamicPathArray
+@[apex_node "SwitchByName<FBIKSkeleton>"]
+opaque SwitchByNameFBIKSkeleton {numinput: Nat} (input : VariadicArg FBIKSkeleton numinput) (name : String) : FBIKSkeleton
+@[apex_node "SwitchByName<FBIKSkeletonArray>"]
+opaque SwitchByNameFBIKSkeletonArray {numinput: Nat} (input : VariadicArg FBIKSkeletonArray numinput) (name : String) : FBIKSkeletonArray
+@[apex_node "SwitchByName<FBIKSolver>"]
+opaque SwitchByNameFBIKSolver {numinput: Nat} (input : VariadicArg FBIKSolver numinput) (name : String) : FBIKSolver
+@[apex_node "SwitchByName<FBIKSolverArray>"]
+opaque SwitchByNameFBIKSolverArray {numinput: Nat} (input : VariadicArg FBIKSolverArray numinput) (name : String) : FBIKSolverArray
+@[apex_node "SwitchByName<FBIKTarget>"]
+opaque SwitchByNameFBIKTarget {numinput: Nat} (input : VariadicArg FBIKTarget numinput) (name : String) : FBIKTarget
+@[apex_node "SwitchByName<FBIKTargetArray>"]
+opaque SwitchByNameFBIKTargetArray {numinput: Nat} (input : VariadicArg FBIKTargetArray numinput) (name : String) : FBIKTargetArray
+@[apex_node "SwitchByName<Float>"]
+opaque SwitchByNameFloat {numinput: Nat} (input : VariadicArg Float numinput) (name : String) : Float
+@[apex_node "SwitchByName<FloatArray>"]
+opaque SwitchByNameFloatArray {numinput: Nat} (input : VariadicArg FloatArray numinput) (name : String) : FloatArray
+@[apex_node "SwitchByName<FloatRamp>"]
+opaque SwitchByNameFloatRamp {numinput: Nat} (input : VariadicArg FloatRamp numinput) (name : String) : FloatRamp
+@[apex_node "SwitchByName<Geometry>"]
+opaque SwitchByNameGeometry {numinput: Nat} (input : VariadicArg Geometry numinput) (name : String) : Geometry
+@[apex_node "SwitchByName<GeometryArray>"]
+opaque SwitchByNameGeometryArray {numinput: Nat} (input : VariadicArg GeometryArray numinput) (name : String) : GeometryArray
+@[apex_node "SwitchByName<Int>"]
+opaque SwitchByNameInt {numinput: Nat} (input : VariadicArg Int numinput) (name : String) : Int
+@[apex_node "SwitchByName<IntArray>"]
+opaque SwitchByNameIntArray {numinput: Nat} (input : VariadicArg IntArray numinput) (name : String) : IntArray
+@[apex_node "SwitchByName<Matrix3>"]
+opaque SwitchByNameMatrix3 {numinput: Nat} (input : VariadicArg Matrix3 numinput) (name : String) : Matrix3
+@[apex_node "SwitchByName<Matrix3Array>"]
+opaque SwitchByNameMatrix3Array {numinput: Nat} (input : VariadicArg Matrix3Array numinput) (name : String) : Matrix3Array
+@[apex_node "SwitchByName<Matrix4>"]
+opaque SwitchByNameMatrix4 {numinput: Nat} (input : VariadicArg Matrix4 numinput) (name : String) : Matrix4
+@[apex_node "SwitchByName<Matrix4Array>"]
+opaque SwitchByNameMatrix4Array {numinput: Nat} (input : VariadicArg Matrix4Array numinput) (name : String) : Matrix4Array
+@[apex_node "SwitchByName<SimRootDataId>"]
+opaque SwitchByNameSimRootDataId {numinput: Nat} (input : VariadicArg SimRootDataId numinput) (name : String) : SimRootDataId
+@[apex_node "SwitchByName<SimRootDataIdArray>"]
+opaque SwitchByNameSimRootDataIdArray {numinput: Nat} (input : VariadicArg SimRootDataIdArray numinput) (name : String) : SimRootDataIdArray
+@[apex_node "SwitchByName<String>"]
+opaque SwitchByNameString {numinput: Nat} (input : VariadicArg String numinput) (name : String) : String
+@[apex_node "SwitchByName<StringArray>"]
+opaque SwitchByNameStringArray {numinput: Nat} (input : VariadicArg StringArray numinput) (name : String) : StringArray
+@[apex_node "SwitchByName<Vector2>"]
+opaque SwitchByNameVector2 {numinput: Nat} (input : VariadicArg Vector2 numinput) (name : String) : Vector2
+@[apex_node "SwitchByName<Vector2Array>"]
+opaque SwitchByNameVector2Array {numinput: Nat} (input : VariadicArg Vector2Array numinput) (name : String) : Vector2Array
+@[apex_node "SwitchByName<Vector3>"]
+opaque SwitchByNameVector3 {numinput: Nat} (input : VariadicArg Vector3 numinput) (name : String) : Vector3
+@[apex_node "SwitchByName<Vector3Array>"]
+opaque SwitchByNameVector3Array {numinput: Nat} (input : VariadicArg Vector3Array numinput) (name : String) : Vector3Array
+@[apex_node "SwitchByName<Vector4>"]
+opaque SwitchByNameVector4 {numinput: Nat} (input : VariadicArg Vector4 numinput) (name : String) : Vector4
+@[apex_node "SwitchByName<Vector4Array>"]
+opaque SwitchByNameVector4Array {numinput: Nat} (input : VariadicArg Vector4Array numinput) (name : String) : Vector4Array
+@[apex_node "Tan"]
+opaque Tan (radians : Float) : Float
+@[apex_node "TransformObject" has_rundata]
+opaque TransformObject (parent : Matrix4) (parentlocal : Matrix4) (scaleinheritance : Int) (xform : Matrix4) (t : Vector3) (r : Vector3) (s : Vector3) (local' : Matrix4) (restlocal : Matrix4) (xord : Int) (rord : Int) (xformmask : Int) : Matrix4×Matrix4×Matrix4×Vector3×Vector3×Vector3
+@[apex_node "Transpose<Matrix3>"]
+opaque TransposeMatrix3 (a : Matrix3) : Matrix3
+@[apex_node "Transpose<Matrix4>"]
+opaque TransposeMatrix4 (a : Matrix4) : Matrix4
+@[apex_node "TwoWaySwitch<AnimChannel>"]
+opaque TwoWaySwitchAnimChannel (a : AnimChannel) (b : AnimChannel) (index : Bool) : AnimChannel
+@[apex_node "TwoWaySwitch<AnimChannelCollection>"]
+opaque TwoWaySwitchAnimChannelCollection (a : AnimChannelCollection) (b : AnimChannelCollection) (index : Bool) : AnimChannelCollection
+@[apex_node "TwoWaySwitch<AnimStack>"]
+opaque TwoWaySwitchAnimStack (a : AnimStack) (b : AnimStack) (index : Bool) : AnimStack
+@[apex_node "TwoWaySwitch<ApexGraphHandle>"]
+opaque TwoWaySwitchApexGraphHandle (a : ApexGraphHandle) (b : ApexGraphHandle) (index : Bool) : ApexGraphHandle
+@[apex_node "TwoWaySwitch<ApexNodeID>"]
+opaque TwoWaySwitchApexNodeID (a : ApexNodeID) (b : ApexNodeID) (index : Bool) : ApexNodeID
+@[apex_node "TwoWaySwitch<ApexNodeIDArray>"]
+opaque TwoWaySwitchApexNodeIDArray (a : ApexNodeIDArray) (b : ApexNodeIDArray) (index : Bool) : ApexNodeIDArray
+@[apex_node "TwoWaySwitch<ApexPortID>"]
+opaque TwoWaySwitchApexPortID (a : ApexPortID) (b : ApexPortID) (index : Bool) : ApexPortID
+@[apex_node "TwoWaySwitch<ApexPortIDArray>"]
+opaque TwoWaySwitchApexPortIDArray (a : ApexPortIDArray) (b : ApexPortIDArray) (index : Bool) : ApexPortIDArray
+@[apex_node "TwoWaySwitch<Bool>"]
+opaque TwoWaySwitchBool (a : Bool) (b : Bool) (index : Bool) : Bool
+@[apex_node "TwoWaySwitch<BoolArray>"]
+opaque TwoWaySwitchBoolArray (a : BoolArray) (b : BoolArray) (index : Bool) : BoolArray
+@[apex_node "TwoWaySwitch<ColorRamp>"]
+opaque TwoWaySwitchColorRamp (a : ColorRamp) (b : ColorRamp) (index : Bool) : ColorRamp
+@[apex_node "TwoWaySwitch<DataItem>"]
+opaque TwoWaySwitchDataItem (a : DataItem) (b : DataItem) (index : Bool) : DataItem
+@[apex_node "TwoWaySwitch<Dict>"]
+opaque TwoWaySwitchDict (a : Dict) (b : Dict) (index : Bool) : Dict
+@[apex_node "TwoWaySwitch<DictArray>"]
+opaque TwoWaySwitchDictArray (a : DictArray) (b : DictArray) (index : Bool) : DictArray
+@[apex_node "TwoWaySwitch<DynamicPath>"]
+opaque TwoWaySwitchDynamicPath (a : DynamicPath) (b : DynamicPath) (index : Bool) : DynamicPath
+@[apex_node "TwoWaySwitch<DynamicPathArray>"]
+opaque TwoWaySwitchDynamicPathArray (a : DynamicPathArray) (b : DynamicPathArray) (index : Bool) : DynamicPathArray
+@[apex_node "TwoWaySwitch<FBIKSkeleton>"]
+opaque TwoWaySwitchFBIKSkeleton (a : FBIKSkeleton) (b : FBIKSkeleton) (index : Bool) : FBIKSkeleton
+@[apex_node "TwoWaySwitch<FBIKSkeletonArray>"]
+opaque TwoWaySwitchFBIKSkeletonArray (a : FBIKSkeletonArray) (b : FBIKSkeletonArray) (index : Bool) : FBIKSkeletonArray
+@[apex_node "TwoWaySwitch<FBIKSolver>"]
+opaque TwoWaySwitchFBIKSolver (a : FBIKSolver) (b : FBIKSolver) (index : Bool) : FBIKSolver
+@[apex_node "TwoWaySwitch<FBIKSolverArray>"]
+opaque TwoWaySwitchFBIKSolverArray (a : FBIKSolverArray) (b : FBIKSolverArray) (index : Bool) : FBIKSolverArray
+@[apex_node "TwoWaySwitch<FBIKTarget>"]
+opaque TwoWaySwitchFBIKTarget (a : FBIKTarget) (b : FBIKTarget) (index : Bool) : FBIKTarget
+@[apex_node "TwoWaySwitch<FBIKTargetArray>"]
+opaque TwoWaySwitchFBIKTargetArray (a : FBIKTargetArray) (b : FBIKTargetArray) (index : Bool) : FBIKTargetArray
+@[apex_node "TwoWaySwitch<Float>"]
+opaque TwoWaySwitchFloat (a : Float) (b : Float) (index : Bool) : Float
+@[apex_node "TwoWaySwitch<FloatArray>"]
+opaque TwoWaySwitchFloatArray (a : FloatArray) (b : FloatArray) (index : Bool) : FloatArray
+@[apex_node "TwoWaySwitch<FloatRamp>"]
+opaque TwoWaySwitchFloatRamp (a : FloatRamp) (b : FloatRamp) (index : Bool) : FloatRamp
+@[apex_node "TwoWaySwitch<Geometry>"]
+opaque TwoWaySwitchGeometry (a : Geometry) (b : Geometry) (index : Bool) : Geometry
+@[apex_node "TwoWaySwitch<GeometryArray>"]
+opaque TwoWaySwitchGeometryArray (a : GeometryArray) (b : GeometryArray) (index : Bool) : GeometryArray
+@[apex_node "TwoWaySwitch<Int>"]
+opaque TwoWaySwitchInt (a : Int) (b : Int) (index : Bool) : Int
+@[apex_node "TwoWaySwitch<IntArray>"]
+opaque TwoWaySwitchIntArray (a : IntArray) (b : IntArray) (index : Bool) : IntArray
+@[apex_node "TwoWaySwitch<Matrix3>"]
+opaque TwoWaySwitchMatrix3 (a : Matrix3) (b : Matrix3) (index : Bool) : Matrix3
+@[apex_node "TwoWaySwitch<Matrix3Array>"]
+opaque TwoWaySwitchMatrix3Array (a : Matrix3Array) (b : Matrix3Array) (index : Bool) : Matrix3Array
+@[apex_node "TwoWaySwitch<Matrix4>"]
+opaque TwoWaySwitchMatrix4 (a : Matrix4) (b : Matrix4) (index : Bool) : Matrix4
+@[apex_node "TwoWaySwitch<Matrix4Array>"]
+opaque TwoWaySwitchMatrix4Array (a : Matrix4Array) (b : Matrix4Array) (index : Bool) : Matrix4Array
+@[apex_node "TwoWaySwitch<SimRootDataId>"]
+opaque TwoWaySwitchSimRootDataId (a : SimRootDataId) (b : SimRootDataId) (index : Bool) : SimRootDataId
+@[apex_node "TwoWaySwitch<SimRootDataIdArray>"]
+opaque TwoWaySwitchSimRootDataIdArray (a : SimRootDataIdArray) (b : SimRootDataIdArray) (index : Bool) : SimRootDataIdArray
+@[apex_node "TwoWaySwitch<String>"]
+opaque TwoWaySwitchString (a : String) (b : String) (index : Bool) : String
+@[apex_node "TwoWaySwitch<StringArray>"]
+opaque TwoWaySwitchStringArray (a : StringArray) (b : StringArray) (index : Bool) : StringArray
+@[apex_node "TwoWaySwitch<Vector2>"]
+opaque TwoWaySwitchVector2 (a : Vector2) (b : Vector2) (index : Bool) : Vector2
+@[apex_node "TwoWaySwitch<Vector2Array>"]
+opaque TwoWaySwitchVector2Array (a : Vector2Array) (b : Vector2Array) (index : Bool) : Vector2Array
+@[apex_node "TwoWaySwitch<Vector3>"]
+opaque TwoWaySwitchVector3 (a : Vector3) (b : Vector3) (index : Bool) : Vector3
+@[apex_node "TwoWaySwitch<Vector3Array>"]
+opaque TwoWaySwitchVector3Array (a : Vector3Array) (b : Vector3Array) (index : Bool) : Vector3Array
+@[apex_node "TwoWaySwitch<Vector4>"]
+opaque TwoWaySwitchVector4 (a : Vector4) (b : Vector4) (index : Bool) : Vector4
+@[apex_node "TwoWaySwitch<Vector4Array>"]
+opaque TwoWaySwitchVector4Array (a : Vector4Array) (b : Vector4Array) (index : Bool) : Vector4Array
+@[apex_node "Value<AnimChannel>"]
+opaque ValueAnimChannel (parm : AnimChannel) : AnimChannel
+@[apex_node "Value<AnimChannelCollection>"]
+opaque ValueAnimChannelCollection (parm : AnimChannelCollection) : AnimChannelCollection
+@[apex_node "Value<AnimStack>"]
+opaque ValueAnimStack (parm : AnimStack) : AnimStack
+@[apex_node "Value<ApexGraphHandle>"]
+opaque ValueApexGraphHandle (parm : ApexGraphHandle) : ApexGraphHandle
+@[apex_node "Value<ApexNodeID>"]
+opaque ValueApexNodeID (parm : ApexNodeID) : ApexNodeID
+@[apex_node "Value<ApexNodeIDArray>"]
+opaque ValueApexNodeIDArray (parm : ApexNodeIDArray) : ApexNodeIDArray
+@[apex_node "Value<ApexPortID>"]
+opaque ValueApexPortID (parm : ApexPortID) : ApexPortID
+@[apex_node "Value<ApexPortIDArray>"]
+opaque ValueApexPortIDArray (parm : ApexPortIDArray) : ApexPortIDArray
+@[apex_node "Value<Bool>"]
+opaque ValueBool (parm : Bool) : Bool
+@[apex_node "Value<BoolArray>"]
+opaque ValueBoolArray (parm : BoolArray) : BoolArray
+@[apex_node "Value<ColorRamp>"]
+opaque ValueColorRamp (parm : ColorRamp) : ColorRamp
+@[apex_node "Value<DataItem>"]
+opaque ValueDataItem (parm : DataItem) : DataItem
+@[apex_node "Value<Dict>"]
+opaque ValueDict (parm : Dict) : Dict
+@[apex_node "Value<DictArray>"]
+opaque ValueDictArray (parm : DictArray) : DictArray
+@[apex_node "Value<DynamicPath>"]
+opaque ValueDynamicPath (parm : DynamicPath) : DynamicPath
+@[apex_node "Value<DynamicPathArray>"]
+opaque ValueDynamicPathArray (parm : DynamicPathArray) : DynamicPathArray
+@[apex_node "Value<FBIKSkeleton>"]
+opaque ValueFBIKSkeleton (parm : FBIKSkeleton) : FBIKSkeleton
+@[apex_node "Value<FBIKSkeletonArray>"]
+opaque ValueFBIKSkeletonArray (parm : FBIKSkeletonArray) : FBIKSkeletonArray
+@[apex_node "Value<FBIKSolverArray>"]
+opaque ValueFBIKSolverArray (parm : FBIKSolverArray) : FBIKSolverArray
+@[apex_node "Value<FBIKTargetArray>"]
+opaque ValueFBIKTargetArray (parm : FBIKTargetArray) : FBIKTargetArray
+@[apex_node "Value<Float>"]
+opaque ValueFloat (parm : Float) : Float
+@[apex_node "Value<FloatArray>"]
+opaque ValueFloatArray (parm : FloatArray) : FloatArray
+@[apex_node "Value<FloatRamp>"]
+opaque ValueFloatRamp (parm : FloatRamp) : FloatRamp
+@[apex_node "Value<Geometry>"]
+opaque ValueGeometry (parm : Geometry) : Geometry
+@[apex_node "Value<GeometryArray>"]
+opaque ValueGeometryArray (parm : GeometryArray) : GeometryArray
+@[apex_node "Value<Int>"]
+opaque ValueInt (parm : Int) : Int
+@[apex_node "Value<IntArray>"]
+opaque ValueIntArray (parm : IntArray) : IntArray
+@[apex_node "Value<Matrix3>"]
+opaque ValueMatrix3 (parm : Matrix3) : Matrix3
+@[apex_node "Value<Matrix3Array>"]
+opaque ValueMatrix3Array (parm : Matrix3Array) : Matrix3Array
+@[apex_node "Value<Matrix4>"]
+opaque ValueMatrix4 (parm : Matrix4) : Matrix4
+@[apex_node "Value<Matrix4Array>"]
+opaque ValueMatrix4Array (parm : Matrix4Array) : Matrix4Array
+@[apex_node "Value<SimRootDataIdArray>"]
+opaque ValueSimRootDataIdArray (parm : SimRootDataIdArray) : SimRootDataIdArray
+@[apex_node "Value<String>"]
+opaque ValueString (parm : String) : String
+@[apex_node "Value<StringArray>"]
+opaque ValueStringArray (parm : StringArray) : StringArray
+@[apex_node "Value<Vector2>"]
+opaque ValueVector2 (parm : Vector2) : Vector2
+@[apex_node "Value<Vector2Array>"]
+opaque ValueVector2Array (parm : Vector2Array) : Vector2Array
+@[apex_node "Value<Vector3>"]
+opaque ValueVector3 (parm : Vector3) : Vector3
+@[apex_node "Value<Vector3Array>"]
+opaque ValueVector3Array (parm : Vector3Array) : Vector3Array
+@[apex_node "Value<Vector4>"]
+opaque ValueVector4 (parm : Vector4) : Vector4
+@[apex_node "Value<Vector4Array>"]
+opaque ValueVector4Array (parm : Vector4Array) : Vector4Array
+@[apex_node "Vector2ToFloat"]
+opaque Vector2ToFloat (vector : Vector2) : Float×Float
+@[apex_node "Vector3ToFloat"]
+opaque Vector3ToFloat (vector : Vector3) : Float×Float×Float
+@[apex_node "Vector3ToMatrix3"]
+opaque Vector3ToMatrix3 (row1 : Vector3) (row2 : Vector3) (row3 : Vector3) : Matrix3
+@[apex_node "Vector4ToFloat"]
+opaque Vector4ToFloat (vector : Vector4) : Float×Float×Float×Float
+@[apex_node "Vector4ToMatrix4"]
+opaque Vector4ToMatrix4 (row1 : Vector4) (row2 : Vector4) (row3 : Vector4) (row4 : Vector4) : Matrix4
+@[apex_node "Xor"]
+opaque Xor {numinputs: Nat} (inputs : VariadicArg Bool numinputs) : Bool
