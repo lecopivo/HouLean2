@@ -82,6 +82,8 @@ run_meta
   IO.println (s.raw.prettyPrint)
 
 -- String to integer
+/-- info:  string  text  =  "123"  ;  int  number  =  atoi  (  text  )  ; -/
+#guard_msgs in
 run_meta
   let s ← `(vexSnippet|
     string text = "123";

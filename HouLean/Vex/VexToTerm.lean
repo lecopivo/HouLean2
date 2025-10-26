@@ -115,7 +115,7 @@ def vexTypeToTerm (ty : TSyntax `vexType) : MacroM Term :=
   | `(vexType| dict) => `(Dict)
   | `(vexType| bsdf) => `(BSDF)
   | `(vexType| $id:ident) => `($id)
-  | _ => Macro.throwError s!"Unsupported VEX type: {ty}"
+  | _ => Macro.throwError s!"Unsupported VEX type: {ty.raw.prettyPrint}"
 
 def vexFullTypeToTerm (fullTy : TSyntax `vexFullType) : MacroM Term :=
   match fullTy with
@@ -124,7 +124,7 @@ def vexFullTypeToTerm (fullTy : TSyntax `vexFullType) : MacroM Term :=
   | `(vexFullType| $[$_:vexTypeQual]* $ty:vexType [ ]) => do
     let elemTy ← vexTypeToTerm ty
     `(Array $elemTy)
-  | _ => Macro.throwError s!"Unsupported VEX full type: {fullTy}"
+  | _ => Macro.throwError s!"Unsupported VEX full type: {fullTy.raw.prettyPrint}"
 
 def vexBuiltinTypeToIdent (ty : TSyntax `vexBuiltinType) : MacroM Ident :=
   match ty with
@@ -139,7 +139,7 @@ def vexBuiltinTypeToIdent (ty : TSyntax `vexBuiltinType) : MacroM Ident :=
   | `(vexBuiltinType| string) => `(String)
   | `(vexBuiltinType| dict) => `(Dict)
   | `(vexBuiltinType| bsdf) => `(BSDF)
-  | _ => Macro.throwError s!"Unsupported VEX builtin type: {ty}"
+  | _ => Macro.throwError s!"Unsupported VEX builtin type: {ty.raw.prettyPrint}"
 
 --------------------------------------------------------------------------------
 -- Macro: vexExpr → term (Pure expressions, no assignments allowed)
@@ -482,7 +482,7 @@ partial def vexExprToTerm (e : TSyntax `vexExpr) : VexMacroM Term := do
   -- Comma operator - just return the last value in pure term context
   | `(vexExpr| $_ , $rhs:vexExpr) => vexExprToTerm rhs
   
-  | _ => Macro.throwError s!"Unsupported VEX expression in term context: {e}"
+  | _ => Macro.throwError s!"Unsupported VEX expression in term context: {e.raw.prettyPrint}"
 
 --------------------------------------------------------------------------------
 -- Macro: vexExpr → doElem (Allows assignments, converts to statements)
@@ -744,7 +744,7 @@ partial def vexStmtToDoElem (s : TSyntax `vexStmt) : VexMacroM (Array (TSyntax `
   -- For loop (basic form)
   | `(vexStmt| for ( $[$init:vexExpr]? ; $[$cond:vexExpr]? ; $[$update:vexExpr]? ) $body:vexStmt) => do
     let mut elems := #[]
-    
+
     -- Add initialization if present
     if let some init := init then
       elems := elems.push (← vexExprToDoElem init)
@@ -766,8 +766,17 @@ partial def vexStmtToDoElem (s : TSyntax `vexStmt) : VexMacroM (Array (TSyntax `
     
     elems := elems.push whileLoop
     return elems
-  
-  -- Return statement
+
+  | `(vexStmt| for ( $[$init:vexStmt]? $[$cond:vexExpr]? ; $[$update:vexExpr]? ) $body:vexStmt) => do
+    let init := (← init.mapM vexStmtToDoElem) |>.getD #[(← `(doElem| pure () ))]
+    let empty ← `(vexExpr| 0) -- this is a bit hacky, those two for loop notations should be unified
+    let forLoop ← vexStmtToDoElem (← `(vexStmt| for ( $empty ;$[$cond:vexExpr]?; $[$update]?) $body))
+    let r ← `(doElem|
+      do
+        $[$init:doElem]*
+        $[$forLoop:doElem]*)
+    return #[r]
+      -- Return statement
   | `(vexStmt| return $e:vexExpr ;) => do
     let term ← vexExprToTerm e
     return #[← `(doElem| return $term)]
@@ -787,7 +796,7 @@ partial def vexStmtToDoElem (s : TSyntax `vexStmt) : VexMacroM (Array (TSyntax `
       allElems := allElems ++ elems
     return allElems
   
-  | _ => Macro.throwError s!"Unsupported VEX statement: {s}"
+  | _ => Macro.throwError s!"Unsupported VEX statement: {s.raw.prettyPrint}"
 
 --------------------------------------------------------------------------------
 -- Parameter List Conversion
@@ -802,7 +811,7 @@ partial def vexParamListToParams (paramList : TSyntax `vexParamList) : MacroM (A
     | `(vexParamList| $param:vexParam ; $rest:vexParamList) => do
       let p ← vexParamToBinder param
       collect rest (acc.push p)
-    | _ => Macro.throwError s!"Invalid parameter list: {pl}"
+    | _ => Macro.throwError s!"Invalid parameter list: {pl.raw.prettyPrint}"
   collect paramList #[]
 where
   vexParamToBinder (param : TSyntax `vexParam) : MacroM (TSyntax ``Parser.Term.bracketedBinder) := do
@@ -826,7 +835,7 @@ where
         arrTy.raw
         (Lean.Syntax.node1 .none `null .missing)
         (Lean.Syntax.atom .none ")")⟩
-    | _ => Macro.throwError s!"Invalid parameter: {param}"
+    | _ => Macro.throwError s!"Invalid parameter: {param.raw.prettyPrint}"
 
 --------------------------------------------------------------------------------
 -- Function Declaration to Command
@@ -880,7 +889,7 @@ def vexFuncDeclToCommand (funcDecl : TSyntax `vexFuncDecl) (ctx : VexContext) : 
     `(def $name:ident $[$paramBinders]* : $retTyTerm := do
         $[$bodyElems:doElem]*)
   
-  | _ => Macro.throwError s!"Unsupported function declaration: {funcDecl}"
+  | _ => Macro.throwError s!"Unsupported function declaration: {funcDecl.raw.prettyPrint}"
 
 -- Macro that uses a default point wrangle context
 macro "vex%(" fn:vexFuncDecl ")" : command => do

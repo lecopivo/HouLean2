@@ -1,10 +1,10 @@
 import Lean
 import HouLean.ArrayTree
-import HouLean.Init
+import HouLean.Data
 
 open Lean
 
-namespace HouLean.Apex.Compiler
+namespace HouLean.Apex
 
 /-- List of element of type `α` whose length `n` has to be known at the APEX compile time. -/
 def VariadicArg (α : Type u) (n : Nat) := Vector α n
@@ -22,6 +22,8 @@ instance (x0 x1 x2 : α) : CoeDep (List α) [x0,x1,x2] (VariadicArg α 3) where
   coe := #v[x0,x1,x2]
 -- ...
 
+namespace Compiler
+
 /-- Name of builtin APEX type. -/
 abbrev TypeName := String
 
@@ -30,11 +32,11 @@ inductive PortType where
   | variadic (elemTypeName : TypeName)
   | rundata
   | undefined
-deriving Inhabited 
+deriving Inhabited, BEq
 
 inductive PortDir where
   | input | output
-deriving Inhabited
+deriving Inhabited, BEq
 
 structure LocalPort where
   /-- local id of a port within node -/
@@ -58,11 +60,15 @@ inductive ApexType where
 
   During compilation to APEX graph this `n` has to be a literal value. -/
   | variadic (elemTypeName : TypeName) (n : Expr)
-  | struct (bundle : ArrayTree TypeName)
+  -- stores field name and name of the builtin type
+  | struct (bundle : ArrayTree (String×TypeName))
 deriving Inhabited, BEq
 
-/-- APEX type that corresponds to a Lean type. Size of variadic types is known. -/
-abbrev ApexStaticType := ArrayTree TypeName
+/-- APEX type that corresponds to a Lean type. Size of variadic types is known.
+
+default name of variable of this type and its builtin type name
+ -/
+abbrev ApexStaticType := ArrayTree (String × TypeName)
 
 structure ApexFunType where
   inputs : Array ApexType

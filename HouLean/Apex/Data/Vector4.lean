@@ -1,192 +1,106 @@
-import HouLean.Apex.Data.Float
+import HouLean.Apex.Generated.Nodes
+import HouLean.Apex.Compile.ImplementedBy
+import HouLean.Data.Vector4
 
 open HouLean.Apex.Generated
 
-namespace HouLean.Apex.Vector4
-
--- Arithmetic operations (Lean implementations)
-def add (a b : Vector4) : Vector4 :=
-  ⟨a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w⟩
-
-def sub (a b : Vector4) : Vector4 :=
-  ⟨a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w⟩
-
-def mul (a : Vector4) (s : Float) : Vector4 :=
-  ⟨a.x * s, a.y * s, a.z * s, a.w * s⟩
-
-def div (a : Vector4) (s : Float) : Vector4 :=
-  ⟨a.x / s, a.y / s, a.z / s, a.w / s⟩
-
-def neg (a : Vector4) : Vector4 :=
-  ⟨-a.x, -a.y, -a.z, -a.w⟩
-
--- Vector operations (Lean implementations)
-def dot (a b : Vector4) : Float :=
-  a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
-
-def length (v : Vector4) : Float :=
-  Float.sqrt (v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w)
-
-def lengthSquared (v : Vector4) : Float :=
-  v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w
-
-def normalize (v : Vector4) : Vector4 × Float :=
-  let len := v.length
-  if len == 0 then (v, 0) else (⟨v.x / len, v.y / len, v.z / len, v.w / len⟩, len)
-
-def distance (a b : Vector4) : Float :=
-  (a.sub b).length
-
-def lerp (a b : Vector4) (t : Float) : Vector4 :=
-  ⟨a.x + (b.x - a.x) * t,
-   a.y + (b.y - a.y) * t,
-   a.z + (b.z - a.z) * t,
-   a.w + (b.w - a.w) * t⟩
-
-def nlerp (a b : Vector4) (t : Float) : Vector4 :=
-  let interpolated := lerp a b t
-  interpolated.normalize.1
-
--- Comparison operations (Lean implementations)
-def beq (a b : Vector4) : Bool :=
-  a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w
-
-def blt (a b : Vector4) : Bool :=
-  a.x < b.x && a.y < b.y && a.z < b.z && a.w < b.w
-
-def ble (a b : Vector4) : Bool :=
-  a.x <= b.x && a.y <= b.y && a.z <= b.z && a.w <= b.w
-
--- Component-wise operations (Lean implementations)
-def abs (v : Vector4) : Vector4 :=
-  ⟨Float.abs v.x, Float.abs v.y, Float.abs v.z, Float.abs v.w⟩
-
-def min (a b : Vector4) : Vector4 :=
-  ⟨Float.min a.x b.x, Float.min a.y b.y, Float.min a.z b.z, Float.min a.w b.w⟩
-
-def max (a b : Vector4) : Vector4 :=
-  ⟨Float.max a.x b.x, Float.max a.y b.y, Float.max a.z b.z, Float.max a.w b.w⟩
-
--- Operator overloading instances
-instance : Add Vector4 where
-  add := add
-
-instance : Sub Vector4 where
-  sub := sub
-
-instance : Neg Vector4 where
-  neg := neg
-
-instance : HMul Vector4 Float Vector4 where
-  hMul := mul
-
-instance : HDiv Vector4 Float Vector4 where
-  hDiv := div
-
-instance : BEq Vector4 where
-  beq := beq
-
-instance : LT Vector4 where
-  lt a b := blt a b
-
-instance : LE Vector4 where
-  le a b := ble a b
+namespace HouLean.Vector4
 
 -- APEX implementations
 
 -- Constructor
 noncomputable
-def mk.impl (x y z w : Float) : Vector4 := FloatToVector4 x y z w
+def mk.apex_impl (x y z w : Float) : Vector4 := FloatToVector4 x y z w
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.mk.impl] mk
+attribute [apex_implemented_by HouLean.Vector4.mk.apex_impl] mk
 
 -- Component accessors
 noncomputable
-def x.impl (v : Vector4) : Float := GetComponentVector4 v 0
+def x.apex_impl (v : Vector4) : Float := GetComponentVector4 v 0
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.x.impl] x
-
-noncomputable
-def y.impl (v : Vector4) : Float := GetComponentVector4 v 1
-
-attribute [apex_implemented_by HouLean.Apex.Vector4.y.impl] y
+attribute [apex_implemented_by HouLean.Vector4.x.apex_impl] x
 
 noncomputable
-def z.impl (v : Vector4) : Float := GetComponentVector4 v 2
+def y.apex_impl (v : Vector4) : Float := GetComponentVector4 v 1
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.z.impl] z
+attribute [apex_implemented_by HouLean.Vector4.y.apex_impl] y
 
 noncomputable
-def w.impl (v : Vector4) : Float := GetComponentVector4 v 3
+def z.apex_impl (v : Vector4) : Float := GetComponentVector4 v 2
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.w.impl] w
+attribute [apex_implemented_by HouLean.Vector4.z.apex_impl] z
+
+noncomputable
+def w.apex_impl (v : Vector4) : Float := GetComponentVector4 v 3
+
+attribute [apex_implemented_by HouLean.Vector4.w.apex_impl] w
 
 -- Arithmetic operations
 -- noncomputable
--- def add.impl (a b : Vector4) : Vector4 := AddVector4 a #v[b]
+-- def add.apex_impl (a b : Vector4) : Vector4 := AddVector4 a #v[b]
 
--- attribute [apex_implemented_by HouLean.Apex.Vector4.add.impl] add
+-- attribute [apex_implemented_by HouLean.Vector4.add.apex_impl] add
 
 -- noncomputable
--- def sub.impl (a b : Vector4) : Vector4 := SubtractVector4 a #v[b]
+-- def sub.apex_impl (a b : Vector4) : Vector4 := SubtractVector4 a #v[b]
 
--- attribute [apex_implemented_by HouLean.Apex.Vector4.sub.impl] sub
-
-noncomputable
-def mul.impl (a : Vector4) (s : Float) : Vector4 := MultiplyVector4Float a #v[s]
-
-attribute [apex_implemented_by HouLean.Apex.Vector4.mul.impl] mul
+-- attribute [apex_implemented_by HouLean.Vector4.sub.apex_impl] sub
 
 noncomputable
-def dot.impl (a b : Vector4) : Float := DotProductVector4 a b
+def mul.apex_impl (a : Vector4) (s : Float) : Vector4 := MultiplyVector4Float a #v[s]
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.dot.impl] dot
-
-noncomputable
-def length.impl (v : Vector4) : Float := LengthVector4 v
-
-attribute [apex_implemented_by HouLean.Apex.Vector4.length.impl] length
+attribute [apex_implemented_by HouLean.Vector4.mul.apex_impl] mul
 
 noncomputable
-def normalize.impl (v : Vector4) : Vector4 × Float := 
+def dot.apex_impl (a b : Vector4) : Float := DotProductVector4 a b
+
+attribute [apex_implemented_by HouLean.Vector4.dot.apex_impl] dot
+
+noncomputable
+def length.apex_impl (v : Vector4) : Float := LengthVector4 v
+
+attribute [apex_implemented_by HouLean.Vector4.length.apex_impl] length
+
+noncomputable
+def normalize.apex_impl (v : Vector4) : Vector4 × Float := 
   let result := NormalizeVector4 v
   (result.1, result.2)
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.normalize.impl] normalize
+attribute [apex_implemented_by HouLean.Vector4.normalize.apex_impl] normalize
 
 noncomputable
-def distance.impl (a b : Vector4) : Float := DistanceVector4 a b
+def distance.apex_impl (a b : Vector4) : Float := DistanceVector4 a b
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.distance.impl] distance
-
-noncomputable
-def lerp.impl (a b : Vector4) (t : Float) : Vector4 := LerpVector4 a b t
-
-attribute [apex_implemented_by HouLean.Apex.Vector4.lerp.impl] lerp
+attribute [apex_implemented_by HouLean.Vector4.distance.apex_impl] distance
 
 noncomputable
-def nlerp.impl (a b : Vector4) (t : Float) : Vector4 := NLerpVector4 a b t
+def lerp.apex_impl (a b : Vector4) (t : Float) : Vector4 := LerpVector4 a b t
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.nlerp.impl] nlerp
-
-noncomputable
-def beq.impl (a b : Vector4) : Bool := EqualsVector4 a b
-
-attribute [apex_implemented_by HouLean.Apex.Vector4.beq.impl] beq
+attribute [apex_implemented_by HouLean.Vector4.lerp.apex_impl] lerp
 
 noncomputable
-def blt.impl (a b : Vector4) : Bool := LessThanVector4 a b
+def nlerp.apex_impl (a b : Vector4) (t : Float) : Vector4 := NLerpVector4 a b t
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.blt.impl] blt
-
-noncomputable
-def ble.impl (a b : Vector4) : Bool := LessThanOrEqualVector4 a b
-
-attribute [apex_implemented_by HouLean.Apex.Vector4.ble.impl] ble
+attribute [apex_implemented_by HouLean.Vector4.nlerp.apex_impl] nlerp
 
 noncomputable
-def abs.impl (v : Vector4) : Vector4 := AbsVector4 v
+def beq.apex_impl (a b : Vector4) : Bool := EqualsVector4 a b
 
-attribute [apex_implemented_by HouLean.Apex.Vector4.abs.impl] abs
+attribute [apex_implemented_by HouLean.Vector4.beq.apex_impl] beq
+
+noncomputable
+def blt.apex_impl (a b : Vector4) : Bool := LessThanVector4 a b
+
+attribute [apex_implemented_by HouLean.Vector4.blt.apex_impl] blt
+
+noncomputable
+def ble.apex_impl (a b : Vector4) : Bool := LessThanOrEqualVector4 a b
+
+attribute [apex_implemented_by HouLean.Vector4.ble.apex_impl] ble
+
+noncomputable
+def abs.apex_impl (v : Vector4) : Vector4 := AbsVector4 v
+
+attribute [apex_implemented_by HouLean.Vector4.abs.apex_impl] abs
 
 end Vector4

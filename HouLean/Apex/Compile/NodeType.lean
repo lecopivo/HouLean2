@@ -6,6 +6,12 @@ namespace HouLean.Apex.Compiler
 open Lean Meta
 
 
+def NodeType.inputs (t : NodeType) : Array LocalPort := 
+  t.ports.filter (fun p => p.dir == .input)
+
+def NodeType.outputs (t : NodeType) : Array LocalPort := 
+  t.ports.filter (fun p => p.dir == .output)
+
 /-- Makes APEX node type from Lean function. 
 
 This is used for buildin APEX nodes to quickly initialize their Lean equivalent. -/
@@ -23,8 +29,8 @@ def mkNodeTypeFromLeanFn (fn : Expr) (apexNodeName : String) (outNames : Array S
         ports := ports.push { localId := off, name := "rundata", type := .rundata, dir := .output }
         off := 1
 
-    for x in xs do
-      let n := (← x.fvarId!.getUserName).toString
+    for x in xs, i in [0:xs.size] do
+      let n := (← x.fvarId!.getUserName).eraseMacroScopes.toString ++ toString i
       let xType ← inferType x
       let t? ← getApexType? xType
       

@@ -129,7 +129,7 @@ syntax:1000 vexExpr:1000 "[" vexExpr "]" : vexExpr
 -- Member access
 syntax:1000 vexExpr:1000 "." ident : vexExpr
 
--- Method call (arrow operator)
+-- Method call (arrow operator)v
 syntax:1000 vexExpr:1000 "->" ident "(" vexExpr,* ")" : vexExpr
 
 -- Post-increment
@@ -293,7 +293,7 @@ syntax "do" vexStmt "while" "(" vexExpr ")" ";" : vexStmt
 
 -- For loops
 syntax "for" "(" (vexExpr)? ";" (vexExpr)? ";" (vexExpr)? ")" vexStmt : vexStmt
-syntax "for" "(" vexFullType ident "=" vexExpr ";" (vexExpr)? ";" (vexExpr)? ")" vexStmt : vexStmt
+syntax "for" "(" (vexStmt)? (vexExpr)? ";" (vexExpr)? ")" vexStmt : vexStmt
 
 -- Foreach loop
 syntax "foreach" "(" vexFullType ident ";" vexExpr ")" vexStmt : vexStmt

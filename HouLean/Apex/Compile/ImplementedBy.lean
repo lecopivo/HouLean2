@@ -67,21 +67,21 @@ def addImplementedBy (srcFun trgFun : Expr) (kind : AttributeKind) : MetaM Unit 
   compilerExt.add (.implementedBy srcFun trgFun) kind
 
 
--- syntax (name:=apex_implements) "apex_implements" ident : attr
+syntax (name:=apex_implements) "apex_implements" ident : attr
 
--- initialize implementsAttr : Unit ←
---   registerBuiltinAttribute {
---     name  := `apex_implements
---     descr := "todo: ..."
---     applicationTime := AttributeApplicationTime.afterCompilation
---     add   := fun trgName stx attrKind =>
---       match stx with
---       | `(apex_implements| apex_implements $srcIdent) => discard <| MetaM.run do
---         addImplementedBy (.const srcIdent.getId []) (.const trgName []) attrKind
---       | _ => Elab.throwUnsupportedSyntax
---     erase := fun _declName =>
---       throwError "Can't remove `apex_implements`, not implemented yet!"
---   }
+initialize implementsAttr : Unit ←
+  registerBuiltinAttribute {
+    name  := `apex_implements
+    descr := "todo: ..."
+    applicationTime := AttributeApplicationTime.afterCompilation
+    add   := fun trgName stx attrKind =>
+      match stx with
+      | `(apex_implements| apex_implements $srcIdent) => discard <| MetaM.run do
+        addImplementedBy (.const srcIdent.getId []) (.const trgName []) attrKind
+      | _ => Elab.throwUnsupportedSyntax
+    erase := fun _declName =>
+      throwError "Can't remove `apex_implements`, not implemented yet!"
+  }
 
 syntax (name:=apex_implemented_by) "apex_implemented_by" ident : attr
 

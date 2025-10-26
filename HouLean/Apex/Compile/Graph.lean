@@ -21,30 +21,35 @@ structure ApexGraph where
   literals : Array (LiteralVal × PortId)
 deriving Inhabited
 
--- instance : ToString ApexGraph := ⟨fun g => 
---   Id.run do
---     let mut s := "Nodes:\n"
---     for n in g.nodes, i in Array.range g.nodes.size do
---       s := s ++ s!"  {i}: {n.apexName}\n"
+def ApexGraph.printPort (g : ApexGraph) (p : PortId) : String := 
+  s!"/{g.nodes[g.ports[p]!.nodeId]!.name}/{g.ports[p]!.name}[{if g.ports[p]!.dir == .input then "in" else "out"}]"
 
---     s := s ++ "\nPorts:\n"
---     for (nodeId, localId) in g.ports, i in Array.range g.ports.size do
---       s := s ++ s!"  {i}: {nodeId} {localId}\n"
+instance : ToString ApexGraph := ⟨fun g => 
+  Id.run do
+    let mut s := "Nodes:\n"
+    for n in g.nodes, i in [0:g.nodes.size] do
+      s := s ++ s!"  {i}: {n.name} : {n.type.name}\n"
 
---     s := s ++ "\nWires:\n"
---     for (src, trg) in g.wires, i in Array.range g.wires.size do
---       s := s ++ s!"  {i}: {src} -> {trg}\n"
+    s := s ++ "\nPorts:\n"
+    for i in [0:g.ports.size] do
+      s := s ++ s!"  {i}: {g.printPort i}\n"
 
---     s := s ++ "\nLiterals:\n"
---     for (val, nodeId) in g.literals, i in Array.range g.literals.size do
---       match val with
---       | .int val => 
---         s := s ++ s!"  {i}: int {val} -> {nodeId} \n"
---       | .float val => 
---         s := s ++ s!"  {i}: float {val} -> {nodeId} \n"
---       | .str str =>
---         s := s ++ s!"  {i}: str \"{str}\" -> {nodeId} \n"
---     return s⟩
+    s := s ++ "\nWires:\n"
+    for (src, trg) in g.wires, i in Array.range g.wires.size do
+      s := s ++ s!"  {i}: {g.printPort src} -> {g.printPort trg}\n"
+
+    s := s ++ "\nLiterals:\n"
+    for (val, nodeId) in g.literals, i in Array.range g.literals.size do
+      match val with
+      | .int val => 
+        s := s ++ s!"  {i}: int {val} -> {nodeId} \n"
+      | .float val => 
+        s := s ++ s!"  {i}: float {val} -> {nodeId} \n"
+      | .str str =>
+        s := s ++ s!"  {i}: str \"{str}\" -> {nodeId} \n"
+      | .bool b =>
+        s := s ++ s!"  {i}: bool \"{b}\" -> {nodeId} \n"
+    return s⟩
 
 -- /-- Merge two disjoint graphs -/
 -- def ApexGraph.merge (g h : ApexGraph) : ApexGraph :=
@@ -103,12 +108,14 @@ def ApexGraph.addBool (g : ApexGraph) (val : Bool) (port : Port) : ApexGraph :=
 def ApexGraph.addString (g : ApexGraph) (val : String) (port : Port) : ApexGraph :=
   {g with literals := g.literals.push (.str val, port.globalId)}
 
+abbrev PortBundle := ArrayTree PortId
+
 structure ForBeginPorts where
-  iterations : Port
-  scope : Port
-  index : Port
-  stateIn  : ArrayTree Port
-  stateOut : ArrayTree Port
+  iterations : PortBundle
+  scope : PortBundle
+  index : PortBundle
+  stateIn  : PortBundle
+  stateOut : PortBundle
 deriving Inhabited
 
 def ApexGraph.addForBegin (g : ApexGraph) (stateType : ApexStaticType) : ApexGraph × ForBeginPorts :=
@@ -134,19 +141,19 @@ def ApexGraph.addForBegin (g : ApexGraph) (stateType : ApexStaticType) : ApexGra
   let ports := localPorts.map (fun p => 
     {p with globalId := portOff + p.localId, nodeId := nodeOff : Port})
 
-  let stateIn := stateType.mapIdx fun i typeName => 
+  let stateIn := stateType.mapIdx fun i (name,typeName) => 
     { localId  := 2*i + localPorts.size, 
       globalId := 2*i + localPorts.size + portOff
       nodeId := nodeOff
-      name := s!"x{i}"
+      name := name
       type := .builtin typeName
       dir := .input : Port}
 
-  let stateOut := stateType.mapIdx fun i typeName => 
+  let stateOut := stateType.mapIdx fun i (name,typeName) => 
     { localId  := 2*i + 1 + localPorts.size, 
       globalId := 2*i + 1 + localPorts.size + portOff
       nodeId := nodeOff
-      name := s!"x{i}"
+      name := name
       type := .builtin typeName
       dir := .output : Port}
 
@@ -171,21 +178,19 @@ def ApexGraph.addForBegin (g : ApexGraph) (stateType : ApexStaticType) : ApexGra
   }
 
   let r := {
-    iterations := ports[1]!
-    scope := ports[3]!
-    index := ports[4]!
-    stateIn := stateIn
-    stateOut := stateOut
+    iterations := .leaf ports[1]!.globalId
+    scope := .leaf ports[3]!.globalId
+    index := .leaf ports[4]!.globalId
+    stateIn := stateIn.mapIdx (fun _ p => p.globalId)
+    stateOut := stateOut.mapIdx (fun _ p => p.globalId)
   }
   
   return (g, r)
 
 structure ForEndPorts where
-  iterations : Port
-  scope : Port
-  index : Port
-  stateIn  : ArrayTree Port
-  stateOut : ArrayTree Port
+  scope : PortBundle
+  stateIn  : PortBundle
+  stateOut : PortBundle
 deriving Inhabited
 
 
@@ -211,19 +216,19 @@ def ApexGraph.addForEnd (g : ApexGraph) (stateType : ApexStaticType) :
   let ports := localPorts.map (fun p => 
     {p with globalId := portOff + p.localId, nodeId := nodeOff : Port})
 
-  let stateIn := stateType.mapIdx fun i typeName => 
+  let stateIn := stateType.mapIdx fun i (name,typeName) => 
     { localId  := 2*i + localPorts.size, 
       globalId := 2*i + localPorts.size + portOff
       nodeId := nodeOff
-      name := s!"x{i}"
+      name := name
       type := .builtin typeName
       dir := .input : Port}
 
-  let stateOut := stateType.mapIdx fun i typeName => 
+  let stateOut := stateType.mapIdx fun i (name,typeName) => 
     { localId  := 2*i + 1 + localPorts.size, 
       globalId := 2*i + 1 + localPorts.size + portOff
       nodeId := nodeOff
-      name := s!"x{i}"
+      name := name
       type := .builtin typeName
       dir := .output : Port}
 
@@ -248,15 +253,20 @@ def ApexGraph.addForEnd (g : ApexGraph) (stateType : ApexStaticType) :
   }
 
   let r := {
-    iterations := ports[1]!
-    scope := ports[3]!
-    index := ports[4]!
-    stateIn := stateIn
-    stateOut := stateOut
+    scope := .leaf ports[3]!.globalId
+    stateIn := stateIn.mapIdx (fun _ p => p.globalId)
+    stateOut := stateOut.mapIdx (fun _ p => p.globalId)
   }
   
   return (g, r)
   
+
+def ApexGraph.addConnection (g : ApexGraph) (src trg : PortId) : ApexGraph :=
+  { g with wires := g.wires.push (src, trg) }
+
+def ApexGraph.addConnections (g : ApexGraph) (src trg : ArrayTree PortId) : ApexGraph :=
+  let wires := src.flatten.zip trg.flatten
+  { g with wires := g.wires ++ wires }
 
 def ApexGraph.pythonBuildScript (g : ApexGraph) (debug := false): String := 
 Id.run do

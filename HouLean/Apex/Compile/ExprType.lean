@@ -31,7 +31,7 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
   
   let (fn, args) := type.getAppFnArgs
 
-  let mut fields : Array (ArrayTree TypeName) := #[]
+  let mut fields : Array (ArrayTree (String×TypeName)) := #[]
   if isStructure (← getEnv) fn then
     let info := getStructureInfo (← getEnv) fn
 
@@ -43,9 +43,9 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
 
       match ← getApexType? t with
       | .some (.builtin typeName) =>
-        fields := fields.push (.leaf typeName)
+        fields := fields.push (.leaf (info.fieldName.toString, typeName))
       | .some (.struct s) => 
-        fields := fields.push s
+        fields := fields.push (s.mapIdx (fun _ (fn, tn) => (info.fieldName.eraseMacroScopes.toString ++ "_" ++ fn, tn)))
       | _ => return none
 
     return some (.struct (.node fields))
@@ -56,12 +56,12 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
 was not possible to turn into `Nat` literal. -/
 def enforceStaticSize (type : ApexType) : MetaM (Except Expr ApexStaticType) := 
   match type with
-  | .builtin n => return .ok (.leaf n)
+  | .builtin n => return .ok (.leaf ("x", n))
   | .struct t => return .ok t
   | .variadic name n => do
     let .lit (Literal.natVal n) ← whnfD n
       | return .error n
-    return .ok (.node (.replicate n (.leaf name)))
+    return .ok (.node (Array.range n |>.map (fun i =>  (.leaf (s!"x{i}",name)))))
 
 
 def addBuiltinApexType (type : Expr) (apexName : String) : MetaM Unit := do
