@@ -64,7 +64,11 @@ def addImplementedBy (srcFun trgFun : Expr) (kind : AttributeKind) : MetaM Unit 
   unless srcType == trgType do
     throwError m!"Can't implement {srcFun} with {trgFun}, they have different APEX types"
 
-  compilerExt.add (.implementedBy srcFun trgFun) kind
+  if let .const trgName _ := trgFun then
+    let info ← getConstInfo trgName
+    compilerExt.add (.implementedBy srcFun info.value!) kind
+  else
+    compilerExt.add (.implementedBy srcFun trgFun) kind
 
 
 syntax (name:=apex_implements) "apex_implements" ident : attr

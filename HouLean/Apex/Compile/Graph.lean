@@ -282,7 +282,7 @@ Id.run do
     s := s ++ s!"n{i} = graph.addNode(\"{n.name}\", \"{n.type.name}\")" ++ "\n"
     for ⟨p, _, names⟩ in n.subPorts do
       for name in names do
-        s := s ++ s!"graph.addSubPort({p}, {name})" ++ "\n"
+        s := s ++ s!"graph.addSubPort({p}, \"{name}\")" ++ "\n"
 
     portCount := portCount + n.ports.size
 

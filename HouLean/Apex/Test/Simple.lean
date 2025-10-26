@@ -42,8 +42,8 @@ run_meta
   let (_,⟨g,_,_⟩) ← c default
   IO.println g
 
-attribute [apex_node "Add<Float>"] Float.add
-attribute [apex_node "Multiply<Float>"] Float.mul
+-- attribute [apex_node "Add<Float>"] Float.add
+-- attribute [apex_node "Multiply<Float>"] Float.mul
 
 
 run_meta
@@ -56,7 +56,7 @@ run_meta
 
 run_meta
   let c : GraphCompileM Unit := do
-    let e := q(fun x : Float => Generated.AddFloat x #v[x,x,x])
+    let e := q(fun x : Float => Generated.AddFloat x #v[x])
     let _ ← functionToApexGraph e
   let (_,⟨g,_,_⟩) ← c default
   IO.println g
@@ -64,7 +64,7 @@ run_meta
 
 run_meta
   let c : GraphCompileM Unit := do
-    let e := q(fun x y : Float => let z := x * y; let w := z * x; w * z + x + z)
+    let e := q(fun x : Float => let y := x/x; y*x.lerp y x)
     let _ ← functionToApexGraph e
   let (_,⟨g,_,_⟩) ← c default
   IO.println g
@@ -79,10 +79,11 @@ instance : Add Float2 := ⟨fun x y => ⟨x.1+y.1, x.2+y.2⟩⟩
 
 run_meta
   let c : GraphCompileM Unit := do
-    let e := q(fun x : Float2 => let y := x; y)
+    let e := q(fun x : Float2 => x + x + x)
     let _ ← functionToApexGraph e
   let (_,⟨g,_,_⟩) ← c default
   IO.println g
+  IO.println g.pythonBuildScript
 
 run_meta
   let c : GraphCompileM Unit := do
@@ -90,6 +91,7 @@ run_meta
     let _ ← functionToApexGraph e
   let (_,⟨g,_,_⟩) ← c default
   IO.println g
+  IO.println g.pythonBuildScript
 
 abbrev add2 (x y : Float × Float) : Float × Float := (x.1+y.1, x.2+y.2)
 abbrev add3 (x y : Float × Float × Float) : Float × Float × Float := (x.1+y.1, add2 x.2 y.2)
