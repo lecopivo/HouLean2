@@ -6,10 +6,9 @@ open HouLean.Apex.Generated
 
 namespace HouLean.Vector2
 -- Constructor
+@[apex_implements HouLean.Vector2.mk]
 noncomputable
 def mk.apex_impl (x y : Float) : Vector2 := FloatToVector2 x y
-
-attribute [apex_implemented_by HouLean.Vector2.mk.apex_impl] mk
 
 -- Component accessors
 noncomputable
@@ -36,7 +35,7 @@ attribute [apex_implemented_by HouLean.Vector2.sub.apex_impl] sub
 noncomputable
 def mul.apex_impl (a : Vector2) (s : Float) : Vector2 := MultiplyVector2Float a #v[s]
 
-attribute [apex_implemented_by HouLean.Vector2.mul.apex_impl] mul
+attribute [apex_implemented_by HouLean.Vector2.mul.apex_impl] hMul
 
 noncomputable
 def neg.apex_impl (a : Vector2) : Vector2 := NegateVector2 a
@@ -70,30 +69,30 @@ def lerp.apex_impl (a b : Vector2) (t : Float) : Vector2 := LerpVector2 a b t
 
 attribute [apex_implemented_by HouLean.Vector2.lerp.apex_impl] lerp
 
-noncomputable
-def beq.apex_impl (a b : Vector2) : Bool := EqualsVector2 a b
+-- noncomputable
+-- def beq.apex_impl (a b : Vector2) : Bool := EqualsVector2 a b
 
-attribute [apex_implemented_by HouLean.Vector2.beq.apex_impl] beq
+-- attribute [apex_implemented_by HouLean.Vector2.beq.apex_impl] beq
 
-noncomputable
-def blt.apex_impl (a b : Vector2) : Bool := LessThanVector2 a b
+-- noncomputable
+-- def blt.apex_impl (a b : Vector2) : Bool := LessThanVector2 a b
 
-attribute [apex_implemented_by HouLean.Vector2.blt.apex_impl] blt
+-- attribute [apex_implemented_by HouLean.Vector2.blt.apex_impl] blt
 
-noncomputable
-def ble.apex_impl (a b : Vector2) : Bool := LessThanOrEqualVector2 a b
+-- noncomputable
+-- def ble.apex_impl (a b : Vector2) : Bool := LessThanOrEqualVector2 a b
 
-attribute [apex_implemented_by HouLean.Vector2.ble.apex_impl] ble
+-- attribute [apex_implemented_by HouLean.Vector2.ble.apex_impl] ble
 
 noncomputable
 def abs.apex_impl (v : Vector2) : Vector2 := AbsVector2 v
 
 attribute [apex_implemented_by HouLean.Vector2.abs.apex_impl] abs
 
-noncomputable
-def quantize.apex_impl (v : Vector2) (step : Float) : Vector2 := QuantizeVector2 v step
+-- noncomputable
+-- def quantize.apex_impl (v : Vector2) (step : Float) : Vector2 := QuantizeVector2 v step
 
-attribute [apex_implemented_by HouLean.Vector2.quantize.apex_impl] quantize
+-- attribute [apex_implemented_by HouLean.Vector2.quantize.apex_impl] quantize
 
 noncomputable
 def toPolar.apex_impl (v : Vector2) : Vector2 := CartesianToPolar v

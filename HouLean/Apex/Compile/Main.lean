@@ -339,8 +339,8 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
       let loopIndexIn := loopIns[0]!
       let loopIn := loopIns[2]!
 
-      let stateShape ← input.mapIdxM (fun i p => do 
-        let p ← readGraph (fun g => pure g.ports[i]!)
+      let stateShape ← input.mapIdxM (fun _ p => do 
+        let p ← readGraph (fun g => pure g.ports[p]!)
         match p.type with
         | .builtin typeName => return (p.name, typeName)
         | _ => throwError m!"Invalid state {← inferType args[5]!} in for loop")
@@ -365,13 +365,11 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
     let argPorts ← args.mapM toApexGraph
     let fnInputs := nodeType.inputs
     
-    logInfo m!"application {e}"
     -- Find variadic arguments
     let mut subPorts : Array AddSubPortSpec := #[]
     for arg in args, i in [0:args.size] do
       let type ← inferType arg
       if type.isAppOfArity' ``Vector 2 then
-        logInfo m!"variadic argument {i} {arg} in {e}"
         let id := fnInputs[i]!.localId
         let names ← argPorts[i]!.flatten.mapM getPortName
         subPorts := subPorts.push ⟨id, none, names⟩
