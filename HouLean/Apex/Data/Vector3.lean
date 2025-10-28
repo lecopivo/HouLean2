@@ -33,7 +33,7 @@ def add.apex_impl (a b : Vector3) : Vector3 := AddVector3 a #v[b]
 noncomputable
 def sub.apex_impl (a b : Vector3) : Vector3 := SubtractVector3 a #v[b]
 
-@[apex_implements HouLean.Vector3.mul]
+@[apex_implements HouLean.Vector3.smul]
 noncomputable
 def mul.apex_impl (a : Vector3) (s : Float) : Vector3 := MultiplyVector3Float a #v[s]
 

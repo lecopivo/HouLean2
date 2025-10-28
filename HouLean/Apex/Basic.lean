@@ -74,9 +74,3 @@ def fromOption {α : Type} [Inhabited α] (x : Option α) : α × Bool :=
   | some x => (x, true)
   | none => (default, false)
 
--- attribute [apex_type_implemented_by toOption fromOption] Option
-
--- Bool should get translate automatically once convert enum(simple inductives) to Int
--- apex_type_implemente_by Bool Bool.toInt Int.toBool
--- apex_type_implemente_by Nat  Nat.toInt Int.toNat
--- apex_type_implemente_by Nat  Nat.toInt Int.toNat

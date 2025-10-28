@@ -1,6 +1,7 @@
 import HouLean.Apex.Generated.Nodes
 import HouLean.Apex.Compile.ImplementedBy
 import HouLean.Data.Matrix3
+import HouLean.Data.Matrix3LinearAlgebra
 
 open HouLean.Apex.Generated
 
@@ -39,15 +40,15 @@ def add.apex_impl (a b : Matrix3) : Matrix3 := AddMatrix3 a #v[b]
 noncomputable
 def sub.apex_impl (a b : Matrix3) : Matrix3 := SubtractMatrix3 a #v[b]
 
-@[apex_implements HouLean.Matrix3.mul]
+@[apex_implements HouLean.Matrix3.matmul]
 noncomputable
 def mul.apex_impl (a b : Matrix3) : Matrix3 := MultiplyMatrix3 a #v[b]
 
-@[apex_implements HouLean.Matrix3.mulScalar]
+@[apex_implements HouLean.Matrix3.smul]
 noncomputable
 def mulScalar.apex_impl (a : Matrix3) (s : Float) : Matrix3 := MultiplyMatrix3Float a #v[s]
 
-@[apex_implements HouLean.Matrix3.mulVector]
+@[apex_implements HouLean.Matrix3.vecMul]
 noncomputable
 def mulVector.apex_impl (v : Vector3) (m : Matrix3) : Vector3 := MultiplyVector3Matrix3 v #v[m]
 
@@ -55,7 +56,7 @@ def mulVector.apex_impl (v : Vector3) (m : Matrix3) : Vector3 := MultiplyVector3
 noncomputable
 def transpose.apex_impl (m : Matrix3) : Matrix3 := TransposeMatrix3 m
 
-@[apex_implements HouLean.Matrix3.invert]
+@[apex_implements HouLean.Matrix3.inverse]
 noncomputable
 def invert.apex_impl (m : Matrix3) : Matrix3 := InvertMatrix3 m
 
@@ -63,8 +64,8 @@ def invert.apex_impl (m : Matrix3) : Matrix3 := InvertMatrix3 m
 noncomputable
 def lerp.apex_impl (a b : Matrix3) (t : Float) : Matrix3 := LerpMatrix3 a b t
 
-@[apex_implements HouLean.Matrix3.almostEquals]
-noncomputable
-def almostEquals.apex_impl (a b : Matrix3) (tolerance : Float) : Bool := AlmostEqualsMatrix3 a b tolerance
+-- @[apex_implements HouLean.Matrix3.almostEquals]
+-- noncomputable
+-- def almostEquals.apex_impl (a b : Matrix3) (tolerance : Float) : Bool := AlmostEqualsMatrix3 a b tolerance
 
 end Matrix3

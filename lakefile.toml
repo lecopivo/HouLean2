@@ -8,6 +8,7 @@ name = "HouLean"
 [[lean_exe]]
 name = "houlean"
 root = "Main"
+supportInterpreter = true
 
 [[lean_exe]]
 name = "compileToApexGraph"

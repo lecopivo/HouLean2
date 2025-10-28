@@ -1,6 +1,6 @@
 import Lean
--- import HouLean.ArrayTree
--- import HouLean.Data
+import HouLean.ArrayTree
+import HouLean.Data
 
 open Lean
 

@@ -19,11 +19,11 @@ defun sub (a b : Vector3) : Vector3 :=
 defun neg (a : Vector3) : Vector3 :=
   ⟨-a.x, -a.y, -a.z⟩
 
-def smul (s : Float) (a : Vector3) : Vector3 :=
+def smul (a : Vector3) (s : Float) : Vector3 :=
   ⟨s * a.x, s * a.y, s * a.z⟩
 
-instance : HMul Float Vector3 Vector3 := ⟨smul⟩
-instance : HMul Vector3 Float Vector3 := ⟨fun v s => smul s v⟩
+instance : HMul Float Vector3 Vector3 := ⟨fun s v => smul v s⟩
+instance : HMul Vector3 Float Vector3 := ⟨smul⟩
 
 defun hDiv (a : Vector3) (s : Float) : Vector3 :=
   ⟨a.x / s, a.y / s, a.z / s⟩

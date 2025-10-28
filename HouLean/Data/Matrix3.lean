@@ -21,14 +21,11 @@ defun sub (a b : Matrix3) : Matrix3 :=
 defun neg (a : Matrix3) : Matrix3 :=
   ⟨a.row0.neg, a.row1.neg, a.row2.neg⟩
 
-def smul (s : Float) (a : Matrix3) : Matrix3 :=
-  ⟨s * a.row0, s * a.row1, s * a.row2⟩
-
-def smul' (a : Matrix3) (s : Float) : Matrix3 :=
+def smul (a : Matrix3) (s : Float) : Matrix3 :=
   ⟨a.row0 * s, a.row1 * s, a.row2 * s⟩
 
-instance : HMul Float Matrix3 Matrix3 := ⟨smul⟩
-instance : HMul Matrix3 Float Matrix3 := ⟨smul'⟩
+instance : HMul Float Matrix3 Matrix3 := ⟨fun s m => smul m s⟩
+instance : HMul Matrix3 Float Matrix3 := ⟨smul⟩
 
 defun hDiv (a : Matrix3) (s : Float) : Matrix3 :=
   ⟨a.row0.hDiv s, a.row1.hDiv s, a.row2.hDiv s⟩
