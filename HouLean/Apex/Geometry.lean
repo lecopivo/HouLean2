@@ -382,137 +382,137 @@ instance : VertexAttrib DictArray where
 namespace Geometry
 
 -- Basic queries
-def numPoints (g : Geometry) : Int := geo_NumPoints g
-def numPrims (g : Geometry) : Int := geo_NumPrims g
+@[apex_unfold] def numPoints (g : Geometry) : Int := geo_NumPoints g
+@[apex_unfold] def numPrims (g : Geometry) : Int := geo_NumPrims g
 
 -- Detail attributes
-def detailAttrib [DetailAttrib α] (g : Geometry) (name : String) : α :=
+@[apex_unfold] def detailAttrib [DetailAttrib α] (g : Geometry) (name : String) : α :=
   (DetailAttrib.get g name).1
 
-def detailAttrib? [DetailAttrib α] (g : Geometry) (name : String) : Option α :=
+@[apex_unfold] def detailAttrib? [DetailAttrib α] (g : Geometry) (name : String) : Option α :=
   toOption (DetailAttrib.get g name)
 
-def setDetailAttrib [DetailAttrib α] (g : Geometry) (name : String) (val : α) : Geometry :=
+@[apex_unfold] def setDetailAttrib [DetailAttrib α] (g : Geometry) (name : String) (val : α) : Geometry :=
   (DetailAttrib.set g name val).1
 
 -- Point attributes
-def pointAttrib [PointAttrib α] (g : Geometry) (pt : Int) (name : String) : α :=
+@[apex_unfold] def pointAttrib [PointAttrib α] (g : Geometry) (pt : Int) (name : String) : α :=
   (PointAttrib.get g pt name).1
 
-def pointAttrib? [PointAttrib α] (g : Geometry) (pt : Int) (name : String) : Option α :=
+@[apex_unfold] def pointAttrib? [PointAttrib α] (g : Geometry) (pt : Int) (name : String) : Option α :=
   toOption (PointAttrib.get g pt name)
 
-def setPointAttrib [PointAttrib α] (g : Geometry) (pt : Int) (name : String) (val : α) : Geometry :=
+@[apex_unfold] def setPointAttrib [PointAttrib α] (g : Geometry) (pt : Int) (name : String) (val : α) : Geometry :=
   (PointAttrib.set g pt name val).1
 
-def setPointAttribs [PointAttrib α] (g : Geometry) (group : String) (name : String) (val : α) : Geometry :=
+@[apex_unfold] def setPointAttribs [PointAttrib α] (g : Geometry) (group : String) (name : String) (val : α) : Geometry :=
   (PointAttrib.setAll g group name val).1
 
-def setPointAttribsByName [PointAttrib α] (g : Geometry) (nameAttrib : String) (attrib : String) {n : Nat} (vals : VariadicArg α n) : Geometry :=
+@[apex_unfold] def setPointAttribsByName [PointAttrib α] (g : Geometry) (nameAttrib : String) (attrib : String) {n : Nat} (vals : VariadicArg α n) : Geometry :=
   PointAttrib.setByName g nameAttrib attrib vals
 
-def findPointAttrib [PointAttrib α] (g : Geometry) (name : String) (val : α) : IntArray :=
+@[apex_unfold] def findPointAttrib [PointAttrib α] (g : Geometry) (name : String) (val : α) : IntArray :=
   (PointAttrib.find g name val).1
 
 -- Primitive attributes
-def primAttrib [PrimAttrib α] (g : Geometry) (prim : Int) (name : String) : α :=
+@[apex_unfold] def primAttrib [PrimAttrib α] (g : Geometry) (prim : Int) (name : String) : α :=
   (PrimAttrib.get g prim name).1
 
-def primAttrib? [PrimAttrib α] (g : Geometry) (prim : Int) (name : String) : Option α :=
+@[apex_unfold] def primAttrib? [PrimAttrib α] (g : Geometry) (prim : Int) (name : String) : Option α :=
   toOption (PrimAttrib.get g prim name)
 
-def setPrimAttrib [PrimAttrib α] (g : Geometry) (prim : Int) (name : String) (val : α) : Geometry :=
+@[apex_unfold] def setPrimAttrib [PrimAttrib α] (g : Geometry) (prim : Int) (name : String) (val : α) : Geometry :=
   (PrimAttrib.set g prim name val).1
 
-def setPrimAttribs [PrimAttrib α] (g : Geometry) (group : String) (name : String) (val : α) : Geometry :=
+@[apex_unfold] def setPrimAttribs [PrimAttrib α] (g : Geometry) (group : String) (name : String) (val : α) : Geometry :=
   (PrimAttrib.setAll g group name val).1
 
-def setPrimAttribsByName [PrimAttrib α] (g : Geometry) (nameAttrib : String) (attrib : String) {n : Nat} (vals : VariadicArg α n) : Geometry :=
+@[apex_unfold] def setPrimAttribsByName [PrimAttrib α] (g : Geometry) (nameAttrib : String) (attrib : String) {n : Nat} (vals : VariadicArg α n) : Geometry :=
   PrimAttrib.setByName g nameAttrib attrib vals
 
-def findPrimAttrib [PrimAttrib α] (g : Geometry) (name : String) (val : α) : IntArray :=
+@[apex_unfold] def findPrimAttrib [PrimAttrib α] (g : Geometry) (name : String) (val : α) : IntArray :=
   (PrimAttrib.find g name val).1
 
 -- Vertex attributes
-def vertexAttrib [VertexAttrib α] (g : Geometry) (vtx : Int) (name : String) : α :=
+@[apex_unfold] def vertexAttrib [VertexAttrib α] (g : Geometry) (vtx : Int) (name : String) : α :=
   (VertexAttrib.get g vtx name).1
 
-def vertexAttrib? [VertexAttrib α] (g : Geometry) (vtx : Int) (name : String) : Option α :=
+@[apex_unfold] def vertexAttrib? [VertexAttrib α] (g : Geometry) (vtx : Int) (name : String) : Option α :=
   toOption (VertexAttrib.get g vtx name)
 
-def setVertexAttrib [VertexAttrib α] (g : Geometry) (vtx : Int) (name : String) (val : α) : Geometry :=
+@[apex_unfold] def setVertexAttrib [VertexAttrib α] (g : Geometry) (vtx : Int) (name : String) (val : α) : Geometry :=
   (VertexAttrib.set g vtx name val).1
 
-def setVertexAttribs [VertexAttrib α] (g : Geometry) (group : String) (name : String) (val : α) : Geometry :=
+@[apex_unfold] def setVertexAttribs [VertexAttrib α] (g : Geometry) (group : String) (name : String) (val : α) : Geometry :=
   (VertexAttrib.setAll g group name val).1
 
-def setVertexAttribsByName [VertexAttrib α] (g : Geometry) (nameAttrib : String) (attrib : String) {n : Nat} (vals : VariadicArg α n) : Geometry :=
+@[apex_unfold] def setVertexAttribsByName [VertexAttrib α] (g : Geometry) (nameAttrib : String) (attrib : String) {n : Nat} (vals : VariadicArg α n) : Geometry :=
   VertexAttrib.setByName g nameAttrib attrib vals
 
-def findVertexAttrib [VertexAttrib α] (g : Geometry) (name : String) (val : α) : IntArray :=
+@[apex_unfold] def findVertexAttrib [VertexAttrib α] (g : Geometry) (name : String) (val : α) : IntArray :=
   (VertexAttrib.find g name val).1
 
 -- Topology queries
-def pointPrims (g : Geometry) (pt : Int) : IntArray := geo_PointPrims g pt
-def primPoints (g : Geometry) (prim : Int) : IntArray := geo_PrimPoints g prim
+@[apex_unfold] def pointPrims (g : Geometry) (pt : Int) : IntArray := geo_PointPrims g pt
+@[apex_unfold] def primPoints (g : Geometry) (prim : Int) : IntArray := geo_PrimPoints g prim
 
 -- Pattern matching / globbing
-def globPoints (g : Geometry) (pattern : String) (ordered : Bool := false) : IntArray :=
+@[apex_unfold] def globPoints (g : Geometry) (pattern : String) (ordered : Bool := false) : IntArray :=
   geo_GlobPoints g pattern ordered
 
-def globPrims (g : Geometry) (pattern : String) (ordered : Bool := false) : IntArray :=
+@[apex_unfold] def globPrims (g : Geometry) (pattern : String) (ordered : Bool := false) : IntArray :=
   geo_GlobPrims g pattern ordered
 
 -- Geometry operations
-def merge (g : Geometry) {n : Nat} (sources : VariadicArg Geometry n) : Geometry :=
+@[apex_unfold] def merge (g : Geometry) {n : Nat} (sources : VariadicArg Geometry n) : Geometry :=
   geo_Merge g sources
 
-def mergePacked {n : Nat} (sources : VariadicArg Geometry n) : Geometry :=
+@[apex_unfold] def mergePacked {n : Nat} (sources : VariadicArg Geometry n) : Geometry :=
   geo_MergePacked sources
 
-def replace (g : Geometry) (src : Geometry) : Geometry := geo_Replace g src
+@[apex_unfold] def replace (g : Geometry) (src : Geometry) : Geometry := geo_Replace g src
 
-def transform (g : Geometry) (xform : Matrix4) : Geometry := geo_Transform g xform
+@[apex_unfold] def transform (g : Geometry) (xform : Matrix4) : Geometry := geo_Transform g xform
 
-def copyDetailAttrib (g : Geometry) (src : Geometry) (attrib : String) : Geometry :=
+@[apex_unfold] def copyDetailAttrib (g : Geometry) (src : Geometry) (attrib : String) : Geometry :=
   (geo_CopyDetailAttrib g src attrib).1
 
 -- Point manipulation
-def dragPoints (g : Geometry) (pts : IntArray) (weights : FloatArray) (delta : Vector3) : Geometry :=
+@[apex_unfold] def dragPoints (g : Geometry) (pts : IntArray) (weights : FloatArray) (delta : Vector3) : Geometry :=
   geo_DragPoints g pts weights delta
 
-def displacePoints (g : Geometry) (refGeo : Geometry) (pts : IntArray) (weights : FloatArray) (strength : Float) (normal : Vector3) : Geometry :=
+@[apex_unfold] def displacePoints (g : Geometry) (refGeo : Geometry) (pts : IntArray) (weights : FloatArray) (strength : Float) (normal : Vector3) : Geometry :=
   geo_DisplacePoints g refGeo pts weights strength normal
 
-def smoothPoints (g : Geometry) (pts : IntArray) (weights : FloatArray) (strength : Float) : Geometry :=
+@[apex_unfold] def smoothPoints (g : Geometry) (pts : IntArray) (weights : FloatArray) (strength : Float) : Geometry :=
   geo_SmoothPoints g pts weights strength
 
 -- Packed geometry
-def addPacked (g : Geometry) (targetPt : Int) (src : Geometry) : Geometry × Int × Int :=
+@[apex_unfold] def addPacked (g : Geometry) (targetPt : Int) (src : Geometry) : Geometry × Int × Int :=
   geo_AddPacked g targetPt src
 
-def extractPackedGeo (g : Geometry) (primNum : Int) : Geometry × Geometry × Int :=
+@[apex_unfold] def extractPackedGeo (g : Geometry) (primNum : Int) : Geometry × Geometry × Int :=
   geo_ExtractPackedGeo g primNum
 
-def updatePackedGeo (g : Geometry) (embedded : Geometry) (primNum : Int) : Geometry :=
+@[apex_unfold] def updatePackedGeo (g : Geometry) (embedded : Geometry) (primNum : Int) : Geometry :=
   geo_UpdatePackedGeo g embedded primNum
 
 -- Bounding box
-def boundingBox (g : Geometry) (orient : Bool := false) (local' : Bool := false) : Vector3 × Vector3 × Vector3 × Vector3 × Matrix4 :=
+@[apex_unfold] def boundingBox (g : Geometry) (orient : Bool := false) (local' : Bool := false) : Vector3 × Vector3 × Vector3 × Vector3 × Matrix4 :=
   geo_BoundingBox g orient local'
 
 -- Load from disk
-def fromDisk (filepath : String) (primname : String := "") : Geometry :=
+@[apex_unfold] def fromDisk (filepath : String) (primname : String := "") : Geometry :=
   geo_FromDisk filepath primname
 
--- Deformation
-def lattice (g : Geometry) (restGeo : Geometry) (deformedGeo : Geometry) 
+-- @[Apex_unfold] Deformation
+@[apex_unfold] def lattice (g : Geometry) (restGeo : Geometry) (deformedGeo : Geometry) 
             (divsX divsY divsZ : Int) (group : String := "") 
             (interpType : Int := 0) (updateNormals : Bool := true) : Geometry :=
   geo_Lattice g restGeo deformedGeo divsX divsY divsZ group interpType updateNormals
 
 -- Agent operations
-def setAgentTransforms (g : Geometry) (primNum : Int) {n : Nat} (transforms : VariadicArg Matrix4 n) : Geometry :=
+@[apex_unfold] def setAgentTransforms (g : Geometry) (primNum : Int) {n : Nat} (transforms : VariadicArg Matrix4 n) : Geometry :=
   geo_SetAgentTransforms g primNum transforms
 
 end Geometry

@@ -45,10 +45,7 @@ unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompi
     try
       let info ← getConstInfo `run
       let val := info.value!
-
-      let (_, s) ← functionToApexGraph val default
-      let graph := s.graph
-
+      let graph ← programToApexGraph val
       let pythonScript := graph.pythonBuildScript
 
       return some pythonScript
@@ -99,16 +96,19 @@ unsafe def processRequest (line : String) (env : Environment) : IO Bool := do
   | .error err => 
       let errResp : Response := { status := "error", result := Json.str s!"Parse error: {err}" }
       IO.println (ToJson.toJson errResp).compress
+      (← IO.getStdout).flush
       return true
   | .ok json =>
       match FromJson.fromJson? json with
       | .error err =>
           let errResp : Response := { status := "error", result := Json.str s!"Invalid format: {err}" }
           IO.println (ToJson.toJson errResp).compress
+          (← IO.getStdout).flush
           return true
       | .ok (req : Request) =>
           let response ← handleRequest req env
           IO.println (ToJson.toJson response).compress
+          (← IO.getStdout).flush
           -- Return false to stop if command is "quit"
           return req.command != "quit"
 
@@ -119,7 +119,16 @@ unsafe def serverLoop (env : Environment) : IO Unit := do
     let c ← processRequest line.trim env
     if !c then break
 
-unsafe def main (_ : List String) : IO UInt32 := do
+unsafe def compileOnce (env : Environment) (codeOrFile : String) : IO Unit := do
+  let req : Request := {
+    command := "compile"
+    data := some (if codeOrFile.endsWith ".lean" then .file codeOrFile else .inline codeOrFile)
+  }
+  let response ← handleRequest req env
+  IO.println (ToJson.toJson response).compress
+  (← IO.getStdout).flush
+
+unsafe def main (args : List String) : IO UInt32 := do
   -- Initialize Lean environment
   initSearchPath (← findSysroot)
     [ "/home/tskrivan/Documents/HouLean/.lake/build/lib/lean",
@@ -127,12 +136,16 @@ unsafe def main (_ : List String) : IO UInt32 := do
 
   enableInitializersExecution
   let env ← Lean.importModules #[{ module := `Lean }, { module := `HouLean }] {} (loadExts := true)
+  
+  if args.contains "-server" then
+    serverLoop env
+    return 0
+  else if h : args.length > 0 then
+    compileOnce env (args.getLast (by grind))
+  else
+    let errResp : Response := { status := "error", result := Json.str s!"Missing input code!" } 
+    IO.println (toJson errResp)
+    return 0
+    
 
-  IO.eprintln "HouLean APEX Compiler Server started."
-  IO.eprintln "Commands: compile, quit"
-  IO.eprintln "Send JSON requests (one per line)."
-  
-  serverLoop env
-  
-  IO.eprintln "Server stopped."
   return 0

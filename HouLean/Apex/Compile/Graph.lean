@@ -19,6 +19,8 @@ structure ApexGraph where
   wires : Array (PortId × PortId)
   /-- Literals values which point to `Value<_>` node of appropriate type -/
   literals : Array (LiteralVal × PortId)
+  inputPorts : Array PortId
+  outputPorts : Array PortId
 deriving Inhabited
 
 def ApexGraph.printPort (g : ApexGraph) (p : PortId) : String := 
@@ -121,9 +123,9 @@ def ApexGraph.addForBegin (g : ApexGraph) (stateType : ApexStaticType) : ApexGra
     name := "forbegin"
     ports := ports.map (fun p => p.globalId)
     subPorts := #[{
-      variadicPortLocalId := 2
-      outputPortId := some 5
-      subports := stateIn.flatten.map (fun p => p.name)
+      inputPortId  := some (2 + portOff)
+      outputPortId := some (5 + portOff)
+      subports := stateIn.flatten.map (fun p => (p.name, p.type.builtin!))
       }]
   }
 
@@ -196,9 +198,9 @@ def ApexGraph.addForEnd (g : ApexGraph) (stateType : ApexStaticType) :
     name := "forend"
     ports := ports.map (fun p => p.globalId)
     subPorts := #[{
-      variadicPortLocalId := 2
-      outputPortId := some 3
-      subports := stateIn.flatten.map (fun p => p.name)
+      inputPortId  := some (2 + portOff)
+      outputPortId := some (3 + portOff)
+      subports := stateIn.flatten.map (fun p => (p.name,p.type.builtin!))
       }]
   }
 
@@ -208,7 +210,7 @@ def ApexGraph.addForEnd (g : ApexGraph) (stateType : ApexStaticType) :
   }
 
   let r := {
-    scope := .leaf ports[3]!.globalId
+    scope := .leaf ports[1]!.globalId
     stateIn := stateIn.mapIdx (fun _ p => p.globalId)
     stateOut := stateOut.mapIdx (fun _ p => p.globalId)
   }
@@ -235,9 +237,11 @@ Id.run do
   let mut portCount : Nat := 0
   for n in g.nodes, i in [0:g.nodes.size] do
     s := s ++ s!"n{i} = graph.addNode(\"{n.name}\", \"{n.type.name}\")" ++ "\n"
-    for ⟨p, _, names⟩ in n.subPorts do
-      for name in names do
-        s := s ++ s!"graph.addSubPort({p}, \"{name}\")" ++ "\n"
+    for ⟨p?, q?, names⟩ in n.subPorts do
+      let i? := p? <|> q?
+      if let some i := i? then
+        for name in names do
+          s := s ++ s!"graph.addSubPort({i}, \"{name}\")" ++ "\n"
 
     portCount := portCount + n.ports.size
 
@@ -252,6 +256,23 @@ Id.run do
     let srcNode := g.nodes[srcPort.nodeId]!
     let trgNode := g.nodes[trgPort.nodeId]!
     s := s ++ s!"graph.addWire({src}, {trg}) # {srcNode.name}[{srcPort.name}] -> {trgNode.name}[{trgPort.name}]" ++ "\n"
+
+  s := s ++ "\n# Add Inputs and Outputs" ++ "\n"
+  if g.inputPorts.size != 0 then
+    s := s ++ s!"graph.addNode(\"input\", \"__parms__\")" ++ "\n"
+    for inputPortId in g.inputPorts, i in [0:g.inputPorts.size] do
+      let j := g.ports.size + i + 1
+      let p := g.ports[inputPortId]!
+      s := s ++ s!"graph.addGraphInput({g.nodes.size+1}, \"{p.name}\")" ++ "\n"
+      s := s ++ s!"graph.addWire({j}, {inputPortId})" ++ "\n"
+
+  if g.outputPorts.size != 0 then
+    s := s ++ s!"graph.addNode(\"output\", \"__output__\")" ++ "\n"
+    for outputPortId in g.outputPorts, i in [0:g.outputPorts.size] do
+      let j := g.ports.size + i + 2 + g.inputPorts.size
+      let p := g.ports[outputPortId]!
+      s := s ++ s!"graph.addGraphOutput({g.nodes.size+2}, \"{p.name}{i}\")" ++ "\n"
+      s := s ++ s!"graph.addWire({outputPortId}, {j})" ++ "\n"
 
   s := s ++ "\n# Layout and Save Graph" ++ "\n"
   s := s ++ "graph.layout()" ++ "\n"

@@ -34,6 +34,11 @@ inductive PortType where
   | undefined
 deriving Inhabited, BEq
 
+def PortType.builtin! (t : PortType) : String :=
+  match t with
+  | .builtin n => n
+  | _ => panic! "invalid use of PortType.buildin!"
+
 inductive PortDir where
   | input | output
 deriving Inhabited, BEq
@@ -80,13 +85,17 @@ structure NodeType where
   ports : Array LocalPort
 deriving Inhabited
 
+/-- Specify for which port to create subports given their names and types in `subports`
+
+Variadic ports usually come in pairs as input and output, or 
+ -/
 structure AddSubPortSpec where
-  variadicPortLocalId : Nat
+  inputPortId : Option Nat
   /-- Some variadic ports are inputs and create the same amount of output subports 
   For example `ForBagin.__spare__` port 2 is input and port 5 is corresponding output -/ 
   outputPortId : Option Nat 
   /-- Names of all subports to be creates. -/
-  subports : Array String
+  subports : Array (String×TypeName)
 deriving Inhabited
 
 abbrev PortId := Nat

@@ -15,6 +15,9 @@ inductive SingleExtension where
   | implementedBy (srcFun : Expr) (trgFun : Expr)
   /-- Translation of Lean functions to APEX nodes. -/
   | nodeType (fn : Expr) (nodeType : NodeType)
+  /-- Unfold declaration during compilation. -/
+  | unfold (toUfold : Name)
+
 deriving Inhabited
 
 /-- Enviroment extension that holds all necessary information for the APEX compiler. -/
@@ -22,6 +25,7 @@ structure Extension where
   apexTypes : ExprMap ApexType
   implementedBy : ExprMap Expr
   nodeTypes : ExprMap NodeType
+  toUnfold : NameSet
 deriving Inhabited
 
 abbrev CompilerExt := SimpleScopedEnvExtension SingleExtension Extension
@@ -38,4 +42,6 @@ initialize compilerExt : CompilerExt ←
         {es with implementedBy := es.implementedBy.insert srcFun trgFun}
       | .nodeType fn nodeType =>
         {es with nodeTypes := es.nodeTypes.insert fn nodeType}
+      | .unfold name =>
+        {es with toUnfold := es.toUnfold.insert name}
   }

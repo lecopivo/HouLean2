@@ -65,32 +65,33 @@ def addNode (nodeType : NodeType) (subports : Array AddSubPortSpec)
       .leaf p.globalId)
     
     -- Add all subports
-    for ⟨i, j?, names⟩ in subports do
-      let p := ports[i]!
+    for ⟨i?, j?, namesAndTypes⟩ in subports do
       let mut inputPorts : Array PortBundle := #[]
       let mut outputPorts : Array PortBundle := #[]
-      for n in names do
-        inputPorts := inputPorts.push (.leaf (ports.size + portOff))
-        ports := ports.push {
-          localId := ports.size
-          name := n
-          type := p.type
-          dir := .input
-          globalId := ports.size + portOff
-          nodeId := nodeOff : Port
-        }
+      for (n,t) in namesAndTypes do
+        if i?.isSome then
+          inputPorts := inputPorts.push (.leaf (ports.size + portOff))
+          ports := ports.push {
+            localId := ports.size
+            name := n
+            type := .builtin t
+            dir := .input
+            globalId := ports.size + portOff
+            nodeId := nodeOff : Port
+          }
         if j?.isSome then
           outputPorts := outputPorts.push (.leaf (ports.size + portOff))
           ports := ports.push {
             localId := ports.size
             name := n
-            type := p.type
+            type := .builtin t
             dir := .output
             globalId := ports.size + portOff
             nodeId := nodeOff : Port
           }
 
-      bundles := bundles.set! i (.node inputPorts)
+      if let some i := i? then
+        bundles := bundles.set! i (.node inputPorts)
       if let some j := j? then
         bundles := bundles.set! j (.node outputPorts)
 
@@ -107,7 +108,7 @@ def addNode (nodeType : NodeType) (subports : Array AddSubPortSpec)
       type := nodeType
       globalId := nodeOff
       ports := portIds
-      subPorts := subports.map (fun ⟨i,j?,n⟩ => ⟨i+portOff, j?.map (·+portOff), n⟩)
+      subPorts := subports.map (fun ⟨i?,j?,n⟩ => ⟨i?.map (·+portOff), j?.map (·+portOff), n⟩)
     }
     
     let g := {g with
@@ -208,9 +209,9 @@ def addIdentity (type : Expr) (userName? : Option String := none) :
     }
     
     let subport : AddSubPortSpec := {
-      variadicPortLocalId := 0
+      inputPortId := some 0
       outputPortId := some 1
-      subports := type.flatten.map (fun (n, _) => n)
+      subports := type.flatten
     }
     let (_, inputs, output) ← addNode nodeType #[subport] userName?
 
@@ -273,8 +274,8 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
   | .lit (.strVal s) => 
     addString s
   | mkApp3 (.const ``Float.ofScientific []) m s e => 
-    let .lit (.natVal m) := m | throwError s!"Invalid literal for mantissa: {m}"
-    let .some e := e.nat? | throwError s!"Invalid literal for exponent: {e}"
+    let .lit (.natVal m) ← whnf m | throwError s!"Invalid literal for mantissa: {m}"
+    let .lit (.natVal e) ← whnf e | throwError s!"Invalid literal for exponent: {e}"
     let s := if ← isDefEq s q(true) then true else false
     addFloat (Float.ofScientific m s e)
   | .sort _ => 
@@ -287,6 +288,10 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
   | .app .. =>
     let (fn, args) := e.withApp fun fn args => (fn, args)
 
+    -- blast match statement
+    if ← isMatcherApp e then
+      return ← toApexGraph (← whnf e)
+
     -- implemented_by -- so something more clever here
     let s := compilerExt.getState (← getEnv)
     if let some fn' := s.implementedBy[fn]? then
@@ -294,6 +299,10 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
 
     let .const fname _ := fn 
       | throwError m!"Unexpected function application: {e}"
+
+    if (compilerExt.getState (← getEnv)).toUnfold.contains fname then
+      let r ← Meta.unfold e fname
+      return ← toApexGraph r.expr
 
     -- Detect variadic argument
     if let some xs ← isVariadicArg e then
@@ -343,7 +352,7 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
         let p ← readGraph (fun g => pure g.ports[p]!)
         match p.type with
         | .builtin typeName => return (p.name, typeName)
-        | _ => throwError m!"Invalid state {← inferType args[5]!} in for loop")
+        | _ => throwError m!"Invalid state {args[5]!} : {← inferType args[5]!} in for loop")
       
       let bp ← addForBegin stateShape
       let ep ← addForEnd stateShape
@@ -371,8 +380,12 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
       let type ← inferType arg
       if type.isAppOfArity' ``Vector 2 then
         let id := fnInputs[i]!.localId
-        let names ← argPorts[i]!.flatten.mapM getPortName
-        subPorts := subPorts.push ⟨id, none, names⟩
+        let namesAndTypes ← argPorts[i]!.flatten.mapM (fun pId => do 
+          let n ← getPortName pId
+          let t ← getPortType pId
+          let t := t.builtin!
+          return (n,t))
+        subPorts := subPorts.push ⟨id, none, namesAndTypes⟩
       
     let (_, inputBundle, outputBundle) ← addNode nodeType subPorts userName?
     let _ ← makeConnections argPorts inputBundle
@@ -402,7 +415,7 @@ partial def functionToApexGraph (e : Expr) :
     if xs.size = 0 then
       throwError m!"Function expected: {e}"
 
-    let b ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <|
+    let b ← withConfig (fun cfg => {cfg with iota := true, zeta := false}) <|
       whnfI (e.beta xs)
 
     let mut inputs : Array PortBundle := #[]
@@ -413,5 +426,19 @@ partial def functionToApexGraph (e : Expr) :
     return (inputs, output)
 
 end
+
+
+def programToApexGraph (e : Expr) : MetaM ApexGraph := do
+  return (← go default).2.graph
+where 
+  go : GraphCompileM Unit := do
+    let (inputs, output) ← functionToApexGraph e
+
+    let inputs := inputs.map (·.flatten) |>.flatten
+    let output := output.flatten
+
+    modifyGraph (fun g => pure ({g with 
+      inputPorts := inputs
+      outputPorts := output},()))
 
 end HouLean.Apex.Compiler

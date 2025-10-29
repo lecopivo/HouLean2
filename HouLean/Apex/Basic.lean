@@ -1,5 +1,6 @@
 import HouLean.Apex.Generated.Nodes
 import HouLean.Apex.Compile.ImplementedBy
+import HouLean.Apex.Compile.Attr
 
 namespace HouLean.Apex
 

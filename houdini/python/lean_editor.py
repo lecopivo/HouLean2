@@ -2,6 +2,9 @@ from PySide6 import QtWidgets, QtGui, QtCore
 import json
 import subprocess
 import threading
+import queue
+import sys
+import os
 
 def line_col_to_offset(text, line, col):
     """Convert line+column (1-indexed) to absolute offset (0-indexed)"""
@@ -10,7 +13,8 @@ def line_col_to_offset(text, line, col):
     
     # Add lengths of all previous lines (including newlines)
     for i in range(line - 1):
-        offset += len(lines[i]) + 1  # +1 for the newline character
+        if i < len(lines):
+            offset += len(lines[i]) + 1  # +1 for the newline character
     
     # Add the column offset (col is 1-indexed)
     offset += col - 1
@@ -85,7 +89,7 @@ class KeybindingPresets:
             'paste_cycle': 'Alt+Y',
             'undo': 'Ctrl+/',
             'redo': 'Ctrl+Shift+/',
-            'select_all': 'Ctrl+X,H',  # Emacs uses Ctrl+X H, not Ctrl+A
+            'select_all': 'Ctrl+X,H',
             'mark_set': 'Ctrl+Space',
             'cancel': 'Ctrl+G',
             'zoom_in': 'Ctrl+=',
@@ -126,7 +130,7 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
         self.mark_position = None
         
         # Font size management
-        self.default_font_size = 11
+        self.default_font_size = 12
         self.current_font_size = self.default_font_size
         
         # Custom tooltip
@@ -251,9 +255,26 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
     def update_font_size(self, size):
         """Update editor font size"""
         self.current_font_size = size
-        font = QtGui.QFont("Consolas", size)
+
+        # VS Code uses Cascadia Code by default
+        font = QtGui.QFont("Cascadia Code", size)
         if not font.exactMatch():
-            font = QtGui.QFont("Courier New", size)
+            font = QtGui.QFont("Consolas", size)
+
+        # VS Code's weight is slightly above Normal (50)
+        # 55–58 looks right in Qt
+        font.setWeight(QtGui.QFont.Weight.Medium)
+
+        # Make sure it's treated as a monospaced font
+        font.setStyleHint(QtGui.QFont.Monospace)
+        font.setFixedPitch(True)
+
+        # Enable good antialiasing
+        font.setStyleStrategy(
+            QtGui.QFont.StyleStrategy.PreferAntialias |
+            QtGui.QFont.StyleStrategy.PreferQuality
+        )
+        
         self.setFont(font)
         # Notify parent about font size change
         self.font_size_changed.emit(size)
@@ -534,6 +555,9 @@ class CodeEditor(QtWidgets.QPlainTextEdit):
 
     def line_number_area_paint_event(self, event):
         painter = QtGui.QPainter(self.line_number_area)
+
+        # painter.setRenderHint(QtGui.QPainter.TextAntialiasing)
+        # painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
         
         # Modern dark theme colors
         bg_color = QtGui.QColor("#252526")
@@ -589,34 +613,31 @@ class ErrorHighlighter(QtGui.QSyntaxHighlighter):
                 error_format = QtGui.QTextCharFormat()
                 error_format.setUnderlineColor(QtGui.QColor("#f48771"))
                 error_format.setUnderlineStyle(QtGui.QTextCharFormat.WaveUnderline)
-                # Add subtle background tint for more visibility
-                error_format.setBackground(QtGui.QColor(244, 135, 113, 15))  # Very subtle red glow
+                error_format.setBackground(QtGui.QColor(244, 135, 113, 15))
                 self.setFormat(block_start, block_length, error_format)
         
-        # Highlight warnings (orange squiggle) - brighter and thicker
+        # Highlight warnings (orange squiggle)
         for start, length in self.warning_ranges:
             if start < block_pos + len(text) and start + length > block_pos:
                 block_start = max(0, start - block_pos)
                 block_length = min(length, len(text) - block_start)
                 
                 warning_format = QtGui.QTextCharFormat()
-                warning_format.setUnderlineColor(QtGui.QColor("#ffcc00"))  # Brighter yellow-orange
+                warning_format.setUnderlineColor(QtGui.QColor("#ffcc00"))
                 warning_format.setUnderlineStyle(QtGui.QTextCharFormat.WaveUnderline)
-                # Add subtle background tint for more visibility
-                warning_format.setBackground(QtGui.QColor(255, 204, 0, 15))  # Very subtle yellow glow
+                warning_format.setBackground(QtGui.QColor(255, 204, 0, 15))
                 self.setFormat(block_start, block_length, warning_format)
         
-        # Highlight info (blue squiggle) - brighter and thicker
+        # Highlight info (blue squiggle)
         for start, length in self.info_ranges:
             if start < block_pos + len(text) and start + length > block_pos:
                 block_start = max(0, start - block_pos)
                 block_length = min(length, len(text) - block_start)
                 
                 info_format = QtGui.QTextCharFormat()
-                info_format.setUnderlineColor(QtGui.QColor("#4fc3f7"))  # Brighter cyan-blue
+                info_format.setUnderlineColor(QtGui.QColor("#4fc3f7"))
                 info_format.setUnderlineStyle(QtGui.QTextCharFormat.WaveUnderline)
-                # Add subtle background tint for more visibility
-                info_format.setBackground(QtGui.QColor(79, 195, 247, 15))  # Very subtle blue glow
+                info_format.setBackground(QtGui.QColor(79, 195, 247, 15))
                 self.setFormat(block_start, block_length, info_format)
 
 
@@ -719,13 +740,16 @@ class CompilerEditorWidget(QtWidgets.QWidget):
         self.parm_name = parm_name
         self.compiler = compiler
         self.is_compiling = False
-        self.is_manual_compile = False  # Track if compilation was triggered manually
+        self.is_manual_compile = False
         self.current_preset = "emacs"
-        self.compile_process = None  # Track subprocess
-        self.compile_thread = None  # Track thread
-        self.should_cancel_compile = False  # Flag to cancel compilation
-        self.pending_compile_code = None  # Store code for pending compilation
-        self.pending_is_manual = False  # Track if pending compile is manual
+        self.compile_process = None  # Single compile server process
+        self.compile_thread = None
+        self.should_cancel_compile = False
+        self.pending_compile_code = None
+        self.pending_is_manual = False
+        
+        # Start the compiler server
+        self.start_compiler_server()
         
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -815,7 +839,8 @@ class CompilerEditorWidget(QtWidgets.QWidget):
         # Message display area with modern styling
         self.message_area = QtWidgets.QTextEdit()
         self.message_area.setReadOnly(True)
-        self.message_font_size = 11
+        # Message area is rendered smaller for some reason, so we set the font size to compensate for it
+        self.message_font_size = 16
         self.update_message_area_style()
         
         splitter.addWidget(self.text_edit)
@@ -838,33 +863,51 @@ class CompilerEditorWidget(QtWidgets.QWidget):
         # Auto-compile on text change with debounce
         self.compile_timer = QtCore.QTimer()
         self.compile_timer.setSingleShot(True)
-        self.compile_timer.timeout.connect(self.compile_silently)  # Use silent compile for auto
+        self.compile_timer.timeout.connect(self.compile_silently)
         self.text_edit.textChanged.connect(self.on_text_changed)
+    
+    def start_compiler_server(self):
+        """Start the compiler server process once"""
+        try:
+            self.compile_process = subprocess.Popen(
+                [self.compiler, "-server"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1  # Line buffered
+            )
+            print(f"Compiler server started with PID: {self.compile_process.pid}")
+        except Exception as e:
+            print(f"Failed to start compiler server: {e}")
+            self.compile_process = None
+    
+    def stop_compiler_server(self):
+        """Stop the compiler server process"""
+        if self.compile_process:
+            try:
+                # Force kill immediately - don't wait for graceful shutdown
+                self.compile_process.kill()
+                # Don't wait for it
+                print(f"Compiler server killed")
+            except Exception as e:
+                print(f"Error stopping compiler server: {e}")
+            finally:
+                self.compile_process = None
     
     def on_text_changed(self):
         """Handle text changes - cancel pending compilation and restart timer"""
-        # Stop the timer
         self.compile_timer.stop()
         
-        # If already compiling, mark for cancellation and queue new compile
         if self.is_compiling:
             self.pending_compile_code = self.text_edit.toPlainText()
             self.cancel_current_compilation()
         else:
-            # Start new timer
             self.compile_timer.start(1000)
     
     def cancel_current_compilation(self):
         """Cancel the currently running compilation"""
         self.should_cancel_compile = True
-        
-        # Force kill the process (don't be polite)
-        if self.compile_process:
-            try:
-                self.compile_process.kill()  # Use kill instead of terminate
-                self.compile_process.wait(timeout=0.5)
-            except:
-                pass
     
     def update_message_area_style(self):
         """Update message area stylesheet with current font size"""
@@ -896,70 +939,88 @@ class CompilerEditorWidget(QtWidgets.QWidget):
             else:
                 self.text_edit.set_keybindings(KeybindingPresets.standard())
     
-    def your_compiler(self, code):
-        """
-        Replace this with your actual compiler.
-        Should return dict with:
-        {
-            'errors': [(start_pos, length, message), ...],
-            'warnings': [(start_pos, length, message), ...],
-            'infos': [(start_pos, length, message), ...]
-        }
-        """
+    def compile_with_server(self, code):
+        """Compile code using the server"""
         errors = []
         warnings = []
         infos = []
-
-        # Check if we should cancel
+        
+        if not self.compile_process or self.compile_process.poll() is not None:
+            return {'errors': [(0, 0, "Compiler server not running")], 'warnings': [], 'infos': []}
+        
         if self.should_cancel_compile:
             return {'errors': [], 'warnings': [], 'infos': [], 'cancelled': True}
-
+        
         try:
-            # Create process with ability to terminate
-            self.compile_process = subprocess.Popen(
-                [self.compiler, code],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            
-            # Wait with timeout (5 seconds for auto-compile)
-            timeout = 5 if not self.is_manual_compile else 30
-            
+            # Create compile request - fix the nested structure
+            request = {
+                "command": "compile",
+                "data": {"inline": {"code" : code}}  # It has to be: {"inline": {"code": code}}
+            }
+
+            request_json = json.dumps(request) + '\n'
+
+            # Send request to server
+            self.compile_process.stdin.write(request_json)
+            self.compile_process.stdin.flush()
+
+            # Read response with timeout using a thread
+            result_queue = queue.Queue()
+
+            def read_line():
+                try:
+                    line = self.compile_process.stdout.readline()
+                    result_queue.put(('success', line))
+                except Exception as e:
+                    result_queue.put(('error', str(e)))
+
+            reader_thread = threading.Thread(target=read_line, daemon=True)
+            reader_thread.start()
+
             try:
-                stdout, stderr = self.compile_process.communicate(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                # Kill the process on timeout
-                self.compile_process.kill()
-                self.compile_process.wait()
-                return {'errors': [(0, 0, "Compilation timeout")], 'warnings': [], 'infos': []}
+                status, response_line = result_queue.get(timeout=30.0)
+
+                if self.should_cancel_compile:
+                    return {'errors': [], 'warnings': [], 'infos': [], 'cancelled': True}
+
+                if status == 'error':
+                    return {'errors': [(0, 0, f"Error reading response: {response_line}")], 'warnings': [], 'infos': []}
+
+                if not response_line:
+                    return {'errors': [(0, 0, "No response from compiler server")], 'warnings': [], 'infos': []}
+
+                response = json.loads(response_line)
+
+            except queue.Empty:
+                return {'errors': [(0, 0, "Compilation timeout (30s)")], 'warnings': [], 'infos': []}
+
+
+            if response.get('status') != 'success':
+                error_msg = response.get('result', {})
+                if isinstance(error_msg, dict):
+                    error_msg = error_msg.get('data', 'Compilation failed')
+                return {'errors': [(0, 0, str(error_msg))], 'warnings': [], 'infos': []}
             
-            # Check if cancelled during compilation
-            if self.should_cancel_compile:
-                return {'errors': [], 'warnings': [], 'infos': [], 'cancelled': True}
-
-            result = json.loads(stdout)
-
-            for msg in result["messages"]:
-
+            result = response.get('result', {})
+            messages = result.get('messages', [])
+            
+            for msg in messages:
                 line_start = msg["pos"]["line"]
                 col_start = msg["pos"]["column"]
                 
-                # Check if endPos exists, otherwise use pos and length of 1
                 if "endPos" in msg:
                     line_end = msg["endPos"]["line"]
                     col_end = msg["endPos"]["column"]
                     start, length = compute_start_length(code, line_start, col_start, line_end, col_end)
                 else:
-                    # No endPos, just compute position and use length 1
                     start = line_col_to_offset(code, line_start, col_start) + 1
                     length = 1
-
+                
                 if msg["severity"] == "error":
                     errors.append((start, length, msg["data"]))
-                if msg["severity"] == "warning":
+                elif msg["severity"] == "warning":
                     warnings.append((start, length, msg["data"]))
-                if msg["severity"] == "information":
+                elif msg["severity"] == "information":
                     infos.append((start, length, msg["data"]))
             
         except Exception as e:
@@ -967,8 +1028,6 @@ class CompilerEditorWidget(QtWidgets.QWidget):
                 return {'errors': [(0, 0, f"Compilation error: {str(e)}")], 'warnings': [], 'infos': []}
             else:
                 return {'errors': [], 'warnings': [], 'infos': [], 'cancelled': True}
-        finally:
-            self.compile_process = None
         
         return {
             'errors': errors,
@@ -977,19 +1036,16 @@ class CompilerEditorWidget(QtWidgets.QWidget):
         }
     
     def compile_async(self, code):
-        """Run compilation in background thread - only if not already compiling"""
-        # Don't start a new thread if one is already running
+        """Run compilation in background thread"""
         if self.compile_thread and self.compile_thread.is_alive():
             return
         
         def compile_thread():
             try:
-                result = self.your_compiler(code)
-                # Only emit if not cancelled
+                result = self.compile_with_server(code)
                 if not result.get('cancelled', False):
                     self.compilation_finished.emit(result)
             except Exception as e:
-                # Only report errors if not cancelled
                 if not self.should_cancel_compile:
                     error_result = {
                         'errors': [(0, 0, f"Compilation error: {str(e)}")],
@@ -998,17 +1054,14 @@ class CompilerEditorWidget(QtWidgets.QWidget):
                     }
                     self.compilation_finished.emit(error_result)
             finally:
-                # Always reset state when thread completes
                 self.is_compiling = False
                 self.should_cancel_compile = False
                 
-                # If there's pending code, trigger new compilation
                 if self.pending_compile_code is not None:
                     pending = self.pending_compile_code
                     is_manual = self.pending_is_manual
                     self.pending_compile_code = None
                     self.pending_is_manual = False
-                    # Use QTimer to ensure we're back in the main thread
                     QtCore.QTimer.singleShot(0, lambda: self._start_pending_compile(pending, is_manual))
         
         self.compile_thread = threading.Thread(target=compile_thread, daemon=True)
@@ -1020,7 +1073,6 @@ class CompilerEditorWidget(QtWidgets.QWidget):
             self.is_compiling = True
             self.is_manual_compile = is_manual
             
-            # Update UI if manual
             if is_manual:
                 self.compile_button.setEnabled(False)
                 self.status_label.setText("⏳ Compiling...")
@@ -1030,18 +1082,15 @@ class CompilerEditorWidget(QtWidgets.QWidget):
     
     def compile_and_highlight(self):
         """Start async compilation (manual)"""
-        # If already compiling, cancel it and queue this compilation
         if self.is_compiling:
             self.pending_compile_code = self.text_edit.toPlainText()
             self.pending_is_manual = True
             self.cancel_current_compilation()
-            # Show status immediately
             self.compile_button.setEnabled(False)
             self.status_label.setText("⏳ Compiling...")
             self.status_label.setStyleSheet("color: #cca700;")
             return
         
-        # Start compilation immediately
         self.should_cancel_compile = False
         self.pending_compile_code = None
         self.pending_is_manual = False
@@ -1056,7 +1105,6 @@ class CompilerEditorWidget(QtWidgets.QWidget):
     
     def compile_silently(self):
         """Start async compilation without UI feedback (for auto-compile)"""
-        # Don't start if already compiling
         if self.is_compiling:
             return
         
@@ -1074,7 +1122,6 @@ class CompilerEditorWidget(QtWidgets.QWidget):
         self.is_compiling = False
         self.should_cancel_compile = False
         
-        # Only update button state if it was a manual compile
         if was_manual:
             self.compile_button.setEnabled(True)
         
@@ -1164,20 +1211,14 @@ class CompilerEditorWidget(QtWidgets.QWidget):
         self.should_cancel_compile = True
         self.compile_timer.stop()
         
-        if self.compile_process:
-            try:
-                self.compile_process.terminate()
-                self.compile_process.wait(timeout=1)
-            except:
-                try:
-                    self.compile_process.kill()
-                except:
-                    pass
+        # Don't wait for thread - just mark it for cancellation
+        # The daemon thread will exit on its own
         
-        # Wait for thread to finish (with timeout)
-        if self.compile_thread and self.compile_thread.is_alive():
-            self.compile_thread.join(timeout=2)
+        # Stop the compiler server immediately
+        self.stop_compiler_server()
         
+        # Accept the close event immediately
+        event.accept()
         super().closeEvent(event)
     
     def set_code(self, code):
