@@ -33,7 +33,7 @@ class DebugLogger(QtCore.QObject):
     
     def __init__(self):
         super().__init__()
-        self.enabled = False
+        self.enabled = True
     
     def log(self, message, level="INFO"):
         if not self.enabled:
@@ -368,10 +368,15 @@ class LSPClient(QtCore.QObject):
     
     def shutdown(self):
         logger.log("Shutting down LSP client")
-        self._send_request("shutdown", {})
-        self._send_notification("exit", {})
-        self.process.waitForFinished(1000)
-        self.process.kill()
+        if self.process.state() == QProcess.ProcessState.Running:
+            self._send_request("shutdown", {})
+            self._send_notification("exit", {})
+            # Give it a short time to shutdown gracefully
+            if not self.process.waitForFinished(500):
+                # Force kill if it doesn't shutdown quickly
+                self.process.kill()
+                self.process.waitForFinished(100)
+        logger.log("LSP client shutdown complete")
 
 
 # ============================================================================
@@ -574,12 +579,13 @@ class CompletionPopup(QtWidgets.QListWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowFlags(QtCore.Qt.WindowType.Popup | QtCore.Qt.WindowType.FramelessWindowHint)
+        self.setWindowFlags(QtCore.Qt.WindowType.ToolTip | QtCore.Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating, True)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
         self.setMaximumHeight(200)
         self.setMinimumWidth(400)
         self.completion_items = []
         self.filter_text = ""
-        self.navigation_mode = False  # Track if user is navigating the list
         
         self.itemClicked.connect(self._on_item_clicked)
         
@@ -606,12 +612,18 @@ class CompletionPopup(QtWidgets.QListWidget):
         """Show completion popup at position with optional prefix for filtering"""
         self.clear()
         self.filter_text = prefix.lower()
-        self.navigation_mode = False
         
         def sort_key(item):
             label = item.get("label", "").lower()
-            starts_with = label.startswith(self.filter_text)
-            return (not starts_with, label)
+            # Prioritize exact prefix matches, then those that start with prefix, then contains
+            if label == self.filter_text:
+                return (0, label)  # Exact match - highest priority
+            elif label.startswith(self.filter_text):
+                return (1, len(label), label)  # Starts with - sort by length (shorter first)
+            elif self.filter_text in label:
+                return (2, label)  # Contains - lower priority
+            else:
+                return (3, label)  # Doesn't match - lowest priority
         
         self.completion_items = sorted(completions, key=sort_key)
         
@@ -643,25 +655,38 @@ class CompletionPopup(QtWidgets.QListWidget):
     def filter_items(self, text):
         """Filter visible items based on text"""
         self.filter_text = text.lower()
-        visible_count = 0
+        visible_items = []
         
+        # Collect visible items with their priority
         for i in range(self.count()):
             item = self.item(i)
             comp_data = item.data(QtCore.Qt.ItemDataRole.UserRole)
             if comp_data:
                 label = comp_data.get("label", "").lower()
-                matches = self.filter_text in label
-                item.setHidden(not matches)
-                if matches:
-                    visible_count += 1
+                if label == self.filter_text:
+                    priority = 0
+                elif label.startswith(self.filter_text):
+                    priority = (1, len(label))  # Shorter matches first
+                elif self.filter_text in label:
+                    priority = (2, label)
+                else:
+                    priority = None
+                
+                if priority is not None:
+                    item.setHidden(False)
+                    visible_items.append((priority, i))
+                else:
+                    item.setHidden(True)
         
-        # Select first visible item
-        for i in range(self.count()):
-            if not self.item(i).isHidden():
-                self.setCurrentRow(i)
-                break
+        # Sort visible items by priority and reorder selection
+        visible_items.sort(key=lambda x: x[0])
         
-        logger.log(f"Filtered to {visible_count} items")
+        # Select the best match (first in sorted list)
+        if visible_items:
+            best_index = visible_items[0][1]
+            self.setCurrentRow(best_index)
+        
+        logger.log(f"Filtered to {len(visible_items)} items")
     
     def _on_item_clicked(self, item):
         """Handle item click"""
@@ -684,36 +709,24 @@ class CompletionPopup(QtWidgets.QListWidget):
         
         self.itemSelected.emit(label, insert_text, prefix_len)
     
-    def handle_navigation_key(self, key):
-        """Handle navigation keys when in navigation mode"""
-        if key == QtCore.Qt.Key.Key_Up:
-            current = self.currentRow()
-            # Find previous visible item
-            for i in range(current - 1, -1, -1):
-                if not self.item(i).isHidden():
-                    self.setCurrentRow(i)
-                    return True
-        elif key == QtCore.Qt.Key.Key_Down:
-            current = self.currentRow()
-            # Find next visible item
-            for i in range(current + 1, self.count()):
-                if not self.item(i).isHidden():
-                    self.setCurrentRow(i)
-                    return True
-        elif key == QtCore.Qt.Key.Key_PageUp:
-            current = self.currentRow()
-            target = max(0, current - 10)
-            for i in range(target, -1, -1):
-                if not self.item(i).isHidden():
-                    self.setCurrentRow(i)
-                    return True
-        elif key == QtCore.Qt.Key.Key_PageDown:
-            current = self.currentRow()
-            target = min(self.count() - 1, current + 10)
-            for i in range(target, self.count()):
-                if not self.item(i).isHidden():
-                    self.setCurrentRow(i)
-                    return True
+    def move_selection_up(self):
+        """Move selection up in the list"""
+        current = self.currentRow()
+        # Find previous visible item
+        for i in range(current - 1, -1, -1):
+            if not self.item(i).isHidden():
+                self.setCurrentRow(i)
+                return True
+        return False
+    
+    def move_selection_down(self):
+        """Move selection down in the list"""
+        current = self.currentRow()
+        # Find next visible item
+        for i in range(current + 1, self.count()):
+            if not self.item(i).isHidden():
+                self.setCurrentRow(i)
+                return True
         return False
     
     def select_current(self):
@@ -770,6 +783,7 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.kill_ring_index = 0
         self.max_kill_ring_size = 20
         self.mark_position = None
+        self.last_action_was_paste_cycle = False
         
         # Custom tooltip
         self.tooltip_widget = None
@@ -809,6 +823,10 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         
         self.completion_popup.itemSelected.connect(self.insert_completion)
         
+        # Store reference to parent window for goto_definition
+        self.parent_window = None
+        self.workspace_path = ""  # Will be set by parent
+        
         self.update_line_number_area_width(0)
         
         logger.log("Waiting for server initialization before opening document")
@@ -834,12 +852,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         """Setup keyboard shortcuts"""
         kb = self.keybindings
         
-        # Movement
-        if kb.get('move_line_start'):
-            shortcut = QtGui.QShortcut(QtGui.QKeySequence(kb['move_line_start']), self)
-            shortcut.activated.connect(lambda: self.move_cursor(QtGui.QTextCursor.StartOfLine))
-            shortcut.setContext(QtCore.Qt.WidgetShortcut)
-        
         # Zoom
         if kb.get('zoom_in'):
             QtGui.QShortcut(QtGui.QKeySequence(kb['zoom_in']), self, self.zoom_in)
@@ -848,14 +860,153 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         if kb.get('zoom_reset'):
             QtGui.QShortcut(QtGui.QKeySequence(kb['zoom_reset']), self, self.zoom_reset)
         
+        # Word movement
+        if kb.get('move_word_left'):
+            QtGui.QShortcut(QtGui.QKeySequence(kb['move_word_left']), self, 
+                          lambda: self.move_cursor(QtGui.QTextCursor.WordLeft))
+        if kb.get('move_word_right'):
+            QtGui.QShortcut(QtGui.QKeySequence(kb['move_word_right']), self,
+                          lambda: self.move_cursor(QtGui.QTextCursor.WordRight))
+        
+        # Document movement
+        if kb.get('move_doc_start') and kb['move_doc_start'] != 'Ctrl+Home':
+            QtGui.QShortcut(QtGui.QKeySequence(kb['move_doc_start']), self,
+                          lambda: self.move_cursor(QtGui.QTextCursor.Start))
+        if kb.get('move_doc_end') and kb['move_doc_end'] != 'Ctrl+End':
+            QtGui.QShortcut(QtGui.QKeySequence(kb['move_doc_end']), self,
+                          lambda: self.move_cursor(QtGui.QTextCursor.End))
+        
         # Emacs-specific
         if self.is_emacs_mode:
+            # Movement
+            if kb.get('move_up'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['move_up']), self,
+                              lambda: self.move_cursor(QtGui.QTextCursor.Up))
+            if kb.get('move_down'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['move_down']), self,
+                              lambda: self.move_cursor(QtGui.QTextCursor.Down))
+            if kb.get('move_left'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['move_left']), self,
+                              lambda: self.move_cursor(QtGui.QTextCursor.Left))
+            if kb.get('move_right'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['move_right']), self,
+                              lambda: self.move_cursor(QtGui.QTextCursor.Right))
+            if kb.get('move_line_start'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['move_line_start']), self,
+                              lambda: self.move_cursor(QtGui.QTextCursor.StartOfLine))
+            if kb.get('move_line_end'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['move_line_end']), self,
+                              lambda: self.move_cursor(QtGui.QTextCursor.EndOfLine))
+            
+            # Deletion
+            if kb.get('delete_char'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['delete_char']), self, self.delete_char)
+            if kb.get('delete_word'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['delete_word']), self, self.delete_word)
+            if kb.get('backspace_word'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['backspace_word']), self, self.backspace_word)
             if kb.get('kill_line'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['kill_line']), self, self.kill_line)
+            
+            # Clipboard
+            if kb.get('cut'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['cut']), self, self.kill_region)
+            if kb.get('copy'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['copy']), self, self.copy_region)
+            if kb.get('paste'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['paste']), self, self.yank)
+            if kb.get('paste_cycle'):
+                QtGui.QShortcut(QtGui.QKeySequence(kb['paste_cycle']), self, self.yank_pop)
+            
+            # Mark and cancel
             if kb.get('mark_set'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['mark_set']), self, self.set_mark)
             if kb.get('cancel'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['cancel']), self, self.cancel_operation)
+    
+    def delete_char(self):
+        """Delete character at cursor"""
+        cursor = self.textCursor()
+        if not cursor.hasSelection():
+            cursor.deleteChar()
+        else:
+            cursor.removeSelectedText()
+        self.setTextCursor(cursor)
+    
+    def delete_word(self):
+        """Delete word forward"""
+        cursor = self.textCursor()
+        cursor.movePosition(QtGui.QTextCursor.EndOfWord, QtGui.QTextCursor.KeepAnchor)
+        text = cursor.selectedText()
+        if text:
+            self.add_to_kill_ring(text)
+        cursor.removeSelectedText()
+        self.setTextCursor(cursor)
+    
+    def backspace_word(self):
+        """Delete word backward"""
+        cursor = self.textCursor()
+        cursor.movePosition(QtGui.QTextCursor.StartOfWord, QtGui.QTextCursor.KeepAnchor)
+        text = cursor.selectedText()
+        if text:
+            self.add_to_kill_ring(text)
+        cursor.removeSelectedText()
+        self.setTextCursor(cursor)
+    
+    def kill_region(self):
+        """Kill (cut) selected region"""
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            text = cursor.selectedText()
+            self.add_to_kill_ring(text)
+            cursor.removeSelectedText()
+            self.setTextCursor(cursor)
+            self.mark_position = None
+    
+    def copy_region(self):
+        """Copy selected region to kill ring"""
+        cursor = self.textCursor()
+        if cursor.hasSelection():
+            text = cursor.selectedText()
+            self.add_to_kill_ring(text)
+            self.mark_position = None
+    
+    def yank(self):
+        """Paste from kill ring (emacs-style)"""
+        if self.kill_ring:
+            cursor = self.textCursor()
+            cursor.insertText(self.kill_ring[self.kill_ring_index])
+            self.setTextCursor(cursor)
+            self.last_action_was_paste_cycle = True
+    
+    def yank_pop(self):
+        """Cycle through kill ring (emacs-style)"""
+        if not self.kill_ring or not hasattr(self, 'last_action_was_paste_cycle') or not self.last_action_was_paste_cycle:
+            return
+        
+        cursor = self.textCursor()
+        last_text = self.kill_ring[self.kill_ring_index]
+        
+        for _ in range(len(last_text)):
+            cursor.deletePreviousChar()
+        
+        self.kill_ring_index = (self.kill_ring_index - 1) % len(self.kill_ring)
+        
+        cursor.insertText(self.kill_ring[self.kill_ring_index])
+        self.setTextCursor(cursor)
+    
+    def set_keybindings(self, keybindings):
+        """Change keybinding scheme dynamically"""
+        self.keybindings = keybindings
+        self.is_emacs_mode = keybindings.get('move_line_start') == 'Ctrl+A'
+        
+        # Clear existing shortcuts
+        for child in self.children():
+            if isinstance(child, QtGui.QShortcut):
+                child.deleteLater()
+        
+        self.setup_keybindings()
+        logger.log(f"Keybindings changed to: {'Emacs' if self.is_emacs_mode else 'Standard'}")
     
     def update_font_size(self, size):
         """Update editor font size"""
@@ -881,9 +1032,23 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
     
     def zoom_out(self):
         self.update_font_size(max(self.current_font_size - 1, 6))
-    
+
     def zoom_reset(self):
-        self.update_font_size(self.default_font_size)
+        self.update_font_size(self.default_font_size)        
+    
+    def set_keybindings(self, keybindings):
+        """Change keybinding scheme"""
+        self.keybindings = keybindings
+        # Check if this is emacs mode
+        self.is_emacs_mode = keybindings.get('move_line_start') == 'Ctrl+A'
+        
+        # Clear existing shortcuts
+        for child in self.children():
+            if isinstance(child, QtGui.QShortcut):
+                child.deleteLater()
+        
+        self.setup_keybindings()
+        logger.log(f"Keybindings changed to: {'Emacs' if self.is_emacs_mode else 'Standard'}")
     
     def move_cursor(self, operation):
         """Move cursor with optional selection for mark"""
@@ -1114,13 +1279,113 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
                 QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), text, self)
     
     def goto_definition(self, file_path, line, character):
-        """Handle go to definition"""
-        import hou
-        hou.ui.displayMessage(
-            f"Definition at:\n{file_path}\nLine {line+1}, Column {character+1}",
-            severity=hou.severityType.Message,
-            title="Go to Definition"
-        )
+        """Handle go to definition - open in external editor specified by parameter"""
+        logger.log(f"Go to definition: {file_path}:{line}:{character}")
+        
+        # Try to get editor command from node parameter
+        editor_cmd = None
+        
+        if hasattr(self, 'parent_window') and self.parent_window:
+            try:
+                parent_window = self.parent_window
+                if hasattr(parent_window, 'node') and parent_window.node:
+                    node = parent_window.node
+                    
+                    # Get editor command from "editor" parameter
+                    if node.parm("editor"):
+                        editor_cmd = node.parm("editor").eval()
+                        logger.log(f"Got editor command from parameter: {editor_cmd}")
+            except Exception as e:
+                logger.log(f"Could not get editor parameter: {e}", "WARNING")
+        
+        # If no editor command specified, show error
+        if not editor_cmd:
+            import hou
+            hou.ui.displayMessage(
+                f"No editor specified!\n\nDefinition at:\n{file_path}\nLine {line+1}, Column {character+1}\n\nPlease set the 'editor' parameter on your node (e.g., 'code', 'emacs', 'vim')",
+                severity=hou.severityType.Warning,
+                title="Go to Definition"
+            )
+            return
+        
+        # Build command based on editor type
+        import subprocess
+        
+        editor_lower = editor_cmd.lower().strip()
+        
+        try:
+            # Detect editor and format command appropriately
+            if 'code' in editor_lower or 'vscode' in editor_lower:
+                # VS Code: code --goto file:line:column
+                cmd = [editor_cmd, '--goto', f"{file_path}:{line+1}:{character+1}"]
+                logger.log(f"Opening in VS Code: {' '.join(cmd)}")
+                subprocess.Popen(cmd)
+                
+            elif 'emacs' in editor_lower:
+                # Emacs: emacs +line:column file
+                cmd = [editor_cmd, f"+{line+1}:{character+1}", file_path]
+                logger.log(f"Opening in Emacs: {' '.join(cmd)}")
+                subprocess.Popen(cmd)
+                
+            elif 'vim' in editor_lower or 'nvim' in editor_lower:
+                # Vim/Neovim: vim +line file (then use :column to go to column)
+                # For exact column positioning: vim +call\ cursor(line,col) file
+                cmd = [editor_cmd, f"+call cursor({line+1},{character+1})", file_path]
+                logger.log(f"Opening in Vim: {' '.join(cmd)}")
+                subprocess.Popen(cmd)
+                
+            elif 'subl' in editor_lower or 'sublime' in editor_lower:
+                # Sublime Text: subl file:line:column
+                cmd = [editor_cmd, f"{file_path}:{line+1}:{character+1}"]
+                logger.log(f"Opening in Sublime: {' '.join(cmd)}")
+                subprocess.Popen(cmd)
+                
+            elif 'atom' in editor_lower:
+                # Atom: atom file:line:column
+                cmd = [editor_cmd, f"{file_path}:{line+1}:{character+1}"]
+                logger.log(f"Opening in Atom: {' '.join(cmd)}")
+                subprocess.Popen(cmd)
+                
+            elif 'kate' in editor_lower:
+                # Kate: kate --line line --column column file
+                cmd = [editor_cmd, '--line', str(line+1), '--column', str(character+1), file_path]
+                logger.log(f"Opening in Kate: {' '.join(cmd)}")
+                subprocess.Popen(cmd)
+                
+            elif 'gedit' in editor_lower:
+                # gedit: gedit +line file
+                cmd = [editor_cmd, f"+{line+1}", file_path]
+                logger.log(f"Opening in gedit: {' '.join(cmd)}")
+                subprocess.Popen(cmd)
+                
+            else:
+                # Unknown editor - try generic approach: editor file
+                # Most editors at least accept the file as argument
+                cmd = [editor_cmd, file_path]
+                logger.log(f"Opening in unknown editor (generic): {' '.join(cmd)}")
+                subprocess.Popen(cmd)
+                
+                # Show info about line/column since we can't navigate automatically
+                import hou
+                hou.ui.setStatusMessage(
+                    f"Opened {os.path.basename(file_path)} - navigate to line {line+1}, column {character+1}",
+                    hou.severityType.Message
+                )
+            
+            import hou
+            hou.ui.setStatusMessage(
+                f"Opened in {editor_cmd}: {os.path.basename(file_path)}:{line+1}:{character+1}",
+                hou.severityType.Message
+            )
+            
+        except Exception as e:
+            logger.log(f"Error opening external editor: {e}", "ERROR")
+            import hou
+            hou.ui.displayMessage(
+                f"Could not open editor '{editor_cmd}':\n{str(e)}\n\nFile: {file_path}\nLine: {line+1}, Column: {character+1}",
+                severity=hou.severityType.Error,
+                title="Go to Definition Error"
+            )
     
     def handle_diagnostics(self, diagnostics):
         """Handle diagnostics (errors/warnings)"""
@@ -1243,69 +1508,84 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
     
     def keyPressEvent(self, event):
         """Handle key press events"""
-        # Completion popup handling
+        # Track if this is a yank action
+        is_yank = False
+        
+        # Completion popup special handling - only for specific keys
         if self.completion_popup.isVisible():
-            # Navigation mode activation
-            if event.key() in (QtCore.Qt.Key.Key_Down, QtCore.Qt.Key.Key_Up,
-                             QtCore.Qt.Key.Key_PageDown, QtCore.Qt.Key.Key_PageUp):
-                self.completion_popup.navigation_mode = True
-                self.completion_popup.handle_navigation_key(event.key())
+            # Up/Down navigate the completion list
+            if event.key() == QtCore.Qt.Key.Key_Up:
+                self.completion_popup.move_selection_up()
+                return
+            elif event.key() == QtCore.Qt.Key.Key_Down:
+                self.completion_popup.move_selection_down()
                 return
             
-            # Selection keys
-            elif event.key() in (QtCore.Qt.Key.Key_Return, QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Tab):
+            # Enter accepts current completion
+            elif event.key() in (QtCore.Qt.Key.Key_Return, QtCore.Qt.Key.Key_Enter):
                 if self.completion_popup.select_current():
                     return
                 else:
+                    # No completion selected, close popup and add newline
                     self.completion_popup.hide()
-                    if event.key() != QtCore.Qt.Key.Key_Tab:
-                        return
+                    super().keyPressEvent(event)
+                    return
             
             # Escape closes popup
             elif event.key() == QtCore.Qt.Key.Key_Escape:
                 self.completion_popup.hide()
                 return
             
-            # Any other key - let editor handle it, popup will update via textChanged
+            # All other keys: process normally, popup will update via textChanged
         
-        # Handle Tab key - insert 2 spaces
+        # Handle Tab key when popup not visible - insert 2 spaces
         if event.key() == QtCore.Qt.Key_Tab and event.modifiers() == QtCore.Qt.NoModifier:
-            cursor = self.textCursor()
-            cursor.insertText("  ")
-            return
+            if not self.completion_popup.isVisible():
+                cursor = self.textCursor()
+                cursor.insertText("  ")
+                return
         
-        # In emacs mode, prevent Ctrl+A from selecting all
-        if self.is_emacs_mode and event.key() == QtCore.Qt.Key_A and \
-           event.modifiers() == QtCore.Qt.ControlModifier:
-            self.move_cursor(QtGui.QTextCursor.StartOfLine)
-            return
-        
-        # Trigger completion
-        kb = self.keybindings
-        if kb.get('completion'):
-            seq = QtGui.QKeySequence(event.key() | int(event.modifiers()))
-            if seq.matches(QtGui.QKeySequence(kb['completion'])) == QtGui.QKeySequence.ExactMatch:
+        # Trigger completion - check for Ctrl+Space (but not Ctrl+Space in Emacs which is mark)
+        if event.key() == QtCore.Qt.Key_Space and event.modifiers() == QtCore.Qt.ControlModifier:
+            if not self.is_emacs_mode:  # Standard mode uses Ctrl+Space for completion
                 self.trigger_completion()
                 return
         
-        # Go to definition
-        if event.key() == QtCore.Qt.Key.Key_F12 or \
-           (kb.get('goto_definition') and 
-            QtGui.QKeySequence(event.key() | int(event.modifiers())).matches(
-                QtGui.QKeySequence(kb['goto_definition'])) == QtGui.QKeySequence.ExactMatch):
+        # Emacs Alt+/ for completion
+        if self.is_emacs_mode and event.key() == QtCore.Qt.Key_Slash and event.modifiers() == QtCore.Qt.AltModifier:
+            self.trigger_completion()
+            return
+        
+        # Go to definition - F12
+        if event.key() == QtCore.Qt.Key.Key_F12:
             self.trigger_goto_definition()
             return
         
-        # Save file
-        if kb.get('save'):
-            seq = QtGui.QKeySequence(event.key() | int(event.modifiers()))
-            if seq.matches(QtGui.QKeySequence(kb['save'])) == QtGui.QKeySequence.ExactMatch:
-                if self.save_file():
-                    import hou
-                    hou.ui.setStatusMessage("File saved", hou.severityType.Message)
-                return
+        # Emacs Alt+. for go to definition
+        if self.is_emacs_mode and event.key() == QtCore.Qt.Key_Period and event.modifiers() == QtCore.Qt.AltModifier:
+            self.trigger_goto_definition()
+            return
         
+        # Save file - Ctrl+S (or Ctrl+X Ctrl+S for Emacs, but we'll use simple Ctrl+S)
+        if event.key() == QtCore.Qt.Key_S and event.modifiers() == QtCore.Qt.ControlModifier:
+            if self.save_file():
+                import hou
+                hou.ui.setStatusMessage("File saved", hou.severityType.Message)
+            return
+        
+        # Check if this is a yank/paste action (for emacs mode)
+        if event.key() == QtCore.Qt.Key_Y:
+            if self.is_emacs_mode and event.modifiers() == QtCore.Qt.ControlModifier:
+                is_yank = True
+            elif event.modifiers() == QtCore.Qt.AltModifier:
+                is_yank = True  # yank_pop
+        
+        # Let Qt handle the key (this will trigger shortcuts or insert text)
         super().keyPressEvent(event)
+        
+        # Update yank cycle flag
+        if not is_yank:
+            self.last_action_was_paste_cycle = False
         
         # Auto-trigger completion on certain characters
         if event.text() in ('.', ':') and not self.completion_popup.isVisible():
@@ -1353,6 +1633,7 @@ class InfoView(QtWidgets.QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.current_font_size = 12
         self.setup_ui()
     
     def setup_ui(self):
@@ -1364,20 +1645,29 @@ class InfoView(QtWidgets.QWidget):
         layout.addWidget(header)
         
         self.list_widget = QtWidgets.QListWidget()
-        self.list_widget.setStyleSheet("""
-            QListWidget {
+        self.update_style()
+        layout.addWidget(self.list_widget)
+    
+    def update_style(self):
+        """Update stylesheet with current font size"""
+        self.list_widget.setStyleSheet(f"""
+            QListWidget {{
                 background-color: #1E1E1E;
                 color: #D4D4D4;
                 border: none;
                 font-family: Consolas, Monaco, monospace;
-                font-size: 10px;
-            }
-            QListWidget::item {
+                font-size: {self.current_font_size}px;
+            }}
+            QListWidget::item {{
                 padding: 4px;
                 border-bottom: 1px solid #2D2D30;
-            }
+            }}
         """)
-        layout.addWidget(self.list_widget)
+    
+    def set_font_size(self, size):
+        """Set the font size for diagnostics"""
+        self.current_font_size = size
+        self.update_style()
     
     def update_diagnostics(self, diagnostics):
         """Update the diagnostic list"""
@@ -1428,12 +1718,17 @@ class LSPEditorWindow(QtWidgets.QWidget):
         self.file_path = file_path
         self.lsp_client = None
         self.editor = None
+
+        logger.log("Setting up UI")
         
         self.setup_ui()
         
         # Auto-start if we have file path
         if file_path and os.path.exists(file_path):
             QtCore.QTimer.singleShot(100, self.start_lsp)
+        else if os.path.exists(workspace_path):
+            logger.log("Creating temporary file {}")
+            
     
     def setup_ui(self):
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -1487,8 +1782,12 @@ class LSPEditorWindow(QtWidgets.QWidget):
         """)
         self.cancel_button.clicked.connect(self.close)
         
+        self.keybinding_button = QtWidgets.QPushButton("⌨ Keybindings")
+        self.keybinding_button.clicked.connect(self.show_keybinding_dialog)
+        
         button_layout.addWidget(self.status_label)
         button_layout.addStretch()
+        button_layout.addWidget(self.keybinding_button)
         button_layout.addWidget(self.apply_button)
         button_layout.addWidget(self.ok_button)
         button_layout.addWidget(self.cancel_button)
@@ -1559,11 +1858,27 @@ class LSPEditorWindow(QtWidgets.QWidget):
                 self.placeholder.deleteLater()
                 self.placeholder = None
             
+            # Determine keybindings from node parameter or default to standard
+            keybindings = KeybindingPresets.standard()
+            if self.node and self.node.parm("keybindings_preset"):
+                preset_idx = self.node.parm("keybindings_preset").eval()
+                if preset_idx == 1:  # 1 = Emacs
+                    keybindings = KeybindingPresets.emacs()
+                logger.log(f"Using keybindings from parameter: {'Emacs' if preset_idx == 1 else 'Standard'}")
+            
             # Create editor
             self.editor = LSPCodeEditor(self.lsp_client, self.file_path or "temp.lean",
-                                       keybindings=KeybindingPresets.standard())
+                                       keybindings=keybindings)
             self.editor.setPlainText(content)
             self.editor.diagnosticsChanged.connect(self.info_view.update_diagnostics)
+            
+            # Connect font size changes to diagnostics panel
+            self.editor.font_size_changed.connect(self.info_view.set_font_size)
+            
+            # Store reference to parent window for goto_definition
+            self.editor.parent_window = self
+            self.editor.workspace_path = self.workspace_path
+            
             self.editor_layout.addWidget(self.editor)
             
             self.status_label.setText(f"LSP running: {self.server_cmd}")
@@ -1578,6 +1893,31 @@ class LSPEditorWindow(QtWidgets.QWidget):
             hou.ui.displayMessage(f"Error starting LSP: {str(e)}",
                                 severity=hou.severityType.Error)
             self.status_label.setText(f"Error: {str(e)}")
+    
+    def show_keybinding_dialog(self):
+        """Show keybinding selection dialog"""
+        if not self.editor:
+            return
+        
+        current_preset = "emacs" if self.editor.is_emacs_mode else "standard"
+        dialog = KeybindingDialog(current_preset, self)
+        
+        if dialog.exec() == QtWidgets.QDialog.Accepted:
+            preset = dialog.get_selected_preset()
+            
+            # Update editor keybindings
+            if preset == "emacs":
+                self.editor.set_keybindings(KeybindingPresets.emacs())
+            else:
+                self.editor.set_keybindings(KeybindingPresets.standard())
+            
+            # Update node parameter if available
+            if self.node and self.node.parm("keybindings_preset"):
+                self.node.parm("keybindings_preset").set(1 if preset == "emacs" else 0)
+                logger.log(f"Updated keybindings_preset parameter to: {preset}")
+            
+            import hou
+            hou.ui.setStatusMessage(f"Keybindings changed to: {preset.title()}", hou.severityType.Message)
     
     def apply_changes(self):
         """Apply changes back to the parameter"""
@@ -1603,8 +1943,12 @@ class LSPEditorWindow(QtWidgets.QWidget):
     
     def closeEvent(self, event):
         """Clean up when closing"""
+        logger.log("Editor window closing")
         if self.lsp_client:
-            self.lsp_client.shutdown()
+            # Shutdown quickly without blocking
+            if self.lsp_client.process.state() == QProcess.ProcessState.Running:
+                self.lsp_client.process.kill()
+            logger.log("LSP process terminated")
         event.accept()
 
 
@@ -1776,7 +2120,8 @@ def open_code_editor_from_kwargs(kwargs):
     server_cmd = node.evalParm("lsp_server") if node.parm("lsp_server") else "lake serve"
     workspace = node.evalParm("workspace") if node.parm("workspace") else os.getcwd()
     file_path = node.evalParm("file") if node.parm("file") else ""
-    
+
+    logger.log("Starting LSP Code Editor")
     return open_code_editor(
         node=node,
         parm_name='code',
