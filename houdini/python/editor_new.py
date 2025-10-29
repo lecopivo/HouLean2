@@ -1485,4 +1485,335 @@ class LSPEditorWindow(QtWidgets.QWidget):
                 background-color: #505053;
             }
         """)
-        self.cancel
+        self.cancel_button.clicked.connect(self.close)
+        
+        button_layout.addWidget(self.status_label)
+        button_layout.addStretch()
+        button_layout.addWidget(self.apply_button)
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
+        
+        main_layout.addWidget(button_bar)
+        
+        # Splitter for editor and diagnostics
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        self.splitter.setStyleSheet("""
+            QSplitter::handle {
+                background-color: #3e3e42;
+                height: 2px;
+            }
+            QSplitter::handle:hover {
+                background-color: #007acc;
+            }
+        """)
+        
+        # Editor will be added here after LSP starts
+        self.editor_container = QtWidgets.QWidget()
+        self.editor_layout = QtWidgets.QVBoxLayout(self.editor_container)
+        self.editor_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.placeholder = QtWidgets.QLabel("Starting LSP server...")
+        self.placeholder.setAlignment(QtCore.Qt.AlignCenter)
+        self.placeholder.setStyleSheet("color: gray; padding: 20px;")
+        self.editor_layout.addWidget(self.placeholder)
+        
+        self.splitter.addWidget(self.editor_container)
+        
+        # Diagnostics view
+        self.info_view = InfoView()
+        self.splitter.addWidget(self.info_view)
+        
+        self.splitter.setSizes([500, 150])
+        
+        main_layout.addWidget(self.splitter)
+    
+    def start_lsp(self):
+        """Start the LSP server and editor"""
+        logger.log("=== Starting LSP ===")
+        logger.log(f"Server: {self.server_cmd}")
+        logger.log(f"Workspace: {self.workspace_path}")
+        logger.log(f"File: {self.file_path}")
+        
+        try:
+            # Start LSP client
+            cmd_parts = self.server_cmd.split() if isinstance(self.server_cmd, str) else self.server_cmd
+            self.lsp_client = LSPClient(cmd_parts, self.workspace_path)
+            
+            if not self.lsp_client.start():
+                raise Exception("Failed to start LSP server process")
+            
+            # Load file content
+            if self.file_path and os.path.exists(self.file_path):
+                with open(self.file_path, 'r') as f:
+                    content = f.read()
+            else:
+                # Try to get from parameter if no file
+                if self.node and self.parm_name:
+                    content = self.node.parm(self.parm_name).eval()
+                else:
+                    content = ""
+            
+            # Remove placeholder
+            if self.placeholder:
+                self.editor_layout.removeWidget(self.placeholder)
+                self.placeholder.deleteLater()
+                self.placeholder = None
+            
+            # Create editor
+            self.editor = LSPCodeEditor(self.lsp_client, self.file_path or "temp.lean",
+                                       keybindings=KeybindingPresets.standard())
+            self.editor.setPlainText(content)
+            self.editor.diagnosticsChanged.connect(self.info_view.update_diagnostics)
+            self.editor_layout.addWidget(self.editor)
+            
+            self.status_label.setText(f"LSP running: {self.server_cmd}")
+            self.apply_button.setEnabled(True)
+            self.ok_button.setEnabled(True)
+            
+            logger.log("=== LSP Started Successfully ===")
+            
+        except Exception as e:
+            logger.log(f"Error starting LSP: {e}", "ERROR")
+            import hou
+            hou.ui.displayMessage(f"Error starting LSP: {str(e)}",
+                                severity=hou.severityType.Error)
+            self.status_label.setText(f"Error: {str(e)}")
+    
+    def apply_changes(self):
+        """Apply changes back to the parameter"""
+        if self.node and self.parm_name and self.editor:
+            try:
+                code = self.editor.toPlainText()
+                self.node.parm(self.parm_name).set(code)
+                import hou
+                hou.ui.setStatusMessage("Changes applied", hou.severityType.Message)
+            except Exception as e:
+                import hou
+                hou.ui.displayMessage(f"Error applying changes: {str(e)}", 
+                                    severity=hou.severityType.Error)
+        
+        # Also save file if we have a path
+        if self.editor and self.file_path:
+            self.editor.save_file()
+    
+    def ok_and_close(self):
+        """Apply changes and close the window"""
+        self.apply_changes()
+        self.close()
+    
+    def closeEvent(self, event):
+        """Clean up when closing"""
+        if self.lsp_client:
+            self.lsp_client.shutdown()
+        event.accept()
+
+
+# ============================================================================
+# Keybinding Dialog
+# ============================================================================
+
+class KeybindingDialog(QtWidgets.QDialog):
+    """Dialog for selecting keybinding preset"""
+    
+    def __init__(self, current_preset="standard", parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Keybinding Settings")
+        self.setModal(True)
+        self.selected_preset = current_preset
+        
+        layout = QtWidgets.QVBoxLayout()
+        
+        preset_group = QtWidgets.QGroupBox("Keybinding Preset")
+        preset_layout = QtWidgets.QVBoxLayout()
+        
+        self.standard_radio = QtWidgets.QRadioButton("Standard (Windows/Qt)")
+        self.emacs_radio = QtWidgets.QRadioButton("Emacs")
+        
+        if current_preset == "emacs":
+            self.emacs_radio.setChecked(True)
+        else:
+            self.standard_radio.setChecked(True)
+        
+        preset_layout.addWidget(self.standard_radio)
+        preset_layout.addWidget(self.emacs_radio)
+        preset_group.setLayout(preset_layout)
+        
+        info_text = QtWidgets.QTextEdit()
+        info_text.setReadOnly(True)
+        info_text.setMaximumHeight(300)
+        info_text.setHtml(self.get_keybinding_reference())
+        
+        button_box = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        
+        layout.addWidget(preset_group)
+        layout.addWidget(QtWidgets.QLabel("Keybinding Reference:"))
+        layout.addWidget(info_text)
+        layout.addWidget(button_box)
+        
+        self.setLayout(layout)
+        self.resize(500, 500)
+        
+        self.standard_radio.toggled.connect(lambda: info_text.setHtml(self.get_keybinding_reference()))
+        self.emacs_radio.toggled.connect(lambda: info_text.setHtml(self.get_keybinding_reference()))
+    
+    def get_keybinding_reference(self):
+        """Generate HTML reference for current preset"""
+        preset = "emacs" if self.emacs_radio.isChecked() else "standard"
+        kb = KeybindingPresets.emacs() if preset == "emacs" else KeybindingPresets.standard()
+        
+        html = "<style>table { border-collapse: collapse; width: 100%; }"
+        html += "th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }"
+        html += "th { background-color: #0e639c; color: white; }</style>"
+        html += "<table><tr><th>Action</th><th>Keybinding</th></tr>"
+        
+        categories = [
+            ("Movement", ['move_up', 'move_down', 'move_left', 'move_right', 
+                         'move_word_left', 'move_word_right', 'move_line_start', 
+                         'move_line_end', 'move_doc_start', 'move_doc_end']),
+            ("Editing", ['delete_char', 'backspace', 'delete_word', 'backspace_word']),
+            ("LSP", ['completion', 'goto_definition', 'save']),
+            ("Clipboard", ['cut', 'copy', 'paste']),
+            ("Undo/Redo", ['undo', 'redo']),
+            ("View", ['zoom_in', 'zoom_out', 'zoom_reset'])
+        ]
+        
+        for category, keys in categories:
+            html += f"<tr><td colspan='2'><b>{category}</b></td></tr>"
+            for key in keys:
+                if key in kb and kb[key]:
+                    action_name = key.replace('_', ' ').title()
+                    html += f"<tr><td>{action_name}</td><td><code>{kb[key]}</code></td></tr>"
+        
+        html += "</table>"
+        return html
+    
+    def get_selected_preset(self):
+        """Return selected preset name"""
+        return "emacs" if self.emacs_radio.isChecked() else "standard"
+
+
+# ============================================================================
+# Public API
+# ============================================================================
+
+_editor_windows = {}
+
+def open_code_editor(node=None, parm_name="code", server_cmd="lake serve", 
+                    workspace_path="", file_path=""):
+    """
+    Open the LSP code editor.
+    
+    Args:
+        node: The HDA node (optional)
+        parm_name: The name of the string parameter to edit (optional)
+        server_cmd: LSP server command (e.g., "lake serve" for Lean 4)
+        workspace_path: Project root directory
+        file_path: File to edit
+    
+    Returns:
+        The editor window instance
+    """
+    global _editor_windows
+    
+    # Create a unique key
+    widget_key = f"{node.path() if node else 'standalone'}_{parm_name}_{file_path}"
+    
+    # If editor already exists, bring it to front
+    if widget_key in _editor_windows and _editor_windows[widget_key].isVisible():
+        _editor_windows[widget_key].raise_()
+        _editor_windows[widget_key].activateWindow()
+        return _editor_windows[widget_key]
+    
+    # Create new editor
+    import hou
+    editor = LSPEditorWindow(
+        parent=hou.qt.mainWindow(),
+        node=node,
+        parm_name=parm_name,
+        server_cmd=server_cmd,
+        workspace_path=workspace_path,
+        file_path=file_path
+    )
+    
+    title = f"LSP Code Editor"
+    if node:
+        title += f" - {node.name()}.{parm_name}"
+    elif file_path:
+        title += f" - {os.path.basename(file_path)}"
+    
+    editor.setWindowTitle(title)
+    editor.setWindowFlags(QtCore.Qt.Window)
+    editor.resize(1000, 750)
+    
+    editor.setStyleSheet("""
+        QWidget {
+            background-color: #1e1e1e;
+        }
+    """)
+    
+    editor.show()
+    _editor_windows[widget_key] = editor
+    
+    return editor
+
+
+def open_code_editor_from_kwargs(kwargs):
+    """
+    Convenience function to call from a button callback.
+    
+    Expects node parameters:
+    - code: string parameter to edit
+    - lsp_server: LSP server command
+    - workspace: workspace path
+    - file: file path (optional)
+    """
+    node = kwargs['node']
+    
+    server_cmd = node.evalParm("lsp_server") if node.parm("lsp_server") else "lake serve"
+    workspace = node.evalParm("workspace") if node.parm("workspace") else os.getcwd()
+    file_path = node.evalParm("file") if node.parm("file") else ""
+    
+    return open_code_editor(
+        node=node,
+        parm_name='code',
+        server_cmd=server_cmd,
+        workspace_path=workspace,
+        file_path=file_path
+    )
+
+
+# ============================================================================
+# Example usage
+# ============================================================================
+
+if __name__ == "__main__":
+    """
+    Example usage in Houdini:
+    
+    1. From a button callback:
+       import lsp_editor
+       lsp_editor.open_code_editor_from_kwargs(kwargs)
+    
+    2. Standalone:
+       import lsp_editor
+       editor = lsp_editor.open_code_editor(
+           server_cmd="lake serve",
+           workspace_path="/path/to/lean/project",
+           file_path="/path/to/file.lean"
+       )
+    
+    3. With HDA parameter:
+       import lsp_editor
+       node = hou.pwd()
+       editor = lsp_editor.open_code_editor(
+           node=node,
+           parm_name="code",
+           server_cmd="lake serve",
+           workspace_path="/path/to/lean/project"
+       )
+    """
+    pass
