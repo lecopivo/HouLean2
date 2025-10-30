@@ -14,15 +14,15 @@ def mk.apex_impl (x y z : Float) : Vector3 := FloatToVector3 x y z
 -- Component accessors
 @[apex_implements HouLean.Vector3.x]
 noncomputable
-def x.apex_impl (v : Vector3) : Float := GetComponentVector3 v 0
+def x.apex_impl (v : Vector3) : Float := (Vector3ToFloat v).1
 
 @[apex_implements HouLean.Vector3.y]
 noncomputable
-def y.apex_impl (v : Vector3) : Float := GetComponentVector3 v 1
+def y.apex_impl (v : Vector3) : Float := (Vector3ToFloat v).2.1
 
 @[apex_implements HouLean.Vector3.z]
 noncomputable
-def z.apex_impl (v : Vector3) : Float := GetComponentVector3 v 2
+def z.apex_impl (v : Vector3) : Float := (Vector3ToFloat v).2.2
 
 -- Arithmetic operations
 @[apex_implements HouLean.Vector3.add]

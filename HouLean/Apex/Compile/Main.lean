@@ -46,6 +46,14 @@ def arrayToBundle (ps : Array PortBundle) : PortBundle :=
   else
     .node ps
 
+partial def arrayToProdBundle (ps : Array PortBundle) : PortBundle :=
+  if ps.size = 0 then
+    .node #[]
+  else if ps.size = 1 then
+    ps[0]!
+  else
+    .node #[ps[0]!, arrayToProdBundle ps[1:].toArray]
+
 /-- Add a node to the graph with optional subports -/
 def addNode (nodeType : NodeType) (subports : Array AddSubPortSpec) 
     (userName? : Option String := none) : 
@@ -116,7 +124,7 @@ def addNode (nodeType : NodeType) (subports : Array AddSubPortSpec)
       ports := g.ports ++ ports
     }
 
-    return (g, nodeOff, inputs, arrayToBundle outputs))
+    return (g, nodeOff, inputs, arrayToProdBundle outputs))
 
 def setIntPort (val : Int) (id : PortId) : GraphCompileM Unit := do
   modifyGraph (fun g => return ({g with literals := g.literals.push (.int val, id)}, ()))
@@ -129,6 +137,8 @@ def setStringPort (val : String) (id : PortId) : GraphCompileM Unit := do
 
 def setBoolPort (val : Bool) (id : PortId) : GraphCompileM Unit := do
   modifyGraph (fun g => return ({g with literals := g.literals.push (.bool val, id)}, ()))
+
+
 
 /-- Add an integer constant node -/
 def addInt (val : Int) : GraphCompileM PortBundle := do
@@ -206,7 +216,7 @@ def makeConnections (src trg : Array PortBundle) : GraphCompileM Bool := do
 
   return true
 
-/-- Add identity node for a given type, returns input and output port bundle -/
+/-- Add identit ynode for a given type, returns input and output port bundle -/
 def addIdentity (type : Expr) (userName? : Option String := none) : 
     GraphCompileM (PortBundle × PortBundle) := do
   let some apexType ← getApexType? type
@@ -257,11 +267,11 @@ def addIdentity (type : Expr) (userName? : Option String := none) :
     let node : Node := {
       type := nodeType
       globalId := nodeOff
-      name := userName?.getD (← getFreshNodeName "null")
+      name := (← getFreshNodeName (userName?.getD "null"))
       ports := ports.map (fun p => p.globalId)
       subPorts := #[{
-        inputPortId  := some (2 + portOff)
-        outputPortId := some (5 + portOff)
+        inputPortId  := some (portOff + 0)
+        outputPortId := some (portOff + 1)
         subports := stateIn.flatten.map (fun p => (p.name, p.type.builtin!))
         }]
     }
@@ -328,8 +338,8 @@ mutual
 partial def toApexGraph (e : Expr) (userName? : Option String := none) : 
     GraphCompileM PortBundle := do
   
-  withTraceNode `HouLean.Apex.compiler (fun r => return m!"[{ExceptToEmoji.toEmoji r}] compiling {e}") do
-  let e ← withConfig (fun cfg => {cfg with iota := true, zeta := false}) <| whnfI e
+  withTraceNode `HouLean.Apex.compiler (fun r => return m!"[{ExceptToEmoji.toEmoji r}] compiling expression\n{e}") do
+  let e ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfI e
 
   match e with
   | .bvar _ => 
@@ -366,8 +376,19 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
     let (fn, args) := e.withApp fun fn args => (fn, args)
 
     -- blast match statement
+    -- todo: add let binding ...
     if ← isMatcherApp e then
-      return ← toApexGraph (← whnf e)
+      let body := e.appArg!
+      let x := e.appFn!.appArg!
+      trace[HouLean.Apex.compiler] m!"match expression for {x}"
+      if x.isFVar then
+        trace[HouLean.Apex.compiler] m!"fvar case, reducing match"
+        return ← toApexGraph (← whnf e)
+      else
+        trace[HouLean.Apex.compiler] m!"nontrivial match"
+        let fn := e.appFn!.appFn!
+        return ← toApexGraph (Expr.letE `r (← inferType x) x ((fn.app (.bvar 0)).app body) false)
+        
 
     -- implemented_by -- so something more clever here
     let s := compilerExt.getState (← getEnv)
@@ -403,6 +424,7 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
 
     -- Special case: for-loop
     if fname = ``Std.Range.forIn'.loop then
+      trace[HouLean.Apex.compiler] m!"compiling for loop"
       let monad := args[0]!
       let range ← whnf args[3]!
 
@@ -419,8 +441,11 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
       unless ← isDefEq s q(1 : Nat) do
         throwError m!"Invalid range step: {s}"
 
+      trace[HouLean.Apex.compiler] m!"iterations"
       let iterations ← toApexGraph (range.getArg! 1)
+      trace[HouLean.Apex.compiler] m!"inner loop"
       let (loopIns, loopOut) ← functionToApexGraph args[4]!
+      trace[HouLean.Apex.compiler] m!"initial state"
       let input ← toApexGraph args[5]!
 
       let loopIndexIn := loopIns[0]!
@@ -470,20 +495,34 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
     return outputBundle
     
   | .letE n t v b _ => 
+    if t.isForall then
+      return ← toApexGraph (b.instantiate1 v)
     withLocalDeclD n t fun x => do
       let letOutput ← toApexGraph v
-      let (input, _) ← addFVar x.fvarId!
-      let _ ← makeConnections #[letOutput] #[input]
+      modify (fun s => {s with fvarToPort := s.fvarToPort.insert x.fvarId! letOutput})
       let b := b.instantiate1 x
       toApexGraph b
 
-  | .proj _ i x => 
+  | .proj s i x => 
     trace[HouLean.Apex.compiler] m!"projection {i}"
-    let x' := x
-    let x ← toApexGraph x
-    let some si := x.child? i
-      | throwError m!"Invalid projection {i} of {x'}: {x.toString}"
-    return si
+    let t ← inferType x
+    if ← isStructureType t then
+      let x' := x
+      let x ← toApexGraph x
+      let some si := x.child? i
+        | throwError m!"Invalid projection {i} of {x'}: {x.toString}"
+      return si
+    else
+      let info := getStructureInfo (← getEnv) s
+      -- revert to projection fn application
+      let some fn := info.getProjFn? i
+        | throwError m!"Invalid projection {i} for {t}"
+      let fn := (← mkAppM fn #[x]).appFn!
+      let s := compilerExt.getState (← getEnv)
+      if let some fn' := s.implementedBy[fn]? then
+        return ← toApexGraph (fn'.beta #[x])
+      else
+        throwError m!"Don't know how to compiler projection {e}"
 
   | _ => 
     throwError m!"Cannot compile expression: {e}. Constructor {e.ctorName}"
@@ -495,7 +534,7 @@ partial def functionToApexGraph (e : Expr) :
     if xs.size = 0 then
       throwError m!"Function expected: {e}"
 
-    let b ← withConfig (fun cfg => {cfg with iota := true, zeta := false}) <|
+    let b ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <|
       whnfI (e.beta xs)
 
     let mut inputs : Array PortBundle := #[]
@@ -503,6 +542,7 @@ partial def functionToApexGraph (e : Expr) :
       let (input, _) ← addFVar x.fvarId!
       inputs := inputs.push input
     let output ← toApexGraph b
+
     return (inputs, output)
 
 end

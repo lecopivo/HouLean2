@@ -52,6 +52,22 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
 
   return none
 
+/-- Is `type` structure *and* not compiler supported type.
+
+Type like `Array String` is a structure by at some point we will treat it as an 
+atomic type and used it instead of `StringArray`.
+-/
+def isStructureType (type : Expr) : MetaM Bool := do
+  let s := compilerExt.getState (← getEnv)
+
+  -- Apex compiler supported type
+  if s.apexTypes.contains type then
+    return false
+
+  let .const fn _ := type.getAppFn | return false
+  return isStructure (← getEnv) fn
+  
+
 /-- Tries to determine size of all variadic types. If fails it returns the `e : Expr` that
 was not possible to turn into `Nat` literal. -/
 def enforceStaticSize (type : ApexType) : MetaM (Except Expr ApexStaticType) := 

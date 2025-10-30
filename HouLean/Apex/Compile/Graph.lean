@@ -294,7 +294,7 @@ Id.run do
   for (val, portId) in g.literals do
     let p := g.ports[portId]!
     -- nodes are index from 1-in python
-    s := s ++ s!"graph.setNodeParm({p.nodeId+1}, \"{p.name}\", {val.toString})"
+    s := s ++ s!"graph.setNodeParm({p.nodeId+1}, \"{p.name}\", {val.toString})" ++ "\n"
 
   s := s ++ "\n# Layout and Save Graph" ++ "\n"
   s := s ++ "graph.layout()" ++ "\n"
