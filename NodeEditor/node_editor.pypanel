@@ -1,4 +1,12 @@
-"""
+<?xml version="1.0" encoding="UTF-8"?>
+<pythonPanelDocument>
+  <!-- This file contains definitions of Python interfaces and the
+ interfaces menu.  It should not be hand-edited when it is being
+ used by the application.  Note, that two definitions of the
+ same interface or of the interfaces menu are not allowed
+ in a single file. -->
+  <interface name="Lean Node Editor" label="Lean Node Editor" icon="MISC_python" showNetworkNavigationBar="false" help_url="">
+    <script><![CDATA["""
 Houdini Node Editor Python Pane
 To use: In Houdini, create a new Python Panel and paste this code
 Or save as a .py file and load it as a Python Panel
@@ -1636,4 +1644,9 @@ class NodeEditorWidget(QWidget):
 
 # This function is called when the Python Panel is created
 def createInterface():
-    return NodeEditorWidget()
+    return NodeEditorWidget()]]></script>
+    <includeInPaneTabMenu menu_position="0" create_separator="false"/>
+    <includeInToolbarMenu menu_position="208" create_separator="false"/>
+    <help><![CDATA[]]></help>
+  </interface>
+</pythonPanelDocument>

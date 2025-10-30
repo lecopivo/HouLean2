@@ -15,6 +15,16 @@
         {"name": "position", "type": "Vector3"},
         {"name": "velocity", "type": "Vector3"}
       ]
+    },
+    "Character": {
+      "subports": [
+        {"name": "head", "type": "Particle"},
+        {"name": "torso", "type": "Particle"},
+        {"name": "left_arm", "type": "Particle"},
+        {"name": "right_arm", "type": "Particle"},
+        {"name": "left_leg", "type": "Particle"},
+        {"name": "right_leg", "type": "Particle"}
+      ]
     }
   },
   "node_types": [
@@ -336,6 +346,69 @@
       ],
       "outputs": [
         {"name": "particle", "type": "Particle"}
+      ]
+    },
+    {
+      "name": "Character_Create",
+      "inputs": [
+        {"name": "head", "type": "Particle"},
+        {"name": "torso", "type": "Particle"},
+        {"name": "left_arm", "type": "Particle"},
+        {"name": "right_arm", "type": "Particle"},
+        {"name": "left_leg", "type": "Particle"},
+        {"name": "right_leg", "type": "Particle"}
+      ],
+      "outputs": [
+        {"name": "character", "type": "Character"}
+      ]
+    },
+    {
+      "name": "Character_GetHead",
+      "inputs": [
+        {"name": "character", "type": "Character"}
+      ],
+      "outputs": [
+        {"name": "head", "type": "Particle"}
+      ]
+    },
+    {
+      "name": "Character_SetHead",
+      "inputs": [
+        {"name": "character", "type": "Character"},
+        {"name": "head", "type": "Particle"}
+      ],
+      "outputs": [
+        {"name": "character", "type": "Character"}
+      ]
+    },
+    {
+      "name": "Character_ApplyGlobalForce",
+      "inputs": [
+        {"name": "character", "type": "Character"},
+        {"name": "force", "type": "Vector3"},
+        {"name": "mass", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "character", "type": "Character"}
+      ]
+    },
+    {
+      "name": "Character_Integrate",
+      "inputs": [
+        {"name": "character", "type": "Character"},
+        {"name": "timestep", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "character", "type": "Character"}
+      ]
+    },
+    {
+      "name": "Character_GetCenterOfMass",
+      "inputs": [
+        {"name": "character", "type": "Character"}
+      ],
+      "outputs": [
+        {"name": "center", "type": "Vector3"}
       ]
     }
   ]

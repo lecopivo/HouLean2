@@ -3,29 +3,71 @@
     {
       "type": "Particle_Create",
       "name": "Particle_Create",
-      "x": -523.0,
-      "y": -85.0
-    },
-    {
-      "type": "Vector3_Add",
-      "name": "Vector3_Add",
-      "x": -203.0,
-      "y": 41.0
+      "x": 180.35999999999996,
+      "y": 238.9600000000001
     },
     {
       "type": "Particle_ApplyForce",
       "name": "Particle_ApplyForce",
-      "x": 159.0,
-      "y": -133.0
+      "x": 950.4799999999996,
+      "y": 193.76000000000008
+    },
+    {
+      "type": "Vector3_Add",
+      "name": "Vector3_Add",
+      "x": 710.9200000000001,
+      "y": 352.7200000000001
+    },
+    {
+      "type": "Float_Sin",
+      "name": "Float_Sin",
+      "x": 456.59999999999997,
+      "y": 518.6400000000001
+    },
+    {
+      "type": "Character_Create",
+      "name": "Character_Create",
+      "x": 1327.2000000000003,
+      "y": 132.16000000000005
+    },
+    {
+      "type": "Character_Integrate",
+      "name": "Character_Integrate",
+      "x": 1756.0020104635573,
+      "y": 138.65863555393582
     },
     {
       "type": "Float_Constant",
       "name": "Float_Constant",
-      "x": -197.0,
-      "y": -224.0
+      "x": 1320.2944635918366,
+      "y": 472.3636124081629
+    },
+    {
+      "type": "Character_GetCenterOfMass",
+      "name": "Character_GetCenterOfMass",
+      "x": 2080.0028330699697,
+      "y": 448.00528362390673
+    },
+    {
+      "type": "Character_ApplyGlobalForce",
+      "name": "Character_ApplyGlobalForce",
+      "x": 2617.596301632652,
+      "y": 103.43242383673481
+    },
+    {
+      "type": "Particle_Integrate",
+      "name": "Particle_Integrate",
+      "x": 2174.0367428571435,
+      "y": -4.952628571428562
     }
   ],
   "connections": [
+    {
+      "output_node": "Particle_Create",
+      "output_port": "particle",
+      "input_node": "Particle_ApplyForce",
+      "input_port": "particle"
+    },
     {
       "output_node": "Particle_Create",
       "output_port": "particle.position",
@@ -34,15 +76,27 @@
     },
     {
       "output_node": "Particle_Create",
-      "output_port": "particle.velocity",
+      "output_port": "particle.velocity.x",
       "input_node": "Vector3_Add",
-      "input_port": "b"
+      "input_port": "b.y"
     },
     {
       "output_node": "Particle_Create",
-      "output_port": "particle",
-      "input_node": "Particle_ApplyForce",
-      "input_port": "particle"
+      "output_port": "particle.velocity.y",
+      "input_node": "Vector3_Add",
+      "input_port": "b.x"
+    },
+    {
+      "output_node": "Particle_Create",
+      "output_port": "particle.velocity.z",
+      "input_node": "Float_Sin",
+      "input_port": "angle"
+    },
+    {
+      "output_node": "Float_Sin",
+      "output_port": "result",
+      "input_node": "Vector3_Add",
+      "input_port": "b.z"
     },
     {
       "output_node": "Vector3_Add",
@@ -51,10 +105,124 @@
       "input_port": "force"
     },
     {
+      "output_node": "Particle_ApplyForce",
+      "output_port": "particle",
+      "input_node": "Character_Create",
+      "input_port": "head"
+    },
+    {
+      "output_node": "Particle_ApplyForce",
+      "output_port": "particle",
+      "input_node": "Character_Create",
+      "input_port": "left_arm"
+    },
+    {
+      "output_node": "Particle_ApplyForce",
+      "output_port": "particle",
+      "input_node": "Character_Create",
+      "input_port": "right_arm"
+    },
+    {
+      "output_node": "Particle_ApplyForce",
+      "output_port": "particle",
+      "input_node": "Character_Create",
+      "input_port": "left_leg"
+    },
+    {
+      "output_node": "Particle_ApplyForce",
+      "output_port": "particle.position",
+      "input_node": "Character_Create",
+      "input_port": "right_leg.velocity"
+    },
+    {
+      "output_node": "Particle_ApplyForce",
+      "output_port": "particle.velocity",
+      "input_node": "Character_Create",
+      "input_port": "right_leg.position"
+    },
+    {
       "output_node": "Float_Constant",
       "output_port": "value",
-      "input_node": "Particle_ApplyForce",
-      "input_port": "mass"
+      "input_node": "Character_Integrate",
+      "input_port": "timestep"
+    },
+    {
+      "output_node": "Character_Create",
+      "output_port": "character",
+      "input_node": "Character_Integrate",
+      "input_port": "character"
+    },
+    {
+      "output_node": "Particle_ApplyForce",
+      "output_port": "particle",
+      "input_node": "Character_Create",
+      "input_port": "torso"
+    },
+    {
+      "output_node": "Character_Integrate",
+      "output_port": "character",
+      "input_node": "Character_GetCenterOfMass",
+      "input_port": "character"
+    },
+    {
+      "output_node": "Character_Integrate",
+      "output_port": "character.head",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "character.head"
+    },
+    {
+      "output_node": "Character_Integrate",
+      "output_port": "character.torso",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "character.torso"
+    },
+    {
+      "output_node": "Character_Integrate",
+      "output_port": "character.left_arm",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "character.left_arm"
+    },
+    {
+      "output_node": "Character_Integrate",
+      "output_port": "character.left_leg",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "character.left_leg"
+    },
+    {
+      "output_node": "Character_Integrate",
+      "output_port": "character.right_leg",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "character.right_leg"
+    },
+    {
+      "output_node": "Character_Integrate",
+      "output_port": "character.right_arm",
+      "input_node": "Particle_Integrate",
+      "input_port": "particle"
+    },
+    {
+      "output_node": "Particle_Integrate",
+      "output_port": "particle",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "character.right_arm"
+    },
+    {
+      "output_node": "Character_GetCenterOfMass",
+      "output_port": "center.z",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "force.z"
+    },
+    {
+      "output_node": "Character_GetCenterOfMass",
+      "output_port": "center.x",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "force.y"
+    },
+    {
+      "output_node": "Character_GetCenterOfMass",
+      "output_port": "center.y",
+      "input_node": "Character_ApplyGlobalForce",
+      "input_port": "force.x"
     }
   ]
 }
