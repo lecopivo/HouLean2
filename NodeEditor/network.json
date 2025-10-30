@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "type": "Particle_Create",
+      "name": "Particle_Create",
+      "x": -523.0,
+      "y": -85.0
+    },
+    {
+      "type": "Vector3_Add",
+      "name": "Vector3_Add",
+      "x": -203.0,
+      "y": 41.0
+    },
+    {
+      "type": "Particle_ApplyForce",
+      "name": "Particle_ApplyForce",
+      "x": 159.0,
+      "y": -133.0
+    },
+    {
+      "type": "Float_Constant",
+      "name": "Float_Constant",
+      "x": -197.0,
+      "y": -224.0
+    }
+  ],
+  "connections": [
+    {
+      "output_node": "Particle_Create",
+      "output_port": "particle.position",
+      "input_node": "Vector3_Add",
+      "input_port": "a"
+    },
+    {
+      "output_node": "Particle_Create",
+      "output_port": "particle.velocity",
+      "input_node": "Vector3_Add",
+      "input_port": "b"
+    },
+    {
+      "output_node": "Particle_Create",
+      "output_port": "particle",
+      "input_node": "Particle_ApplyForce",
+      "input_port": "particle"
+    },
+    {
+      "output_node": "Vector3_Add",
+      "output_port": "result",
+      "input_node": "Particle_ApplyForce",
+      "input_port": "force"
+    },
+    {
+      "output_node": "Float_Constant",
+      "output_port": "value",
+      "input_node": "Particle_ApplyForce",
+      "input_port": "mass"
+    }
+  ]
+}

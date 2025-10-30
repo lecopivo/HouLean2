@@ -1,0 +1,1606 @@
+import sys
+import json
+from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+                               QHBoxLayout, QGraphicsView, QGraphicsScene, 
+                               QGraphicsItem, QGraphicsRectItem, QGraphicsEllipseItem,
+                               QGraphicsTextItem, QSplitter, QPushButton,
+                               QFileDialog, QGraphicsPathItem, QInputDialog, QLineEdit,
+                               QMenu, QLabel, QToolBar)
+from PySide6.QtCore import Qt, QRectF, QPointF, Signal, QTimer
+from PySide6.QtGui import QPen, QBrush, QColor, QPainterPath, QFont, QPainter, QAction, QPainterPathStroker
+
+
+def get_type_color(type_name):
+    """Get color for a port type"""
+    colors = {
+        'Float': QColor(120, 220, 120),
+        'Vector3': QColor(100, 180, 255),
+        'Particle': QColor(255, 160, 100),
+    }
+    return colors.get(type_name, QColor(180, 180, 180))
+
+
+class PortType:
+    """Defines a port type with its subport structure"""
+    def __init__(self, name, subports=None):
+        self.name = name
+        self.subports = subports or []
+
+
+class NodeType:
+    """Defines a node type with its inputs and outputs"""
+    def __init__(self, name, inputs, outputs):
+        self.name = name
+        self.inputs = inputs
+        self.outputs = outputs
+
+
+class NodeTypeRegistry:
+    """Stores all available node types and port types"""
+    def __init__(self):
+        self.node_types = {}
+        self.port_types = {}
+    
+    def load_from_json(self, json_data):
+        """Load node types and port types from JSON"""
+        data = json.loads(json_data) if isinstance(json_data, str) else json_data
+        
+        for type_name, type_def in data.get('port_types', {}).items():
+            subports = [(sp['name'], sp['type']) for sp in type_def.get('subports', [])]
+            self.port_types[type_name] = PortType(type_name, subports)
+        
+        for node_def in data.get('node_types', []):
+            inputs = [(inp['name'], inp['type']) for inp in node_def.get('inputs', [])]
+            outputs = [(out['name'], out['type']) for out in node_def.get('outputs', [])]
+            self.node_types[node_def['name']] = NodeType(node_def['name'], inputs, outputs)
+    
+    def get_port_type(self, type_name):
+        return self.port_types.get(type_name)
+    
+    def get_node_type(self, type_name):
+        return self.node_types.get(type_name)
+
+
+class SubportWidget(QGraphicsItem):
+    """A subport that is shown when parent is expanded"""
+    PORT_RADIUS = 5
+    SUBPORT_SPACING = 22
+    
+    def __init__(self, name, type_name, is_input, parent_port, registry):
+        super().__init__()
+        self.name = name
+        self.type_name = type_name
+        self.is_input = is_input
+        self.parent_port = parent_port
+        self.node = parent_port.node
+        self.registry = registry
+        self.connections = []
+        self.hover_active = False
+        
+        # Support for nested subports
+        self.subport_widgets = []
+        self.expanded = False
+        self.expansion_widget = None
+        
+        # Store subport definitions
+        port_type = registry.get_port_type(type_name)
+        self.subport_defs = []
+        if port_type and port_type.subports:
+            self.subport_defs = port_type.subports
+        
+        self.setAcceptHoverEvents(True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, False)
+        self.setAcceptedMouseButtons(Qt.NoButton)
+    
+    def boundingRect(self):
+        return QRectF(-self.PORT_RADIUS, -self.PORT_RADIUS, 
+                     self.PORT_RADIUS * 2, self.PORT_RADIUS * 2)
+    
+    def shape(self):
+        """Expanded shape for better hover detection"""
+        path = QPainterPath()
+        # Larger circle for easier hovering
+        radius = self.PORT_RADIUS + 5
+        path.addEllipse(QPointF(0, 0), radius, radius)
+        return path
+    
+    def paint(self, painter, option, widget):
+        painter.setRenderHint(QPainter.Antialiasing)
+        color = get_type_color(self.type_name)
+        
+        if self.has_connection():
+            painter.setBrush(QBrush(color))
+        else:
+            painter.setBrush(QBrush(color.lighter(140)))
+        
+        border_width = 2.5 if self.hover_active else 1.5
+        painter.setPen(QPen(color.darker(120), border_width))
+        painter.drawEllipse(self.boundingRect())
+    
+    def get_full_path(self):
+        return f"{self.parent_port.get_full_path()}.{self.name}"
+    
+    def has_connection(self):
+        if self.connections:
+            return True
+        for subport in self.subport_widgets:
+            if subport.has_connection():
+                return True
+        return False
+    
+    def is_connectable_to(self, other_port):
+        if self.is_input == other_port.is_input:
+            return False
+        
+        if self.node == other_port.node:
+            return False
+        
+        if self.type_name != other_port.type_name:
+            return False
+        
+        input_port = self if self.is_input else other_port
+        if input_port.is_occupied():
+            return False
+        
+        return True
+    
+    def is_occupied(self):
+        if self.connections:
+            return True
+        
+        current = self.parent_port
+        while current:
+            if current.connections:
+                return True
+            current = current.parent_port if hasattr(current, 'parent_port') else None
+        
+        return self._has_connected_descendant()
+    
+    def _has_connected_descendant(self):
+        for subport in self.subport_widgets:
+            if subport.connections or subport._has_connected_descendant():
+                return True
+        return False
+    
+    def get_scene_pos(self):
+        return self.scenePos()
+    
+    def expand(self):
+        """Show subports recursively"""
+        if not self.subport_defs or self.expanded:
+            return
+        
+        self.expanded = True
+        original_scene_pos = self.get_scene_pos()
+        
+        # Create nested subport widgets
+        self.subport_widgets = []
+        for subport_name, subport_type in self.subport_defs:
+            subport = SubportWidget(subport_name, subport_type, self.is_input, self, self.registry)
+            self.subport_widgets.append(subport)
+        
+        # Create expansion container - parent to node (keep it simple)
+        self.expansion_widget = SubportExpansion(self, self.subport_widgets, self.is_input)
+        self.expansion_widget.setParentItem(self.node)
+        
+        # Position the expansion widget
+        node_pos = self.node.mapFromItem(self, 0, 0)
+        if self.is_input:
+            self.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH, 
+                                        node_pos.y() + self.PORT_RADIUS)
+        else:
+            self.expansion_widget.setPos(node_pos.x() + self.PORT_RADIUS, 
+                                        node_pos.y() + self.PORT_RADIUS)
+        
+        # Update parent expansion positions if this is nested
+        self._update_parent_expansions()
+        
+        # Adjust node size
+        if self.node:
+            self.node.adjust_size_for_expansion(self, original_scene_pos)
+    
+    def _update_parent_expansions(self):
+        """Update positions in all parent expansion widgets"""
+        current = self.parent_port
+        while current:
+            if hasattr(current, 'expansion_widget') and current.expansion_widget:
+                current.expansion_widget._update_subport_positions()
+            if hasattr(current, 'parent_port'):
+                current = current.parent_port
+            else:
+                break
+    
+    def collapse(self):
+        """Hide subports if they have no connections"""
+        if not self.expanded:
+            return
+        
+        # Check if this subport is locked (being used in a drag operation)
+        if self.node and self.node.scene():
+            view = self.node.scene().views()[0] if self.node.scene().views() else None
+            if view and hasattr(view, '_is_port_locked') and view._is_port_locked(self):
+                return
+        
+        has_connections = any(subport.has_connection() for subport in self.subport_widgets)
+        
+        if not has_connections:
+            print(f"  Collapsing subport {self.name}")
+            original_scene_pos = self.get_scene_pos()
+            
+            self.expanded = False
+            
+            # Recursively collapse all nested subports first
+            for subport in self.subport_widgets[:]:  # Make a copy of the list
+                if subport.expanded:
+                    subport.collapse()
+            
+            # Remove expansion widget (which removes its children automatically)
+            if self.expansion_widget:
+                scene = self.scene()
+                if scene and self.expansion_widget.scene() == scene:
+                    scene.removeItem(self.expansion_widget)
+                self.expansion_widget = None
+            
+            # Clear the list - items are already removed with expansion_widget
+            self.subport_widgets = []
+            
+            # Update parent expansion positions
+            self._update_parent_expansions()
+            
+            if self.node:
+                self.node.adjust_size_for_expansion(self, original_scene_pos)
+    
+    def hoverEnterEvent(self, event):
+        self.hover_active = True
+        self.update()
+        if self.subport_defs and not self.expanded:
+            self.expand()
+        super().hoverEnterEvent(event)
+    
+    def hoverLeaveEvent(self, event):
+        self.hover_active = False
+        self.update()
+        # Schedule a collapse check
+        QTimer.singleShot(500, self.try_collapse)
+        super().hoverLeaveEvent(event)
+    
+    def try_collapse(self):
+        """Try to collapse if not hovering over port or expansion"""
+        if self.hover_active:
+            return
+        if self.expansion_widget and self.expansion_widget.isUnderMouse():
+            return
+        # Also check if any child expansion is under mouse
+        if self._is_any_expansion_hovered():
+            return
+        self.collapse()
+    
+    def _is_any_expansion_hovered(self):
+        """Check if any expansion in the hierarchy is hovered"""
+        if self.expansion_widget and self.expansion_widget.isUnderMouse():
+            return True
+        for subport in self.subport_widgets:
+            if subport.hover_active:
+                return True
+            if subport._is_any_expansion_hovered():
+                return True
+        return False
+
+
+class PortWidget(QGraphicsItem):
+    """Represents a port with hierarchical subports"""
+    PORT_RADIUS = 6
+    SUBPORT_SPACING = 22
+    
+    def __init__(self, name, type_name, registry, is_input, parent_port=None, node=None):
+        super().__init__()
+        self.name = name
+        self.type_name = type_name
+        self.registry = registry
+        self.is_input = is_input
+        self.parent_port = parent_port
+        self.node = node
+        self.subport_widgets = []
+        self.expanded = False
+        self.expansion_widget = None
+        self.connections = []
+        self.hover_active = False
+        
+        port_type = registry.get_port_type(type_name)
+        self.subport_defs = []
+        if port_type and port_type.subports:
+            self.subport_defs = port_type.subports
+        
+        self.setAcceptHoverEvents(True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, False)
+        self.setAcceptedMouseButtons(Qt.NoButton)
+    
+    def boundingRect(self):
+        return QRectF(-self.PORT_RADIUS, -self.PORT_RADIUS, 
+                     self.PORT_RADIUS * 2, self.PORT_RADIUS * 2)
+    
+    def shape(self):
+        """Expanded shape for better hover detection"""
+        path = QPainterPath()
+        # Larger circle for easier hovering
+        radius = self.PORT_RADIUS + 5
+        path.addEllipse(QPointF(0, 0), radius, radius)
+        return path
+    
+    def paint(self, painter, option, widget):
+        painter.setRenderHint(QPainter.Antialiasing)
+        color = get_type_color(self.type_name)
+        
+        if self.has_connection():
+            painter.setBrush(QBrush(color))
+        else:
+            painter.setBrush(QBrush(color.lighter(140)))
+        
+        border_width = 2.5 if self.hover_active else 1.5
+        painter.setPen(QPen(color.darker(120), border_width))
+        painter.drawEllipse(self.boundingRect())
+    
+    def get_full_path(self):
+        if self.parent_port:
+            return f"{self.parent_port.get_full_path()}.{self.name}"
+        return self.name
+    
+    def has_connection(self):
+        if self.connections:
+            return True
+        for subport in self.subport_widgets:
+            if subport.has_connection():
+                return True
+        return False
+    
+    def is_connectable_to(self, other_port):
+        if self.is_input == other_port.is_input:
+            return False
+        
+        if self.node == other_port.node:
+            return False
+        
+        if self.type_name != other_port.type_name:
+            return False
+        
+        input_port = self if self.is_input else other_port
+        if input_port.is_occupied():
+            return False
+        
+        return True
+    
+    def is_occupied(self):
+        if self.connections:
+            return True
+        
+        current = self.parent_port
+        while current:
+            if current.connections:
+                return True
+            current = current.parent_port
+        
+        return self._has_connected_descendant()
+    
+    def _has_connected_descendant(self):
+        for subport in self.subport_widgets:
+            if subport.connections:
+                return True
+        return False
+    
+    def get_scene_pos(self):
+        return self.scenePos()
+    
+    def expand(self):
+        if not self.subport_defs or self.expanded:
+            return
+        
+        self.expanded = True
+        original_scene_pos = self.get_scene_pos()
+        
+        self.subport_widgets = []
+        for subport_name, subport_type in self.subport_defs:
+            subport = SubportWidget(subport_name, subport_type, self.is_input, self, self.registry)
+            self.subport_widgets.append(subport)
+        
+        self.expansion_widget = SubportExpansion(self, self.subport_widgets, self.is_input)
+        self.expansion_widget.setParentItem(self.node)
+        
+        node_pos = self.node.mapFromItem(self, 0, 0)
+        if self.is_input:
+            self.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH, 
+                                        node_pos.y() + self.PORT_RADIUS)
+        else:
+            self.expansion_widget.setPos(node_pos.x() + self.PORT_RADIUS, 
+                                        node_pos.y() + self.PORT_RADIUS)
+        
+        if self.node:
+            self.node.adjust_size_for_expansion(self, original_scene_pos)
+    
+    def collapse(self):
+        if not self.expanded:
+            return
+        
+        # Check if this port is locked (being used in a drag operation)
+        if self.node and self.node.scene():
+            view = self.node.scene().views()[0] if self.node.scene().views() else None
+            if view and hasattr(view, '_is_port_locked') and view._is_port_locked(self):
+                return
+        
+        has_connections = any(subport.has_connection() for subport in self.subport_widgets)
+        
+        if not has_connections:
+            print(f"Collapsing port {self.name}")
+            original_scene_pos = self.get_scene_pos()
+            
+            self.expanded = False
+            
+            # Recursively collapse all nested subports first
+            for subport in self.subport_widgets[:]:  # Make a copy of the list
+                if subport.expanded:
+                    subport.collapse()
+            
+            # Remove expansion widget (which removes its children automatically)
+            if self.expansion_widget:
+                scene = self.scene()
+                if scene and self.expansion_widget.scene() == scene:
+                    scene.removeItem(self.expansion_widget)
+                self.expansion_widget = None
+            
+            # Clear the list - items are already removed with expansion_widget
+            self.subport_widgets = []
+            
+            if self.node:
+                self.node.adjust_size_for_expansion(self, original_scene_pos)
+    
+    def hoverEnterEvent(self, event):
+        self.hover_active = True
+        self.update()
+        if self.subport_defs and not self.expanded:
+            self.expand()
+        super().hoverEnterEvent(event)
+    
+    def hoverLeaveEvent(self, event):
+        self.hover_active = False
+        self.update()
+        # Schedule a collapse check
+        QTimer.singleShot(500, self.try_collapse)
+        super().hoverLeaveEvent(event)
+    
+    def try_collapse(self):
+        """Try to collapse if not hovering over port or expansion"""
+        if self.hover_active:
+            return
+        if self.expansion_widget and self.expansion_widget.isUnderMouse():
+            return
+        # Also check if any child expansion is under mouse
+        if self._is_any_expansion_hovered():
+            return
+        self.collapse()
+    
+    def _is_any_expansion_hovered(self):
+        """Check if any expansion in the hierarchy is hovered"""
+        if self.expansion_widget and self.expansion_widget.isUnderMouse():
+            return True
+        for subport in self.subport_widgets:
+            if subport.hover_active:
+                return True
+            if subport._is_any_expansion_hovered():
+                return True
+        return False
+
+
+class SubportExpansion(QGraphicsRectItem):
+    """Container for expanded subports"""
+    WIDTH = 12
+    HOVER_MARGIN = 30  # Extra hover detection area
+    
+    def __init__(self, parent_port, subports, is_input):
+        super().__init__()
+        self.parent_port = parent_port
+        self.subports = subports
+        self.is_input = is_input
+        self.labels = []
+        
+        self.setAcceptHoverEvents(True)
+        
+        height = len(subports) * PortWidget.SUBPORT_SPACING
+        self.setRect(0, 0, self.WIDTH, height)
+        
+        self.setBrush(QBrush(QColor(45, 45, 55, 220)))
+        self.setPen(QPen(QColor(70, 70, 80, 150), 1))
+        
+        # Position subports and create labels
+        self._update_subport_positions()
+    
+    def _update_subport_positions(self):
+        """Update positions of all subports, accounting for nested expansions"""
+        current_y = PortWidget.SUBPORT_SPACING // 2
+        
+        for i, subport in enumerate(self.subports):
+            # Ensure subport is parented to this expansion
+            if subport.parentItem() != self:
+                subport.setParentItem(self)
+            
+            if self.is_input:
+                subport.setPos(0, current_y)
+            else:
+                subport.setPos(self.WIDTH, current_y)
+            
+            # Create or update label
+            if i < len(self.labels):
+                label = self.labels[i]
+            else:
+                label = QGraphicsTextItem(subport.name, self)
+                label.setDefaultTextColor(QColor(220, 220, 230))
+                font = QFont("Segoe UI", 8)
+                label.setFont(font)
+                self.labels.append(label)
+            
+            if self.is_input:
+                label.setPos(self.WIDTH + 5, current_y - 8)
+            else:
+                label.setPos(-label.boundingRect().width() - 5, current_y - 8)
+            
+            # Update nested expansion position if this subport is expanded
+            if subport.expanded and subport.expansion_widget:
+                # Position the nested expansion relative to the node
+                node_pos = subport.node.mapFromItem(subport, 0, 0)
+                if self.is_input:
+                    subport.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH,
+                                                   node_pos.y() + subport.PORT_RADIUS)
+                else:
+                    subport.expansion_widget.setPos(node_pos.x() + subport.PORT_RADIUS,
+                                                   node_pos.y() + subport.PORT_RADIUS)
+            
+            # Move to next position, accounting for this subport's expansion
+            current_y += PortWidget.SUBPORT_SPACING
+            if subport.expanded and subport.subport_widgets:
+                current_y += self._calculate_subport_expansion_height(subport)
+        
+        # Update container height to fit all subports
+        new_height = current_y - PortWidget.SUBPORT_SPACING // 2
+        self.setRect(0, 0, self.WIDTH, new_height)
+    
+    def _calculate_subport_expansion_height(self, subport):
+        """Calculate total height taken by a subport's expansion"""
+        if not subport.expanded or not subport.subport_widgets:
+            return 0
+        
+        height = 0
+        for nested in subport.subport_widgets:
+            height += PortWidget.SUBPORT_SPACING
+            if nested.expanded and nested.subport_widgets:
+                height += self._calculate_subport_expansion_height(nested)
+        return height
+    
+    def shape(self):
+        """Expanded shape for better hover detection"""
+        path = QPainterPath()
+        rect = self.rect()
+        if self.is_input:
+            # Expand to the right for input ports (to cover labels)
+            expanded = QRectF(rect.x() - self.HOVER_MARGIN, 
+                            rect.y() - 5, 
+                            rect.width() + self.HOVER_MARGIN + 100,  # Extra space for labels
+                            rect.height() + 10)
+        else:
+            # Expand to the left for output ports (to cover labels)
+            expanded = QRectF(rect.x() - 100,  # Extra space for labels
+                            rect.y() - 5, 
+                            rect.width() + self.HOVER_MARGIN + 100, 
+                            rect.height() + 10)
+        path.addRect(expanded)
+        return path
+    
+    def hoverLeaveEvent(self, event):
+        if not self.isUnderMouse():
+            QTimer.singleShot(500, self.try_collapse)  # Increased to match port delay
+        super().hoverLeaveEvent(event)
+    
+    def try_collapse(self):
+        """Try to collapse the parent port if nothing is hovered"""
+        if self.isUnderMouse():
+            return
+        if self.parent_port.hover_active:
+            return
+        # Check if any subport is hovered
+        if self.parent_port._is_any_expansion_hovered():
+            return
+        self.parent_port.collapse()
+
+
+class Connection(QGraphicsPathItem):
+    """Represents a connection wire between two ports"""
+    def __init__(self, output_port, input_port, scene):
+        super().__init__()
+        self.output_port = output_port
+        self.input_port = input_port
+        
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        
+        color = get_type_color(output_port.type_name)
+        self.setPen(QPen(color, 2.5))
+        self.normal_pen = QPen(color, 2.5)
+        self.selected_pen = QPen(color.lighter(150), 3.5)
+        
+        output_port.connections.append(self)
+        input_port.connections.append(self)
+        
+        self._expand_hierarchy(output_port)
+        self._expand_hierarchy(input_port)
+        
+        self.update_path()
+    
+    def shape(self):
+        """Return a wider path for easier selection"""
+        # Create a stroke with wider width for hit testing
+        stroker = QPainterPathStroker()
+        stroker.setWidth(12)  # Much wider hit area
+        stroker.setCapStyle(Qt.RoundCap)
+        return stroker.createStroke(self.path())
+    
+    def _expand_hierarchy(self, port):
+        """Expand all ancestors of a port"""
+        if isinstance(port, SubportWidget):
+            try:
+                current = port.parent_port
+                while current:
+                    # Check if the port still exists
+                    _ = current.scene()
+                    if not current.expanded:
+                        current.expand()
+                    current = current.parent_port if hasattr(current, 'parent_port') else None
+            except RuntimeError:
+                # Port was deleted during expansion, ignore
+                pass
+    
+    def update_path(self):
+        try:
+            start = self.output_port.get_scene_pos()
+            end = self.input_port.get_scene_pos()
+            
+            path = QPainterPath()
+            path.moveTo(start)
+            
+            ctrl_offset = abs(end.x() - start.x()) * 0.5
+            ctrl1 = QPointF(start.x() + ctrl_offset, start.y())
+            ctrl2 = QPointF(end.x() - ctrl_offset, end.y())
+            path.cubicTo(ctrl1, ctrl2, end)
+            
+            self.setPath(path)
+        except RuntimeError:
+            # Port was deleted, remove this connection
+            if self.scene():
+                self.scene().removeItem(self)
+    
+    def remove(self):
+        try:
+            if self in self.output_port.connections:
+                self.output_port.connections.remove(self)
+        except (RuntimeError, AttributeError):
+            pass
+            
+        try:
+            if self in self.input_port.connections:
+                self.input_port.connections.remove(self)
+        except (RuntimeError, AttributeError):
+            pass
+        
+        # Try to collapse - handle both PortWidget and SubportWidget
+        def try_collapse_hierarchy(port):
+            try:
+                if isinstance(port, SubportWidget):
+                    # Collapse from the leaf upward
+                    port.collapse()
+                    # Try to collapse parent too
+                    if hasattr(port, 'parent_port') and port.parent_port:
+                        try_collapse_hierarchy(port.parent_port)
+                elif isinstance(port, PortWidget):
+                    port.collapse()
+            except RuntimeError:
+                # Port was already deleted
+                pass
+        
+        try:
+            try_collapse_hierarchy(self.output_port)
+        except (RuntimeError, AttributeError):
+            pass
+            
+        try:
+            try_collapse_hierarchy(self.input_port)
+        except (RuntimeError, AttributeError):
+            pass
+        
+        if self.scene():
+            self.scene().removeItem(self)
+    
+    def paint(self, painter, option, widget):
+        painter.setRenderHint(QPainter.Antialiasing)
+        if self.isSelected():
+            self.setPen(self.selected_pen)
+        else:
+            self.setPen(self.normal_pen)
+        super().paint(painter, option, widget)
+
+
+class NodeWidget(QGraphicsRectItem):
+    """Represents a node in the graph"""
+    MIN_WIDTH = 140
+    MIN_HEIGHT = 60
+    PORT_SPACING = 28
+    HEADER_HEIGHT = 32
+    
+    def __init__(self, node_type, registry, name=None):
+        super().__init__()
+        self.node_type = node_type
+        self.registry = registry
+        self.node_name = name or node_type.name
+        self.input_ports = []
+        self.output_ports = []
+        
+        self.setFlag(QGraphicsItem.ItemIsMovable, True)
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
+        
+        self.setBrush(QBrush(QColor(40, 42, 48)))
+        self.setPen(QPen(QColor(60, 62, 68), 2))
+        
+        self.header = QGraphicsTextItem(self.node_name, self)
+        self.header.setDefaultTextColor(QColor(240, 240, 245))
+        font = QFont("Segoe UI", 11, QFont.Bold)
+        self.header.setFont(font)
+        self.header.setPos(8, 6)
+        
+        self._create_ports()
+        self.adjust_size_for_expansion()
+    
+    def _create_ports(self):
+        for i, (port_name, port_type) in enumerate(self.node_type.inputs):
+            port = PortWidget(port_name, port_type, self.registry, True, None, self)
+            port.setParentItem(self)
+            self.input_ports.append(port)
+            
+            label = QGraphicsTextItem(port_name, self)
+            label.setDefaultTextColor(QColor(200, 200, 210))
+            font = QFont("Segoe UI", 9)
+            label.setFont(font)
+            port.label = label
+        
+        for i, (port_name, port_type) in enumerate(self.node_type.outputs):
+            port = PortWidget(port_name, port_type, self.registry, False, None, self)
+            port.setParentItem(self)
+            self.output_ports.append(port)
+            
+            label = QGraphicsTextItem(port_name, self)
+            label.setDefaultTextColor(QColor(200, 200, 210))
+            font = QFont("Segoe UI", 9)
+            label.setFont(font)
+            port.label = label
+    
+    def adjust_size_for_expansion(self, expanding_port=None, original_port_pos=None):
+        def count_all_visible_items(ports):
+            """Count all visible ports including nested subports"""
+            count = 0
+            for port in ports:
+                count += 1  # The port itself
+                if port.expanded and port.subport_widgets:
+                    count += count_nested_subports(port.subport_widgets)
+            return count
+        
+        def count_nested_subports(subports):
+            """Recursively count nested subports"""
+            count = 0
+            for subport in subports:
+                count += 1  # The subport itself
+                if subport.expanded and subport.subport_widgets:
+                    count += count_nested_subports(subport.subport_widgets)
+            return count
+        
+        visible_inputs = count_all_visible_items(self.input_ports)
+        visible_outputs = count_all_visible_items(self.output_ports)
+        
+        # Calculate required height with proper spacing
+        max_items = max(visible_inputs, visible_outputs)
+        required_height = max_items * self.PORT_SPACING + self.HEADER_HEIGHT + 15
+        height = max(self.MIN_HEIGHT, required_height)
+        width = self.MIN_WIDTH
+        
+        print(f"Node resize: inputs={visible_inputs}, outputs={visible_outputs}, height={height}")
+        
+        if expanding_port and original_port_pos:
+            self.setRect(0, 0, width, height)
+            self._position_ports()
+            
+            new_port_scene_pos = expanding_port.get_scene_pos()
+            delta_y = original_port_pos.y() - new_port_scene_pos.y()
+            
+            if abs(delta_y) > 0.1:
+                self.setPos(self.pos().x(), self.pos().y() + delta_y)
+        else:
+            self.setRect(0, 0, width, height)
+            self._position_ports()
+    
+    def _position_ports(self):
+        """Position all ports on the node"""
+        width = self.rect().width()
+        
+        def calculate_spacing_for_port(port):
+            """Calculate how much vertical space a port takes (including subports)"""
+            space = self.PORT_SPACING  # The port itself
+            if port.expanded and port.subport_widgets:
+                for subport in port.subport_widgets:
+                    space += calculate_spacing_for_subport(subport)
+            return space
+        
+        def calculate_spacing_for_subport(subport):
+            """Calculate how much vertical space a subport takes (including nested)"""
+            space = PortWidget.SUBPORT_SPACING  # The subport itself
+            if subport.expanded and subport.subport_widgets:
+                for nested in subport.subport_widgets:
+                    space += calculate_spacing_for_subport(nested)
+            return space
+        
+        # Position input ports
+        current_y = self.HEADER_HEIGHT
+        for i, port in enumerate(self.input_ports):
+            current_y += self.PORT_SPACING
+            port.setPos(0, current_y)
+            print(f"  Input port {port.name} at y={current_y}, expanded={port.expanded}")
+            if hasattr(port, 'label'):
+                port.label.setPos(PortWidget.PORT_RADIUS * 2 + 5, current_y - 8)
+            
+            # Account for expanded subports
+            if port.expanded and port.subport_widgets:
+                for subport in port.subport_widgets:
+                    subport_spacing = calculate_spacing_for_subport(subport)
+                    print(f"    Subport {subport.name} adds {subport_spacing}px")
+                    current_y += subport_spacing
+        
+        # Position output ports
+        current_y = self.HEADER_HEIGHT
+        for i, port in enumerate(self.output_ports):
+            current_y += self.PORT_SPACING
+            port.setPos(width, current_y)
+            print(f"  Output port {port.name} at y={current_y}, expanded={port.expanded}")
+            if hasattr(port, 'label'):
+                label_width = port.label.boundingRect().width()
+                port.label.setPos(width - PortWidget.PORT_RADIUS * 2 - label_width - 5, current_y - 8)
+            
+            # Account for expanded subports
+            if port.expanded and port.subport_widgets:
+                for subport in port.subport_widgets:
+                    subport_spacing = calculate_spacing_for_subport(subport)
+                    print(f"    Subport {subport.name} adds {subport_spacing}px")
+                    current_y += subport_spacing
+    
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionHasChanged:
+            for port in self.input_ports + self.output_ports:
+                self._update_port_connections(port)
+        
+        return super().itemChange(change, value)
+    
+    def _update_port_connections(self, port):
+        """Recursively update connections for a port and its subports"""
+        try:
+            for conn in port.connections[:]:  # Make a copy of the list
+                conn.update_path()
+            for subport in port.subport_widgets[:]:  # Make a copy
+                self._update_subport_connections(subport)
+        except RuntimeError:
+            # Port or connection was deleted, ignore
+            pass
+    
+    def _update_subport_connections(self, subport):
+        """Recursively update connections for subports"""
+        try:
+            for conn in subport.connections[:]:  # Make a copy
+                conn.update_path()
+            for nested_subport in subport.subport_widgets[:]:  # Make a copy
+                self._update_subport_connections(nested_subport)
+        except RuntimeError:
+            # Subport or connection was deleted, ignore
+            pass
+    
+    def paint(self, painter, option, widget):
+        painter.setRenderHint(QPainter.Antialiasing)
+        if self.isSelected():
+            self.setPen(QPen(QColor(100, 180, 255), 2.5))
+        else:
+            self.setPen(QPen(QColor(60, 62, 68), 1.5))
+        super().paint(painter, option, widget)
+    
+    def get_all_ports(self):
+        """Get all ports including subports recursively"""
+        all_ports = []
+        
+        def collect_subports(subport):
+            all_ports.append(subport)
+            for nested_subport in subport.subport_widgets:
+                collect_subports(nested_subport)
+        
+        for port in self.input_ports + self.output_ports:
+            all_ports.append(port)
+            for subport in port.subport_widgets:
+                collect_subports(subport)
+        
+        return all_ports
+    
+    def to_dict(self):
+        return {
+            'type': self.node_type.name,
+            'name': self.node_name,
+            'x': self.pos().x(),
+            'y': self.pos().y()
+        }
+
+
+class NodeEditorScene(QGraphicsScene):
+    """Custom scene for the node editor"""
+    def __init__(self):
+        super().__init__()
+        self.temp_connection = None
+        self.drag_start_port = None
+        self.setBackgroundBrush(QBrush(QColor(32, 34, 38)))
+        # Set very large scene rect for unlimited workspace
+        self.setSceneRect(-10000, -10000, 20000, 20000)
+
+
+class NodeEditorView(QGraphicsView):
+    """Main view for the node editor"""
+    def __init__(self, registry):
+        super().__init__()
+        self.registry = registry
+        self.editor_scene = NodeEditorScene()
+        self.setScene(self.editor_scene)
+        
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setRenderHint(QPainter.SmoothPixmapTransform)
+        self.setDragMode(QGraphicsView.NoDrag)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        
+        # Enable scrollbars for unlimited workspace
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
+        self.nodes = []
+        self.connections = []
+        self.last_mouse_pos = QPointF(0, 0)
+        self.is_dragging_connection = False
+        self.is_panning = False
+        self.pan_start_pos = QPointF()
+        self.drag_locked_ports = []  # Ports that should not collapse during drag
+    
+    def drawBackground(self, painter, rect):
+        """Draw grid background"""
+        super().drawBackground(painter, rect)
+        
+        # Draw fine grid
+        grid_size = 20
+        left = int(rect.left()) - (int(rect.left()) % grid_size)
+        top = int(rect.top()) - (int(rect.top()) % grid_size)
+        
+        fine_lines = []
+        thick_lines = []
+        
+        x = left
+        while x < rect.right():
+            if x % 100 == 0:
+                thick_lines.append((x, rect.top(), x, rect.bottom()))
+            else:
+                fine_lines.append((x, rect.top(), x, rect.bottom()))
+            x += grid_size
+        
+        y = top
+        while y < rect.bottom():
+            if y % 100 == 0:
+                thick_lines.append((rect.left(), y, rect.right(), y))
+            else:
+                fine_lines.append((rect.left(), y, rect.right(), y))
+            y += grid_size
+        
+        # Draw fine grid
+        painter.setPen(QPen(QColor(42, 44, 48), 1))
+        for line in fine_lines:
+            painter.drawLine(line[0], line[1], line[2], line[3])
+        
+        # Draw thick grid
+        painter.setPen(QPen(QColor(50, 52, 58), 1))
+        for line in thick_lines:
+            painter.drawLine(line[0], line[1], line[2], line[3])
+    
+    def _lock_port_hierarchy(self, port):
+        """Lock a port and all its ancestors from collapsing"""
+        self.drag_locked_ports.append(port)
+        
+        # Lock all ancestors
+        if isinstance(port, SubportWidget):
+            current = port.parent_port
+            while current:
+                self.drag_locked_ports.append(current)
+                if hasattr(current, 'parent_port'):
+                    current = current.parent_port
+                else:
+                    break
+    
+    def _unlock_all_ports(self):
+        """Unlock all ports"""
+        self.drag_locked_ports.clear()
+    
+    def _is_port_locked(self, port):
+        """Check if a port is locked from collapsing"""
+        return port in self.drag_locked_ports
+    
+    def contextMenuEvent(self, event):
+        item = self.itemAt(event.pos())
+        if item is None or isinstance(item, QGraphicsTextItem):
+            self.show_node_creation_menu(event.pos())
+        else:
+            super().contextMenuEvent(event)
+    
+    def mousePressEvent(self, event):
+        pos = event.position() if hasattr(event, 'position') else event.pos()
+        self.last_mouse_pos = self.mapToScene(pos.toPoint())
+        
+        items = self.items(pos.toPoint())
+        
+        if event.button() == Qt.LeftButton:
+            port_item = None
+            for item in items:
+                if isinstance(item, (PortWidget, SubportWidget)):
+                    port_item = item
+                    break
+            
+            if port_item:
+                print(f"Starting connection from {port_item.name} ({port_item.type_name})")
+                # Lock this port and its hierarchy from collapsing
+                self._lock_port_hierarchy(port_item)
+                self.start_connection(port_item)
+                self.is_dragging_connection = True
+                event.accept()
+                return
+        
+        elif event.button() == Qt.MiddleButton:
+            self.is_panning = True
+            self.pan_start_pos = pos
+            self.setCursor(Qt.ClosedHandCursor)
+            event.accept()
+            return
+        
+        super().mousePressEvent(event)
+    
+    def mouseMoveEvent(self, event):
+        pos = event.position() if hasattr(event, 'position') else event.pos()
+        self.last_mouse_pos = self.mapToScene(pos.toPoint())
+        
+        if self.is_panning:
+            delta = pos - self.pan_start_pos
+            self.pan_start_pos = pos
+            
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - int(delta.x())
+            )
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() - int(delta.y())
+            )
+            event.accept()
+            return
+        
+        if self.is_dragging_connection and self.editor_scene.temp_connection:
+            # Validate that drag_start_port still exists
+            try:
+                if not self.editor_scene.drag_start_port:
+                    self.is_dragging_connection = False
+                    return
+                    
+                start_pos = self.editor_scene.drag_start_port.get_scene_pos()
+                end_pos = self.last_mouse_pos
+                
+                path = QPainterPath()
+                path.moveTo(start_pos)
+                
+                # Adjust tangents based on whether we're dragging from input or output
+                is_input_drag = self.editor_scene.drag_start_port.is_input
+                ctrl_offset = abs(end_pos.x() - start_pos.x()) * 0.5
+                
+                if is_input_drag:
+                    # Input ports: tangent goes left (negative x)
+                    ctrl1 = QPointF(start_pos.x() - ctrl_offset, start_pos.y())
+                    ctrl2 = QPointF(end_pos.x() + ctrl_offset, end_pos.y())
+                else:
+                    # Output ports: tangent goes right (positive x)
+                    ctrl1 = QPointF(start_pos.x() + ctrl_offset, start_pos.y())
+                    ctrl2 = QPointF(end_pos.x() - ctrl_offset, end_pos.y())
+                
+                path.cubicTo(ctrl1, ctrl2, end_pos)
+                
+                self.editor_scene.temp_connection.setPath(path)
+                
+                # Expand ports and subports when hovering during drag
+                items = self.items(pos.toPoint())
+                for item in items:
+                    if isinstance(item, (PortWidget, SubportWidget)):
+                        if item.subport_defs and not item.expanded:
+                            item.expand()
+                        break
+                
+                event.accept()
+                return
+            except RuntimeError:
+                # Port was deleted during drag
+                print("Drag port deleted, canceling drag")
+                self.is_dragging_connection = False
+                if self.editor_scene.temp_connection:
+                    self.editor_scene.removeItem(self.editor_scene.temp_connection)
+                    self.editor_scene.temp_connection = None
+                self.editor_scene.drag_start_port = None
+                self._unlock_all_ports()
+                return
+        
+        super().mouseMoveEvent(event)
+    
+    def mouseReleaseEvent(self, event):
+        pos = event.position() if hasattr(event, 'position') else event.pos()
+        
+        if event.button() == Qt.MiddleButton:
+            self.is_panning = False
+            self.setCursor(Qt.ArrowCursor)
+            event.accept()
+            return
+        
+        if event.button() == Qt.LeftButton and self.is_dragging_connection:
+            self.is_dragging_connection = False
+            
+            if self.editor_scene.temp_connection:
+                items = self.items(pos.toPoint())
+                
+                target_port = None
+                for item in items:
+                    if isinstance(item, (PortWidget, SubportWidget)):
+                        target_port = item
+                        break
+                
+                if target_port and self.editor_scene.drag_start_port:
+                    start_port = self.editor_scene.drag_start_port
+                    
+                    # Validate that the ports still exist
+                    try:
+                        _ = start_port.scene()  # Check if C++ object still exists
+                        _ = target_port.scene()
+                        
+                        print(f"Trying to connect {start_port.name} to {target_port.name}")
+                        
+                        if start_port.is_connectable_to(target_port):
+                            output_port = start_port if not start_port.is_input else target_port
+                            input_port = target_port if target_port.is_input else start_port
+                            
+                            print(f"Creating connection: {output_port.name} -> {input_port.name}")
+                            conn = Connection(output_port, input_port, self.editor_scene)
+                            self.editor_scene.addItem(conn)
+                            self.connections.append(conn)
+                        else:
+                            print(f"Cannot connect: incompatible ports")
+                    except RuntimeError as e:
+                        print(f"Port no longer exists: {e}")
+                else:
+                    print("No target port found")
+                
+                self.editor_scene.removeItem(self.editor_scene.temp_connection)
+                self.editor_scene.temp_connection = None
+                self.editor_scene.drag_start_port = None
+            
+            # Unlock all ports now that drag is complete
+            self._unlock_all_ports()
+            event.accept()
+            return
+        
+        super().mouseReleaseEvent(event)
+    
+    def start_connection(self, port):
+        self.editor_scene.drag_start_port = port
+        self.editor_scene.temp_connection = QGraphicsPathItem()
+        color = get_type_color(port.type_name)
+        self.editor_scene.temp_connection.setPen(QPen(color, 2.5, Qt.DashLine))
+        self.editor_scene.addItem(self.editor_scene.temp_connection)
+    
+    def show_node_creation_menu(self, view_pos):
+        menu = QMenu(self)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #2a2c32;
+                color: #e0e0e8;
+                border: 1px solid #404248;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 25px 6px 15px;
+                border-radius: 3px;
+            }
+            QMenu::item:selected {
+                background-color: #3a3c42;
+            }
+            QMenu::separator {
+                height: 1px;
+                background: #404248;
+                margin: 4px 0px;
+            }
+        """)
+        
+        scene_pos = self.mapToScene(view_pos)
+        
+        categories = {}
+        for node_type_name in sorted(self.registry.node_types.keys()):
+            if '_' in node_type_name:
+                category = node_type_name.split('_')[0]
+            else:
+                category = "Other"
+            
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(node_type_name)
+        
+        for category in sorted(categories.keys()):
+            if len(categories) > 1:
+                submenu = menu.addMenu(category)
+                submenu.setStyleSheet(menu.styleSheet())
+            else:
+                submenu = menu
+            
+            for node_type_name in sorted(categories[category]):
+                action = submenu.addAction(node_type_name)
+                action.triggered.connect(lambda checked=False, name=node_type_name, pos=scene_pos: 
+                                       self.add_node(name, pos))
+        
+        menu.exec(self.mapToGlobal(view_pos))
+    
+    def add_node(self, node_type_name, pos):
+        node_type = self.registry.get_node_type(node_type_name)
+        if node_type:
+            base_name = node_type.name
+            counter = 1
+            name = base_name
+            existing_names = {node.node_name for node in self.nodes}
+            while name in existing_names:
+                name = f"{base_name}_{counter}"
+                counter += 1
+            
+            node = NodeWidget(node_type, self.registry, name)
+            node.setPos(pos)
+            self.editor_scene.addItem(node)
+            self.nodes.append(node)
+            return node
+    
+    def delete_selected(self):
+        selected = self.editor_scene.selectedItems()
+        
+        for item in selected:
+            if isinstance(item, NodeWidget):
+                all_ports = item.get_all_ports()
+                for port in all_ports:
+                    for conn in port.connections[:]:
+                        conn.remove()
+                        if conn in self.connections:
+                            self.connections.remove(conn)
+                
+                self.nodes.remove(item)
+                self.editor_scene.removeItem(item)
+            
+            elif isinstance(item, Connection):
+                item.remove()
+                if item in self.connections:
+                    self.connections.remove(item)
+    
+    def rename_selected(self):
+        selected = self.editor_scene.selectedItems()
+        
+        for item in selected:
+            if isinstance(item, NodeWidget):
+                text, ok = QInputDialog.getText(self, "Rename Node", 
+                                               "New name:", QLineEdit.Normal,
+                                               item.node_name)
+                if ok and text:
+                    item.node_name = text
+                    item.header.setPlainText(text)
+                break
+    
+    def save_to_json(self):
+        nodes_data = []
+        connections_data = []
+        
+        for node in self.nodes:
+            nodes_data.append(node.to_dict())
+        
+        for conn in self.connections:
+            output_node = conn.output_port.node
+            input_node = conn.input_port.node
+            
+            connections_data.append({
+                'output_node': output_node.node_name,
+                'output_port': conn.output_port.get_full_path(),
+                'input_node': input_node.node_name,
+                'input_port': conn.input_port.get_full_path()
+            })
+        
+        return {
+            'nodes': nodes_data,
+            'connections': connections_data
+        }
+    
+    def load_from_json(self, data):
+        for node in self.nodes[:]:
+            all_ports = node.get_all_ports()
+            for port in all_ports:
+                for conn in port.connections[:]:
+                    conn.remove()
+            self.editor_scene.removeItem(node)
+        self.nodes.clear()
+        self.connections.clear()
+        
+        node_map = {}
+        for node_data in data.get('nodes', []):
+            node = self.add_node(node_data['type'], 
+                               QPointF(node_data['x'], node_data['y']))
+            if node:
+                node.node_name = node_data['name']
+                node.header.setPlainText(node_data['name'])
+                node_map[node_data['name']] = node
+        
+        for conn_data in data.get('connections', []):
+            output_node = node_map.get(conn_data['output_node'])
+            input_node = node_map.get(conn_data['input_node'])
+            
+            if output_node and input_node:
+                output_port = self._find_port_by_path(output_node, conn_data['output_port'], False)
+                input_port = self._find_port_by_path(input_node, conn_data['input_port'], True)
+                
+                if output_port and input_port:
+                    conn = Connection(output_port, input_port, self.editor_scene)
+                    self.editor_scene.addItem(conn)
+                    self.connections.append(conn)
+    
+    def _find_port_by_path(self, node, path, is_input):
+        """Find a port by its full path, expanding as needed"""
+        parts = path.split('.')
+        ports = node.input_ports if is_input else node.output_ports
+        
+        # Find top-level port
+        current_port = None
+        for port in ports:
+            if port.name == parts[0]:
+                current_port = port
+                break
+        
+        if not current_port:
+            return None
+        
+        if len(parts) == 1:
+            return current_port
+        
+        # Navigate through nested subports
+        for part in parts[1:]:
+            # Expand current port if not already expanded
+            if not current_port.expanded:
+                current_port.expand()
+            
+            found = False
+            for subport in current_port.subport_widgets:
+                if subport.name == part:
+                    current_port = subport
+                    found = True
+                    break
+            if not found:
+                return None
+        
+        return current_port
+    
+    def frame_all(self):
+        """Center view on all nodes"""
+        if not self.nodes:
+            return
+        
+        # Calculate bounding box of all nodes
+        min_x = min(node.pos().x() for node in self.nodes)
+        max_x = max(node.pos().x() + node.rect().width() for node in self.nodes)
+        min_y = min(node.pos().y() for node in self.nodes)
+        max_y = max(node.pos().y() + node.rect().height() for node in self.nodes)
+        
+        # Add some padding
+        padding = 100
+        min_x -= padding
+        max_x += padding
+        min_y -= padding
+        max_y += padding
+        
+        # Calculate center and size
+        center_x = (min_x + max_x) / 2
+        center_y = (min_y + max_y) / 2
+        width = max_x - min_x
+        height = max_y - min_y
+        
+        # Fit the rect in view
+        rect = QRectF(min_x, min_y, width, height)
+        self.fitInView(rect, Qt.KeepAspectRatio)
+        
+        # Ensure zoom isn't too extreme
+        if self.transform().m11() > 2.0:
+            self.resetTransform()
+            self.scale(1.0, 1.0)
+            self.centerOn(center_x, center_y)
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
+            self.delete_selected()
+        elif event.key() == Qt.Key_F2:
+            self.rename_selected()
+        elif event.key() == Qt.Key_Tab:
+            view_pos = self.mapFromScene(self.last_mouse_pos)
+            self.show_node_creation_menu(view_pos)
+        elif event.key() == Qt.Key_G:
+            self.frame_all()
+        else:
+            super().keyPressEvent(event)
+    
+    def wheelEvent(self, event):
+        zoom_factor = 1.12
+        if event.angleDelta().y() > 0:
+            self.scale(zoom_factor, zoom_factor)
+        else:
+            self.scale(1 / zoom_factor, 1 / zoom_factor)
+
+
+class NodeEditorWindow(QMainWindow):
+    """Main application window"""
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Node Editor")
+        self.setGeometry(100, 100, 1400, 900)
+        
+        self.registry = NodeTypeRegistry()
+        self._load_default_types()
+        
+        self._create_ui()
+        
+        # Apply dark theme
+        self.setStyleSheet("""
+            QMainWindow, QWidget {
+                background-color: #2a2c32;
+                color: #e0e0e8;
+            }
+            QPushButton {
+                background-color: #3a3c42;
+                color: #e0e0e8;
+                border: 1px solid #4a4c52;
+                border-radius: 4px;
+                padding: 6px 16px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #4a4c52;
+            }
+            QPushButton:pressed {
+                background-color: #2a2c32;
+            }
+            QLabel {
+                color: #a0a0a8;
+                font-size: 12px;
+            }
+            QToolBar {
+                background-color: #2a2c32;
+                border-bottom: 1px solid #3a3c42;
+                spacing: 8px;
+                padding: 4px;
+            }
+        """)
+    
+    def _load_default_types(self):
+        default_config = {
+            "port_types": {
+                "Float": {"subports": []},
+                "Vector3": {
+                    "subports": [
+                        {"name": "x", "type": "Float"},
+                        {"name": "y", "type": "Float"},
+                        {"name": "z", "type": "Float"}
+                    ]
+                },
+                "Particle": {
+                    "subports": [
+                        {"name": "position", "type": "Vector3"},
+                        {"name": "velocity", "type": "Vector3"}
+                    ]
+                }
+            },
+            "node_types": [
+                {
+                    "name": "Length",
+                    "inputs": [{"name": "vector", "type": "Vector3"}],
+                    "outputs": [{"name": "length", "type": "Float"}]
+                },
+                {
+                    "name": "Add",
+                    "inputs": [
+                        {"name": "a", "type": "Vector3"},
+                        {"name": "b", "type": "Vector3"}
+                    ],
+                    "outputs": [{"name": "result", "type": "Vector3"}]
+                },
+                {
+                    "name": "ParticleSystem",
+                    "inputs": [{"name": "time", "type": "Float"}],
+                    "outputs": [{"name": "particle", "type": "Particle"}]
+                }
+            ]
+        }
+        self.registry.load_from_json(default_config)
+    
+    def _create_ui(self):
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # Compact toolbar
+        toolbar = QToolBar()
+        toolbar.setMovable(False)
+        
+        save_btn = QPushButton("💾 Save")
+        save_btn.clicked.connect(self.save_graph)
+        toolbar.addWidget(save_btn)
+        
+        load_btn = QPushButton("📁 Load")
+        load_btn.clicked.connect(self.load_graph)
+        toolbar.addWidget(load_btn)
+        
+        toolbar.addSeparator()
+        
+        load_types_btn = QPushButton("📋 Load Types")
+        load_types_btn.clicked.connect(self.load_node_types)
+        toolbar.addWidget(load_types_btn)
+        
+        toolbar.addSeparator()
+        
+        instructions = QLabel("Right-click/Tab: add | Middle-drag: pan | Del: remove | F2: rename | G: frame all")
+        toolbar.addWidget(instructions)
+        
+        self.addToolBar(toolbar)
+        
+        # Editor view
+        self.editor = NodeEditorView(self.registry)
+        layout.addWidget(self.editor)
+        
+        # Center view at origin
+        self.editor.centerOn(0, 0)
+    
+    def save_graph(self):
+        filename, _ = QFileDialog.getSaveFileName(self, "Save Graph", "", "JSON Files (*.json)")
+        if filename:
+            data = self.editor.save_to_json()
+            with open(filename, 'w') as f:
+                json.dump(data, f, indent=2)
+    
+    def load_graph(self):
+        filename, _ = QFileDialog.getOpenFileName(self, "Load Graph", "", "JSON Files (*.json)")
+        if filename:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+            self.editor.load_from_json(data)
+    
+    def load_node_types(self):
+        filename, _ = QFileDialog.getOpenFileName(self, "Load Node Types", "", "JSON Files (*.json)")
+        if filename:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+            self.registry.load_from_json(data)
+
+
+def main():
+    app = QApplication(sys.argv)
+    window = NodeEditorWindow()
+    window.show()
+    sys.exit(app.exec())
+
+
+if __name__ == '__main__':
+    main()

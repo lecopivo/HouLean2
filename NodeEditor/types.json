@@ -1,0 +1,342 @@
+{
+  "port_types": {
+    "Float": {
+      "subports": []
+    },
+    "Vector3": {
+      "subports": [
+        {"name": "x", "type": "Float"},
+        {"name": "y", "type": "Float"},
+        {"name": "z", "type": "Float"}
+      ]
+    },
+    "Particle": {
+      "subports": [
+        {"name": "position", "type": "Vector3"},
+        {"name": "velocity", "type": "Vector3"}
+      ]
+    }
+  },
+  "node_types": [
+    {
+      "name": "Float_Constant",
+      "inputs": [],
+      "outputs": [
+        {"name": "value", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Add",
+      "inputs": [
+        {"name": "a", "type": "Float"},
+        {"name": "b", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Subtract",
+      "inputs": [
+        {"name": "a", "type": "Float"},
+        {"name": "b", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Multiply",
+      "inputs": [
+        {"name": "a", "type": "Float"},
+        {"name": "b", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Divide",
+      "inputs": [
+        {"name": "a", "type": "Float"},
+        {"name": "b", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Pow",
+      "inputs": [
+        {"name": "base", "type": "Float"},
+        {"name": "exponent", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Sqrt",
+      "inputs": [
+        {"name": "value", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Abs",
+      "inputs": [
+        {"name": "value", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Sin",
+      "inputs": [
+        {"name": "angle", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Cos",
+      "inputs": [
+        {"name": "angle", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Tan",
+      "inputs": [
+        {"name": "angle", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Min",
+      "inputs": [
+        {"name": "a", "type": "Float"},
+        {"name": "b", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Max",
+      "inputs": [
+        {"name": "a", "type": "Float"},
+        {"name": "b", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Float_Clamp",
+      "inputs": [
+        {"name": "value", "type": "Float"},
+        {"name": "min", "type": "Float"},
+        {"name": "max", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Vector3_Constant",
+      "inputs": [],
+      "outputs": [
+        {"name": "vector", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Vector3_Add",
+      "inputs": [
+        {"name": "a", "type": "Vector3"},
+        {"name": "b", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Vector3_Subtract",
+      "inputs": [
+        {"name": "a", "type": "Vector3"},
+        {"name": "b", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Vector3_Scale",
+      "inputs": [
+        {"name": "vector", "type": "Vector3"},
+        {"name": "scalar", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Vector3_Length",
+      "inputs": [
+        {"name": "vector", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "length", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Vector3_Normalize",
+      "inputs": [
+        {"name": "vector", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Vector3_Dot",
+      "inputs": [
+        {"name": "a", "type": "Vector3"},
+        {"name": "b", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Vector3_Cross",
+      "inputs": [
+        {"name": "a", "type": "Vector3"},
+        {"name": "b", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Vector3_Distance",
+      "inputs": [
+        {"name": "a", "type": "Vector3"},
+        {"name": "b", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "distance", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Vector3_Lerp",
+      "inputs": [
+        {"name": "a", "type": "Vector3"},
+        {"name": "b", "type": "Vector3"},
+        {"name": "t", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "result", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Vector3_Compose",
+      "inputs": [
+        {"name": "x", "type": "Float"},
+        {"name": "y", "type": "Float"},
+        {"name": "z", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "vector", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Vector3_Decompose",
+      "inputs": [
+        {"name": "vector", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "x", "type": "Float"},
+        {"name": "y", "type": "Float"},
+        {"name": "z", "type": "Float"}
+      ]
+    },
+    {
+      "name": "Particle_Create",
+      "inputs": [
+        {"name": "position", "type": "Vector3"},
+        {"name": "velocity", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "particle", "type": "Particle"}
+      ]
+    },
+    {
+      "name": "Particle_GetPosition",
+      "inputs": [
+        {"name": "particle", "type": "Particle"}
+      ],
+      "outputs": [
+        {"name": "position", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Particle_GetVelocity",
+      "inputs": [
+        {"name": "particle", "type": "Particle"}
+      ],
+      "outputs": [
+        {"name": "velocity", "type": "Vector3"}
+      ]
+    },
+    {
+      "name": "Particle_SetPosition",
+      "inputs": [
+        {"name": "particle", "type": "Particle"},
+        {"name": "position", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "particle", "type": "Particle"}
+      ]
+    },
+    {
+      "name": "Particle_SetVelocity",
+      "inputs": [
+        {"name": "particle", "type": "Particle"},
+        {"name": "velocity", "type": "Vector3"}
+      ],
+      "outputs": [
+        {"name": "particle", "type": "Particle"}
+      ]
+    },
+    {
+      "name": "Particle_Integrate",
+      "inputs": [
+        {"name": "particle", "type": "Particle"},
+        {"name": "timestep", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "particle", "type": "Particle"}
+      ]
+    },
+    {
+      "name": "Particle_ApplyForce",
+      "inputs": [
+        {"name": "particle", "type": "Particle"},
+        {"name": "force", "type": "Vector3"},
+        {"name": "mass", "type": "Float"}
+      ],
+      "outputs": [
+        {"name": "particle", "type": "Particle"}
+      ]
+    }
+  ]
+}
