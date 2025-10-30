@@ -15,7 +15,7 @@ def LiteralVal.toString : LiteralVal → String
   | .int val => s!"{val}"
   | .float val => s!"{val}"
   | .str val => val.quote
-  | .bool val => s!"{val}"
+  | .bool val => s!"{val}".capitalize -- designed to be consumable by Python
 
 
 structure ApexGraph where

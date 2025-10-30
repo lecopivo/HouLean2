@@ -18,7 +18,7 @@ initialize apexAttr : Unit ←
         
         -- try to compile to warn user but we consume all implicit arguments
         
-        let _ ← functionToApexGraph val default
+        let _ ← programToApexGraph val
         compilerExt.add (.unfold declName)
     erase := fun _declName =>
       throwError "Can't remove `apex`, not implemented yet!"

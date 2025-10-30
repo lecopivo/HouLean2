@@ -141,6 +141,8 @@ elab_rules : command
         let declId := strId.append (.mkSimple funName)
         let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) f + 1)
         let decl ← Lean.mkDefinitionValInferrringUnsafe declId [] F f hints
+        addDeclarationRangesFromSyntax declId id
+
         
         -- Add documentation if provided
         match doc with
@@ -161,6 +163,7 @@ elab_rules : command
       let decl ← Lean.mkDefinitionValInferrringUnsafe instName [] classExpr inst hints
       addAndCompile (Declaration.defnDecl decl)
       addInstance instName AttributeKind.global (eval_prio default)
+      addDeclarationRangesFromSyntax instName id
     else
       throwError m!"Invalid function type {F}, expected {funType}!"
 

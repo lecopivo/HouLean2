@@ -4,6 +4,10 @@ open Lean Meta Std
 
 namespace HouLean.Apex.Compiler
 
+structure Context where
+  unfoldStack : List Name
+deriving Inhabited
+
 structure GraphState where
   /-- Currently built graph -/
   graph : ApexGraph
@@ -11,19 +15,31 @@ structure GraphState where
   fvarToPort : HashMap FVarId (ArrayTree PortId)
   /-- Counts how many times we added a node with particular name -/
   nameCounter : HashMap String Nat
+  /-- Cache output ports for expressions -/
+  cache : ExprMap PortBundle
 deriving Inhabited
 
-abbrev GraphCompileM := StateT GraphState MetaM
+abbrev GraphCompileM := ReaderT Context <| StateT GraphState MetaM
+
+def withUnfolded {α} (name : Name) (go : GraphCompileM α) : GraphCompileM α := 
+  fun ctx => go {ctx with unfoldStack := name :: ctx.unfoldStack}
+
+def GraphCompileM.run {α} (go : GraphCompileM α) 
+    (c : Context := default) (s : GraphState := default) : MetaM α := do
+  return (← go c s).1
+
+def GraphCompileM.run' {α} (go : GraphCompileM α) (c : Context := default) 
+    (s : GraphState := default) : MetaM ApexGraph := do
+  return (← go c s).2.graph
 
 def modifyGraph {α} (f : ApexGraph → MetaM (ApexGraph × α)) : GraphCompileM α := do
-  let ⟨g, map, names⟩ ← get
-  let (g, val) ← f g
-  set { graph := g, fvarToPort := map, nameCounter := names : GraphState}
+  let s ← get
+  let (g, val) ← f s.graph
+  set {s with graph := g}
   return val
 
 def readGraph {α} (f : ApexGraph → MetaM α) : GraphCompileM α := do
-  let ⟨g, _, _⟩ ← get
-  return (← f g)
+  return (← f (← get).graph)
 
 def getPortName (portId : Nat) : GraphCompileM String := do
   readGraph (fun g => return g.ports[portId]!.name)
@@ -119,7 +135,7 @@ def addNode (nodeType : NodeType) (subports : Array AddSubPortSpec)
       subPorts := subports.map (fun ⟨i?,j?,n⟩ => ⟨i?.map (·+portOff), j?.map (·+portOff), n⟩)
     }
     
-    let g := {g with
+    let g := { g with
       nodes := g.nodes.push node
       ports := g.ports ++ ports
     }
@@ -330,13 +346,13 @@ instance : ExceptToEmoji Exception PortBundle where
     | .ok p => s!"✅️ {p.toString}"
     | .error _ => "💥️"
 
-
 open Qq in
 mutual
 
 /-- Compile Lean expression to APEX graph -/
 partial def toApexGraph (e : Expr) (userName? : Option String := none) : 
     GraphCompileM PortBundle := do
+  Meta.withIncRecDepth do
   
   withTraceNode `HouLean.Apex.compiler (fun r => return m!"[{ExceptToEmoji.toEmoji r}] compiling expression\n{e}") do
   let e ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfI e
@@ -377,15 +393,18 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
 
     -- blast match statement
     -- todo: add let binding ...
-    if ← isMatcherApp e then
+    if let some info := isMatcherAppCore? (← getEnv) e then
+    
       let body := e.appArg!
       let x := e.appFn!.appArg!
-      trace[HouLean.Apex.compiler] m!"match expression for {x}"
+      trace[HouLean.Apex.compiler] m!"match expression for {x}, numParams {info.numParams}, numDiscrs {info.numDiscrs}, altNumParams {info.altNumParams}"
       if x.isFVar then
         trace[HouLean.Apex.compiler] m!"fvar case, reducing match"
         return ← toApexGraph (← whnf e)
       else
         trace[HouLean.Apex.compiler] m!"nontrivial match"
+        unless info.numParams = 0 ∧ info.numDiscrs = 1 ∧ info.altNumParams.size = 1 do
+          throwError m!"Do not know how to handle match statement\n{e}\nunfolded symbols {(← read).unfoldStack}"
         let fn := e.appFn!.appFn!
         return ← toApexGraph (Expr.letE `r (← inferType x) x ((fn.app (.bvar 0)).app body) false)
         
@@ -472,7 +491,13 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
     -- Normal application
     let args ← getExplicitArgs fn args
     let some nodeType ← getNodeType (.const fname []) 
-      | throwError m!"No APEX node for {fname}"
+      | let r ← unfold e fname
+        if r.expr == e then
+          throwError m!"No APEX node for {fname}, unfolded symbols: {(← read).unfoldStack}"
+        trace[HouLean.Apex.compiler] m!"unfolded {fname}\n{e} ==> {r.expr}"
+        withUnfolded fname do
+          return ← toApexGraph r.expr
+
 
     let argPorts ← args.mapM toApexGraph
     let fnInputs := nodeType.inputs
@@ -505,7 +530,7 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
 
   | .proj s i x => 
     trace[HouLean.Apex.compiler] m!"projection {i}"
-    let t ← inferType x
+    let t ← whnf (← inferType x) -- whnf here might be too eager ...
     if ← isStructureType t then
       let x' := x
       let x ← toApexGraph x
@@ -522,7 +547,7 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
       if let some fn' := s.implementedBy[fn]? then
         return ← toApexGraph (fn'.beta #[x])
       else
-        throwError m!"Don't know how to compiler projection {e}"
+        throwError m!"Don't know how to compile projection {e}"
 
   | _ => 
     throwError m!"Cannot compile expression: {e}. Constructor {e.ctorName}"
@@ -549,9 +574,7 @@ end
 
 
 def programToApexGraph (e : Expr) : MetaM ApexGraph := do
-  return (← go default).2.graph
-where 
-  go : GraphCompileM Unit := do
+  GraphCompileM.run' do
     let (inputs, output) ← functionToApexGraph e
 
     let inputs := inputs.map (·.flatten) |>.flatten
