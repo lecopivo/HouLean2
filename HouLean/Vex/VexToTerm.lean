@@ -3,6 +3,7 @@ VEX to Lean 4 Macro Transformation
 Translates VEX syntax to Lean code with proper handling of assignments
 -/
 
+import HouLean.Data
 import HouLean.Vex.Parser
 import Lean
 
@@ -104,16 +105,16 @@ def vexTypeToTerm (ty : TSyntax `vexType) : MacroM Term :=
   match ty with
   | `(vexType| int) => `(Int)
   | `(vexType| float) => `(Float)
-  | `(vexType| vector) => `(Vector3)
-  | `(vexType| vector2) => `(Vector2)
-  | `(vexType| vector4) => `(Vector4)
-  | `(vexType| matrix) => `(Matrix3)
-  | `(vexType| matrix2) => `(Matrix2)
-  | `(vexType| matrix3) => `(Matrix3)
+  | `(vexType| vector) => `(HouLean.Vector3)
+  | `(vexType| vector2) => `(HouLean.Vector2)
+  | `(vexType| vector4) => `(HouLean.Vector4)
+  | `(vexType| matrix) => `(HouLean.Matrix3)
+  | `(vexType| matrix2) => `(HouLeanMatrix2)
+  | `(vexType| matrix3) => `(HouLean.Matrix3)
   | `(vexType| string) => `(String)
   | `(vexType| void) => `(Unit)
-  | `(vexType| dict) => `(Dict)
-  | `(vexType| bsdf) => `(BSDF)
+  | `(vexType| dict) => `(HouLean.Dict)
+  | `(vexType| bsdf) => `(HouLeanBSDF)
   | `(vexType| $id:ident) => `($id)
   | _ => Macro.throwError s!"Unsupported VEX type: {ty.raw.prettyPrint}"
 

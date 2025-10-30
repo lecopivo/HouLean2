@@ -49,10 +49,21 @@ def ArrayTree.flatten {α} (t : ArrayTree α) : Array α :=
   | .leaf v => #[v]
   | .node cs => cs.foldl (init:=#[]) (fun arr c => arr ++ c.flatten)
 
+private def _root_.Array.join (arr : Array String) (sep : String) : String := Id.run do
+  if arr.size = 0 then
+    return ""
+  else if arr.size = 1 then
+    return arr[0]!
+  else
+    let mut s := arr[0]!
+    for a in arr[1:] do
+      s := s ++ sep ++ a
+    return s
+
 protected def ArrayTree.toString {α} [ToString α] (t : ArrayTree α) : String :=
   match t with
   | .leaf v => toString v
-  | .node cs => toString (cs.map ArrayTree.toString)
+  | .node cs => "(" ++ (cs.map ArrayTree.toString).join ", " ++ ")"
 
 def ArrayTree.mapIdxM {m} [Monad m] {α β} (p : ArrayTree α) (f : Nat → α → m β) : m (ArrayTree β) := do
   return (← go p 0).1

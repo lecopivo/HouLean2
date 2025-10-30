@@ -4,9 +4,13 @@ namespace HouLean
 
 open Apex
 
-structure VexCommonContext where
-  geo : Vector Geometry 4
+structure VexState where
+  /-- Input geometry at index 0 -/
+  geo : Geometry
 
+structure VexCommonContext where
+  /-- Input geometry at index 1,2,3 -/
+  geo : Vector Geometry 3
   -- bound variables
   time : Float
   timeInc : Float
@@ -45,4 +49,27 @@ inductive VexContext where
   | vertex (ctx : VexVertexContext)
   | volume (ctx : VexVolumeContext)
   
-abbrev VexM := ReaderM VexContext
+abbrev VexM := ReaderT VexContext <| StateM VexState
+
+
+def getGeo? (i : Int) : VexM (Option Geometry) := do
+  if i = 0 then
+    return (← get).geo
+  else if _h : i < 4 then
+    return panic! "getGeo? not fully implemented!"
+  else
+    return none
+
+namespace Vex
+
+
+def point (geo : Int) (attr : String) (ptnum : Int) : VexM Vector3 := do
+  let some g ← getGeo? geo
+    | return default
+  return g.pointAttrib ptnum attr
+
+def prim (geo : Int) (attr : String) (ptnum : Int) : VexM Vector3 := do
+  let some g ← getGeo? geo
+    | return default
+  return g.pointAttrib ptnum attr
+

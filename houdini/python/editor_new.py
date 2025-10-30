@@ -33,7 +33,7 @@ class DebugLogger(QtCore.QObject):
     
     def __init__(self):
         super().__init__()
-        self.enabled = True
+        self.enabled = False
     
     def log(self, message, level="INFO"):
         if not self.enabled:
@@ -1034,8 +1034,8 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.update_font_size(max(self.current_font_size - 1, 6))
 
     def zoom_reset(self):
-        self.update_font_size(self.default_font_size)        
-    
+        self.update_font_size(self.default_font_size)
+        
     def set_keybindings(self, keybindings):
         """Change keybinding scheme"""
         self.keybindings = keybindings
@@ -1513,11 +1513,19 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         
         # Completion popup special handling - only for specific keys
         if self.completion_popup.isVisible():
-            # Up/Down navigate the completion list
+            # Up/Down navigate the completion list (also Ctrl+P/N in Emacs mode)
             if event.key() == QtCore.Qt.Key.Key_Up:
                 self.completion_popup.move_selection_up()
                 return
             elif event.key() == QtCore.Qt.Key.Key_Down:
+                self.completion_popup.move_selection_down()
+                return
+            elif self.is_emacs_mode and event.key() == QtCore.Qt.Key_P and event.modifiers() == QtCore.Qt.ControlModifier:
+                # Ctrl+P in emacs mode moves up in completion
+                self.completion_popup.move_selection_up()
+                return
+            elif self.is_emacs_mode and event.key() == QtCore.Qt.Key_N and event.modifiers() == QtCore.Qt.ControlModifier:
+                # Ctrl+N in emacs mode moves down in completion
                 self.completion_popup.move_selection_down()
                 return
             
@@ -1537,6 +1545,14 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
                 return
             
             # All other keys: process normally, popup will update via textChanged
+        
+        # In emacs mode, override Ctrl+A to move to line start (not select all)
+        if self.is_emacs_mode and event.key() == QtCore.Qt.Key_A and event.modifiers() == QtCore.Qt.ControlModifier:
+            cursor = self.textCursor()
+            cursor.clearSelection()  # Clear any selection
+            cursor.movePosition(QtGui.QTextCursor.StartOfLine, QtGui.QTextCursor.MoveAnchor)
+            self.setTextCursor(cursor)
+            return
         
         # Handle Tab key when popup not visible - insert 2 spaces
         if event.key() == QtCore.Qt.Key_Tab and event.modifiers() == QtCore.Qt.NoModifier:
@@ -1718,17 +1734,12 @@ class LSPEditorWindow(QtWidgets.QWidget):
         self.file_path = file_path
         self.lsp_client = None
         self.editor = None
-
-        logger.log("Setting up UI")
         
         self.setup_ui()
         
         # Auto-start if we have file path
         if file_path and os.path.exists(file_path):
             QtCore.QTimer.singleShot(100, self.start_lsp)
-        else if os.path.exists(workspace_path):
-            logger.log("Creating temporary file {}")
-            
     
     def setup_ui(self):
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -2120,8 +2131,7 @@ def open_code_editor_from_kwargs(kwargs):
     server_cmd = node.evalParm("lsp_server") if node.parm("lsp_server") else "lake serve"
     workspace = node.evalParm("workspace") if node.parm("workspace") else os.getcwd()
     file_path = node.evalParm("file") if node.parm("file") else ""
-
-    logger.log("Starting LSP Code Editor")
+    
     return open_code_editor(
         node=node,
         parm_name='code',

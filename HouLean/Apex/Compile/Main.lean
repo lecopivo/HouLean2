@@ -127,13 +127,16 @@ def setFloatPort (val : Float) (id : PortId) : GraphCompileM Unit := do
 def setStringPort (val : String) (id : PortId) : GraphCompileM Unit := do
   modifyGraph (fun g => return ({g with literals := g.literals.push (.str val, id)}, ()))
 
+def setBoolPort (val : Bool) (id : PortId) : GraphCompileM Unit := do
+  modifyGraph (fun g => return ({g with literals := g.literals.push (.bool val, id)}, ()))
+
 /-- Add an integer constant node -/
 def addInt (val : Int) : GraphCompileM PortBundle := do
   let nodeType : NodeType := {
     name := "Value<Int>"
     ports := #[
-      {localId := 0, dir := .input, name := "val", type := .builtin "Int"},
-      {localId := 1, dir := .output, name := "val", type := .builtin "Int"}
+      {localId := 0, dir := .input, name := "parm", type := .builtin "Int"},
+      {localId := 1, dir := .output, name := "value", type := .builtin "Int"}
     ]
   }
   let (_, #[.leaf input], output) ← addNode nodeType #[]
@@ -146,8 +149,8 @@ def addFloat (val : Float) : GraphCompileM PortBundle := do
   let nodeType : NodeType := {
     name := "Value<Float>"
     ports := #[
-      {localId := 0, dir := .input, name := "val", type := .builtin "Float"},
-      {localId := 1, dir := .output, name := "val", type := .builtin "Float"}
+      {localId := 0, dir := .input, name := "parm", type := .builtin "Float"},
+      {localId := 1, dir := .output, name := "value", type := .builtin "Float"}
     ]
   }
   let (_, #[.leaf input], output) ← addNode nodeType #[]
@@ -160,13 +163,27 @@ def addString (val : String) : GraphCompileM PortBundle := do
   let nodeType : NodeType := {
     name := "Value<String>"
     ports := #[
-      {localId := 0, dir := .input, name := "val", type := .builtin "String"},
-      {localId := 1, dir := .output, name := "val", type := .builtin "String"}
+      {localId := 0, dir := .input, name := "parm", type := .builtin "String"},
+      {localId := 1, dir := .output, name := "value", type := .builtin "String"}
     ]
   }
   let (_, #[.leaf input], output) ← addNode nodeType #[]
     | throwError "Failed to add Value<String> node"
   setStringPort val input
+  return output
+
+/-- Add a bool constant node -/
+def addBool (val : Bool) : GraphCompileM PortBundle := do
+  let nodeType : NodeType := {
+    name := "Value<Bool>"
+    ports := #[
+      {localId := 0, dir := .input, name := "parm", type := .builtin "Float"},
+      {localId := 1, dir := .output, name := "value", type := .builtin "Float"}
+    ]
+  }
+  let (_, #[.leaf input], output) ← addNode nodeType #[]
+    | throwError "Failed to add Value<Bool> node"
+  setBoolPort val input
   return output
 
 def addForBegin (state : ApexStaticType) : GraphCompileM ForBeginPorts := do
@@ -199,23 +216,66 @@ def addIdentity (type : Expr) (userName? : Option String := none) :
   | .error n => 
     throwError m!"Cannot determine static size of {type}, the number {n} should be a compile time constant"
   | .ok type => 
-    -- Offset by two for default `__spare__` ports
+
+    let mut g := (← get).graph
+
+    let localPorts : Array LocalPort := #[
+      { localId := 0, name := "__spare__", type := .undefined, dir := .input},
+      { localId := 1, name := "__spare__", type := .undefined, dir := .output}
+    ]
+
     let nodeType : NodeType := {
       name := "__null__"
-      ports := #[
-        {localId := 0, name := "__spare__", type := .undefined, dir := .input},
-        {localId := 1, name := "__spare__", type := .undefined, dir := .output}
-      ]
+      ports := localPorts
     }
-    
-    let subport : AddSubPortSpec := {
-      inputPortId := some 0
-      outputPortId := some 1
-      subports := type.flatten
-    }
-    let (_, inputs, output) ← addNode nodeType #[subport] userName?
 
-    return (inputs[0]!, output)
+    let nodeOff := g.nodes.size
+    let portOff := g.ports.size
+
+    let ports := localPorts.map (fun p => 
+      {p with globalId := portOff + p.localId, nodeId := nodeOff : Port})
+
+    let stateIn : ArrayTree Port := type.mapIdx fun i (name,typeName) => 
+      { localId  := 2*i + localPorts.size, 
+        globalId := 2*i + localPorts.size + portOff
+        nodeId := nodeOff
+        name := name
+        type := .builtin typeName
+        dir := .input : Port}
+
+    let stateOut : ArrayTree Port := type.mapIdx fun i (name,typeName) => 
+      { localId  := 2*i + 1 + localPorts.size, 
+        globalId := 2*i + 1 + localPorts.size + portOff
+        nodeId := nodeOff
+        name := name
+        type := .builtin typeName
+        dir := .output : Port}
+
+    let statePorts := stateIn.flatten.zip stateOut.flatten |>.map (fun (x,y) => #[x,y]) |>.flatten
+    let ports := ports ++ statePorts
+
+    let node : Node := {
+      type := nodeType
+      globalId := nodeOff
+      name := userName?.getD (← getFreshNodeName "null")
+      ports := ports.map (fun p => p.globalId)
+      subPorts := #[{
+        inputPortId  := some (2 + portOff)
+        outputPortId := some (5 + portOff)
+        subports := stateIn.flatten.map (fun p => (p.name, p.type.builtin!))
+        }]
+    }
+
+    g := {g with
+      nodes := g.nodes.push node
+      ports := g.ports ++ ports
+    }
+
+    modify (fun s => {s with graph := g})
+
+    return (stateIn.mapIdx (fun _ p => p.globalId), 
+            stateOut.mapIdx (fun _ p => p.globalId))
+
 
 /-- Add a free variable node -/
 def addFVar (var : FVarId) : GraphCompileM (PortBundle × PortBundle) := do
@@ -254,12 +314,21 @@ where
     | mkApp3 (.const ``List.cons _) _ x xs => return x :: (← splitList xs)
     | l => throwError m!"Invalid variadic argument {l} {l.getAppFn}"
 
+instance : ExceptToEmoji Exception PortBundle where
+  toEmoji r :=
+    match r with
+    | .ok p => s!"✅️ {p.toString}"
+    | .error _ => "💥️"
+
+
 open Qq in
 mutual
 
 /-- Compile Lean expression to APEX graph -/
 partial def toApexGraph (e : Expr) (userName? : Option String := none) : 
     GraphCompileM PortBundle := do
+  
+  withTraceNode `HouLean.Apex.compiler (fun r => return m!"[{ExceptToEmoji.toEmoji r}] compiling {e}") do
   let e ← withConfig (fun cfg => {cfg with iota := true, zeta := false}) <| whnfI e
 
   match e with
@@ -278,6 +347,14 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
     let .lit (.natVal e) ← whnf e | throwError s!"Invalid literal for exponent: {e}"
     let s := if ← isDefEq s q(true) then true else false
     addFloat (Float.ofScientific m s e)
+  | .const _ _ =>
+    -- hard code Bool.true/Bool.false
+    if (← isDefEq e q(true)) then
+      return ← addBool true
+    if (← isDefEq e q(false)) then
+      return ← addBool false
+
+    throwError m!"Cannot compile constant: {e}"
   | .sort _ => 
     throwError m!"Cannot compile sort: {e}"
   | .mvar _ => 
@@ -317,6 +394,7 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
 
     -- Special case: projection
     if let some info ← getProjectionFnInfo? fname then
+      trace[HouLean.Apex.compiler] m!"projection function {info.ctorName}"
       let x := args[args.size - 1]!
       let x ← toApexGraph x
       let some si := x.child? info.i
@@ -400,13 +478,15 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
       toApexGraph b
 
   | .proj _ i x => 
+    trace[HouLean.Apex.compiler] m!"projection {i}"
     let x' := x
     let x ← toApexGraph x
     let some si := x.child? i
       | throwError m!"Invalid projection {i} of {x'}: {x.toString}"
     return si
 
-  | _ => throwError m!"Cannot compile expression: {e}"
+  | _ => 
+    throwError m!"Cannot compile expression: {e}. Constructor {e.ctorName}"
 
 /-- Compile function to APEX graph, returning input and output bundles -/  
 partial def functionToApexGraph (e : Expr) : 

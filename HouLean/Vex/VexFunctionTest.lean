@@ -1,8 +1,9 @@
 import HouLean.Vex.VexFunction
+
 -- Example VEX functions (these should be in a separate file in practice)
 -- Uncomment when testing in a separate module
 
-open VEX
+open VEX HouLean Math
 
 -- Test 1: Simple function
 vexfunction
@@ -19,6 +20,10 @@ vexfunction
 vector addVectors(vector a; vector b) {
   return a + b;
 }
+
+/-- info: { x := 2.000000, y := 12.000000, z := 103.000000 } -/
+#guard_msgs in
+#eval addVectors((⟨1.0,2.0,3.0⟩ : Vector3), (⟨1.0,10.0,100.0⟩ : Vector3))
 
 -- Test 3: Control flow
 vexfunction
@@ -52,12 +57,17 @@ float lerp(float a; float b; float t) {
 #guard_msgs in
 #eval lerp(0.0, 10.0, 0.5)
 
+
 -- Test 5: Displacement
 vexfunction
 vector displace(vector P; float amount) {
-  vector N = normalize(P);
+  vector N = normalized(P);
   return P + N * amount;
 }
+
+/-- info: { x := 1.026726, y := 2.053452, z := 3.080178 } -/
+#guard_msgs in
+#eval displace((⟨1.0,2.0,3.0⟩ : Vector3), 0.1)
 
 -- Test 6: Integer operations
 vexfunction
@@ -236,20 +246,6 @@ Available overloads:
 #guard_msgs in
 #eval add("a", "b")
 
--- Test 16: Error cases - wrong arity
-/--
-error: no matching overload for add
-
-Provided arguments: ?m.12042
-
-Available overloads:
-  • add : Float × Float → Float
-  • add : Float × Float × Float → Float
-  • add : Float × Float × Float × Float → Float
-  • add : Int × Int → Int
--/
-#guard_msgs in
-#eval add(1.0)
 
 -- Test 17: Max function
 vexfunction

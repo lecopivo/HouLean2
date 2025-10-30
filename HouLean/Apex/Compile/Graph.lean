@@ -11,6 +11,13 @@ inductive LiteralVal
   | bool (str : Bool)
 deriving Inhabited
 
+def LiteralVal.toString : LiteralVal → String
+  | .int val => s!"{val}"
+  | .float val => s!"{val}"
+  | .str val => val.quote
+  | .bool val => s!"{val}"
+
+
 structure ApexGraph where
   nodes : Array Node
   /-- ports[i] = (node id, local port id) -/
@@ -35,6 +42,16 @@ instance : ToString ApexGraph := ⟨fun g =>
     s := s ++ "\nPorts:\n"
     for i in [0:g.ports.size] do
       s := s ++ s!"  {i}: {g.printPort i}\n"
+
+    if g.inputPorts.size != 0 then
+      s := s ++ "\nInput Ports:\n"
+      for i in g.inputPorts do
+        s := s ++ s!"  {i}: {g.printPort i}\n"
+
+    if g.outputPorts.size != 0 then
+      s := s ++ "\nOutput Ports:\n"
+      for i in g.outputPorts do
+        s := s ++ s!"  {i}: {g.printPort i}\n"
 
     s := s ++ "\nWires:\n"
     for (src, trg) in g.wires, i in Array.range g.wires.size do
@@ -273,6 +290,11 @@ Id.run do
       let p := g.ports[outputPortId]!
       s := s ++ s!"graph.addGraphOutput({g.nodes.size+2}, \"{p.name}{i}\")" ++ "\n"
       s := s ++ s!"graph.addWire({outputPortId}, {j})" ++ "\n"
+
+  for (val, portId) in g.literals do
+    let p := g.ports[portId]!
+    -- nodes are index from 1-in python
+    s := s ++ s!"graph.setNodeParm({p.nodeId+1}, \"{p.name}\", {val.toString})"
 
   s := s ++ "\n# Layout and Save Graph" ++ "\n"
   s := s ++ "graph.layout()" ++ "\n"

@@ -24,6 +24,8 @@ instance (x0 x1 x2 : α) : CoeDep (List α) [x0,x1,x2] (VariadicArg α 3) where
 
 namespace Compiler
 
+initialize registerTraceClass `HouLean.Apex.compiler
+
 /-- Name of builtin APEX type. -/
 abbrev TypeName := String
 
