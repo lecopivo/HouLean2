@@ -279,51 +279,51 @@ run_meta
   IO.println g
 
 
-/--
-info: import apex
-geo = hou.pwd().geometry()
-graph = apex.Graph()
+-- /--
+-- info: import apex
+-- geo = hou.pwd().geometry()
+-- graph = apex.Graph()
 
-# Adding Nodes
-n0 = graph.addNode("x", "__null__")
-graph.addSubPort(0, "(x, Int)")
-n1 = graph.addNode("value_int", "Value<Int>")
-n2 = graph.addNode("a", "__null__")
-graph.addSubPort(6, "(x, Int)")
-n3 = graph.addNode("x1", "__null__")
-n4 = graph.addNode("r", "__null__")
-graph.addSubPort(12, "(x, Int)")
-n5 = graph.addNode("add_int", "Add<Int>")
-graph.addSubPort(17, "(x, Int)")
-n6 = graph.addNode("forbegin", "ForBegin")
-graph.addSubPort(22, "(x, Int)")
-n7 = graph.addNode("forend", "ForEnd")
-graph.addSubPort(30, "(x, Int)")
+-- # Adding Nodes
+-- n0 = graph.addNode("x", "__null__")
+-- graph.addSubPort(0, "(x, Int)")
+-- n1 = graph.addNode("value_int", "Value<Int>")
+-- n2 = graph.addNode("a", "__null__")
+-- graph.addSubPort(6, "(x, Int)")
+-- n3 = graph.addNode("x1", "__null__")
+-- n4 = graph.addNode("r", "__null__")
+-- graph.addSubPort(12, "(x, Int)")
+-- n5 = graph.addNode("add_int", "Add<Int>")
+-- graph.addSubPort(17, "(x, Int)")
+-- n6 = graph.addNode("forbegin", "ForBegin")
+-- graph.addSubPort(22, "(x, Int)")
+-- n7 = graph.addNode("forend", "ForEnd")
+-- graph.addSubPort(30, "(x, Int)")
 
-# Add Wires
-graph.addWire(15, 16) # r[x] -> add_int[a0]
-graph.addWire(15, 19) # r[x] -> add_int[x]
-graph.addWire(3, 26) # x[x] -> forbegin[x]
-graph.addWire(5, 21) # value_int[value] -> forbegin[iterations]
-graph.addWire(23, 29) # forbegin[scope] -> forend[scope]
-graph.addWire(24, 8) # forbegin[index] -> a[x]
-graph.addWire(27, 14) # forbegin[x] -> r[x]
-graph.addWire(18, 32) # add_int[out0] -> forend[x]
+-- # Add Wires
+-- graph.addWire(15, 16) # r[x] -> add_int[a0]
+-- graph.addWire(15, 19) # r[x] -> add_int[x]
+-- graph.addWire(3, 26) # x[x] -> forbegin[x]
+-- graph.addWire(5, 21) # value_int[value] -> forbegin[iterations]
+-- graph.addWire(23, 29) # forbegin[scope] -> forend[scope]
+-- graph.addWire(24, 8) # forbegin[index] -> a[x]
+-- graph.addWire(27, 14) # forbegin[x] -> r[x]
+-- graph.addWire(18, 32) # add_int[out0] -> forend[x]
 
-# Add Inputs and Outputs
-graph.addNode("input", "__parms__")
-graph.addGraphInput(9, "x")
-graph.addWire(35, 2)
-graph.addNode("output", "__output__")
-graph.addGraphOutput(10, "x0")
-graph.addWire(33, 37)
-graph.setNodeParm(2, "parm", 5)
+-- # Add Inputs and Outputs
+-- graph.addNode("input", "__parms__")
+-- graph.addGraphInput(9, "x")
+-- graph.addWire(35, 2)
+-- graph.addNode("output", "__output__")
+-- graph.addGraphOutput(10, "x0")
+-- graph.addWire(33, 37)
+-- graph.setNodeParm(2, "parm", 5)
 
-# Layout and Save Graph
-graph.layout()
-graph.saveToGeometry(geo)
--/
-#guard_msgs in
+-- # Layout and Save Graph
+-- graph.layout()
+-- graph.saveToGeometry(geo)
+-- -/
+-- #guard_msgs in
 run_meta
   let e := q(fun (x : Int) => Id.run do
   let mut x : Int := x

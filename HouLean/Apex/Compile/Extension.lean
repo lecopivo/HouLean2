@@ -6,13 +6,26 @@ namespace HouLean.Apex.Compiler
 
 inductive SingleExtension where
   | apexType (leanType : Expr) (type : ApexType)
-  /-- During compilation we replace `srcFun` with `trgFun`.
+  /-- During compilation we replace `src` with `trg`.
+
+  These functions might not have the same Lean type but they should
+  have the same `ApexFunType`.
+  
+  This is also used for types. We might have `src` 
+  -/
+  | implementedByName (src : Name) (trg : Name)
+  /-- During compilation we replace `src` with `trg`.
 
   These functions might not have the same Lean type but they should
   have the same `ApexFunType`.
 
-  Note: `srcFun` and `trgFun` might have zero arguments, i.e. just constants -/
-  | implementedBy (srcFun : Expr) (trgFun : Expr)
+  Replacing `Expr` with `Expr` is used when we need to 
+  replace `@Array.get Float` and `@Array.get Int` with different 
+  functions.
+
+  `src` and `trg` must have the same APEX types
+  -/
+  | implementedByExpr (src : Expr) (trg : Expr)
   /-- Translation of Lean functions to APEX nodes. -/
   | nodeType (fn : Expr) (nodeType : NodeType)
   /-- Unfold declaration during compilation. -/
@@ -23,7 +36,8 @@ deriving Inhabited
 /-- Enviroment extension that holds all necessary information for the APEX compiler. -/
 structure Extension where
   apexTypes : ExprMap ApexType
-  implementedBy : ExprMap Expr
+  implementedByName : NameMap Name
+  implementedByExpr : ExprMap Expr
   nodeTypes : ExprMap NodeType
   toUnfold : NameSet
 deriving Inhabited
@@ -38,8 +52,10 @@ initialize compilerExt : CompilerExt ←
       match e with
       | .apexType leanType apexType =>
         {es with apexTypes := es.apexTypes.insert leanType apexType}
-      | .implementedBy srcFun trgFun =>
-        {es with implementedBy := es.implementedBy.insert srcFun trgFun}
+      | .implementedByName src trg =>
+        {es with implementedByName := es.implementedByName.insert src trg}
+      | .implementedByExpr src trg =>
+        {es with implementedByExpr := es.implementedByExpr.insert src trg}
       | .nodeType fn nodeType =>
         {es with nodeTypes := es.nodeTypes.insert fn nodeType}
       | .unfold name =>

@@ -7,6 +7,7 @@ namespace HouLean.Apex.Compiler
 partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do 
 
   let type ← whnfR type
+  let (fn, args) := type.getAppFnArgs
 
   let m := (compilerExt.getState (← getEnv)).apexTypes
 
@@ -15,7 +16,7 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
     return t
 
   -- is variadic builtin type?
-  if type.isAppOfArity ``VariadicArg 2 then
+  if fn == ``VariadicArg ∧ args.size == 2 then
     let elemType ← whnfR (type.getArg! 0)
     let n ← whnfD (type.getArg! 1) -- reduce as much as possible
     -- special case for "VariadicArg<void>"
@@ -28,9 +29,19 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
 
   if (← inferType type).isProp then
     return some (.struct (.node #[]))
-  
-  let (fn, args) := type.getAppFnArgs
 
+  -- implemented by
+  let s := compilerExt.getState (← getEnv)
+  if let some fn' := s.implementedByName.find? fn then
+    try
+      -- type constructores are assumet to have the same arguments
+      let type' ← mkAppOptM fn' (args.map some)
+      return ← getApexType? type'
+    catch _ =>
+      throwError m!"Failed replacing {fn} with {fn'} in {type}"
+
+  
+  -- Handle structure types
   let mut fields : Array (ArrayTree (String×TypeName)) := #[]
   if isStructure (← getEnv) fn then
     let info := getStructureInfo (← getEnv) fn

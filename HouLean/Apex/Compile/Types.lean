@@ -71,6 +71,14 @@ inductive ApexType where
   | struct (bundle : ArrayTree (String×TypeName))
 deriving Inhabited, BEq
 
+def ApexType.toString (t : ApexType) : String :=
+  match t with
+  | .builtin t => t
+  | .variadic t _ => s!"({t},...)"
+  | .struct t => (t.mapIdx (fun _ n => n.2)).toString
+
+instance : ToString ApexType := ⟨fun t => t.toString⟩
+
 /-- APEX type that corresponds to a Lean type. Size of variadic types is known.
 
 default name of variable of this type and its builtin type name

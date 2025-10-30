@@ -54,6 +54,67 @@ structure ImplementedBy where
   trgFun : Expr
 deriving Inhabited
 
+def addImplementedByName (src trg : Name) (kind : AttributeKind) : MetaM Unit := do
+  let srcInfo ← getConstInfo src
+  let trgExpr ← mkConstWithFreshMVarLevels src
+
+  -- initializing the types for src and trg in different ways to 
+  -- handle universes properly (we keep level parameters from `srcInfo` and `trgExpr` will
+  -- get them from unification)
+  forallTelescope (srcInfo.type) fun xs t => do
+  forallTelescope (← inferType trgExpr) fun ys _ => do
+
+    let typeConstructor := t.isSort
+
+    unless xs.size = ys.size do
+      throwError m!"Functions {src} and {trg} must have the same arity!"
+
+    -- prepare all type arguments with `Float`
+    let mut typeArgs : Array (Option Expr) := #[]
+    for x in xs, y in ys do
+
+      let srcBi ← x.fvarId!.getBinderInfo
+      let trgBi ← y.fvarId!.getBinderInfo
+      unless srcBi == trgBi do
+        throwError m!"type argument {x} of {src} and type argumetn {y} of {trg} are expected to have the same binder type"
+
+      -- once we hit explicit arguments we stop
+      -- for type constructors we do not stop
+      if srcBi.isExplicit ∧ ¬typeConstructor then
+        break
+
+      -- all type parameters are required to have the same type!
+      unless ← isDefEq (← inferType x) (← inferType y) do
+        throwError m!"type argument {x} of {src} and type argument {y} of {trg} must have the same type!"
+
+      if (← inferType x).isSort then
+        typeArgs := typeArgs.push (some (.const ``Float []))
+      else
+        typeArgs := typeArgs.push none
+
+    let srcExpr ← mkAppOptM src typeArgs
+    let trgExpr ← mkAppOptM trg typeArgs
+  
+    if typeConstructor then
+      compilerExt.add (.implementedByName src trg) kind
+    else
+
+      let some srcType ← getApexFunType? (← inferType srcExpr)
+        | throwError m!"Function {srcExpr} : {← inferType srcExpr} does not have a valid APEX type!"
+      let some trgType ← getApexFunType? (← inferType trgExpr)
+        | throwError m!"Function {trgExpr} : {← inferType trgExpr} does not have a valid APEX type!"
+
+      unless srcType == trgType do
+        throwError m!"Can't implement {srcExpr} with {trgExpr}, they have different APEX types"
+
+      compilerExt.add (.implementedByName src trg) kind
+    
+  -- unless srcType == trgType do
+  --   throwError m!"Can't implement {src} with {trg}, they have different APEX types"
+
+  compilerExt.add (.implementedByName src trg) kind
+
+
 def addImplementedBy (srcFun trgFun : Expr) (kind : AttributeKind) : MetaM Unit := do
 
   let some srcType ← getApexFunType? (← inferType srcFun)
@@ -66,9 +127,9 @@ def addImplementedBy (srcFun trgFun : Expr) (kind : AttributeKind) : MetaM Unit 
 
   if let .const trgName _ := trgFun then
     let info ← getConstInfo trgName
-    compilerExt.add (.implementedBy srcFun info.value!) kind
+    compilerExt.add (.implementedByExpr srcFun info.value!) kind
   else
-    compilerExt.add (.implementedBy srcFun trgFun) kind
+    compilerExt.add (.implementedByExpr srcFun trgFun) kind
 
 
 syntax (name:=apex_implements) "apex_implements" ident : attr

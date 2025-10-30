@@ -70,6 +70,16 @@ partial def arrayToProdBundle (ps : Array PortBundle) : PortBundle :=
   else
     .node #[ps[0]!, arrayToProdBundle ps[1:].toArray]
 
+def getUnfoldStackMsg : GraphCompileM MessageData := do
+  let stack := (← read).unfoldStack
+  if stack.isEmpty then
+    return m!""
+  else
+    return m!", unfolded: {stack.head!} → ... → {stack.getLast!}"
+
+def throwErrorWithStack (msg : MessageData) : GraphCompileM α := do
+  throwError m!"{msg}{← getUnfoldStackMsg}"
+
 /-- Add a node to the graph with optional subports -/
 def addNode (nodeType : NodeType) (subports : Array AddSubPortSpec) 
     (userName? : Option String := none) : 
@@ -154,8 +164,6 @@ def setStringPort (val : String) (id : PortId) : GraphCompileM Unit := do
 def setBoolPort (val : Bool) (id : PortId) : GraphCompileM Unit := do
   modifyGraph (fun g => return ({g with literals := g.literals.push (.bool val, id)}, ()))
 
-
-
 /-- Add an integer constant node -/
 def addInt (val : Int) : GraphCompileM PortBundle := do
   let nodeType : NodeType := {
@@ -166,7 +174,7 @@ def addInt (val : Int) : GraphCompileM PortBundle := do
     ]
   }
   let (_, #[.leaf input], output) ← addNode nodeType #[]
-    | throwError "Failed to add Value<Int> node"
+    | throwErrorWithStack m!"Failed to add Value<Int> node"
   setIntPort val input
   return output
 
@@ -180,7 +188,7 @@ def addFloat (val : Float) : GraphCompileM PortBundle := do
     ]
   }
   let (_, #[.leaf input], output) ← addNode nodeType #[]
-    | throwError "Failed to add Value<Float> node"
+    | throwErrorWithStack m!"Failed to add Value<Float> node"
   setFloatPort val input
   return output
 
@@ -194,7 +202,7 @@ def addString (val : String) : GraphCompileM PortBundle := do
     ]
   }
   let (_, #[.leaf input], output) ← addNode nodeType #[]
-    | throwError "Failed to add Value<String> node"
+    | throwErrorWithStack m!"Failed to add Value<String> node"
   setStringPort val input
   return output
 
@@ -208,7 +216,7 @@ def addBool (val : Bool) : GraphCompileM PortBundle := do
     ]
   }
   let (_, #[.leaf input], output) ← addNode nodeType #[]
-    | throwError "Failed to add Value<Bool> node"
+    | throwErrorWithStack m!"Failed to add Value<Bool> node"
   setBoolPort val input
   return output
 
@@ -232,15 +240,15 @@ def makeConnections (src trg : Array PortBundle) : GraphCompileM Bool := do
 
   return true
 
-/-- Add identit ynode for a given type, returns input and output port bundle -/
+/-- Add identity node for a given type, returns input and output port bundle -/
 def addIdentity (type : Expr) (userName? : Option String := none) : 
     GraphCompileM (PortBundle × PortBundle) := do
   let some apexType ← getApexType? type
-    | throwError m!"Cannot get APEX type for {type}"
+    | throwErrorWithStack m!"Cannot get APEX type for {type}"
 
   match ← enforceStaticSize apexType with
   | .error n => 
-    throwError m!"Cannot determine static size of {type}, the number {n} should be a compile time constant"
+    throwErrorWithStack m!"Cannot determine static size of {type}, the number {n} should be a compile time constant"
   | .ok type => 
 
     let mut g := (← get).graph
@@ -302,7 +310,6 @@ def addIdentity (type : Expr) (userName? : Option String := none) :
     return (stateIn.mapIdx (fun _ p => p.globalId), 
             stateOut.mapIdx (fun _ p => p.globalId))
 
-
 /-- Add a free variable node -/
 def addFVar (var : FVarId) : GraphCompileM (PortBundle × PortBundle) := do
   let (input, output) ← addIdentity (← var.getType) (← var.getUserName).eraseMacroScopes.toString
@@ -362,227 +369,314 @@ partial def compile (e : Expr) : GraphCompileM (Array PortBundle × PortBundle) 
     modify (fun s => {s with cache := s.cache.insert e output})
     return output
 
+/-- Compile a free variable reference -/
+partial def compileVariable (id : FVarId) (e : Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  let some portBundle := (← get).fvarToPort[id]?
+    | throwErrorWithStack m!"Unrecognized free variable: {e}"
+  return (#[], portBundle)
+
+/-- Compile literal values (Nat, String) -/
+partial def compileLiteral (lit : Literal) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  match lit with
+  | .natVal n => return (#[], ← addInt n)
+  | .strVal s => return (#[], ← addString s)
+
+/-- Compile Float literals -/
+partial def compileFloat (m s e : Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  let .lit (.natVal m) ← whnf m 
+    | throwErrorWithStack s!"Invalid literal for mantissa: {m}"
+  let .lit (.natVal e) ← whnf e 
+    | throwErrorWithStack s!"Invalid literal for exponent: {e}"
+  let s := if ← isDefEq s q(true) then true else false
+  return (#[], ← addFloat (Float.ofScientific m s e))
+
+/-- Compile Bool constants -/
+partial def compileConstant (e : Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  if (← isDefEq e q(true)) then
+    return (#[], ← addBool true)
+  if (← isDefEq e q(false)) then
+    return (#[], ← addBool false)
+  throwErrorWithStack m!"Cannot compile constant: {e}"
+
+/-- Compile match expressions -/
+partial def compileMatchExpr (e : Expr) (info : MatcherInfo) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  let body := e.appArg!
+  let x := e.appFn!.appArg!
+  
+  trace[HouLean.Apex.compiler] "Compiling match on {x}"
+  
+  if x.isFVar then
+    trace[HouLean.Apex.compiler] "  → fvar case, reducing match"
+    return ← compile (← whnf e)
+  else
+    trace[HouLean.Apex.compiler] "  → nontrivial match"
+    unless info.numParams = 0 ∧ info.numDiscrs = 1 ∧ info.altNumParams.size = 1 do
+      throwErrorWithStack m!"Unsupported match statement: {e}"
+    let fn := e.appFn!.appFn!
+    return ← compile (Expr.letE `r (← inferType x) x ((fn.app (.bvar 0)).app body) false)
+
+/-- Try to compile using implemented_by override -/
+partial def tryCompileImplementedBy (fn : Expr) (args : Array Expr) : 
+    GraphCompileM (Option (Array PortBundle × PortBundle)) := do
+  let s := compilerExt.getState (← getEnv)
+  if let some fn' := s.implementedByExpr[fn]? then
+    trace[HouLean.Apex.compiler] "Using implemented_by override for {fn}"
+    return some (← compile (fn'.beta args))
+  return none
+
+/-- Try to compile variadic argument -/
+partial def tryCompileVariadic (e : Expr) : 
+    GraphCompileM (Option (Array PortBundle × PortBundle)) := do
+  if let some xs ← isVariadicArg e then
+    let xs ← xs.mapM (fun x => do pure (← compile x).2)
+    return some (#[], arrayToBundle xs)
+  return none
+
+/-- Compile constructor application -/
+partial def compileConstructor (e : Expr) (info : ConstructorVal) (args : Array Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  -- unless ← isStructureType (← inferType e) do
+  --   throwErrorWithStack m!"Constructor must produce a structure type: {e}"
+  
+  let args := args[info.numParams:].toArray
+  let args ← args.mapM (fun x => do pure (← compile x).2)
+  return (#[], .node args)
+
+/-- Compile projection function -/
+partial def compileProjectionFn (fname : Name) (args : Array Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  let some info ← getProjectionFnInfo? fname
+    | throwErrorWithStack m!"Expected projection function: {fname}"
+  
+  trace[HouLean.Apex.compiler] "Compiling projection function {fname}"
+  let x := args[args.size - 1]!
+  let (_, x) ← compile x
+  let some si := x.child? info.i
+    | throwErrorWithStack m!"Invalid projection {info.i} of {args[args.size - 1]!}: {x.toString}"
+  return (#[], si)
+
+/-- Compile for-loop -/
+partial def compileForLoop (e : Expr) (args : Array Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  trace[HouLean.Apex.compiler] "Compiling for-loop"
+  
+  let monad := args[0]!
+  let range ← whnf args[3]!
+
+  unless ← isDefEq monad q(@Id : Type → Type) do
+    throwErrorWithStack m!"Unsupported monad {monad} in for loop"
+
+  unless range.isAppOfArity' ``Std.Range.mk 4 do
+    throwErrorWithStack m!"Unsupported range {range} in for loop"
+
+  let b ← whnf (range.getArg! 0)
+  let s ← whnf (range.getArg! 2)
+  unless ← isDefEq b q(0 : Nat) do
+    throwErrorWithStack m!"Invalid range start: {b}"
+  unless ← isDefEq s q(1 : Nat) do
+    throwErrorWithStack m!"Invalid range step: {s}"
+
+  let (_, iterations) ← compile (range.getArg! 1)
+  let (loopIns, loopOut) ← compile args[4]!
+  let (_, input) ← compile args[5]!
+
+  let loopIndexIn := loopIns[0]!
+  let loopIn := loopIns[2]!
+
+  let stateShape ← input.mapIdxM (fun _ p => do 
+    let p ← readGraph (fun g => pure g.ports[p]!)
+    match p.type with
+    | .builtin typeName => return (p.name, typeName)
+    | _ => throwErrorWithStack m!"Invalid state {args[5]!} : {← inferType args[5]!} in for loop")
+  
+  let bp ← addForBegin stateShape
+  let ep ← addForEnd stateShape
+
+  let _ ← makeConnection input bp.stateIn
+  let _ ← makeConnection iterations bp.iterations
+  let _ ← makeConnection bp.scope ep.scope
+  let _ ← makeConnection bp.index loopIndexIn
+  let _ ← makeConnection bp.stateOut loopIn
+  let _ ← makeConnection loopOut ep.stateIn
+
+  return (#[], ep.stateOut)
+
+/-- Compile normal function application -/
+partial def compileNormalApp (fn : Expr) (args : Array Expr) (e : Expr) 
+    (userName? : Option String) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  let .const fname _ := fn 
+    | throwErrorWithStack m!"Expected constant function: {fn}"
+
+  let args ← getExplicitArgs fn args
+  let some nodeType ← getNodeType (.const fname []) 
+    | let r ← unfold e fname
+      if r.expr == e then
+        throwErrorWithStack m!"No APEX node for {fname}"
+      trace[HouLean.Apex.compiler] "Unfolding {fname}"
+      withUnfolded fname do
+        return ← compile r.expr
+
+  let argPorts ← args.mapM (fun x => do pure (← compile x).2)
+  let fnInputs := nodeType.inputs
+  
+  -- Find variadic arguments
+  let mut subPorts : Array AddSubPortSpec := #[]
+  for arg in args, i in [0:args.size] do
+    let type ← inferType arg
+    if type.isAppOfArity' ``Vector 2 then
+      let id := fnInputs[i]!.localId
+      let namesAndTypes ← argPorts[i]!.flatten.mapM (fun pId => do 
+        let n ← getPortName pId
+        let t ← getPortType pId
+        let t := t.builtin!
+        return (n,t))
+      subPorts := subPorts.push ⟨id, none, namesAndTypes⟩
+  
+  let (_, inputBundle, outputBundle) ← addNode nodeType subPorts userName?
+  let _ ← makeConnections argPorts inputBundle
+  return (#[], outputBundle)
+
+/-- Compile function application -/
+partial def compileApplication (e : Expr) (userName? : Option String) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  let (fn, args) := e.withApp fun fn args => (fn, args)
+
+  -- Handle match statements
+  if let some info := isMatcherAppCore? (← getEnv) e then
+    return ← compileMatchExpr e info
+
+  -- Try implemented_by override
+  if let some result ← tryCompileImplementedBy fn args then
+    return result
+
+  let .const fname _ := fn 
+    | throwErrorWithStack m!"Unexpected function application: {e}"
+
+  -- Check if function should be unfolded
+  if (compilerExt.getState (← getEnv)).toUnfold.contains fname then
+    let r ← Meta.unfold e fname
+    trace[HouLean.Apex.compiler] "Unfolding {fname}"
+    return ← compile r.expr
+
+  -- Try variadic argument
+  if let some result ← tryCompileVariadic e then
+    return result
+
+  -- Handle constructor
+  if let some (info, args) ← constructorApp? e then
+    return ← compileConstructor e info args
+
+  -- Handle projection function
+  if let some _ ← getProjectionFnInfo? fname then
+    return ← compileProjectionFn fname args
+
+  -- Handle for-loop
+  if fname = ``Std.Range.forIn'.loop then
+    return ← compileForLoop e args
+
+  -- Normal application
+  compileNormalApp fn args e userName?
+
+/-- Compile let expression -/
+partial def compileLet (n : Name) (t : Expr) (v : Expr) (b : Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  if t.isForall then
+    return ← compile (b.instantiate1 v)
+  
+  withLocalDeclD n t fun x => do
+    let (_, letOutput) ← compile v
+    modify (fun s => {s with fvarToPort := s.fvarToPort.insert x.fvarId! letOutput})
+    let b := b.instantiate1 x
+    compile b
+
+/-- Compile projection expression -/
+partial def compileProjection (s : Name) (i : Nat) (x : Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  trace[HouLean.Apex.compiler] "Compiling projection {s}.{i}"
+  
+  let t ← whnf (← inferType x)
+  if ← isStructureType t then
+    let x' := x
+    let (_, x) ← compile x
+    let some si := x.child? i
+      | throwErrorWithStack m!"Invalid projection {i} of {x'}: {x.toString}"
+    return (#[], si)
+  else
+    let info := getStructureInfo (← getEnv) s
+    let some fn := info.getProjFn? i
+      | throwErrorWithStack m!"Invalid projection {i} for {t}"
+    let fn := (← mkAppM fn #[x]).appFn!
+    
+    -- Try implemented_by override
+    if let some result ← tryCompileImplementedBy fn #[x] then
+      return result
+    else
+      throwErrorWithStack m!"Don't know how to compile projection {fn}"
+
+/-- Compile lambda expression -/
+partial def compileLambda (e : Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  forallTelescope (← inferType e) fun xs _ => do
+    if xs.size = 0 then
+      throwErrorWithStack m!"Function expected: {e}"
+
+    let b ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <|
+      whnfI (e.beta xs)
+
+    let mut inputs : Array PortBundle := #[]
+    for x in xs do
+      let (input, _) ← addFVar x.fvarId!
+      inputs := inputs.push input
+    let (_,output) ← compile b
+
+    return (inputs, output)
+
 /-- Compile Lean expression to APEX graph -/
 partial def toApexGraph (e : Expr) (userName? : Option String := none) : 
     GraphCompileM (Array PortBundle × PortBundle) := do
   Meta.withIncRecDepth do
   
-  withTraceNode `HouLean.Apex.compiler (fun r => return m!"[{ExceptToEmoji.toEmoji r}] compiling expression\n{e}") do
-  let e ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfI e
-
-  match e with
-  | .bvar _ => 
-    throwError m!"Cannot compile bound variable: {e}"
-  | .fvar id => 
-    let some portBundle := (← get).fvarToPort[id]?
-      | throwError m!"Unrecognized free variable: {e}"
-    return (#[], portBundle)
-  | .lit (.natVal n) =>
-    return (#[], ← addInt n)
-  | .lit (.strVal s) => 
-    return (#[], ← addString s)
-  | mkApp3 (.const ``Float.ofScientific []) m s e => 
-    let .lit (.natVal m) ← whnf m | throwError s!"Invalid literal for mantissa: {m}"
-    let .lit (.natVal e) ← whnf e | throwError s!"Invalid literal for exponent: {e}"
-    let s := if ← isDefEq s q(true) then true else false
-    return (#[], ← addFloat (Float.ofScientific m s e))
-  | .const _ _ =>
-    -- hard code Bool.true/Bool.false
-    if (← isDefEq e q(true)) then
-      return (#[], ← addBool true)
-    if (← isDefEq e q(false)) then
-      return (#[], ← addBool false)
-
-    throwError m!"Cannot compile constant: {e}"
-  | .sort _ => 
-    throwError m!"Cannot compile sort: {e}"
-  | .mvar _ => 
-    let e ← instantiateMVars e
-    if e.isMVar then 
-      throwError m!"Cannot compile metavariable: {e}"
-    compile (← instantiateMVars e)
-  | .app .. =>
-    let (fn, args) := e.withApp fun fn args => (fn, args)
-
-    -- blast match statement
-    -- todo: add let binding ...
-    if let some info := isMatcherAppCore? (← getEnv) e then
+  withTraceNode `HouLean.Apex.compiler 
+      (fun r => return m!"[{ExceptToEmoji.toEmoji r}] {e}") do
     
-      let body := e.appArg!
-      let x := e.appFn!.appArg!
-      trace[HouLean.Apex.compiler] m!"match expression for {x}, numParams {info.numParams}, numDiscrs {info.numDiscrs}, altNumParams {info.altNumParams}"
-      if x.isFVar then
-        trace[HouLean.Apex.compiler] m!"fvar case, reducing match"
-        return ← compile (← whnf e)
-      else
-        trace[HouLean.Apex.compiler] m!"nontrivial match"
-        unless info.numParams = 0 ∧ info.numDiscrs = 1 ∧ info.altNumParams.size = 1 do
-          throwError m!"Do not know how to handle match statement\n{e}\nunfolded symbols {(← read).unfoldStack}"
-        let fn := e.appFn!.appFn!
-        return ← compile (Expr.letE `r (← inferType x) x ((fn.app (.bvar 0)).app body) false)
-        
+    let e ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfI e
 
-    -- implemented_by -- so something more clever here
-    let s := compilerExt.getState (← getEnv)
-    if let some fn' := s.implementedBy[fn]? then
-      return ← compile (fn'.beta args)
-
-    let .const fname _ := fn 
-      | throwError m!"Unexpected function application: {e}"
-
-    if (compilerExt.getState (← getEnv)).toUnfold.contains fname then
-      let r ← Meta.unfold e fname
-      return ← compile r.expr
-
-    -- Detect variadic argument
-    if let some xs ← isVariadicArg e then
-      let xs ← xs.mapM (fun x => do pure (← compile x).2)
-      return (#[], arrayToBundle xs)
-
-    -- Special case: constructor
-    if let some (info, args) ← constructorApp? e then
-      let args := args[info.numParams:].toArray
-      let args ← args.mapM (fun x => do pure (← compile x).2)
-      return (#[], .node args)
-
-    -- Special case: projection
-    if let some info ← getProjectionFnInfo? fname then
-      trace[HouLean.Apex.compiler] m!"projection function {info.ctorName}"
-      let x := args[args.size - 1]!
-      let (_, x) ← compile x
-      let some si := x.child? info.i
-        | throwError m!"Invalid projection {info.i} of {args[args.size - 1]!}: {x.toString}"
-      return (#[], si)
-
-    -- Special case: for-loop
-    if fname = ``Std.Range.forIn'.loop then
-      trace[HouLean.Apex.compiler] m!"compiling for loop"
-      let monad := args[0]!
-      let range ← whnf args[3]!
-
-      unless ← isDefEq monad q(@Id : Type → Type) do
-        throwError m!"Unsupported monad {monad} in for loop: {e}"
-
-      unless range.isAppOfArity' ``Std.Range.mk 4 do
-        throwError m!"Unsupported range {range} in for loop: {e}"
-
-      let b ← whnf (range.getArg! 0)
-      let s ← whnf (range.getArg! 2)
-      unless ← isDefEq b q(0 : Nat) do
-        throwError m!"Invalid range start: {b}"
-      unless ← isDefEq s q(1 : Nat) do
-        throwError m!"Invalid range step: {s}"
-
-      trace[HouLean.Apex.compiler] m!"iterations"
-      let (_, iterations) ← compile (range.getArg! 1)
-      trace[HouLean.Apex.compiler] m!"inner loop"
-      let (loopIns, loopOut) ← compile args[4]!
-      trace[HouLean.Apex.compiler] m!"initial state"
-      let (_, input) ← compile args[5]!
-
-      let loopIndexIn := loopIns[0]!
-      let loopIn := loopIns[2]!
-
-      let stateShape ← input.mapIdxM (fun _ p => do 
-        let p ← readGraph (fun g => pure g.ports[p]!)
-        match p.type with
-        | .builtin typeName => return (p.name, typeName)
-        | _ => throwError m!"Invalid state {args[5]!} : {← inferType args[5]!} in for loop")
-      
-      let bp ← addForBegin stateShape
-      let ep ← addForEnd stateShape
-
-      let _ ← makeConnection input bp.stateIn
-      let _ ← makeConnection iterations bp.iterations
-      let _ ← makeConnection bp.scope ep.scope
-      let _ ← makeConnection bp.index loopIndexIn
-      let _ ← makeConnection bp.stateOut loopIn
-      let _ ← makeConnection loopOut ep.stateIn
-
-      return (#[], ep.stateOut)
-
-    -- Normal application
-    let args ← getExplicitArgs fn args
-    let some nodeType ← getNodeType (.const fname []) 
-      | let r ← unfold e fname
-        if r.expr == e then
-          throwError m!"No APEX node for {fname}, unfolded symbols: {(← read).unfoldStack}"
-        trace[HouLean.Apex.compiler] m!"unfolded {fname}\n{e} ==> {r.expr}"
-        withUnfolded fname do
-          return ← compile r.expr
-
-
-    let argPorts ← args.mapM (fun x => do pure (← compile x).2)
-    let fnInputs := nodeType.inputs
-    
-    -- Find variadic arguments
-    let mut subPorts : Array AddSubPortSpec := #[]
-    for arg in args, i in [0:args.size] do
-      let type ← inferType arg
-      if type.isAppOfArity' ``Vector 2 then
-        let id := fnInputs[i]!.localId
-        let namesAndTypes ← argPorts[i]!.flatten.mapM (fun pId => do 
-          let n ← getPortName pId
-          let t ← getPortType pId
-          let t := t.builtin!
-          return (n,t))
-        subPorts := subPorts.push ⟨id, none, namesAndTypes⟩
-      
-    let (_, inputBundle, outputBundle) ← addNode nodeType subPorts userName?
-    let _ ← makeConnections argPorts inputBundle
-    return (#[], outputBundle)
-    
-  | .letE n t v b _ => 
-    if t.isForall then
-      return ← compile (b.instantiate1 v)
-    withLocalDeclD n t fun x => do
-      let (_, letOutput) ← compile v
-      modify (fun s => {s with fvarToPort := s.fvarToPort.insert x.fvarId! letOutput})
-      let b := b.instantiate1 x
-      compile b
-
-  | .proj s i x => 
-    trace[HouLean.Apex.compiler] m!"projection {i}"
-    let t ← whnf (← inferType x) -- whnf here might be too eager ...
-    if ← isStructureType t then
-      let x' := x
-      let (_, x) ← compile x
-      let some si := x.child? i
-        | throwError m!"Invalid projection {i} of {x'}: {x.toString}"
-      return (#[], si)
-    else
-      let info := getStructureInfo (← getEnv) s
-      -- revert to projection fn application
-      let some fn := info.getProjFn? i
-        | throwError m!"Invalid projection {i} for {t}"
-      let fn := (← mkAppM fn #[x]).appFn!
-      let s := compilerExt.getState (← getEnv)
-      if let some fn' := s.implementedBy[fn]? then
-        return ← compile (fn'.beta #[x])
-      else
-        throwError m!"Don't know how to compile projection {e}"
-
-  | .lam .. =>
-    forallTelescope (← inferType e) fun xs _ => do
-      if xs.size = 0 then
-        throwError m!"Function expected: {e}"
-
-      let b ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <|
-        whnfI (e.beta xs)
-
-      let mut inputs : Array PortBundle := #[]
-      for x in xs do
-        let (input, _) ← addFVar x.fvarId!
-        inputs := inputs.push input
-      let (_,output) ← compile b
-
-      return (inputs, output)
-
-  | _ => 
-    throwError m!"Cannot compile expression: {e}. Constructor {e.ctorName}"
+    match e with
+    | .bvar _ => 
+      throwErrorWithStack m!"Cannot compile bound variable: {e}"
+    | .fvar id => 
+      compileVariable id e
+    | .lit lit =>
+      compileLiteral lit
+    | mkApp3 (.const ``Float.ofScientific []) m s e => 
+      compileFloat m s e
+    | .const _ _ =>
+      compileConstant e
+    | .sort _ => 
+      throwErrorWithStack m!"Cannot compile sort: {e}"
+    | .mvar _ => 
+      let e ← instantiateMVars e
+      if e.isMVar then 
+        throwErrorWithStack m!"Cannot compile metavariable: {e}"
+      compile (← instantiateMVars e)
+    | .app .. =>
+      compileApplication e userName?
+    | .letE n t v b _ => 
+      compileLet n t v b
+    | .proj s i x => 
+      compileProjection s i x
+    | .lam .. =>
+      compileLambda e
+    | _ => 
+      throwErrorWithStack m!"Cannot compile expression: {e}. Constructor {e.ctorName}"
 
 end
-
 
 def programToApexGraph (e : Expr) : MetaM ApexGraph := do
   GraphCompileM.run' do
