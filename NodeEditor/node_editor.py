@@ -204,7 +204,7 @@ class SubportWidget(QGraphicsItem):
         
         node_pos = self.node.mapFromItem(self, 0, 0)
         if self.is_input:
-            self.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH, 
+            self.expansion_widget.setPos(node_pos.x() - 2*SubportExpansion.WIDTH, 
                                         node_pos.y() + self.PORT_RADIUS)
         else:
             self.expansion_widget.setPos(node_pos.x() + SubportExpansion.WIDTH, 
@@ -410,7 +410,7 @@ class PortWidget(QGraphicsItem):
         
         node_pos = self.node.mapFromItem(self, 0, 0)
         if self.is_input:
-            self.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH, 
+            self.expansion_widget.setPos(node_pos.x() - 2*SubportExpansion.WIDTH, 
                                         node_pos.y() + self.PORT_RADIUS)
         else:
             self.expansion_widget.setPos(node_pos.x() + SubportExpansion.WIDTH, 
@@ -564,11 +564,11 @@ class SubportExpansion(QGraphicsRectItem):
                 node_pos = subport.node.mapFromItem(subport, 0, 0)
                 if self.is_input:
                     # Input subport expansion goes further right
-                    subport.expansion_widget.setPos(node_pos.x() + SubportExpansion.WIDTH,
+                    subport.expansion_widget.setPos(node_pos.x() - 2*SubportExpansion.WIDTH,
                                                    node_pos.y() + subport.PORT_RADIUS)
                 else:
                     # Output subport expansion goes further left
-                    subport.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH,
+                    subport.expansion_widget.setPos(node_pos.x() + SubportExpansion.WIDTH,
                                                    node_pos.y() + subport.PORT_RADIUS)
             
             current_y += PortWidget.SUBPORT_SPACING
@@ -579,7 +579,7 @@ class SubportExpansion(QGraphicsRectItem):
         
         # Update rectangle size based on direction
         if self.is_input:
-            self.setRect(0, 0, self.WIDTH, new_height)
+            self.setRect(self.WIDTH, 0, self.WIDTH, new_height)
         else:
             self.setRect(-self.WIDTH, 0, self.WIDTH, new_height)
     
