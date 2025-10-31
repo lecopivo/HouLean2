@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView,
                                QLabel, QFrame)
 from PySide6.QtCore import Qt, QRectF, QPointF, QTimer
 from PySide6.QtGui import QPen, QBrush, QColor, QPainterPath, QFont, QPainter, QPainterPathStroker, QLinearGradient
+from PySide6.QtWidgets import QStyle
 
 # Houdini color scheme
 HOUDINI_BG = QColor(58, 58, 58)
@@ -206,7 +207,7 @@ class SubportWidget(QGraphicsItem):
             self.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH, 
                                         node_pos.y() + self.PORT_RADIUS)
         else:
-            self.expansion_widget.setPos(node_pos.x() + self.PORT_RADIUS, 
+            self.expansion_widget.setPos(node_pos.x() + SubportExpansion.WIDTH, 
                                         node_pos.y() + self.PORT_RADIUS)
         
         self._update_parent_expansions()
@@ -412,7 +413,7 @@ class PortWidget(QGraphicsItem):
             self.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH, 
                                         node_pos.y() + self.PORT_RADIUS)
         else:
-            self.expansion_widget.setPos(node_pos.x() + self.PORT_RADIUS, 
+            self.expansion_widget.setPos(node_pos.x() + SubportExpansion.WIDTH, 
                                         node_pos.y() + self.PORT_RADIUS)
         
         self._update_parent_expansions()
@@ -510,7 +511,14 @@ class SubportExpansion(QGraphicsRectItem):
         self.setAcceptHoverEvents(True)
         
         height = len(subports) * PortWidget.SUBPORT_SPACING
-        self.setRect(0, 0, self.WIDTH, height)
+        
+        # Position rectangle based on port direction
+        if is_input:
+            # For input: rectangle extends to the right (away from node)
+            self.setRect(0, 0, self.WIDTH, height)
+        else:
+            # For output: rectangle extends to the left (toward node, away from port)
+            self.setRect(-self.WIDTH, 0, self.WIDTH, height)
         
         self.setBrush(QBrush(HOUDINI_BG_LIGHT))
         self.setPen(QPen(HOUDINI_NODE_BORDER, 1))
@@ -525,10 +533,13 @@ class SubportExpansion(QGraphicsRectItem):
                 subport.setParentItem(self)
             
             if self.is_input:
-                subport.setPos(0, current_y)
-            else:
+                # For input: place subports at the right edge of expansion (away from main port)
                 subport.setPos(self.WIDTH, current_y)
+            else:
+                # For output: place subports at the left edge of expansion (away from main port)
+                subport.setPos(0, current_y)
             
+            # Create or update label
             if i < len(self.labels):
                 label = self.labels[i]
             else:
@@ -538,25 +549,26 @@ class SubportExpansion(QGraphicsRectItem):
                 label.setFont(font)
                 self.labels.append(label)
             
-            # Position labels at fixed distance from node edge, regardless of nesting
+            # Position labels consistently for both input and output
             node = subport.node
             if self.is_input:
-                # For input ports, position label to the right of the node's left edge
-                node_left_in_expansion = node.mapToItem(self, 0, 0).x()
-                label.setPos(node_left_in_expansion + PortWidget.PORT_RADIUS * 2 + 5, current_y - 8)
+                # For input: label to the right of the subport
+                label.setPos(self.WIDTH + PortWidget.PORT_RADIUS * 2 + 5, current_y - 8)
             else:
-                # For output ports, position label to the left of the node's right edge
-                node_right_in_expansion = node.mapToItem(self, node.rect().width(), 0).x()
+                # For output: label to the left of the subport
                 label_width = label.boundingRect().width()
-                label.setPos(node_right_in_expansion - PortWidget.PORT_RADIUS * 2 - label_width - 5, current_y - 8)
+                label.setPos(-PortWidget.PORT_RADIUS * 2 - label_width - 5, current_y - 8)
             
+            # Update nested expansion positions
             if subport.expanded and subport.expansion_widget:
                 node_pos = subport.node.mapFromItem(subport, 0, 0)
                 if self.is_input:
-                    subport.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH,
+                    # Input subport expansion goes further right
+                    subport.expansion_widget.setPos(node_pos.x() + SubportExpansion.WIDTH,
                                                    node_pos.y() + subport.PORT_RADIUS)
                 else:
-                    subport.expansion_widget.setPos(node_pos.x() + subport.PORT_RADIUS,
+                    # Output subport expansion goes further left
+                    subport.expansion_widget.setPos(node_pos.x() - SubportExpansion.WIDTH,
                                                    node_pos.y() + subport.PORT_RADIUS)
             
             current_y += PortWidget.SUBPORT_SPACING
@@ -564,7 +576,12 @@ class SubportExpansion(QGraphicsRectItem):
                 current_y += self._calculate_subport_expansion_height(subport)
         
         new_height = current_y - PortWidget.SUBPORT_SPACING // 2
-        self.setRect(0, 0, self.WIDTH, new_height)
+        
+        # Update rectangle size based on direction
+        if self.is_input:
+            self.setRect(0, 0, self.WIDTH, new_height)
+        else:
+            self.setRect(-self.WIDTH, 0, self.WIDTH, new_height)
     
     def _calculate_subport_expansion_height(self, subport):
         if not subport.expanded or not subport.subport_widgets:
@@ -581,12 +598,14 @@ class SubportExpansion(QGraphicsRectItem):
         path = QPainterPath()
         rect = self.rect()
         if self.is_input:
-            expanded = QRectF(rect.x() - self.HOVER_MARGIN, 
+            # Input: expand hover area to the right
+            expanded = QRectF(rect.x() - 5, 
                             rect.y() - 5, 
                             rect.width() + self.HOVER_MARGIN + 100,
                             rect.height() + 10)
         else:
-            expanded = QRectF(rect.x() - 100,
+            # Output: expand hover area to the left
+            expanded = QRectF(rect.x() - self.HOVER_MARGIN - 100,
                             rect.y() - 5, 
                             rect.width() + self.HOVER_MARGIN + 100, 
                             rect.height() + 10)
@@ -606,7 +625,7 @@ class SubportExpansion(QGraphicsRectItem):
         if self.parent_port._is_any_expansion_hovered():
             return
         self.parent_port.collapse()
-
+        
 
 class Connection(QGraphicsPathItem):
     def __init__(self, output_port, input_port, scene, output_index_path=None, input_index_path=None):
@@ -632,6 +651,8 @@ class Connection(QGraphicsPathItem):
             self.input_relative_y = 0
         
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        # Don't allow moving wires - they're determined by node positions
+        self.setFlag(QGraphicsItem.ItemIsMovable, False)
         
         # Determine connection validity
         self.output_valid = output_port is not None
@@ -641,6 +662,9 @@ class Connection(QGraphicsPathItem):
         self.normal_pen = QPen(color, 2.5)
         self.selected_pen = QPen(HOUDINI_NODE_SELECTED, 3.5)
         self.invalid_pen = QPen(HOUDINI_ERROR, 2.5)
+        
+        # Shadow pen for selection
+        self.shadow_pen = QPen(QColor(255, 255, 255, 180), 6.0)
         
         if output_port:
             output_port.connections.append(self)
@@ -667,6 +691,13 @@ class Connection(QGraphicsPathItem):
         """Check if both ends exist but types don't match"""
         return (self.output_valid and self.input_valid and 
                 self.output_port.type_name != self.input_port.type_name)
+    
+    def boundingRect(self):
+        """Override to prevent default selection border"""
+        # Add a bit of padding for the shadow
+        if self.isSelected():
+            return self.path().boundingRect().adjusted(-4, -4, 4, 4)
+        return self.path().boundingRect()
     
     def shape(self):
         stroker = QPainterPathStroker()
@@ -762,9 +793,13 @@ class Connection(QGraphicsPathItem):
     def paint(self, painter, option, widget):
         painter.setRenderHint(QPainter.Antialiasing)
         
+        # Draw shadow if selected
         if self.isSelected():
-            pen = self.selected_pen
-        elif self.has_type_mismatch():
+            painter.setPen(self.shadow_pen)
+            painter.drawPath(self.path())
+        
+        # Draw the main wire
+        if self.has_type_mismatch():
             # Type mismatch - gradient from output color to input color
             output_color = get_type_color(self.output_port.type_name)
             input_color = get_type_color(self.input_port.type_name)
@@ -792,8 +827,8 @@ class Connection(QGraphicsPathItem):
         else:
             pen = self.normal_pen
         
-        self.setPen(pen)
-        super().paint(painter, option, widget)
+        painter.setPen(pen)
+        painter.drawPath(self.path())
     
     def expand_connection(self):
         """Expand this connection into subport connections"""
@@ -904,7 +939,7 @@ class Connection(QGraphicsPathItem):
 
 
 class NodeWidget(QGraphicsRectItem):
-    MIN_WIDTH = 220
+    MIN_WIDTH = 180
     MIN_HEIGHT = 60
     PORT_SPACING = 28
     HEADER_HEIGHT = 32
@@ -1159,11 +1194,19 @@ class NodeWidget(QGraphicsRectItem):
     
     def paint(self, painter, option, widget):
         painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Draw shadow/glow if selected
         if self.isSelected():
-            self.setPen(QPen(HOUDINI_NODE_SELECTED, 2.5))
-        else:
-            self.setPen(QPen(HOUDINI_NODE_BORDER, 1.5))
-        super().paint(painter, option, widget)
+            glow_pen = QPen(QColor(255, 255, 255, 180), 6.0)
+            painter.setPen(glow_pen)
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(self.rect())
+        
+        # Draw the node
+        self.setPen(QPen(HOUDINI_NODE_BORDER, 1.5))
+        painter.setPen(self.pen())
+        painter.setBrush(self.brush())
+        painter.drawRect(self.rect())
     
     def get_all_ports(self):
         all_ports = []
@@ -1207,7 +1250,7 @@ class NodeEditorView(QGraphicsView):
         
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
-        self.setDragMode(QGraphicsView.NoDrag)
+        self.setDragMode(QGraphicsView.RubberBandDrag)  # Enable rubber band selection
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         
@@ -1295,13 +1338,19 @@ class NodeEditorView(QGraphicsView):
                     break
             
             if port_item:
+                # Disable rubber band for port dragging
+                self.setDragMode(QGraphicsView.NoDrag)
                 self._lock_port_hierarchy(port_item)
                 self.start_connection(port_item)
                 self.is_dragging_connection = True
                 event.accept()
                 return
+            else:
+                # Enable rubber band for selection
+                self.setDragMode(QGraphicsView.RubberBandDrag)
         
         elif event.button() == Qt.MiddleButton:
+            self.setDragMode(QGraphicsView.NoDrag)
             self.is_panning = True
             self.pan_start_pos = pos
             self.setCursor(Qt.ClosedHandCursor)
@@ -1331,6 +1380,7 @@ class NodeEditorView(QGraphicsView):
             try:
                 if not self.editor_scene.drag_start_port:
                     self.is_dragging_connection = False
+                    self.setDragMode(QGraphicsView.RubberBandDrag)
                     return
                     
                 start_pos = self.editor_scene.drag_start_port.get_scene_pos()
@@ -1371,6 +1421,7 @@ class NodeEditorView(QGraphicsView):
                     self.editor_scene.temp_connection = None
                 self.editor_scene.drag_start_port = None
                 self._unlock_all_ports()
+                self.setDragMode(QGraphicsView.RubberBandDrag)
                 return
         
         super().mouseMoveEvent(event)
@@ -1380,6 +1431,7 @@ class NodeEditorView(QGraphicsView):
         
         if event.button() == Qt.MiddleButton:
             self.is_panning = False
+            self.setDragMode(QGraphicsView.RubberBandDrag)
             self.setCursor(Qt.ArrowCursor)
             event.accept()
             return
@@ -1418,6 +1470,7 @@ class NodeEditorView(QGraphicsView):
                 self.editor_scene.drag_start_port = None
             
             self._unlock_all_ports()
+            self.setDragMode(QGraphicsView.RubberBandDrag)
             event.accept()
             return
         
@@ -1731,16 +1784,25 @@ class NodeEditorView(QGraphicsView):
         return current_port
     
     def expand_selected_connections(self):
+        """Expand selected connections and select the newly created ones"""
         selected = self.editor_scene.selectedItems()
         
+        new_connections = []
         for item in selected:
             if isinstance(item, Connection):
-                new_connections = item.expand_connection()
-                for conn in new_connections:
+                expanded = item.expand_connection()
+                new_connections.extend(expanded)
+                # Add new connections to tracking list
+                for conn in expanded:
                     if conn not in self.connections:
                         self.connections.append(conn)
+                # Remove old connection from tracking
                 if item in self.connections:
                     self.connections.remove(item)
+        
+        # Select all the newly created connections
+        for conn in new_connections:
+            conn.setSelected(True)
     
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
@@ -1872,7 +1934,7 @@ class NodeEditorWidget(QWidget):
         
         toolbar_layout.addStretch()
         
-        instructions = QLabel("RMB/Tab: add | M: change type | E: expand wire | Del: remove | F2: rename | G: frame")
+        instructions = QLabel("Drag: select | RMB/Tab: add | M: change type | E: expand wire | Del: remove | F2: rename | G: frame")
         toolbar_layout.addWidget(instructions)
         
         layout.addWidget(toolbar_frame)
@@ -1951,3 +2013,5 @@ class NodeEditorWidget(QWidget):
 
 def createInterface():
     return NodeEditorWidget()
+
+

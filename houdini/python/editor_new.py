@@ -3,10 +3,22 @@ Modern LSP Code Editor for Houdini
 
 Combines LSP protocol support with VS Code-like UI.
 Supports Lean 4 with 'lake serve' LSP server.
+Works with both real files and virtual in-memory documents.
 
 Usage:
     import lsp_editor
     node = hou.pwd()
+    
+    # With file
+    lsp_editor.open_code_editor(
+        node=node,
+        parm_name="code",
+        server_cmd="lake serve",
+        workspace_path="/path/to/lean/project",
+        file_path="/path/to/file.lean"
+    )
+    
+    # In-memory (no file)
     lsp_editor.open_code_editor(
         node=node,
         parm_name="code",
@@ -371,9 +383,7 @@ class LSPClient(QtCore.QObject):
         if self.process.state() == QProcess.ProcessState.Running:
             self._send_request("shutdown", {})
             self._send_notification("exit", {})
-            # Give it a short time to shutdown gracefully
             if not self.process.waitForFinished(500):
-                # Force kill if it doesn't shutdown quickly
                 self.process.kill()
                 self.process.waitForFinished(100)
         logger.log("LSP client shutdown complete")
@@ -615,15 +625,14 @@ class CompletionPopup(QtWidgets.QListWidget):
         
         def sort_key(item):
             label = item.get("label", "").lower()
-            # Prioritize exact prefix matches, then those that start with prefix, then contains
             if label == self.filter_text:
-                return (0, label)  # Exact match - highest priority
+                return (0, label)
             elif label.startswith(self.filter_text):
-                return (1, len(label), label)  # Starts with - sort by length (shorter first)
+                return (1, len(label), label)
             elif self.filter_text in label:
-                return (2, label)  # Contains - lower priority
+                return (2, label)
             else:
-                return (3, label)  # Doesn't match - lowest priority
+                return (3, label)
         
         self.completion_items = sorted(completions, key=sort_key)
         
@@ -657,7 +666,6 @@ class CompletionPopup(QtWidgets.QListWidget):
         self.filter_text = text.lower()
         visible_items = []
         
-        # Collect visible items with their priority
         for i in range(self.count()):
             item = self.item(i)
             comp_data = item.data(QtCore.Qt.ItemDataRole.UserRole)
@@ -666,7 +674,7 @@ class CompletionPopup(QtWidgets.QListWidget):
                 if label == self.filter_text:
                     priority = 0
                 elif label.startswith(self.filter_text):
-                    priority = (1, len(label))  # Shorter matches first
+                    priority = (1, len(label))
                 elif self.filter_text in label:
                     priority = (2, label)
                 else:
@@ -678,10 +686,8 @@ class CompletionPopup(QtWidgets.QListWidget):
                 else:
                     item.setHidden(True)
         
-        # Sort visible items by priority and reorder selection
         visible_items.sort(key=lambda x: x[0])
         
-        # Select the best match (first in sorted list)
         if visible_items:
             best_index = visible_items[0][1]
             self.setCurrentRow(best_index)
@@ -712,7 +718,6 @@ class CompletionPopup(QtWidgets.QListWidget):
     def move_selection_up(self):
         """Move selection up in the list"""
         current = self.currentRow()
-        # Find previous visible item
         for i in range(current - 1, -1, -1):
             if not self.item(i).isHidden():
                 self.setCurrentRow(i)
@@ -722,7 +727,6 @@ class CompletionPopup(QtWidgets.QListWidget):
     def move_selection_down(self):
         """Move selection down in the list"""
         current = self.currentRow()
-        # Find next visible item
         for i in range(current + 1, self.count()):
             if not self.item(i).isHidden():
                 self.setCurrentRow(i)
@@ -750,12 +754,26 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
     font_size_changed = QtCore.Signal(int)
     diagnosticsChanged = QtCore.Signal(list)
     
+    _untitled_counter = 0
+    
     def __init__(self, lsp_client, file_path, keybindings=None):
         super().__init__()
         
         self.lsp_client = lsp_client
         self.file_path = file_path
-        self.uri = f"file://{file_path}"
+        self.is_virtual = False
+        
+        # Generate appropriate URI
+        if file_path and os.path.exists(file_path):
+            self.uri = f"file://{os.path.abspath(file_path)}"
+            self.is_virtual = False
+        else:
+            LSPCodeEditor._untitled_counter += 1
+            ext = os.path.splitext(file_path)[1] if file_path else ".lean"
+            self.uri = f"untitled:Untitled-{LSPCodeEditor._untitled_counter}{ext}"
+            self.is_virtual = True
+            logger.log(f"Created virtual document: {self.uri}")
+        
         self.version = 1
         
         # Line numbers
@@ -763,7 +781,7 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         
         # Diagnostics
         self.current_diagnostics = []
-        self.diagnostic_ranges = {}  # Map (start_pos, length) -> (severity, message)
+        self.diagnostic_ranges = {}
         
         # Completion
         self.completion_popup = CompletionPopup(self)
@@ -774,7 +792,7 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.keybindings = keybindings or KeybindingPresets.standard()
         self.is_emacs_mode = keybindings and keybindings.get('move_line_start') == 'Ctrl+A'
         
-        # Font size management
+        # Font size
         self.default_font_size = 12
         self.current_font_size = self.default_font_size
         
@@ -825,7 +843,7 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         
         # Store reference to parent window for goto_definition
         self.parent_window = None
-        self.workspace_path = ""  # Will be set by parent
+        self.workspace_path = ""
         
         self.update_line_number_area_width(0)
         
@@ -852,7 +870,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         """Setup keyboard shortcuts"""
         kb = self.keybindings
         
-        # Zoom
         if kb.get('zoom_in'):
             QtGui.QShortcut(QtGui.QKeySequence(kb['zoom_in']), self, self.zoom_in)
         if kb.get('zoom_out'):
@@ -860,7 +877,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         if kb.get('zoom_reset'):
             QtGui.QShortcut(QtGui.QKeySequence(kb['zoom_reset']), self, self.zoom_reset)
         
-        # Word movement
         if kb.get('move_word_left'):
             QtGui.QShortcut(QtGui.QKeySequence(kb['move_word_left']), self, 
                           lambda: self.move_cursor(QtGui.QTextCursor.WordLeft))
@@ -868,7 +884,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             QtGui.QShortcut(QtGui.QKeySequence(kb['move_word_right']), self,
                           lambda: self.move_cursor(QtGui.QTextCursor.WordRight))
         
-        # Document movement
         if kb.get('move_doc_start') and kb['move_doc_start'] != 'Ctrl+Home':
             QtGui.QShortcut(QtGui.QKeySequence(kb['move_doc_start']), self,
                           lambda: self.move_cursor(QtGui.QTextCursor.Start))
@@ -876,9 +891,7 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             QtGui.QShortcut(QtGui.QKeySequence(kb['move_doc_end']), self,
                           lambda: self.move_cursor(QtGui.QTextCursor.End))
         
-        # Emacs-specific
         if self.is_emacs_mode:
-            # Movement
             if kb.get('move_up'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['move_up']), self,
                               lambda: self.move_cursor(QtGui.QTextCursor.Up))
@@ -898,7 +911,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['move_line_end']), self,
                               lambda: self.move_cursor(QtGui.QTextCursor.EndOfLine))
             
-            # Deletion
             if kb.get('delete_char'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['delete_char']), self, self.delete_char)
             if kb.get('delete_word'):
@@ -908,7 +920,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             if kb.get('kill_line'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['kill_line']), self, self.kill_line)
             
-            # Clipboard
             if kb.get('cut'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['cut']), self, self.kill_region)
             if kb.get('copy'):
@@ -918,14 +929,12 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             if kb.get('paste_cycle'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['paste_cycle']), self, self.yank_pop)
             
-            # Mark and cancel
             if kb.get('mark_set'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['mark_set']), self, self.set_mark)
             if kb.get('cancel'):
                 QtGui.QShortcut(QtGui.QKeySequence(kb['cancel']), self, self.cancel_operation)
     
     def delete_char(self):
-        """Delete character at cursor"""
         cursor = self.textCursor()
         if not cursor.hasSelection():
             cursor.deleteChar()
@@ -934,7 +943,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.setTextCursor(cursor)
     
     def delete_word(self):
-        """Delete word forward"""
         cursor = self.textCursor()
         cursor.movePosition(QtGui.QTextCursor.EndOfWord, QtGui.QTextCursor.KeepAnchor)
         text = cursor.selectedText()
@@ -944,7 +952,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.setTextCursor(cursor)
     
     def backspace_word(self):
-        """Delete word backward"""
         cursor = self.textCursor()
         cursor.movePosition(QtGui.QTextCursor.StartOfWord, QtGui.QTextCursor.KeepAnchor)
         text = cursor.selectedText()
@@ -954,7 +961,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.setTextCursor(cursor)
     
     def kill_region(self):
-        """Kill (cut) selected region"""
         cursor = self.textCursor()
         if cursor.hasSelection():
             text = cursor.selectedText()
@@ -964,7 +970,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             self.mark_position = None
     
     def copy_region(self):
-        """Copy selected region to kill ring"""
         cursor = self.textCursor()
         if cursor.hasSelection():
             text = cursor.selectedText()
@@ -972,7 +977,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             self.mark_position = None
     
     def yank(self):
-        """Paste from kill ring (emacs-style)"""
         if self.kill_ring:
             cursor = self.textCursor()
             cursor.insertText(self.kill_ring[self.kill_ring_index])
@@ -980,7 +984,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             self.last_action_was_paste_cycle = True
     
     def yank_pop(self):
-        """Cycle through kill ring (emacs-style)"""
         if not self.kill_ring or not hasattr(self, 'last_action_was_paste_cycle') or not self.last_action_was_paste_cycle:
             return
         
@@ -996,11 +999,9 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.setTextCursor(cursor)
     
     def set_keybindings(self, keybindings):
-        """Change keybinding scheme dynamically"""
         self.keybindings = keybindings
         self.is_emacs_mode = keybindings.get('move_line_start') == 'Ctrl+A'
         
-        # Clear existing shortcuts
         for child in self.children():
             if isinstance(child, QtGui.QShortcut):
                 child.deleteLater()
@@ -1009,7 +1010,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         logger.log(f"Keybindings changed to: {'Emacs' if self.is_emacs_mode else 'Standard'}")
     
     def update_font_size(self, size):
-        """Update editor font size"""
         self.current_font_size = size
         
         font = QtGui.QFont("Cascadia Code", size)
@@ -1035,23 +1035,8 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
 
     def zoom_reset(self):
         self.update_font_size(self.default_font_size)
-        
-    def set_keybindings(self, keybindings):
-        """Change keybinding scheme"""
-        self.keybindings = keybindings
-        # Check if this is emacs mode
-        self.is_emacs_mode = keybindings.get('move_line_start') == 'Ctrl+A'
-        
-        # Clear existing shortcuts
-        for child in self.children():
-            if isinstance(child, QtGui.QShortcut):
-                child.deleteLater()
-        
-        self.setup_keybindings()
-        logger.log(f"Keybindings changed to: {'Emacs' if self.is_emacs_mode else 'Standard'}")
     
     def move_cursor(self, operation):
-        """Move cursor with optional selection for mark"""
         cursor = self.textCursor()
         
         if self.mark_position is not None:
@@ -1070,7 +1055,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             self.setTextCursor(cursor)
     
     def set_mark(self):
-        """Set/unset mark for region selection (emacs-style)"""
         if self.mark_position is None:
             self.mark_position = self.textCursor().position()
             self.viewport().update()
@@ -1081,7 +1065,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             self.setTextCursor(cursor)
     
     def cancel_operation(self):
-        """Cancel current operation (Ctrl+G in Emacs)"""
         self.mark_position = None
         cursor = self.textCursor()
         cursor.clearSelection()
@@ -1091,7 +1074,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             self.completion_popup.hide()
     
     def kill_line(self):
-        """Kill from cursor to end of line"""
         cursor = self.textCursor()
         cursor.movePosition(QtGui.QTextCursor.EndOfLine, QtGui.QTextCursor.KeepAnchor)
         text = cursor.selectedText()
@@ -1106,14 +1088,12 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.setTextCursor(cursor)
     
     def add_to_kill_ring(self, text):
-        """Add text to kill ring"""
         if text:
             self.kill_ring.append(text)
             if len(self.kill_ring) > self.max_kill_ring_size:
                 self.kill_ring.pop(0)
             self.kill_ring_index = len(self.kill_ring) - 1
     
-    # Line number area methods
     def line_number_area_width(self):
         digits = len(str(max(1, self.blockCount())))
         space = 15 + self.fontMetrics().horizontalAdvance('9') * digits
@@ -1162,32 +1142,26 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             bottom = top + self.blockBoundingRect(block).height()
             block_number += 1
     
-    # LSP integration
     def on_server_initialized(self):
-        """Called when LSP server is fully initialized"""
         logger.log("Server initialized, now opening document")
         text = self.toPlainText()
         self.lsp_client.did_open(self.uri, "lean4", text)
         QtCore.QTimer.singleShot(1000, self.request_semantic_tokens)
     
     def on_text_changed(self):
-        """Handle text changes"""
         if not self.lsp_client.is_initialized:
             return
         
-        # If completion popup is visible, update filter
         if self.completion_popup.isVisible():
             cursor = self.textCursor()
             current_pos = cursor.position()
             
-            # Get text from completion start to current cursor
             cursor.setPosition(self.completion_start_pos)
             cursor.setPosition(current_pos, QtGui.QTextCursor.MoveMode.KeepAnchor)
             current_text = cursor.selectedText()
             
             self.completion_popup.filter_items(current_text)
             
-            # If we moved away from completion region, hide it
             if current_pos < self.completion_start_pos:
                 self.completion_popup.hide()
             
@@ -1203,7 +1177,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             self.lsp_client.semantic_tokens(self.uri)
     
     def request_hover(self):
-        """Request hover information for current position"""
         if self.last_hover_pos and self.lsp_client.is_initialized:
             cursor = self.cursorForPosition(self.last_hover_pos)
             line = cursor.blockNumber()
@@ -1211,18 +1184,15 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             self.lsp_client.hover(self.uri, line, char)
     
     def trigger_completion(self):
-        """Trigger code completion"""
         cursor = self.textCursor()
         line = cursor.blockNumber()
         char = cursor.columnNumber()
         
-        # Store the start position
         text_cursor = self.textCursor()
         text_cursor.movePosition(QtGui.QTextCursor.MoveOperation.StartOfWord, 
                                 QtGui.QTextCursor.MoveMode.MoveAnchor)
         self.completion_start_pos = text_cursor.position()
         
-        # Get current prefix
         text_cursor.setPosition(cursor.position(), QtGui.QTextCursor.MoveMode.KeepAnchor)
         self.completion_prefix = text_cursor.selectedText()
         
@@ -1230,7 +1200,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.lsp_client.completion(self.uri, line, char)
     
     def trigger_goto_definition(self):
-        """Trigger go to definition"""
         cursor = self.textCursor()
         line = cursor.blockNumber()
         char = cursor.columnNumber()
@@ -1238,7 +1207,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.lsp_client.definition(self.uri, line, char)
     
     def handle_completion(self, items):
-        """Handle completion results"""
         if items:
             cursor = self.textCursor()
             cursor_rect = self.cursorRect(cursor)
@@ -1248,28 +1216,23 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             logger.log("No completion items to show")
     
     def insert_completion(self, label, insert_text, prefix_len):
-        """Insert selected completion"""
         cursor = self.textCursor()
         
-        # Delete from completion start to current position
         current_pos = cursor.position()
         cursor.setPosition(self.completion_start_pos)
         cursor.setPosition(current_pos, QtGui.QTextCursor.MoveMode.KeepAnchor)
         cursor.removeSelectedText()
         
-        # Insert the completion text
         cursor.insertText(insert_text)
         self.completion_popup.hide()
         logger.log(f"Inserted completion: {label}")
         
-        # Send didChange after completion
         self.version += 1
         text = self.toPlainText()
         self.lsp_client.did_change(self.uri, self.version, text)
         self.highlight_timer.start(800)
     
     def show_hover_tooltip(self, text):
-        """Show hover information"""
         if text:
             text = re.sub(r'```[\w]*\n', '', text)
             text = re.sub(r'```', '', text)
@@ -1279,10 +1242,8 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
                 QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), text, self)
     
     def goto_definition(self, file_path, line, character):
-        """Handle go to definition - open in external editor specified by parameter"""
         logger.log(f"Go to definition: {file_path}:{line}:{character}")
         
-        # Try to get editor command from node parameter
         editor_cmd = None
         
         if hasattr(self, 'parent_window') and self.parent_window:
@@ -1291,14 +1252,12 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
                 if hasattr(parent_window, 'node') and parent_window.node:
                     node = parent_window.node
                     
-                    # Get editor command from "editor" parameter
                     if node.parm("editor"):
                         editor_cmd = node.parm("editor").eval()
                         logger.log(f"Got editor command from parameter: {editor_cmd}")
             except Exception as e:
                 logger.log(f"Could not get editor parameter: {e}", "WARNING")
         
-        # If no editor command specified, show error
         if not editor_cmd:
             import hou
             hou.ui.displayMessage(
@@ -1308,64 +1267,51 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             )
             return
         
-        # Build command based on editor type
         import subprocess
         
         editor_lower = editor_cmd.lower().strip()
         
         try:
-            # Detect editor and format command appropriately
             if 'code' in editor_lower or 'vscode' in editor_lower:
-                # VS Code: code --goto file:line:column
                 cmd = [editor_cmd, '--goto', f"{file_path}:{line+1}:{character+1}"]
                 logger.log(f"Opening in VS Code: {' '.join(cmd)}")
                 subprocess.Popen(cmd)
                 
             elif 'emacs' in editor_lower:
-                # Emacs: emacs +line:column file
                 cmd = [editor_cmd, f"+{line+1}:{character+1}", file_path]
                 logger.log(f"Opening in Emacs: {' '.join(cmd)}")
                 subprocess.Popen(cmd)
                 
             elif 'vim' in editor_lower or 'nvim' in editor_lower:
-                # Vim/Neovim: vim +line file (then use :column to go to column)
-                # For exact column positioning: vim +call\ cursor(line,col) file
                 cmd = [editor_cmd, f"+call cursor({line+1},{character+1})", file_path]
                 logger.log(f"Opening in Vim: {' '.join(cmd)}")
                 subprocess.Popen(cmd)
                 
             elif 'subl' in editor_lower or 'sublime' in editor_lower:
-                # Sublime Text: subl file:line:column
                 cmd = [editor_cmd, f"{file_path}:{line+1}:{character+1}"]
                 logger.log(f"Opening in Sublime: {' '.join(cmd)}")
                 subprocess.Popen(cmd)
                 
             elif 'atom' in editor_lower:
-                # Atom: atom file:line:column
                 cmd = [editor_cmd, f"{file_path}:{line+1}:{character+1}"]
                 logger.log(f"Opening in Atom: {' '.join(cmd)}")
                 subprocess.Popen(cmd)
                 
             elif 'kate' in editor_lower:
-                # Kate: kate --line line --column column file
                 cmd = [editor_cmd, '--line', str(line+1), '--column', str(character+1), file_path]
                 logger.log(f"Opening in Kate: {' '.join(cmd)}")
                 subprocess.Popen(cmd)
                 
             elif 'gedit' in editor_lower:
-                # gedit: gedit +line file
                 cmd = [editor_cmd, f"+{line+1}", file_path]
                 logger.log(f"Opening in gedit: {' '.join(cmd)}")
                 subprocess.Popen(cmd)
                 
             else:
-                # Unknown editor - try generic approach: editor file
-                # Most editors at least accept the file as argument
                 cmd = [editor_cmd, file_path]
                 logger.log(f"Opening in unknown editor (generic): {' '.join(cmd)}")
                 subprocess.Popen(cmd)
                 
-                # Show info about line/column since we can't navigate automatically
                 import hou
                 hou.ui.setStatusMessage(
                     f"Opened {os.path.basename(file_path)} - navigate to line {line+1}, column {character+1}",
@@ -1388,7 +1334,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             )
     
     def handle_diagnostics(self, diagnostics):
-        """Handle diagnostics (errors/warnings)"""
         self.current_diagnostics = diagnostics
         self.diagnosticsChanged.emit(diagnostics)
         self.diagnostic_ranges.clear()
@@ -1420,24 +1365,22 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             end_pos = cursor.position()
             length = end_pos - start_pos
             
-            # Store for tooltip
             severity_name = {1: 'error', 2: 'warning', 3: 'info', 4: 'hint'}.get(severity, 'info')
             self.diagnostic_ranges[(start_pos, length)] = (severity_name, message)
             
-            # Create selection for underline
             cursor.setPosition(start_pos)
             cursor.setPosition(end_pos, QtGui.QTextCursor.MoveMode.KeepAnchor)
             
             selection = QtWidgets.QTextEdit.ExtraSelection()
             selection.cursor = cursor
             
-            if severity == 1:  # Error
+            if severity == 1:
                 selection.format.setUnderlineColor(QtGui.QColor("#f48771"))
                 selection.format.setBackground(QtGui.QColor(244, 135, 113, 15))
-            elif severity == 2:  # Warning
+            elif severity == 2:
                 selection.format.setUnderlineColor(QtGui.QColor("#ffcc00"))
                 selection.format.setBackground(QtGui.QColor(255, 204, 0, 15))
-            else:  # Info/Hint
+            else:
                 selection.format.setUnderlineColor(QtGui.QColor("#4fc3f7"))
                 selection.format.setBackground(QtGui.QColor(79, 195, 247, 15))
             
@@ -1447,14 +1390,12 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.setExtraSelections(extra_selections)
     
     def handle_semantic_tokens(self, result):
-        """Handle semantic tokens from LSP"""
         legend = result.get("legend")
         data = result.get("data")
         if legend and data:
             self.semantic_highlighter.apply_highlighting(legend, data)
     
     def show_custom_tooltip(self, severity, text, pos):
-        """Show custom styled tooltip with severity-based color"""
         if self.tooltip_widget is None:
             self.tooltip_widget = QtWidgets.QLabel(None, QtCore.Qt.ToolTip | QtCore.Qt.FramelessWindowHint)
             self.tooltip_widget.setTextFormat(QtCore.Qt.PlainText)
@@ -1489,16 +1430,28 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         self.tooltip_widget.show()
     
     def hide_custom_tooltip(self):
-        """Hide custom tooltip"""
         if self.tooltip_widget and self.tooltip_widget.isVisible():
             self.tooltip_widget.hide()
     
     def save_file(self):
-        """Save the current file"""
+        if self.is_virtual:
+            logger.log(f"Virtual file {self.uri} - content kept in memory only")
+            import hou
+            hou.ui.setStatusMessage("Virtual file - use Apply to save to parameter", 
+                                   hou.severityType.Message)
+            return True
+        
+        if not self.file_path:
+            logger.log("No file path to save to", "WARNING")
+            return False
+            
         try:
             with open(self.file_path, 'w') as f:
                 f.write(self.toPlainText())
             logger.log(f"File saved: {self.file_path}")
+            import hou
+            hou.ui.setStatusMessage(f"Saved {os.path.basename(self.file_path)}", 
+                                   hou.severityType.Message)
             return True
         except Exception as e:
             logger.log(f"Error saving file: {e}", "ERROR")
@@ -1507,13 +1460,9 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
             return False
     
     def keyPressEvent(self, event):
-        """Handle key press events"""
-        # Track if this is a yank action
         is_yank = False
         
-        # Completion popup special handling - only for specific keys
         if self.completion_popup.isVisible():
-            # Up/Down navigate the completion list (also Ctrl+P/N in Emacs mode)
             if event.key() == QtCore.Qt.Key.Key_Up:
                 self.completion_popup.move_selection_up()
                 return
@@ -1521,98 +1470,74 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
                 self.completion_popup.move_selection_down()
                 return
             elif self.is_emacs_mode and event.key() == QtCore.Qt.Key_P and event.modifiers() == QtCore.Qt.ControlModifier:
-                # Ctrl+P in emacs mode moves up in completion
                 self.completion_popup.move_selection_up()
                 return
             elif self.is_emacs_mode and event.key() == QtCore.Qt.Key_N and event.modifiers() == QtCore.Qt.ControlModifier:
-                # Ctrl+N in emacs mode moves down in completion
                 self.completion_popup.move_selection_down()
                 return
-            
-            # Enter accepts current completion
             elif event.key() in (QtCore.Qt.Key.Key_Return, QtCore.Qt.Key.Key_Enter):
                 if self.completion_popup.select_current():
                     return
                 else:
-                    # No completion selected, close popup and add newline
                     self.completion_popup.hide()
                     super().keyPressEvent(event)
                     return
-            
-            # Escape closes popup
             elif event.key() == QtCore.Qt.Key.Key_Escape:
                 self.completion_popup.hide()
                 return
-            
-            # All other keys: process normally, popup will update via textChanged
         
-        # In emacs mode, override Ctrl+A to move to line start (not select all)
         if self.is_emacs_mode and event.key() == QtCore.Qt.Key_A and event.modifiers() == QtCore.Qt.ControlModifier:
             cursor = self.textCursor()
-            cursor.clearSelection()  # Clear any selection
+            cursor.clearSelection()
             cursor.movePosition(QtGui.QTextCursor.StartOfLine, QtGui.QTextCursor.MoveAnchor)
             self.setTextCursor(cursor)
             return
         
-        # Handle Tab key when popup not visible - insert 2 spaces
         if event.key() == QtCore.Qt.Key_Tab and event.modifiers() == QtCore.Qt.NoModifier:
             if not self.completion_popup.isVisible():
                 cursor = self.textCursor()
                 cursor.insertText("  ")
                 return
         
-        # Trigger completion - check for Ctrl+Space (but not Ctrl+Space in Emacs which is mark)
         if event.key() == QtCore.Qt.Key_Space and event.modifiers() == QtCore.Qt.ControlModifier:
-            if not self.is_emacs_mode:  # Standard mode uses Ctrl+Space for completion
+            if not self.is_emacs_mode:
                 self.trigger_completion()
                 return
         
-        # Emacs Alt+/ for completion
         if self.is_emacs_mode and event.key() == QtCore.Qt.Key_Slash and event.modifiers() == QtCore.Qt.AltModifier:
             self.trigger_completion()
             return
         
-        # Go to definition - F12
         if event.key() == QtCore.Qt.Key.Key_F12:
             self.trigger_goto_definition()
             return
         
-        # Emacs Alt+. for go to definition
         if self.is_emacs_mode and event.key() == QtCore.Qt.Key_Period and event.modifiers() == QtCore.Qt.AltModifier:
             self.trigger_goto_definition()
             return
         
-        # Save file - Ctrl+S (or Ctrl+X Ctrl+S for Emacs, but we'll use simple Ctrl+S)
         if event.key() == QtCore.Qt.Key_S and event.modifiers() == QtCore.Qt.ControlModifier:
-            if self.save_file():
-                import hou
-                hou.ui.setStatusMessage("File saved", hou.severityType.Message)
+            self.save_file()
             return
         
-        # Check if this is a yank/paste action (for emacs mode)
         if event.key() == QtCore.Qt.Key_Y:
             if self.is_emacs_mode and event.modifiers() == QtCore.Qt.ControlModifier:
                 is_yank = True
             elif event.modifiers() == QtCore.Qt.AltModifier:
-                is_yank = True  # yank_pop
+                is_yank = True
         
-        # Let Qt handle the key (this will trigger shortcuts or insert text)
         super().keyPressEvent(event)
         
-        # Update yank cycle flag
         if not is_yank:
             self.last_action_was_paste_cycle = False
         
-        # Auto-trigger completion on certain characters
         if event.text() in ('.', ':') and not self.completion_popup.isVisible():
             QtCore.QTimer.singleShot(100, self.trigger_completion)
     
     def mouseMoveEvent(self, event):
-        """Show tooltip with diagnostic message on hover"""
         cursor = self.cursorForPosition(event.pos())
         position = cursor.position()
         
-        # Check if cursor is over any diagnostic range
         tooltip_data = None
         for (start, length), (severity, message) in self.diagnostic_ranges.items():
             if start <= position < start + length:
@@ -1625,7 +1550,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         else:
             self.hide_custom_tooltip()
         
-        # Hover for LSP
         self.last_hover_pos = event.pos()
         if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier:
             self.hover_timer.start(300)
@@ -1635,7 +1559,6 @@ class LSPCodeEditor(QtWidgets.QPlainTextEdit):
         super().mouseMoveEvent(event)
     
     def leaveEvent(self, event):
-        """Hide tooltip when mouse leaves"""
         self.hide_custom_tooltip()
         super().leaveEvent(event)
 
@@ -1665,7 +1588,6 @@ class InfoView(QtWidgets.QWidget):
         layout.addWidget(self.list_widget)
     
     def update_style(self):
-        """Update stylesheet with current font size"""
         self.list_widget.setStyleSheet(f"""
             QListWidget {{
                 background-color: #1E1E1E;
@@ -1681,12 +1603,10 @@ class InfoView(QtWidgets.QWidget):
         """)
     
     def set_font_size(self, size):
-        """Set the font size for diagnostics"""
         self.current_font_size = size
         self.update_style()
     
     def update_diagnostics(self, diagnostics):
-        """Update the diagnostic list"""
         self.list_widget.clear()
         
         for diag in diagnostics:
@@ -1697,16 +1617,16 @@ class InfoView(QtWidgets.QWidget):
             line = start.get("line", 0) + 1
             char = start.get("character", 0) + 1
             
-            if severity == 1:  # Error
+            if severity == 1:
                 icon = "❌"
                 color = "#F48771"
-            elif severity == 2:  # Warning
+            elif severity == 2:
                 icon = "⚠️"
                 color = "#CCA700"
-            elif severity == 3:  # Info
+            elif severity == 3:
                 icon = "ℹ️"
                 color = "#75BEFF"
-            else:  # Hint
+            else:
                 icon = "💡"
                 color = "#CCCCCC"
             
@@ -1737,16 +1657,13 @@ class LSPEditorWindow(QtWidgets.QWidget):
         
         self.setup_ui()
         
-        # Auto-start if we have file path
-        if file_path and os.path.exists(file_path):
-            QtCore.QTimer.singleShot(100, self.start_lsp)
+        QtCore.QTimer.singleShot(100, self.start_lsp)
     
     def setup_ui(self):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Button bar
         button_bar = QtWidgets.QWidget()
         button_bar.setStyleSheet("""
             QWidget {
@@ -1805,7 +1722,6 @@ class LSPEditorWindow(QtWidgets.QWidget):
         
         main_layout.addWidget(button_bar)
         
-        # Splitter for editor and diagnostics
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
         self.splitter.setStyleSheet("""
             QSplitter::handle {
@@ -1817,7 +1733,6 @@ class LSPEditorWindow(QtWidgets.QWidget):
             }
         """)
         
-        # Editor will be added here after LSP starts
         self.editor_container = QtWidgets.QWidget()
         self.editor_layout = QtWidgets.QVBoxLayout(self.editor_container)
         self.editor_layout.setContentsMargins(0, 0, 0, 0)
@@ -1829,7 +1744,6 @@ class LSPEditorWindow(QtWidgets.QWidget):
         
         self.splitter.addWidget(self.editor_container)
         
-        # Diagnostics view
         self.info_view = InfoView()
         self.splitter.addWidget(self.info_view)
         
@@ -1838,61 +1752,58 @@ class LSPEditorWindow(QtWidgets.QWidget):
         main_layout.addWidget(self.splitter)
     
     def start_lsp(self):
-        """Start the LSP server and editor"""
         logger.log("=== Starting LSP ===")
         logger.log(f"Server: {self.server_cmd}")
         logger.log(f"Workspace: {self.workspace_path}")
-        logger.log(f"File: {self.file_path}")
+        logger.log(f"File: {self.file_path or '(in-memory)'}")
         
         try:
-            # Start LSP client
             cmd_parts = self.server_cmd.split() if isinstance(self.server_cmd, str) else self.server_cmd
             self.lsp_client = LSPClient(cmd_parts, self.workspace_path)
             
             if not self.lsp_client.start():
                 raise Exception("Failed to start LSP server process")
             
-            # Load file content
+            content = ""
             if self.file_path and os.path.exists(self.file_path):
                 with open(self.file_path, 'r') as f:
                     content = f.read()
+                logger.log(f"Loaded content from file: {len(content)} chars")
+            elif self.node and self.parm_name:
+                content = self.node.parm(self.parm_name).eval()
+                logger.log(f"Loaded content from parameter '{self.parm_name}': {len(content)} chars")
             else:
-                # Try to get from parameter if no file
-                if self.node and self.parm_name:
-                    content = self.node.parm(self.parm_name).eval()
-                else:
-                    content = ""
+                content = ""
+                logger.log("Starting with empty content")
             
-            # Remove placeholder
             if self.placeholder:
                 self.editor_layout.removeWidget(self.placeholder)
                 self.placeholder.deleteLater()
                 self.placeholder = None
             
-            # Determine keybindings from node parameter or default to standard
             keybindings = KeybindingPresets.standard()
             if self.node and self.node.parm("keybindings_preset"):
                 preset_idx = self.node.parm("keybindings_preset").eval()
-                if preset_idx == 1:  # 1 = Emacs
+                if preset_idx == 1:
                     keybindings = KeybindingPresets.emacs()
                 logger.log(f"Using keybindings from parameter: {'Emacs' if preset_idx == 1 else 'Standard'}")
             
-            # Create editor
-            self.editor = LSPCodeEditor(self.lsp_client, self.file_path or "temp.lean",
+            self.editor = LSPCodeEditor(self.lsp_client, self.file_path,
                                        keybindings=keybindings)
             self.editor.setPlainText(content)
             self.editor.diagnosticsChanged.connect(self.info_view.update_diagnostics)
             
-            # Connect font size changes to diagnostics panel
             self.editor.font_size_changed.connect(self.info_view.set_font_size)
             
-            # Store reference to parent window for goto_definition
             self.editor.parent_window = self
             self.editor.workspace_path = self.workspace_path
             
             self.editor_layout.addWidget(self.editor)
             
-            self.status_label.setText(f"LSP running: {self.server_cmd}")
+            status_msg = f"LSP running: {self.server_cmd}"
+            if self.editor.is_virtual:
+                status_msg += " (in-memory document)"
+            self.status_label.setText(status_msg)
             self.apply_button.setEnabled(True)
             self.ok_button.setEnabled(True)
             
@@ -1906,7 +1817,6 @@ class LSPEditorWindow(QtWidgets.QWidget):
             self.status_label.setText(f"Error: {str(e)}")
     
     def show_keybinding_dialog(self):
-        """Show keybinding selection dialog"""
         if not self.editor:
             return
         
@@ -1916,13 +1826,11 @@ class LSPEditorWindow(QtWidgets.QWidget):
         if dialog.exec() == QtWidgets.QDialog.Accepted:
             preset = dialog.get_selected_preset()
             
-            # Update editor keybindings
             if preset == "emacs":
                 self.editor.set_keybindings(KeybindingPresets.emacs())
             else:
                 self.editor.set_keybindings(KeybindingPresets.standard())
             
-            # Update node parameter if available
             if self.node and self.node.parm("keybindings_preset"):
                 self.node.parm("keybindings_preset").set(1 if preset == "emacs" else 0)
                 logger.log(f"Updated keybindings_preset parameter to: {preset}")
@@ -1931,32 +1839,29 @@ class LSPEditorWindow(QtWidgets.QWidget):
             hou.ui.setStatusMessage(f"Keybindings changed to: {preset.title()}", hou.severityType.Message)
     
     def apply_changes(self):
-        """Apply changes back to the parameter"""
         if self.node and self.parm_name and self.editor:
             try:
                 code = self.editor.toPlainText()
                 self.node.parm(self.parm_name).set(code)
                 import hou
-                hou.ui.setStatusMessage("Changes applied", hou.severityType.Message)
+                hou.ui.setStatusMessage("Changes applied to parameter", hou.severityType.Message)
+                logger.log(f"Applied {len(code)} chars to parameter '{self.parm_name}'")
             except Exception as e:
                 import hou
                 hou.ui.displayMessage(f"Error applying changes: {str(e)}", 
                                     severity=hou.severityType.Error)
+                logger.log(f"Error applying changes: {e}", "ERROR")
         
-        # Also save file if we have a path
-        if self.editor and self.file_path:
+        if self.editor and self.file_path and not self.editor.is_virtual:
             self.editor.save_file()
     
     def ok_and_close(self):
-        """Apply changes and close the window"""
         self.apply_changes()
         self.close()
     
     def closeEvent(self, event):
-        """Clean up when closing"""
         logger.log("Editor window closing")
         if self.lsp_client:
-            # Shutdown quickly without blocking
             if self.lsp_client.process.state() == QProcess.ProcessState.Running:
                 self.lsp_client.process.kill()
             logger.log("LSP process terminated")
@@ -2016,7 +1921,6 @@ class KeybindingDialog(QtWidgets.QDialog):
         self.emacs_radio.toggled.connect(lambda: info_text.setHtml(self.get_keybinding_reference()))
     
     def get_keybinding_reference(self):
-        """Generate HTML reference for current preset"""
         preset = "emacs" if self.emacs_radio.isChecked() else "standard"
         kb = KeybindingPresets.emacs() if preset == "emacs" else KeybindingPresets.standard()
         
@@ -2047,7 +1951,6 @@ class KeybindingDialog(QtWidgets.QDialog):
         return html
     
     def get_selected_preset(self):
-        """Return selected preset name"""
         return "emacs" if self.emacs_radio.isChecked() else "standard"
 
 
@@ -2058,7 +1961,7 @@ class KeybindingDialog(QtWidgets.QDialog):
 _editor_windows = {}
 
 def open_code_editor(node=None, parm_name="code", server_cmd="lake serve", 
-                    workspace_path="", file_path=""):
+                    workspace_path="", file_path=None):
     """
     Open the LSP code editor.
     
@@ -2067,23 +1970,20 @@ def open_code_editor(node=None, parm_name="code", server_cmd="lake serve",
         parm_name: The name of the string parameter to edit (optional)
         server_cmd: LSP server command (e.g., "lake serve" for Lean 4)
         workspace_path: Project root directory
-        file_path: File to edit
+        file_path: File to edit (optional - will create virtual file if None)
     
     Returns:
         The editor window instance
     """
     global _editor_windows
     
-    # Create a unique key
-    widget_key = f"{node.path() if node else 'standalone'}_{parm_name}_{file_path}"
+    widget_key = f"{node.path() if node else 'standalone'}_{parm_name}_{file_path or 'virtual'}"
     
-    # If editor already exists, bring it to front
     if widget_key in _editor_windows and _editor_windows[widget_key].isVisible():
         _editor_windows[widget_key].raise_()
         _editor_windows[widget_key].activateWindow()
         return _editor_windows[widget_key]
     
-    # Create new editor
     import hou
     editor = LSPEditorWindow(
         parent=hou.qt.mainWindow(),
@@ -2091,7 +1991,7 @@ def open_code_editor(node=None, parm_name="code", server_cmd="lake serve",
         parm_name=parm_name,
         server_cmd=server_cmd,
         workspace_path=workspace_path,
-        file_path=file_path
+        file_path=file_path or ""
     )
     
     title = f"LSP Code Editor"
@@ -2099,6 +1999,8 @@ def open_code_editor(node=None, parm_name="code", server_cmd="lake serve",
         title += f" - {node.name()}.{parm_name}"
     elif file_path:
         title += f" - {os.path.basename(file_path)}"
+    else:
+        title += " - (in-memory)"
     
     editor.setWindowTitle(title)
     editor.setWindowFlags(QtCore.Qt.Window)
@@ -2122,15 +2024,18 @@ def open_code_editor_from_kwargs(kwargs):
     
     Expects node parameters:
     - code: string parameter to edit
-    - lsp_server: LSP server command
-    - workspace: workspace path
-    - file: file path (optional)
+    - lsp_server: LSP server command (default: "lake serve")
+    - workspace: workspace path (default: current directory)
+    - file: file path (optional - creates virtual file if empty)
     """
     node = kwargs['node']
     
     server_cmd = node.evalParm("lsp_server") if node.parm("lsp_server") else "lake serve"
     workspace = node.evalParm("workspace") if node.parm("workspace") else os.getcwd()
     file_path = node.evalParm("file") if node.parm("file") else ""
+    
+    if not file_path:
+        file_path = None
     
     return open_code_editor(
         node=node,
@@ -2153,7 +2058,7 @@ if __name__ == "__main__":
        import lsp_editor
        lsp_editor.open_code_editor_from_kwargs(kwargs)
     
-    2. Standalone:
+    2. Standalone with file:
        import lsp_editor
        editor = lsp_editor.open_code_editor(
            server_cmd="lake serve",
@@ -2161,7 +2066,14 @@ if __name__ == "__main__":
            file_path="/path/to/file.lean"
        )
     
-    3. With HDA parameter:
+    3. In-memory editing (no file):
+       import lsp_editor
+       editor = lsp_editor.open_code_editor(
+           server_cmd="lake serve",
+           workspace_path="/path/to/lean/project"
+       )
+    
+    4. With HDA parameter (in-memory):
        import lsp_editor
        node = hou.pwd()
        editor = lsp_editor.open_code_editor(
@@ -2169,6 +2081,17 @@ if __name__ == "__main__":
            parm_name="code",
            server_cmd="lake serve",
            workspace_path="/path/to/lean/project"
+       )
+    
+    5. With HDA parameter and file:
+       import lsp_editor
+       node = hou.pwd()
+       editor = lsp_editor.open_code_editor(
+           node=node,
+           parm_name="code",
+           server_cmd="lake serve",
+           workspace_path="/path/to/lean/project",
+           file_path="/path/to/file.lean"
        )
     """
     pass
