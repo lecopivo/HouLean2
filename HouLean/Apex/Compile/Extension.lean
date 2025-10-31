@@ -13,7 +13,7 @@ inductive SingleExtension where
   
   This is also used for types. We might have `src` 
   -/
-  | implementedByName (src : Name) (trg : Name)
+  | implementedByName (src : Name) (trg : Name) (argMap : Array (Option Nat)) 
   /-- During compilation we replace `src` with `trg`.
 
   These functions might not have the same Lean type but they should
@@ -33,10 +33,11 @@ inductive SingleExtension where
 
 deriving Inhabited
 
+
 /-- Enviroment extension that holds all necessary information for the APEX compiler. -/
 structure Extension where
   apexTypes : ExprMap ApexType
-  implementedByName : NameMap Name
+  implementedByName : NameMap (Name × Array (Option Nat))
   implementedByExpr : ExprMap Expr
   nodeTypes : ExprMap NodeType
   toUnfold : NameSet
@@ -52,8 +53,8 @@ initialize compilerExt : CompilerExt ←
       match e with
       | .apexType leanType apexType =>
         {es with apexTypes := es.apexTypes.insert leanType apexType}
-      | .implementedByName src trg =>
-        {es with implementedByName := es.implementedByName.insert src trg}
+      | .implementedByName src trg argMap =>
+        {es with implementedByName := es.implementedByName.insert src (trg, argMap)}
       | .implementedByExpr src trg =>
         {es with implementedByExpr := es.implementedByExpr.insert src trg}
       | .nodeType fn nodeType =>

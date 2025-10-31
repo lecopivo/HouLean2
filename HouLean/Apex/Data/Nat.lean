@@ -14,7 +14,7 @@ def Nat.add.apex_impl (x y : Int) : Int := x + y
 def Nat.mul.apex_impl (x y : Int) : Int := x * y
 
 @[apex_implements Nat.sub]
-def Nat.sub.apex_impl (x y : Int) : Int := (x - y).max 0
+def Nat.sub.apex_impl (x y : Int) : Int := max (x - y) 0
 
 @[apex_implements Nat.mod]
 def Nat.mod.apex_impl (x y : Int) : Int := x % y

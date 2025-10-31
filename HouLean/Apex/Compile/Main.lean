@@ -5,7 +5,9 @@ open Lean Meta Std
 namespace HouLean.Apex.Compiler
 
 structure Context where
-  unfoldStack : List Name
+  -- recDepth : Nat
+  -- maxRecDepth : Nat := 100
+  unfoldStack : List Name -- todo: store recursion depth too and probably use it to report errors
 deriving Inhabited
 
 structure GraphState where
@@ -21,7 +23,13 @@ deriving Inhabited
 
 abbrev GraphCompileM := ReaderT Context <| StateT GraphState MetaM
 
-def withUnfolded {α} (name : Name) (go : GraphCompileM α) : GraphCompileM α := 
+-- def withIncRecDepth {α} (go : GraphCompileM α) : GraphCompileM α := do
+--   throwMaxRecDepthAt (← getRef)
+
+
+def withUnfolded {α} (name : Name) (go : GraphCompileM α) : GraphCompileM α := do
+--   Meta.withIncRecDepth do
+--     sorry
   fun ctx => go {ctx with unfoldStack := name :: ctx.unfoldStack}
 
 def GraphCompileM.run {α} (go : GraphCompileM α) 
@@ -78,7 +86,7 @@ def getUnfoldStackMsg : GraphCompileM MessageData := do
     return m!", unfolded: {stack.head!} → ... → {stack.getLast!}"
 
 def throwErrorWithStack (msg : MessageData) : GraphCompileM α := do
-  throwError m!"{msg}{← getUnfoldStackMsg}"
+  throwErrorAt (← getRef) m!"{msg}{← getUnfoldStackMsg}"
 
 /-- Add a node to the graph with optional subports -/
 def addNode (nodeType : NodeType) (subports : Array AddSubPortSpec) 
@@ -357,6 +365,26 @@ instance : ExceptToEmoji Exception (Array PortBundle × PortBundle) where
         s!"✅️ {p.1.map (·.toString)} -> {p.2.toString}"
     | .error _ => "💥️"
 
+private def _root_.Lean.isInstanceProjection (name : Name) : MetaM Bool := do
+  unless ← isProjectionFn name do return false
+  let some info ← getProjectionFnInfo? name | return false
+  unless info.fromClass do return false
+  return true
+
+def doUnfold (e : Expr) : MetaM Bool := do
+  let .const name _ := e.getAppFn | return false
+  if ← isReducible name then return true
+  unless ← isInstanceProjection name do return false
+  let s := compilerExt.getState (← getEnv)
+  if s.implementedByName.contains name then
+    return false
+  else
+    return true
+
+def whnfC (e : Expr) : MetaM Expr :=
+  whnfHeadPred e doUnfold
+
+
 open Qq in
 mutual
 
@@ -412,21 +440,46 @@ partial def compileMatchExpr (e : Expr) (info : MatcherInfo) :
   
   if x.isFVar then
     trace[HouLean.Apex.compiler] "  → fvar case, reducing match"
-    return ← compile (← whnf e)
+    compile (← whnf e)
   else
+    let matchFn := e.getAppFn.constName!
     trace[HouLean.Apex.compiler] "  → nontrivial match"
-    unless info.numParams = 0 ∧ info.numDiscrs = 1 ∧ info.altNumParams.size = 1 do
-      throwErrorWithStack m!"Unsupported match statement: {e}"
-    let fn := e.appFn!.appFn!
-    return ← compile (Expr.letE `r (← inferType x) x ((fn.app (.bvar 0)).app body) false)
+    if info.numParams = 0 ∧ info.numDiscrs = 1 ∧ info.altNumParams.size = 1 then
+      let fn := e.appFn!.appFn!
+      compile (Expr.letE `r (← inferType x) x ((fn.app (.bvar 0)).app body) false)
+    else
+      let e' ← whnf (← unfold e matchFn).expr
+      withUnfolded matchFn do
+        unless e != e' do
+          throwErrorWithStack m!"can't compile {e}"
+        trace[HouLean.Apex.compiler] "reduced to: {e'}"
+        compile e'
 
 /-- Try to compile using implemented_by override -/
 partial def tryCompileImplementedBy (fn : Expr) (args : Array Expr) : 
     GraphCompileM (Option (Array PortBundle × PortBundle)) := do
+
   let s := compilerExt.getState (← getEnv)
+
+  -- Direct expr level overrides
   if let some fn' := s.implementedByExpr[fn]? then
-    trace[HouLean.Apex.compiler] "Using implemented_by override for {fn}"
+    trace[HouLean.Apex.compiler] "Using implemented_by override for {fn} -> {fn'}"
     return some (← compile (fn'.beta args))
+  
+  -- Name based overrides
+  if let (.const fn _) := fn then
+    if let some (fn', argMap) := s.implementedByName.find? fn then
+      trace[HouLean.Apex.compiler] "Using implemented_by override for {fn} -> {fn'}"
+      let args' := argMap.map (fun i? => i?.map (fun i => args[i]!))
+      let e' ← do
+        try 
+          let e' ← mkAppOptM fn' args'
+          pure e'
+        catch err =>
+          throwErrorWithStack m!"Failed to apply implemented_by override {fn} -> {fn'}\n{err.toMessageData}"
+      return ← compile e'
+
+
   return none
 
 /-- Try to compile variadic argument -/
@@ -547,13 +600,13 @@ partial def compileApplication (e : Expr) (userName? : Option String) :
     GraphCompileM (Array PortBundle × PortBundle) := do
   let (fn, args) := e.withApp fun fn args => (fn, args)
 
-  -- Handle match statements
-  if let some info := isMatcherAppCore? (← getEnv) e then
-    return ← compileMatchExpr e info
-
   -- Try implemented_by override
   if let some result ← tryCompileImplementedBy fn args then
     return result
+
+  -- Handle match statements
+  if let some info := isMatcherAppCore? (← getEnv) e then
+    return ← compileMatchExpr e info
 
   let .const fname _ := fn 
     | throwErrorWithStack m!"Unexpected function application: {e}"
@@ -627,7 +680,7 @@ partial def compileLambda (e : Expr) :
       throwErrorWithStack m!"Function expected: {e}"
 
     let b ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <|
-      whnfI (e.beta xs)
+      whnfC (e.beta xs)
 
     let mut inputs : Array PortBundle := #[]
     for x in xs do
@@ -645,7 +698,9 @@ partial def toApexGraph (e : Expr) (userName? : Option String := none) :
   withTraceNode `HouLean.Apex.compiler 
       (fun r => return m!"[{ExceptToEmoji.toEmoji r}] {e}") do
     
-    let e ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfI e
+    let e' ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfC e
+    if e != e' then trace[HouLean.Apex.compiler] m!"reduced to: {e'}"
+    let e := e'
 
     match e with
     | .bvar _ => 

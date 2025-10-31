@@ -32,10 +32,10 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
 
   -- implemented by
   let s := compilerExt.getState (← getEnv)
-  if let some fn' := s.implementedByName.find? fn then
+  if let some (fn',argMap) := s.implementedByName.find? fn then
     try
       -- type constructores are assumet to have the same arguments
-      let type' ← mkAppOptM fn' (args.map some)
+      let type' ← mkAppOptM fn' (argMap.map (fun i? => i?.map (fun i => args[i]!)))
       return ← getApexType? type'
     catch _ =>
       throwError m!"Failed replacing {fn} with {fn'} in {type}"

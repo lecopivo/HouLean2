@@ -1811,6 +1811,133 @@ class NodeEditorView(QGraphicsView):
         # Select all the newly created connections
         for conn in new_connections:
             conn.setSelected(True)
+
+    def collapse_selected_connections(self):
+        """Collapse selected subport connections back to parent connections"""
+        selected = self.editor_scene.selectedItems()
+        selected_connections = [item for item in selected if isinstance(item, Connection)]
+        
+        if not selected_connections:
+            return
+        
+        # Group connections by their potential parent ports
+        # Key: (output_parent_port, input_parent_port)
+        groups = {}
+        
+        for conn in selected_connections:
+            if not conn.output_port or not conn.input_port:
+                continue
+            
+            # Find parent ports
+            output_parent = self._get_parent_port(conn.output_port)
+            input_parent = self._get_parent_port(conn.input_port)
+            
+            if not output_parent or not input_parent:
+                continue
+            
+            key = (id(output_parent), id(input_parent), output_parent, input_parent)
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(conn)
+        
+        # Process each group
+        wires_to_flash = []
+        new_parent_connections = []
+        
+        for (_, _, output_parent, input_parent), conns in groups.items():
+            result = self._try_collapse_group(output_parent, input_parent, conns)
+            if result == 'success':
+                # The new parent connection is the last one added
+                new_parent_connections.append(result)
+            elif result == 'blocked':
+                wires_to_flash.extend(conns)
+            elif isinstance(result, Connection):
+                # Result is the new connection object
+                new_parent_connections.append(result)
+        
+        # Select all newly created parent connections
+        for conn in new_parent_connections:
+            conn.setSelected(True)
+        
+        # Flash red wires that couldn't collapse
+        if wires_to_flash:
+            self._flash_wires_red(wires_to_flash)
+    
+    def _get_parent_port(self, port):
+        """Get the immediate parent port of a subport, or the port itself if it's top-level"""
+        if isinstance(port, SubportWidget):
+            return port.parent_port
+        return None  # Top-level ports don't have parents to collapse to
+    
+    def _try_collapse_group(self, output_parent, input_parent, selected_conns):
+        """Try to collapse a group of connections. Returns Connection object on success, 'blocked' or 'skip' on failure"""
+        
+        # Check if parent ports already have a direct connection
+        if output_parent.connections or input_parent.connections:
+            return 'blocked'
+        
+        # Get all subports of the parent
+        all_output_subports = output_parent.subport_widgets if output_parent.expanded else []
+        all_input_subports = input_parent.subport_widgets if input_parent.expanded else []
+        
+        if not all_output_subports or not all_input_subports:
+            return 'skip'
+        
+        # Find which subports are in the selection
+        selected_output_subports = set()
+        selected_input_subports = set()
+        
+        for conn in selected_conns:
+            selected_output_subports.add(conn.output_port)
+            selected_input_subports.add(conn.input_port)
+        
+        # Check if any sibling connections exist but weren't selected
+        for out_subport in all_output_subports:
+            if out_subport.connections and out_subport not in selected_output_subports:
+                # There's a connection we didn't select
+                return 'blocked'
+        
+        for in_subport in all_input_subports:
+            if in_subport.connections and in_subport not in selected_input_subports:
+                # There's a connection we didn't select
+                return 'blocked'
+        
+        # All checks passed - perform the collapse
+        # Remove all subport connections
+        for conn in selected_conns:
+            conn.remove()
+            if conn in self.connections:
+                self.connections.remove(conn)
+        
+        # Create parent connection
+        parent_conn = Connection(output_parent, input_parent, self.editor_scene)
+        self.editor_scene.addItem(parent_conn)
+        self.connections.append(parent_conn)
+        
+        # Collapse the expansions (they'll stay expanded if there are other connections)
+        output_parent.collapse()
+        input_parent.collapse()
+        
+        return parent_conn
+    
+    def _flash_wires_red(self, wires):
+        """Flash wires red to indicate they can't be collapsed"""
+        original_pens = {}
+        
+        # Store original pens and set to red
+        for wire in wires:
+            original_pens[wire] = wire.pen()
+            wire.setPen(QPen(HOUDINI_ERROR, 3.5))
+            wire.update()
+        
+        # Use QTimer to restore original pens after a delay
+        def restore_pens():
+            for wire in wires:
+                if wire in original_pens and wire.scene():
+                    wire.setPen(original_pens[wire])
+                    wire.update()
+        
+        QTimer.singleShot(300, restore_pens)
     
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Delete or event.key() == Qt.Key_Backspace:
@@ -1826,6 +1953,8 @@ class NodeEditorView(QGraphicsView):
             self.frame_all()
         elif event.key() == Qt.Key_E:
             self.expand_selected_connections()
+        elif event.key() == Qt.Key_C:
+            self.collapse_selected_connections()
         else:
             super().keyPressEvent(event)
     
@@ -1835,6 +1964,9 @@ class NodeEditorView(QGraphicsView):
             self.scale(zoom_factor, zoom_factor)
         else:
             self.scale(1 / zoom_factor, 1 / zoom_factor)
+
+
+            
 
 
 class NodeEditorWidget(QWidget):

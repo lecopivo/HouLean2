@@ -7,5 +7,6 @@ import HouLean.Math
 import HouLean.Apex.Compile.Main
 import HouLean.Apex.Data
 import HouLean.Apex.Geometry
+import HouLean.Apex.Lean
 
 
