@@ -818,4 +818,14 @@ def programToApexGraph (e : Expr) : MetaM ApexGraph := do
       inputPorts := inputs
       outputPorts := output},()))
 
+
+open Elab Term Command in
+/-- Print APEX graph for given Lean expression. -/
+elab t:"#apex_graph" x:term : command => do
+  liftTermElabM do
+  let x ← elabTermAndSynthesize x none
+  let g ← programToApexGraph x
+  logInfoAt t s!"{g}"
+
+
 end HouLean.Apex.Compiler

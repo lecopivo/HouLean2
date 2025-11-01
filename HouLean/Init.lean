@@ -27,3 +27,4 @@ structure StructProd (α β : Type) where
 -- Structure is encoded into StructProd that always ending with `StructEnd`
 inductive StructEnd 
   | nil
+

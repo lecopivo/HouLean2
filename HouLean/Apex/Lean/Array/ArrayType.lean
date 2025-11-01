@@ -55,6 +55,36 @@ class ArraySort (α : Type) (arr : outParam Type) where
   arraySort : arr → arr
   arraySortAndRemoveDuplicates : arr → arr
 
+-----------------------------------------------------------------------------
+-- Transport ArrayType to any ApexType
+
+
+-- this instance might be dangerous and cause diamonds ... maybe we need different solution
+open ArrayType in
+instance (priority:=low) {α A As} [ApexType α A] [ArrayType A As] : ArrayType α As where
+  toApex a := toApex (a.map toApex)
+  fromApex a := (fromApex a : Array A).map fromApex
+
+  getElem a i h := fromApex a[i]
+  getElem? a i := a[i]?.map fromApex
+  getElem! {d} a i := 
+    have : Inhabited A := ⟨toApex d.1⟩
+    fromApex (a[i]!)
+  setElem := sorry
+
+  empty := ArrayType.empty A
+  length a := ArrayType.length A a
+  null a := a
+  build := sorry
+  append a v := ArrayType.append a (toApex v)
+  insert a v i := ArrayType.insert a (toApex v) i
+  remove a i := ArrayType.remove A a i
+  clear a := ArrayType.clear A a
+  extend a a' := ArrayType.extend A a a'
+  reverse a := ArrayType.reverse A a
+
+
+
 -- Array instances for all APEX array types
 
 private def toOption {α} (a : α × Bool) : Option α := Maybe.toOption a
