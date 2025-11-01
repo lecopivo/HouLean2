@@ -1,8 +1,11 @@
+import HouLean.Apex.ApexType
 import HouLean.Apex.Generated.Nodes
 import HouLean.Apex.Compile.ImplementedBy
 
 open HouLean Apex Compiler
 
+/-- `TwoWaySwitch α` provides Apex implementation of `if _ then _ else _` statement
+through `TwoWaySwitch` Apex node. -/
 class TwoWaySwitch (α : Type) where
   twoWaySwitch (c : Prop) [h : Decidable c] (t e : α) : α
 
@@ -134,6 +137,12 @@ instance : TwoWaySwitch SimRootDataIdArray where
 
 instance : TwoWaySwitch AnimChannelCollection where
   twoWaySwitch c _ t e := Generated.TwoWaySwitchAnimChannelCollection t e (decide c)
+
+
+open TwoWaySwitch in
+-- this might be dangerous and cause diamonds ...
+instance (priority:=low) {α A} [ApexType α A] [TwoWaySwitch A] : TwoWaySwitch α where
+  twoWaySwitch c _ t e := fromApex (twoWaySwitch c (toApex t) (toApex e))
 
 open TwoWaySwitch in
 instance [TwoWaySwitch α] [TwoWaySwitch β] : TwoWaySwitch (α×β) where

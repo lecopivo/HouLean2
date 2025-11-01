@@ -371,6 +371,68 @@ private def _root_.Lean.isInstanceProjection (name : Name) : MetaM Bool := do
   unless info.fromClass do return false
   return true
 
+
+/-- If `e` is a match expression then all discriminants are turned into a let bindings
+if they are not free variable already.
+
+For example the expression
+```
+let (x,y) := f x
+x + y
+```
+gets elaborated to
+```
+match f x with
+| (x,y) => x + y
+```
+and running `whnf` with `iota := true` and `zeta := false` turns it into
+```
+(f x).1 + (f x).2
+```
+which is undesirable. Therefore this function turns
+```
+match f x with
+| (x,y) => x + y
+```
+into
+```
+let r := f x
+match r with
+| (x,y) => x + y
+```
+and now running whnf on the let body will produce
+```
+let r := f x
+r.1 + r.2
+```
+which preserves the let binding of the original expression
+
+ -/
+partial def letBindMatchDiscrs (e : Expr) (doUnfold := false) : MetaM Expr := do
+  let some info := isMatcherAppCore? (← getEnv) e 
+    | return e
+  let (fn, args) := e.withApp (fun fn args => (fn,args))
+  go fn args info 0 #[]
+where
+  go (fn : Expr) (args : Array Expr) (info : MatcherInfo) (i : Nat) (xs : Array Expr) : MetaM Expr := do
+    if i = info.numDiscrs then
+      let mut e := fn.beta args
+      if doUnfold then
+        -- todo: maybe check that the proof of unfolding is rfl as we use it int whnf
+        e := (← unfold e fn.constName!).expr
+      return ← mkLambdaFVars xs e
+    else
+      let xi := args[i + info.numParams + 1]!
+      if xi.isFVar then
+        -- do nothing if `xi` is already fvar
+        go fn args info (i+1) xs
+      else
+        let name := Name.appendAfter `r (toString i)
+        withLetDecl name (← inferType xi) xi fun xvar => do
+          let args := args.set! (i + info.numParams + 1) xvar
+          let xs := xs.push xvar
+          go fn args info (i+1) xs
+
 def doUnfold (e : Expr) : MetaM Bool := do
   let .const name _ := e.getAppFn | return false
   if ← isReducible name then return true
@@ -381,9 +443,22 @@ def doUnfold (e : Expr) : MetaM Bool := do
   else
     return true
 
-def whnfC (e : Expr) : MetaM Expr :=
-  whnfHeadPred e doUnfold
+/-- Specially configured `whnf` for APEX compilation. 
 
+At its core it is whnf at reducible and instances with `iota := true` and `zeta := false`
+
+But certain instance projections are overriden by `apex_implemented_by` so those do not 
+get reduced. Also match statements hoist their discriminants into let binders before
+reducing them.
+-/
+partial def whnfC (e : Expr) : MetaM Expr :=
+  withConfig (fun cfg => {cfg with iota := false, zeta := true}) do
+    let e' ← whnfHeadPred e doUnfold
+    let e' ← letBindMatchDiscrs e' true
+    if e.equal e' then
+      return e'
+    else
+      whnfC e'
 
 open Qq in
 mutual
@@ -679,8 +754,7 @@ partial def compileLambda (e : Expr) :
     if xs.size = 0 then
       throwErrorWithStack m!"Function expected: {e}"
 
-    let b ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <|
-      whnfC (e.beta xs)
+    let b ← whnfC (e.beta xs)
 
     let mut inputs : Array PortBundle := #[]
     for x in xs do

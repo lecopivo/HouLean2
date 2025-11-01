@@ -37,8 +37,8 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
       -- type constructores are assumet to have the same arguments
       let type' ← mkAppOptM fn' (argMap.map (fun i? => i?.map (fun i => args[i]!)))
       return ← getApexType? type'
-    catch _ =>
-      throwError m!"Failed replacing {fn} with {fn'} in {type}"
+    catch e =>
+      throwError m!"Failed replacing {fn} with {fn'} in {type}\n{e.toMessageData}"
 
   
   -- Handle structure types
@@ -115,3 +115,14 @@ initialize apexTypeAttr : Unit ←
     erase := fun _declName =>
       throwError "Can't remove `apex_type`, not implemented yet!"
   }
+
+
+
+open Lean Elab Term Command in
+/-- Check APEX type of Lean type -/
+elab "#apex_type" x:term : command => do
+  liftTermElabM do
+    let x ← elabTerm x none
+    let some t ← getApexType? x 
+      | throwError m!"{x} is not an APEX type"
+    logInfo m!"{t}"

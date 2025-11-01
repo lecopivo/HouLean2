@@ -257,3 +257,83 @@ run_meta
   let e := q(fun x y : Int => if x < y then x + y else x * y)
   let g ← programToApexGraph e
   IO.println g
+
+
+/--
+info: Nodes:
+  0: x : __null__
+  1: y : __null__
+  2: lessthan_float : LessThan<Float>
+  3: twowayswitch_float : TwoWaySwitch<Float>
+  4: twowayswitch_float1 : TwoWaySwitch<Float>
+  5: twowayswitch_float2 : TwoWaySwitch<Float>
+  6: twowayswitch_float3 : TwoWaySwitch<Float>
+
+Ports:
+  0: /x/__spare__[in]
+  1: /x/__spare__[out]
+  2: /x/fst[in]
+  3: /x/fst[out]
+  4: /x/snd[in]
+  5: /x/snd[out]
+  6: /y/__spare__[in]
+  7: /y/__spare__[out]
+  8: /y/fst[in]
+  9: /y/fst[out]
+  10: /y/snd[in]
+  11: /y/snd[out]
+  12: /lessthan_float/a0[in]
+  13: /lessthan_float/b1[in]
+  14: /lessthan_float/out0[out]
+  15: /twowayswitch_float/a0[in]
+  16: /twowayswitch_float/b1[in]
+  17: /twowayswitch_float/index2[in]
+  18: /twowayswitch_float/out0[out]
+  19: /twowayswitch_float1/a0[in]
+  20: /twowayswitch_float1/b1[in]
+  21: /twowayswitch_float1/index2[in]
+  22: /twowayswitch_float1/out0[out]
+  23: /twowayswitch_float2/a0[in]
+  24: /twowayswitch_float2/b1[in]
+  25: /twowayswitch_float2/index2[in]
+  26: /twowayswitch_float2/out0[out]
+  27: /twowayswitch_float3/a0[in]
+  28: /twowayswitch_float3/b1[in]
+  29: /twowayswitch_float3/index2[in]
+  30: /twowayswitch_float3/out0[out]
+
+Input Ports:
+  2: /x/fst[in]
+  4: /x/snd[in]
+  8: /y/fst[in]
+  10: /y/snd[in]
+
+Output Ports:
+  18: /twowayswitch_float/out0[out]
+  22: /twowayswitch_float1/out0[out]
+  26: /twowayswitch_float2/out0[out]
+  30: /twowayswitch_float3/out0[out]
+
+Wires:
+  0: /x/fst[out] -> /lessthan_float/a0[in]
+  1: /y/snd[out] -> /lessthan_float/b1[in]
+  2: /x/fst[out] -> /twowayswitch_float/a0[in]
+  3: /y/fst[out] -> /twowayswitch_float/b1[in]
+  4: /lessthan_float/out0[out] -> /twowayswitch_float/index2[in]
+  5: /x/snd[out] -> /twowayswitch_float1/a0[in]
+  6: /y/snd[out] -> /twowayswitch_float1/b1[in]
+  7: /lessthan_float/out0[out] -> /twowayswitch_float1/index2[in]
+  8: /y/fst[out] -> /twowayswitch_float2/a0[in]
+  9: /x/fst[out] -> /twowayswitch_float2/b1[in]
+  10: /lessthan_float/out0[out] -> /twowayswitch_float2/index2[in]
+  11: /y/snd[out] -> /twowayswitch_float3/a0[in]
+  12: /x/snd[out] -> /twowayswitch_float3/b1[in]
+  13: /lessthan_float/out0[out] -> /twowayswitch_float3/index2[in]
+
+Literals:
+-/
+#guard_msgs in
+run_meta
+  let e := q(fun x y : Float×Float => if x.1 < y.2 then (x,y) else (y,x))
+  let g ← programToApexGraph e
+  IO.println g

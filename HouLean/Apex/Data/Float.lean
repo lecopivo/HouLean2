@@ -1,5 +1,6 @@
 import HouLean.Apex.Generated.Nodes
 import HouLean.Apex.Compile.ImplementedBy
+import HouLean.Apex.Lean.Decidable
 
 open HouLean.Apex.Generated
 
@@ -29,11 +30,11 @@ def Float.neg.impl (x : Float) : Float := NegateFloat x
 noncomputable
 def Float.beq.impl (x y : Float) : Bool := EqualsFloat x y
 
-@[apex_implements Float.blt]
+@[apex_implements Float.decLt]
 noncomputable
 def Float.blt.impl (x y : Float) : Bool := LessThanFloat x y
 
-@[apex_implements Float.ble]
+@[apex_implements Float.decLe]
 noncomputable
 def Float.ble.impl (x y : Float) : Bool := LessThanOrEqualFloat x y
 
