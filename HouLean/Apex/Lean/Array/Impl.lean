@@ -31,7 +31,7 @@ def Array.get!Internal.apex_impl {α As} [ArrayType α As] (a : Array α) (i : @
   getElem (toApex a) (Int.ofNat i) .intro
 
 run_meta compilerExt.add (.implementedByName ``Array.get!Internal ``Array.get!Internal.apex_impl 
-  #[some 0, none, none, some 1, some 2]) default
+  #[some 0, none, none, some 2, some 3]) default
 
 def Array.push.apex_impl {α As} [ArrayType α As] (a : Array α) (v : α) : Array α := 
   fromApex (ArrayType.append (toApex a) v).1

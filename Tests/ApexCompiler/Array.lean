@@ -125,12 +125,13 @@ Literals:
 #apex_graph fun (x : Array Float) => x * x
 
 
-set_option trace.HouLean.Apex.compiler true in
+
 #apex_graph fun (x : Array Float) => x[0]?
 
 #apex_graph fun (x : Array Float) => x[0]!
 
 #apex_graph fun (x : Array Float) (i : Nat) (h : i < x.size) => x[i]
+
 
 /--
 info: Nodes:
