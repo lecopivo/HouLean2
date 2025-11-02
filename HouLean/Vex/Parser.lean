@@ -4,7 +4,7 @@ Based on https://www.sidefx.com/docs/houdini/vex/lang.html
 Using precedence-based expression parsing similar to Alloy C grammar
 -/
 
-import Lean.Parser
+import Lean
 
 namespace VEX
 
@@ -355,4 +355,36 @@ syntax vexProgram := vexTopDecl*
 -- Snippet (wrangle node code)
 syntax vexSnippet := vexSnippetItem*
 
+elab "vexsnippet%" code:VEX.vexSnippet : term =>
+  let s := code.raw.prettyPrint
+  let e := Lean.mkStrLit (toString s)
+  pure e
+
+
+def foo (s : Syntax) (visit : Syntax → MetaM Unit) : MetaM Unit := 
+  match s with
+  | .missing => pure ()
+  | .node info kind args => do
+    visit s
+    args.foldlM (init:=()) (fun _ a => foo a visit)
+  | .atom .. => 
+    visit s
+  | .ident .. => 
+    visit s
+
+#check Lean.Syntax.getPos?
+
+run_meta
+  let s ← `(vexSnippet| @Cd = point(1, "Cd", @ptnum);)
+  let code := toString s.raw.prettyPrint
+  let b := s.raw.getPos?.getD default
+  foo s fun s => do
+    if s.getKind == ``VEX.«vexChannelAccess@_» then
+      let pos := s.getPos?.getD default
+      let str := code.get (pos - b)
+      logInfo m!" {s.getKind}: {s}, pos: {pos}, at pos: {str}"
+
+  IO.println code
+
 end VEX
+

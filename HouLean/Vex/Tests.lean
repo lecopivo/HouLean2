@@ -8,7 +8,7 @@ VEX Grammar Tests
 
 namespace VEX.Test
 
-open Lean VEX
+open Lean VEX HouLean
 open Lean Elab Term
 
 -- Test 1: Simple function
@@ -32,8 +32,8 @@ run_elab
 
 -- Test 2: Vector operations
 /--
-info:  vector  addVectors  (  vector  a  ;  vector  b  )  {  return  a  +  b  ;  }
-  def  addVectors  (  a  :  Vector3  )  (  b  :  Vector3  )  :  Vector3  :=  do  return  a  +  b
+info:  vector  addVectors  (  vector  a  ;  vector  b  )  {  return  a  +  b  ;  } ⏎
+ def  addVectors  (  a  :  HouLean.Vector3  )  (  b  :  HouLean.Vector3  )  :  HouLean.Vector3  :=  do  return  a  +  b
 -/
 #guard_msgs in
 run_elab

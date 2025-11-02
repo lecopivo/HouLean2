@@ -280,7 +280,7 @@ Id.run do
     for inputPortId in g.inputPorts, i in [0:g.inputPorts.size] do
       let j := g.ports.size + i + 1
       let p := g.ports[inputPortId]!
-      s := s ++ s!"graph.addGraphInput({g.nodes.size+1}, \"{p.name}\")" ++ "\n"
+      s := s ++ s!"graph.addGraphInput({g.nodes.size+1}, \"{p.name}{i}\")" ++ "\n"
       s := s ++ s!"graph.addWire({j}, {inputPortId})" ++ "\n"
 
   if g.outputPorts.size != 0 then

@@ -89,7 +89,7 @@ instance (priority:=low) {α A As} [ApexType α A] [ArrayType A As] : ArrayType 
 
 private def toOption {α} (a : α × Bool) : Option α := Maybe.toOption a
 
-unsafe instance : ArrayType Bool BoolArray where
+instance : ArrayType Bool BoolArray where
   getElem a i _ := (array_GetBool a i default).1
   getElem? a i := toOption (array_GetBool a i default)
   setElem a i v := (array_SetBool a i v).1
@@ -119,7 +119,7 @@ instance : ArraySort Bool BoolArray where
   arraySort := array_SortBool
   arraySortAndRemoveDuplicates := array_SortAndRemoveDuplicatesBool
 
-unsafe instance : ArrayType Int IntArray where
+instance : ArrayType Int IntArray where
   getElem a i _ := (array_GetInt a i default).1
   getElem? a i := toOption (array_GetInt a i default)
   setElem a i v := (array_SetInt a i v).1
@@ -168,7 +168,7 @@ instance : ArraySort Int IntArray where
   arraySort := array_SortInt
   arraySortAndRemoveDuplicates := array_SortAndRemoveDuplicatesInt
 
-unsafe instance : ArrayType Float FloatArray where
+instance : ArrayType Float FloatArray where
   getElem a i _ := (array_GetFloat a i default).1
   getElem? a i := toOption (array_GetFloat a i default)
   setElem a i v := (array_SetFloat a i v).1
@@ -220,7 +220,7 @@ instance : ArraySort Float FloatArray where
   arraySort := array_SortFloat
   arraySortAndRemoveDuplicates := array_SortAndRemoveDuplicatesFloat
 
-unsafe instance : ArrayType String StringArray where
+instance : ArrayType String StringArray where
   getElem a i _ := (array_GetString a i default).1
   getElem? a i := toOption (array_GetString a i default)
   setElem a i v := (array_SetString a i v).1
@@ -251,7 +251,7 @@ instance : ArraySort String StringArray where
   arraySort := array_SortString
   arraySortAndRemoveDuplicates := array_SortAndRemoveDuplicatesString
 
-unsafe instance : ArrayType Vector2 Vector2Array where
+instance : ArrayType Vector2 Vector2Array where
   getElem a i _ := (array_GetVector2 a i default).1
   getElem? a i := toOption (array_GetVector2 a i default)
   setElem a i v := (array_SetVector2 a i v).1
@@ -302,7 +302,7 @@ instance : ArraySort Vector2 Vector2Array where
   arraySort := array_SortVector2
   arraySortAndRemoveDuplicates := array_SortAndRemoveDuplicatesVector2
 
-unsafe instance : ArrayType Vector3 Vector3Array where
+instance : ArrayType Vector3 Vector3Array where
   getElem a i _ := (array_GetVector3 a i default).1
   getElem? a i := toOption (array_GetVector3 a i default)
   setElem a i v := (array_SetVector3 a i v).1
@@ -353,7 +353,7 @@ instance : ArraySort Vector3 Vector3Array where
   arraySort := array_SortVector3
   arraySortAndRemoveDuplicates := array_SortAndRemoveDuplicatesVector3
 
-unsafe instance : ArrayType Vector4 Vector4Array where
+instance : ArrayType Vector4 Vector4Array where
   getElem a i _ := (array_GetVector4 a i default).1
   getElem? a i := toOption (array_GetVector4 a i default)
   setElem a i v := (array_SetVector4 a i v).1
@@ -404,7 +404,7 @@ instance : ArraySort Vector4 Vector4Array where
   arraySort := array_SortVector4
   arraySortAndRemoveDuplicates := array_SortAndRemoveDuplicatesVector4
 
-unsafe instance : ArrayType Matrix3 Matrix3Array where
+instance : ArrayType Matrix3 Matrix3Array where
   getElem a i _ := (array_GetMatrix3 a i default).1
   getElem? a i := toOption (array_GetMatrix3 a i default)
   setElem a i v := (array_SetMatrix3 a i v).1
@@ -439,7 +439,7 @@ instance : ArraySum Matrix3 Matrix3Array where
 instance : ArrayLerp Matrix3 Matrix3Array where
   arrayLerp := array_LerpMatrix3
 
-unsafe instance : ArrayType Matrix4 Matrix4Array where
+instance : ArrayType Matrix4 Matrix4Array where
   getElem a i _ := (array_GetMatrix4 a i default).1
   getElem? a i := toOption (array_GetMatrix4 a i default)
   setElem a i v := (array_SetMatrix4 a i v).1
@@ -475,7 +475,7 @@ instance : ArrayLerp Matrix4 Matrix4Array where
   arrayLerp := array_LerpMatrix4
 
 -- Simple arrays without arithmetic
-unsafe instance : ArrayType Geometry GeometryArray where
+instance : ArrayType Geometry GeometryArray where
   getElem a i _ := (array_GetGeometry a i default).1
   getElem? a i := toOption (array_GetGeometry a i default)
   setElem a i v := (array_SetGeometry a i v).1
@@ -492,7 +492,7 @@ unsafe instance : ArrayType Geometry GeometryArray where
   toApex xs := cast silentSorry xs
   fromApex xs := cast silentSorry xs
 
-unsafe instance : ArrayType Dict DictArray where
+instance : ArrayType Dict DictArray where
   getElem a i _ := (array_GetDict a i default).1
   getElem? a i := toOption (array_GetDict a i default)
   setElem a i v := (array_SetDict a i v).1
@@ -509,7 +509,7 @@ unsafe instance : ArrayType Dict DictArray where
   toApex xs := cast silentSorry xs
   fromApex xs := cast silentSorry xs
 
-unsafe instance : ArrayType DynamicPath DynamicPathArray where
+instance : ArrayType DynamicPath DynamicPathArray where
   getElem a i _ := (array_GetDynamicPath a i default).1
   getElem? a i := toOption (array_GetDynamicPath a i default)
   setElem a i v := (array_SetDynamicPath a i v).1
@@ -526,7 +526,7 @@ unsafe instance : ArrayType DynamicPath DynamicPathArray where
   toApex xs := cast silentSorry xs
   fromApex xs := cast silentSorry xs
 
-unsafe instance : ArrayType ApexNodeID ApexNodeIDArray where
+instance : ArrayType ApexNodeID ApexNodeIDArray where
   getElem a i _ := (array_GetApexNodeID a i default).1
   getElem? a i := toOption (array_GetApexNodeID a i default)
   setElem a i v := (array_SetApexNodeID a i v).1
@@ -546,7 +546,7 @@ unsafe instance : ArrayType ApexNodeID ApexNodeIDArray where
 instance : ArrayFind ApexNodeID ApexNodeIDArray where
   arrayFind := array_FindApexNodeID
 
-unsafe instance : ArrayType ApexPortID ApexPortIDArray where
+instance : ArrayType ApexPortID ApexPortIDArray where
   getElem a i _ := (array_GetApexPortID a i default).1
   getElem? a i := toOption (array_GetApexPortID a i default)
   setElem a i v := (array_SetApexPortID a i v).1
@@ -566,7 +566,7 @@ unsafe instance : ArrayType ApexPortID ApexPortIDArray where
 instance : ArrayFind ApexPortID ApexPortIDArray where
   arrayFind := array_FindApexPortID
 
-unsafe instance : ArrayType FBIKSkeleton FBIKSkeletonArray where
+instance : ArrayType FBIKSkeleton FBIKSkeletonArray where
   getElem a i _ := (array_GetFBIKSkeleton a i default).1
   getElem? a i := toOption (array_GetFBIKSkeleton a i default)
   setElem a i v := (array_SetFBIKSkeleton a i v).1
@@ -583,7 +583,7 @@ unsafe instance : ArrayType FBIKSkeleton FBIKSkeletonArray where
   toApex xs := cast silentSorry xs
   fromApex xs := cast silentSorry xs
 
-unsafe instance : ArrayType FBIKSolver FBIKSolverArray where
+instance : ArrayType FBIKSolver FBIKSolverArray where
   getElem a i _ := (array_GetFBIKSolver a i default).1
   getElem? a i := toOption (array_GetFBIKSolver a i default)
   setElem a i v := (array_SetFBIKSolver a i v).1
@@ -600,7 +600,7 @@ unsafe instance : ArrayType FBIKSolver FBIKSolverArray where
   toApex xs := cast silentSorry xs
   fromApex xs := cast silentSorry xs
 
-unsafe instance : ArrayType FBIKTarget FBIKTargetArray where
+instance : ArrayType FBIKTarget FBIKTargetArray where
   getElem a i _ := (array_GetFBIKTarget a i default).1
   getElem? a i := toOption (array_GetFBIKTarget a i default)
   setElem a i v := (array_SetFBIKTarget a i v).1
@@ -617,7 +617,7 @@ unsafe instance : ArrayType FBIKTarget FBIKTargetArray where
   toApex xs := cast silentSorry xs
   fromApex xs := cast silentSorry xs
 
-unsafe instance : ArrayType SimRootDataId SimRootDataIdArray where
+instance : ArrayType SimRootDataId SimRootDataIdArray where
   getElem a i _ := (array_GetSimRootDataId a i default).1
   getElem? a i := toOption (array_GetSimRootDataId a i default)
   setElem a i v := (array_SetSimRootDataId a i v).1
