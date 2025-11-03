@@ -6,9 +6,8 @@ Following the structure of lean4-alloy's C parser
 
 import Lean
 import HouLean.Vex.Compiler.ParserUtil
--- import HouLean.Vex.Compiler.GrammarUtil
 
-namespace VEX
+namespace HouLean.Vex.Compiler
 
 open Lean Parser Alloy
 
@@ -688,4 +687,3 @@ elab "vexsnippet%" code:vexSnippet : term =>
   let e := Lean.mkStrLit (toString s)
   pure e
 
-end VEX
