@@ -682,8 +682,15 @@ declare_syntax_cat vexSnippet
 syntax vexSnippetItem* : vexSnippet
 
 /-- Elaborator for VEX snippets (converts to string). -/
-elab "vexsnippet%" code:vexSnippet : term =>
+elab "vexsnippet%" "{" code:vexSnippet "}" : term =>
   let s := code.raw.prettyPrint
   let e := Lean.mkStrLit (toString s)
   pure e
+
+
+declare_syntax_cat cvexProgram
+syntax cvexParam := vexParamDecl "=" vexExpr
+syntax cvexParamList := sepBy(cvexParam, ";")
+
+syntax "cvex" ident "(" cvexParamList ")" "{" vexSnippet "}" : cvexProgram
 

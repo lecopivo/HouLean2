@@ -1,31 +1,9 @@
-import HouLean.Vex.Compiler.Grammar
-import HouLean.TypeTag
-import Qq
-
-open Lean Parser Category
+import HouLean.Vex.Compiler.BoundVariable
+open Lean
 
 namespace HouLean.Vex.Compiler
 
-private def _root_.Lean.Syntax.visitKind {m} [Monad m] 
-    (s : Syntax) (kindPred : SyntaxNodeKind → Bool) (visitor : SyntaxNodeKind → Syntax → m Unit) : 
-    m Unit := 
-  match s with
-  | .node _ kind args => do
-    if kindPred kind then
-      visitor kind s
-    args.foldlM (init:=()) (fun _ a => a.visitKind kindPred visitor)
-  | _ => pure ()
-
-structure BoundVariable where
-  name : Name
-  strName : String
-  isExport : Bool := false
-  type? : Option AttribTypeTag
-deriving Repr
-
-abbrev BoundVariables := Std.HashMap Name BoundVariable
-
-namespace CollectBoundVars
+namespace CollectBoundVariables
 
 abbrev State := Std.HashMap Name BoundVariable
 abbrev CollectM := StateT State MacroM
@@ -47,9 +25,12 @@ def addVarCore (ref : Syntax) (ident : Ident) (type? : Option AttribTypeTag) (is
       | some t, none 
       | none, some t => pure (some t)
       | some t, some t' => 
-        Macro.throwErrorAt ref 
-          s!"Invalid type annotation '{t'.typeAnnotation}@{name}', \
-             previously annotated with '{t.typeAnnotation}@{name}'!"
+        if t != t' then
+          Macro.throwErrorAt ref 
+            s!"Invalid type annotation '{t'.typeAnnotation}@{name}', \
+               previously annotated with '{t.typeAnnotation}@{name}'!"
+        else
+          pure (some t)
     var := {var with type? := t?}
 
     -- update export
@@ -96,75 +77,30 @@ def addVar (s : TSyntax `attribAccess) (isExport := false) : CollectM Unit := do
   -- unknown type
   | `(attrAccess| @$x:ident) => addVarCore s x none isExport
 
-  | _ => Macro.throwErrorAt s "Unhandled attribute type case!"
+  | _ => Macro.throwErrorAt s s!"CollectBoundVariables: Unhandled attribute type case {s}!"
 
-  
-def knownTypes : Std.HashMap String AttribTypeTag :=
-  Std.HashMap.emptyWithCapacity 10
-  |>.insert "P" .vector3
-  |>.insert "accel" .vector3
-  |>.insert "Cd" .vector3
-  |>.insert "N" .vector3
-  |>.insert "scale" .vector3
-  |>.insert "force" .vector3
-  |>.insert "rest" .vector3
-  |>.insert "torque" .vector3
-  |>.insert "up" .vector3
-  |>.insert "uv" .vector3
-  |>.insert "v" .vector3
-  |>.insert "center" .vector3
-  |>.insert "dPdx" .vector3
-  |>.insert "dPdy" .vector3
-  |>.insert "dPdz" .vector3
-  |>.insert "backtract" .vector4
-  |>.insert "orient" .vector4
-  |>.insert "pstate" .vector4
-  |>.insert "id" .int
-  |>.insert "nextid" .int
-  |>.insert "pstate" .int
-  |>.insert "elemnum" .int
-  |>.insert "ptnum" .int
-  |>.insert "primnum" .int
-  |>.insert "vtxnum" .int
-  |>.insert "numelem" .int
-  |>.insert "numpt" .int
-  |>.insert "numpt" .int
-  |>.insert "numprim" .int
-  |>.insert "numvtx" .int
-  --|>.insert "group_*" .int
-  |>.insert "ix" .int
-  |>.insert "iy" .int
-  |>.insert "iz" .int
-  |>.insert "resx" .int
-  |>.insert "resy" .int
-  |>.insert "resz" .int
-  |>.insert "name" .string
-  |>.insert "instance" .string
+end CollectBoundVariables
 
-/-- Go over collected bounda variables and update types based on known attribute names.
+private def _root_.Lean.Syntax.visitKind {m} [Monad m] 
+    (s : Syntax) (kindPred : SyntaxNodeKind → Bool) (visitor : SyntaxNodeKind → Syntax → m Unit) : 
+    m Unit := 
+  match s with
+  | .node _ kind args => do
+    if kindPred kind then
+      visitor kind s
+    args.foldlM (init:=()) (fun _ a => a.visitKind kindPred visitor)
+  | _ => pure ()
 
-If known attribute name has been annotated with different type, we keep that type
-and do not throw any error or produce any warning. -/
-def fixKnownTypes : CollectM Unit := do
-  let s ← get
-  set (s.map (fun _ var => 
-    let t? := 
-      match var.type? with
-      | some t => some t
-      | none => knownTypes[var.strName]?
-    { var with type? := t? }))
-
-end CollectBoundVars
-
-
-open CollectBoundVars in
+open CollectBoundVariables Parser Category in
 /-- Collect information about bound variables in a VEX code snippet. -/
-def collectBoundVars (stx : TSyntax `vexSnippet) : MacroM (Std.HashMap Name BoundVariable) := do
+def collectBoundVars (stx : TSyntax ``vexSnippet) : MacroM BoundVariables := do
 
   let go : CollectM Unit := do
-    stx.raw.visitKind (fun k => k == ``attrAccess || k == ``assignExpr) fun kind s => 
+    stx.raw.visitKind (fun k => k == ``attrAccess || k == ``assignExpr) fun kind s => do
       if kind == ``assignExpr then
-        addVar ⟨s.getArg 0⟩ true
+        let lhs := s.getArg 0
+        if lhs.getKind == ``attrAccess then
+          addVar ⟨s.getArg 0⟩ true
       else 
         addVar ⟨s⟩ false
 
