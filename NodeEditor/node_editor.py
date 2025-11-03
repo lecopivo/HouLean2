@@ -1,6 +1,15 @@
 """
 Houdini Node Editor Python Pane with Dynamic Typing and Custom Port Types
 To use: In Houdini, create a new Python Panel and paste this code
+
+Features:
+- Custom per-node port types (define inline in JSON)
+- Nested custom types (e.g., MyParticle contains MyVector3)
+- Structural type matching (MyVector3 connects to Vector3 if structures match)
+- Wildcard type "?_" matches any type
+- Wildcard structures ignore subport names (only check count and type compatibility)
+- Wire expansion with structural compatibility
+- Live JSON editing panel for node types
 """
 
 import json
@@ -30,13 +39,20 @@ HOUDINI_ERROR = QColor(220, 60, 60)
 
 def get_type_color(type_name):
     """Get color for a port type"""
+    # Known/built-in types with distinct colors
     colors = {
         'Float': QColor(120, 220, 120),
         'Vector3': QColor(100, 180, 255),
         'Particle': QColor(255, 160, 100),
         'Character': QColor(200, 120, 200),
+        '?_': QColor(160, 160, 160),  # Wildcard type - medium gray
     }
-    return colors.get(type_name, QColor(180, 180, 180))
+    
+    if type_name in colors:
+        return colors[type_name]
+    else:
+        # Custom types - light beige/tan color
+        return QColor(210, 195, 180)
 
 
 class PortType:
@@ -234,6 +250,10 @@ class SubportWidget(QGraphicsItem):
     
     def _types_structurally_match(self, other_port):
         """Check if two ports have matching structure"""
+        # Wildcard type matches anything
+        if self.type_name == "?_" or other_port.type_name == "?_":
+            return True
+        
         # If names match exactly, they're compatible
         if self.type_name == other_port.type_name:
             return True
@@ -243,7 +263,7 @@ class SubportWidget(QGraphicsItem):
         other_port_type = self.registry.get_port_type(other_port.type_name, 
                                                        other_port.node_type if hasattr(other_port, 'node_type') else None)
         
-        # If both are leaf types (no subports), they must have the same name
+        # If both are leaf types (no subports), they must have the same name (or be wildcards, already checked)
         if not my_port_type or not my_port_type.subports:
             if not other_port_type or not other_port_type.subports:
                 return self.type_name == other_port.type_name
@@ -260,11 +280,17 @@ class SubportWidget(QGraphicsItem):
         if len(my_subports) != len(other_subports):
             return False
         
-        # Check each subport matches (name and type structure)
+        # Check if either structure has all wildcards - if so, relax name matching
+        my_has_wildcards = self._structure_has_wildcards(my_subports)
+        other_has_wildcards = self._structure_has_wildcards(other_subports)
+        
+        # Check each subport matches
         for (my_name, my_type), (other_name, other_type) in zip(my_subports, other_subports):
-            # Subport names must match
-            if my_name != other_name:
-                return False
+            # If either side has wildcards in structure, don't enforce name matching
+            if not (my_has_wildcards or other_has_wildcards):
+                # Strict mode: names must match
+                if my_name != other_name:
+                    return False
             
             # Recursively check subport type compatibility
             # Create temporary subport widgets to check their structure
@@ -276,6 +302,18 @@ class SubportWidget(QGraphicsItem):
                 return False
         
         return True
+    
+    def _structure_has_wildcards(self, subports):
+        """Check if a structure contains any wildcard types"""
+        for name, type_name in subports:
+            if type_name == "?_":
+                return True
+            # Check nested structures
+            port_type = self.registry.get_port_type(type_name, self.node_type)
+            if port_type and port_type.subports:
+                if self._structure_has_wildcards(port_type.subports):
+                    return True
+        return False
     
     def is_occupied(self):
         if self.connections:
@@ -501,6 +539,10 @@ class PortWidget(QGraphicsItem):
     
     def _types_structurally_match(self, other_port):
         """Check if two ports have matching structure"""
+        # Wildcard type matches anything
+        if self.type_name == "?_" or other_port.type_name == "?_":
+            return True
+        
         # If names match exactly, they're compatible
         if self.type_name == other_port.type_name:
             return True
@@ -510,7 +552,7 @@ class PortWidget(QGraphicsItem):
         other_port_type = self.registry.get_port_type(other_port.type_name, 
                                                        other_port.node_type if hasattr(other_port, 'node_type') else None)
         
-        # If both are leaf types (no subports), they must have the same name
+        # If both are leaf types (no subports), they must have the same name (or be wildcards, already checked)
         if not my_port_type or not my_port_type.subports:
             if not other_port_type or not other_port_type.subports:
                 return self.type_name == other_port.type_name
@@ -527,11 +569,17 @@ class PortWidget(QGraphicsItem):
         if len(my_subports) != len(other_subports):
             return False
         
-        # Check each subport matches (name and type structure)
+        # Check if either structure has all wildcards - if so, relax name matching
+        my_has_wildcards = self._structure_has_wildcards(my_subports)
+        other_has_wildcards = self._structure_has_wildcards(other_subports)
+        
+        # Check each subport matches
         for (my_name, my_type), (other_name, other_type) in zip(my_subports, other_subports):
-            # Subport names must match
-            if my_name != other_name:
-                return False
+            # If either side has wildcards in structure, don't enforce name matching
+            if not (my_has_wildcards or other_has_wildcards):
+                # Strict mode: names must match
+                if my_name != other_name:
+                    return False
             
             # Recursively check subport type compatibility
             # Create temporary port widgets to check their structure
@@ -543,6 +591,18 @@ class PortWidget(QGraphicsItem):
                 return False
         
         return True
+    
+    def _structure_has_wildcards(self, subports):
+        """Check if a structure contains any wildcard types"""
+        for name, type_name in subports:
+            if type_name == "?_":
+                return True
+            # Check nested structures
+            port_type = self.registry.get_port_type(type_name, self.node_type)
+            if port_type and port_type.subports:
+                if self._structure_has_wildcards(port_type.subports):
+                    return True
+        return False
     
     def is_occupied(self):
         if self.connections:
@@ -2368,7 +2428,8 @@ class NodeEditorWidget(QWidget):
                         {"name": "position", "type": "Vector3"},
                         {"name": "velocity", "type": "Vector3"}
                     ]
-                }
+                },
+                "?_": {"subports": []}
             },
             "node_types": [
                 {
@@ -2383,6 +2444,11 @@ class NodeEditorWidget(QWidget):
                         {"name": "b", "type": "Vector3"}
                     ],
                     "outputs": [{"name": "result", "type": "Vector3"}]
+                },
+                {
+                    "name": "Wildcard",
+                    "inputs": [{"name": "input", "type": "?_"}],
+                    "outputs": [{"name": "output", "type": "?_"}]
                 }
             ]
         }

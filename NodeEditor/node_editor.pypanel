@@ -9,6 +9,15 @@
     <script><![CDATA["""
 Houdini Node Editor Python Pane with Dynamic Typing and Custom Port Types
 To use: In Houdini, create a new Python Panel and paste this code
+
+Features:
+- Custom per-node port types (define inline in JSON)
+- Nested custom types (e.g., MyParticle contains MyVector3)
+- Structural type matching (MyVector3 connects to Vector3 if structures match)
+- Wildcard type "?_" matches any type
+- Wildcard structures ignore subport names (only check count and type compatibility)
+- Wire expansion with structural compatibility
+- Live JSON editing panel for node types
 """
 
 import json
@@ -36,15 +45,43 @@ HOUDINI_GRID_THICK = QColor(60, 60, 60)
 HOUDINI_ERROR = QColor(220, 60, 60)
 
 
-def get_type_color(type_name):
+def get_type_color(type_name, registry=None, node_type=None):
     """Get color for a port type"""
+    # Known/built-in types with distinct colors
     colors = {
         'Float': QColor(120, 220, 120),
         'Vector3': QColor(100, 180, 255),
         'Particle': QColor(255, 160, 100),
         'Character': QColor(200, 120, 200),
+        '?_': QColor(160, 160, 160),  # Wildcard type - medium gray
     }
-    return colors.get(type_name, QColor(180, 180, 180))
+    
+    if type_name in colors:
+        return colors[type_name]
+    else:
+        # For custom types, check if they contain wildcards
+        if registry and _type_contains_wildcards(type_name, registry, node_type):
+            return QColor(160, 160, 160)  # Wildcard gray
+        else:
+            # Custom types - golden yellow color (clearly distinct from gray)
+            return QColor(255, 220, 100)
+
+
+def _type_contains_wildcards(type_name, registry, node_type):
+    """Check if a type or any of its subports contain wildcards"""
+    if type_name == "?_":
+        return True
+    
+    port_type = registry.get_port_type(type_name, node_type)
+    if not port_type or not port_type.subports:
+        return False
+    
+    # Check all subports recursively
+    for subport_name, subport_type in port_type.subports:
+        if _type_contains_wildcards(subport_type, registry, node_type):
+            return True
+    
+    return False
 
 
 class PortType:
@@ -177,7 +214,7 @@ class SubportWidget(QGraphicsItem):
     
     def paint(self, painter, option, widget):
         painter.setRenderHint(QPainter.Antialiasing)
-        color = get_type_color(self.type_name)
+        color = get_type_color(self.type_name, self.registry, self.node_type)
         
         if self.has_connection():
             painter.setBrush(QBrush(color))
@@ -242,6 +279,10 @@ class SubportWidget(QGraphicsItem):
     
     def _types_structurally_match(self, other_port):
         """Check if two ports have matching structure"""
+        # Wildcard type matches anything
+        if self.type_name == "?_" or other_port.type_name == "?_":
+            return True
+        
         # If names match exactly, they're compatible
         if self.type_name == other_port.type_name:
             return True
@@ -251,7 +292,7 @@ class SubportWidget(QGraphicsItem):
         other_port_type = self.registry.get_port_type(other_port.type_name, 
                                                        other_port.node_type if hasattr(other_port, 'node_type') else None)
         
-        # If both are leaf types (no subports), they must have the same name
+        # If both are leaf types (no subports), they must have the same name (or be wildcards, already checked)
         if not my_port_type or not my_port_type.subports:
             if not other_port_type or not other_port_type.subports:
                 return self.type_name == other_port.type_name
@@ -268,11 +309,17 @@ class SubportWidget(QGraphicsItem):
         if len(my_subports) != len(other_subports):
             return False
         
-        # Check each subport matches (name and type structure)
+        # Check if either structure has all wildcards - if so, relax name matching
+        my_has_wildcards = self._structure_has_wildcards(my_subports)
+        other_has_wildcards = self._structure_has_wildcards(other_subports)
+        
+        # Check each subport matches
         for (my_name, my_type), (other_name, other_type) in zip(my_subports, other_subports):
-            # Subport names must match
-            if my_name != other_name:
-                return False
+            # If either side has wildcards in structure, don't enforce name matching
+            if not (my_has_wildcards or other_has_wildcards):
+                # Strict mode: names must match
+                if my_name != other_name:
+                    return False
             
             # Recursively check subport type compatibility
             # Create temporary subport widgets to check their structure
@@ -284,6 +331,18 @@ class SubportWidget(QGraphicsItem):
                 return False
         
         return True
+    
+    def _structure_has_wildcards(self, subports):
+        """Check if a structure contains any wildcard types"""
+        for name, type_name in subports:
+            if type_name == "?_":
+                return True
+            # Check nested structures
+            port_type = self.registry.get_port_type(type_name, self.node_type)
+            if port_type and port_type.subports:
+                if self._structure_has_wildcards(port_type.subports):
+                    return True
+        return False
     
     def is_occupied(self):
         if self.connections:
@@ -453,7 +512,7 @@ class PortWidget(QGraphicsItem):
     
     def paint(self, painter, option, widget):
         painter.setRenderHint(QPainter.Antialiasing)
-        color = get_type_color(self.type_name)
+        color = get_type_color(self.type_name, self.registry, self.node_type)
         
         if self.has_connection():
             painter.setBrush(QBrush(color))
@@ -509,6 +568,10 @@ class PortWidget(QGraphicsItem):
     
     def _types_structurally_match(self, other_port):
         """Check if two ports have matching structure"""
+        # Wildcard type matches anything
+        if self.type_name == "?_" or other_port.type_name == "?_":
+            return True
+        
         # If names match exactly, they're compatible
         if self.type_name == other_port.type_name:
             return True
@@ -518,7 +581,7 @@ class PortWidget(QGraphicsItem):
         other_port_type = self.registry.get_port_type(other_port.type_name, 
                                                        other_port.node_type if hasattr(other_port, 'node_type') else None)
         
-        # If both are leaf types (no subports), they must have the same name
+        # If both are leaf types (no subports), they must have the same name (or be wildcards, already checked)
         if not my_port_type or not my_port_type.subports:
             if not other_port_type or not other_port_type.subports:
                 return self.type_name == other_port.type_name
@@ -535,11 +598,17 @@ class PortWidget(QGraphicsItem):
         if len(my_subports) != len(other_subports):
             return False
         
-        # Check each subport matches (name and type structure)
+        # Check if either structure has all wildcards - if so, relax name matching
+        my_has_wildcards = self._structure_has_wildcards(my_subports)
+        other_has_wildcards = self._structure_has_wildcards(other_subports)
+        
+        # Check each subport matches
         for (my_name, my_type), (other_name, other_type) in zip(my_subports, other_subports):
-            # Subport names must match
-            if my_name != other_name:
-                return False
+            # If either side has wildcards in structure, don't enforce name matching
+            if not (my_has_wildcards or other_has_wildcards):
+                # Strict mode: names must match
+                if my_name != other_name:
+                    return False
             
             # Recursively check subport type compatibility
             # Create temporary port widgets to check their structure
@@ -551,6 +620,18 @@ class PortWidget(QGraphicsItem):
                 return False
         
         return True
+    
+    def _structure_has_wildcards(self, subports):
+        """Check if a structure contains any wildcard types"""
+        for name, type_name in subports:
+            if type_name == "?_":
+                return True
+            # Check nested structures
+            port_type = self.registry.get_port_type(type_name, self.node_type)
+            if port_type and port_type.subports:
+                if self._structure_has_wildcards(port_type.subports):
+                    return True
+        return False
     
     def is_occupied(self):
         if self.connections:
@@ -837,7 +918,9 @@ class Connection(QGraphicsPathItem):
         self.output_valid = output_port is not None
         self.input_valid = input_port is not None
         
-        color = get_type_color(output_port.type_name) if output_port else HOUDINI_ERROR
+        color = get_type_color(output_port.type_name, 
+                              output_port.registry if output_port else None,
+                              output_port.node_type if output_port and hasattr(output_port, 'node_type') else None) if output_port else HOUDINI_ERROR
         self.normal_pen = QPen(color, 2.5)
         self.selected_pen = QPen(HOUDINI_NODE_SELECTED, 3.5)
         self.invalid_pen = QPen(HOUDINI_ERROR, 2.5)
@@ -980,8 +1063,12 @@ class Connection(QGraphicsPathItem):
         # Draw the main wire
         if self.has_type_mismatch():
             # Type mismatch - gradient from output color to input color
-            output_color = get_type_color(self.output_port.type_name)
-            input_color = get_type_color(self.input_port.type_name)
+            output_color = get_type_color(self.output_port.type_name,
+                                         self.output_port.registry,
+                                         self.output_port.node_type if hasattr(self.output_port, 'node_type') else None)
+            input_color = get_type_color(self.input_port.type_name,
+                                        self.input_port.registry,
+                                        self.input_port.node_type if hasattr(self.input_port, 'node_type') else None)
             gradient = QLinearGradient(self.path().pointAtPercent(0), self.path().pointAtPercent(1))
             gradient.setColorAt(0, output_color)
             gradient.setColorAt(1, input_color)
@@ -1071,11 +1158,15 @@ class Connection(QGraphicsPathItem):
         
         # Update pen color based on new port type
         if self.output_port:
-            color = get_type_color(self.output_port.type_name)
+            color = get_type_color(self.output_port.type_name,
+                                  self.output_port.registry,
+                                  self.output_port.node_type if hasattr(self.output_port, 'node_type') else None)
             self.normal_pen = QPen(color, 2.5)
         elif self.input_port:
             # If no output port, use input port color
-            color = get_type_color(self.input_port.type_name)
+            color = get_type_color(self.input_port.type_name,
+                                  self.input_port.registry,
+                                  self.input_port.node_type if hasattr(self.input_port, 'node_type') else None)
             self.normal_pen = QPen(color, 2.5)
         
         # Add to new port connection lists
@@ -1796,7 +1887,9 @@ class NodeEditorView(QGraphicsView):
     def start_connection(self, port):
         self.editor_scene.drag_start_port = port
         self.editor_scene.temp_connection = QGraphicsPathItem()
-        color = get_type_color(port.type_name)
+        color = get_type_color(port.type_name, 
+                              port.registry,
+                              port.node_type if hasattr(port, 'node_type') else None)
         self.editor_scene.temp_connection.setPen(QPen(color, 2.5, Qt.DashLine))
         self.editor_scene.addItem(self.editor_scene.temp_connection)
     
@@ -2376,7 +2469,8 @@ class NodeEditorWidget(QWidget):
                         {"name": "position", "type": "Vector3"},
                         {"name": "velocity", "type": "Vector3"}
                     ]
-                }
+                },
+                "?_": {"subports": []}
             },
             "node_types": [
                 {
@@ -2391,6 +2485,11 @@ class NodeEditorWidget(QWidget):
                         {"name": "b", "type": "Vector3"}
                     ],
                     "outputs": [{"name": "result", "type": "Vector3"}]
+                },
+                {
+                    "name": "Wildcard",
+                    "inputs": [{"name": "input", "type": "?_"}],
+                    "outputs": [{"name": "output", "type": "?_"}]
                 }
             ]
         }
@@ -2623,8 +2722,9 @@ class NodeEditorWidget(QWidget):
             # Update the node
             self.editor.update_selected_node_type(definition)
             
+            success_color = get_type_color('Float')  # Use Float's green color for success
             self.status_label.setText("â Node type updated successfully")
-            self.status_label.setStyleSheet(f"color: {get_type_color('Float').name()}; font-size: 10px; padding: 4px;")
+            self.status_label.setStyleSheet(f"color: {success_color.name()}; font-size: 10px; padding: 4px;")
             
         except json.JSONDecodeError as e:
             self.status_label.setText(f"JSON Error: {str(e)}")
