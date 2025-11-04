@@ -39,6 +39,5 @@ def Nat.zero.apex_impl : Int := 0
 def Float.ofNat.apex_impl (x : Nat) : Float := 
   ConvertIntFloat (toApex x)
 
-#check Nat.decLt
 @[apex_implements Nat.decLt]
 def Nat.decLt.apex_impl (a b : Nat) : Bool := decide (toApex a < toApex b)

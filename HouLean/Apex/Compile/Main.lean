@@ -566,7 +566,7 @@ partial def tryCompileVariadic (e : Expr) :
   return none
 
 /-- Compile constructor application -/
-partial def compileConstructor (e : Expr) (info : ConstructorVal) (args : Array Expr) : 
+partial def compileConstructor (_e : Expr) (info : ConstructorVal) (args : Array Expr) : 
     GraphCompileM (Array PortBundle × PortBundle) := do
   -- unless ← isStructureType (← inferType e) do
   --   throwErrorWithStack m!"Constructor must produce a structure type: {e}"
@@ -589,7 +589,7 @@ partial def compileProjectionFn (fname : Name) (args : Array Expr) :
   return (#[], si)
 
 /-- Compile for-loop -/
-partial def compileForLoop (e : Expr) (args : Array Expr) : 
+partial def compileForLoop (_e : Expr) (args : Array Expr) : 
     GraphCompileM (Array PortBundle × PortBundle) := do
   trace[HouLean.Apex.compiler] "Compiling for-loop"
   

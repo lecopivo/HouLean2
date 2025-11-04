@@ -21,7 +21,7 @@ instance : ArrayType (α×β) (As×Bs) where
   length := fun (xs,ys) => length α xs
   empty := (ArrayType.empty α, ArrayType.empty β)
   null := fun (xs, ys) => (null α xs, null β ys)
-  build := fun elems => sorry
+--  build := fun elems => sorry
   append := fun (xs, ys) (x,y) => 
     let (xs',i) := append xs x
     let (ys',_) := append ys y

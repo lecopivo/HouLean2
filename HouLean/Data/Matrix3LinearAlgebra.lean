@@ -158,130 +158,130 @@ defun norm2 (m : Matrix3) : Float :=
 -- ============================================================================
 -- Linear System Solving
 -- ============================================================================
-#exit
--- /-- Solve linear system Ax = b using Cramer's rule. -/
-defun solve (A : Matrix3) (b : Vector3) : Vector3 :=
-  let det := A.determinant
-  if det.abs < 1e-10 then ⟨0.0, 0.0, 0.0⟩
-  else
-    let invDet := 1.0 / det
-    let Ax : Matrix3 := ⟨⟨b.x, A.row0.y, A.row0.z⟩,
-                         ⟨b.y, A.row1.y, A.row1.z⟩,
-                         ⟨b.z, A.row2.y, A.row2.z⟩⟩
-    let Ay : Matrix3 := ⟨⟨A.row0.x, b.x, A.row0.z⟩,
-                         ⟨A.row1.x, b.y, A.row1.z⟩,
-                         ⟨A.row2.x, b.z, A.row2.z⟩⟩
-    let Az : Matrix3 := ⟨⟨A.row0.x, A.row0.y, b.x⟩,
-                         ⟨A.row1.x, A.row1.y, b.y⟩,
-                         ⟨A.row2.x, A.row2.y, b.z⟩⟩
-    ⟨Ax.determinant * invDet, Ay.determinant * invDet, Az.determinant * invDet⟩
 
-defun solveGaussian (A : Matrix3) (b : Vector3) : Vector3 :=
-  A.solve b
+-- -- /-- Solve linear system Ax = b using Cramer's rule. -/
+-- defun solve (A : Matrix3) (b : Vector3) : Vector3 :=
+--   let det := A.determinant
+--   if det.abs < 1e-10 then ⟨0.0, 0.0, 0.0⟩
+--   else
+--     let invDet := 1.0 / det
+--     let Ax : Matrix3 := ⟨⟨b.x, A.row0.y, A.row0.z⟩,
+--                          ⟨b.y, A.row1.y, A.row1.z⟩,
+--                          ⟨b.z, A.row2.y, A.row2.z⟩⟩
+--     let Ay : Matrix3 := ⟨⟨A.row0.x, b.x, A.row0.z⟩,
+--                          ⟨A.row1.x, b.y, A.row1.z⟩,
+--                          ⟨A.row2.x, b.z, A.row2.z⟩⟩
+--     let Az : Matrix3 := ⟨⟨A.row0.x, A.row0.y, b.x⟩,
+--                          ⟨A.row1.x, A.row1.y, b.y⟩,
+--                          ⟨A.row2.x, A.row2.y, b.z⟩⟩
+--     ⟨Ax.determinant * invDet, Ay.determinant * invDet, Az.determinant * invDet⟩
 
-defun solveLU (A : Matrix3) (b : Vector3) : Vector3 :=
-  A.solve b
+-- defun solveGaussian (A : Matrix3) (b : Vector3) : Vector3 :=
+--   A.solve b
 
-defun solveCholesky (A : Matrix3) (b : Vector3) : Vector3 :=
-  A.solve b
+-- defun solveLU (A : Matrix3) (b : Vector3) : Vector3 :=
+--   A.solve b
 
-defun solveQR (A : Matrix3) (b : Vector3) : Vector3 :=
-  A.solve b
+-- defun solveCholesky (A : Matrix3) (b : Vector3) : Vector3 :=
+--   A.solve b
 
--- ============================================================================
--- Matrix Construction
--- ============================================================================
+-- defun solveQR (A : Matrix3) (b : Vector3) : Vector3 :=
+--   A.solve b
 
-/-- Zero matrix. -/
-defun zeros : Matrix3 :=
-  ⟨⟨0.0, 0.0, 0.0⟩, ⟨0.0, 0.0, 0.0⟩, ⟨0.0, 0.0, 0.0⟩⟩
+-- -- ============================================================================
+-- -- Matrix Construction
+-- -- ============================================================================
 
-/-- Matrix with all ones. -/
-defun ones : Matrix3 :=
-  ⟨⟨1.0, 1.0, 1.0⟩, ⟨1.0, 1.0, 1.0⟩, ⟨1.0, 1.0, 1.0⟩⟩
+-- /-- Zero matrix. -/
+-- defun zeros : Matrix3 :=
+--   ⟨⟨0.0, 0.0, 0.0⟩, ⟨0.0, 0.0, 0.0⟩, ⟨0.0, 0.0, 0.0⟩⟩
 
-/-- Create diagonal matrix from vector. -/
-defun diag (v : Vector3) : Matrix3 :=
-  ⟨⟨v.x, 0.0, 0.0⟩, ⟨0.0, v.y, 0.0⟩, ⟨0.0, 0.0, v.z⟩⟩
+-- /-- Matrix with all ones. -/
+-- defun ones : Matrix3 :=
+--   ⟨⟨1.0, 1.0, 1.0⟩, ⟨1.0, 1.0, 1.0⟩, ⟨1.0, 1.0, 1.0⟩⟩
 
-/-- Extract diagonal as vector. -/
-defun getDiag (m : Matrix3) : Vector3 :=
-  ⟨m.row0.x, m.row1.y, m.row2.z⟩
+-- /-- Create diagonal matrix from vector. -/
+-- defun diag (v : Vector3) : Matrix3 :=
+--   ⟨⟨v.x, 0.0, 0.0⟩, ⟨0.0, v.y, 0.0⟩, ⟨0.0, 0.0, v.z⟩⟩
 
-/-- Create matrix from outer product: A = u * vᵀ. -/
-defun outerProduct (u v : Vector3) : Matrix3 :=
-  ⟨⟨u.x * v.x, u.x * v.y, u.x * v.z⟩,
-   ⟨u.y * v.x, u.y * v.y, u.y * v.z⟩,
-   ⟨u.z * v.x, u.z * v.y, u.z * v.z⟩⟩
+-- /-- Extract diagonal as vector. -/
+-- defun getDiag (m : Matrix3) : Vector3 :=
+--   ⟨m.row0.x, m.row1.y, m.row2.z⟩
 
--- ============================================================================
--- Block Matrix Operations
--- ============================================================================
+-- /-- Create matrix from outer product: A = u * vᵀ. -/
+-- defun outerProduct (u v : Vector3) : Matrix3 :=
+--   ⟨⟨u.x * v.x, u.x * v.y, u.x * v.z⟩,
+--    ⟨u.y * v.x, u.y * v.y, u.y * v.z⟩,
+--    ⟨u.z * v.x, u.z * v.y, u.z * v.z⟩⟩
 
-/-- Get row i as a vector. -/
-defun getRow (m : Matrix3) (i : Int) : Vector3 :=
-  if i == 0 then m.row0
-  else if i == 1 then m.row1
-  else m.row2
+-- -- ============================================================================
+-- -- Block Matrix Operations
+-- -- ============================================================================
 
-/-- Get column j as a vector. -/
-defun getColumn (m : Matrix3) (j : Int) : Vector3 :=
-  if j == 0 then ⟨m.row0.x, m.row1.x, m.row2.x⟩
-  else if j == 1 then ⟨m.row0.y, m.row1.y, m.row2.y⟩
-  else ⟨m.row0.z, m.row1.z, m.row2.z⟩
+-- /-- Get row i as a vector. -/
+-- defun getRow (m : Matrix3) (i : Int) : Vector3 :=
+--   if i == 0 then m.row0
+--   else if i == 1 then m.row1
+--   else m.row2
 
-/-- Set row i to vector v. -/
-defun setRow (m : Matrix3) (i : Int) (v : Vector3) : Matrix3 :=
-  if i == 0 then ⟨v, m.row1, m.row2⟩
-  else if i == 1 then ⟨m.row0, v, m.row2⟩
-  else ⟨m.row0, m.row1, v⟩
+-- /-- Get column j as a vector. -/
+-- defun getColumn (m : Matrix3) (j : Int) : Vector3 :=
+--   if j == 0 then ⟨m.row0.x, m.row1.x, m.row2.x⟩
+--   else if j == 1 then ⟨m.row0.y, m.row1.y, m.row2.y⟩
+--   else ⟨m.row0.z, m.row1.z, m.row2.z⟩
 
-/-- Set column j to vector v. -/
-defun setColumn (m : Matrix3) (j : Int) (v : Vector3) : Matrix3 :=
-  if j == 0 then ⟨⟨v.x, m.row0.y, m.row0.z⟩, ⟨v.y, m.row1.y, m.row1.z⟩, ⟨v.z, m.row2.y, m.row2.z⟩⟩
-  else if j == 1 then ⟨⟨m.row0.x, v.x, m.row0.z⟩, ⟨m.row1.x, v.y, m.row1.z⟩, ⟨m.row2.x, v.z, m.row2.z⟩⟩
-  else ⟨⟨m.row0.x, m.row0.y, v.x⟩, ⟨m.row1.x, m.row1.y, v.y⟩, ⟨m.row2.x, m.row2.y, v.z⟩⟩
+-- /-- Set row i to vector v. -/
+-- defun setRow (m : Matrix3) (i : Int) (v : Vector3) : Matrix3 :=
+--   if i == 0 then ⟨v, m.row1, m.row2⟩
+--   else if i == 1 then ⟨m.row0, v, m.row2⟩
+--   else ⟨m.row0, m.row1, v⟩
 
-/-- Swap rows i and j. -/
-defun swapRows (m : Matrix3) (i j : Int) : Matrix3 :=
-  if i == j then m
-  else if i == 0 && j == 1 then ⟨m.row1, m.row0, m.row2⟩
-  else if i == 0 && j == 2 then ⟨m.row2, m.row1, m.row0⟩
-  else if i == 1 && j == 0 then ⟨m.row1, m.row0, m.row2⟩
-  else if i == 1 && j == 2 then ⟨m.row0, m.row2, m.row1⟩
-  else if i == 2 && j == 0 then ⟨m.row2, m.row1, m.row0⟩
-  else ⟨m.row0, m.row2, m.row1⟩
+-- /-- Set column j to vector v. -/
+-- defun setColumn (m : Matrix3) (j : Int) (v : Vector3) : Matrix3 :=
+--   if j == 0 then ⟨⟨v.x, m.row0.y, m.row0.z⟩, ⟨v.y, m.row1.y, m.row1.z⟩, ⟨v.z, m.row2.y, m.row2.z⟩⟩
+--   else if j == 1 then ⟨⟨m.row0.x, v.x, m.row0.z⟩, ⟨m.row1.x, v.y, m.row1.z⟩, ⟨m.row2.x, v.z, m.row2.z⟩⟩
+--   else ⟨⟨m.row0.x, m.row0.y, v.x⟩, ⟨m.row1.x, m.row1.y, v.y⟩, ⟨m.row2.x, m.row2.y, v.z⟩⟩
 
-/-- Swap columns i and j. -/
-defun swapColumns (m : Matrix3) (i j : Int) : Matrix3 :=
-  if i == j then m
-  else
-    let c0 := m.getColumn i
-    let c1 := m.getColumn j
-    m.setColumn i c1 |>.setColumn j c0
+-- /-- Swap rows i and j. -/
+-- defun swapRows (m : Matrix3) (i j : Int) : Matrix3 :=
+--   if i == j then m
+--   else if i == 0 && j == 1 then ⟨m.row1, m.row0, m.row2⟩
+--   else if i == 0 && j == 2 then ⟨m.row2, m.row1, m.row0⟩
+--   else if i == 1 && j == 0 then ⟨m.row1, m.row0, m.row2⟩
+--   else if i == 1 && j == 2 then ⟨m.row0, m.row2, m.row1⟩
+--   else if i == 2 && j == 0 then ⟨m.row2, m.row1, m.row0⟩
+--   else ⟨m.row0, m.row2, m.row1⟩
 
--- ============================================================================
--- Gram Matrix and Orthogonalization
--- ============================================================================
+-- /-- Swap columns i and j. -/
+-- defun swapColumns (m : Matrix3) (i j : Int) : Matrix3 :=
+--   if i == j then m
+--   else
+--     let c0 := m.getColumn i
+--     let c1 := m.getColumn j
+--     m.setColumn i c1 |>.setColumn j c0
 
-/-- Gram matrix: G = Aᵀ * A. -/
-defun gramMatrix (m : Matrix3) : Matrix3 :=
-  let mt := m.transpose
-  mt * m
+-- -- ============================================================================
+-- -- Gram Matrix and Orthogonalization
+-- -- ============================================================================
 
-/-- Orthogonalize using Gram-Schmidt. -/
-defun gramSchmidt (m : Matrix3) : Matrix3 :=
-  let v0 := m.getColumn 0
-  let u0 := v0
+-- /-- Gram matrix: G = Aᵀ * A. -/
+-- defun gramMatrix (m : Matrix3) : Matrix3 :=
+--   let mt := m.transpose
+--   mt * m
+
+-- /-- Orthogonalize using Gram-Schmidt. -/
+-- defun gramSchmidt (m : Matrix3) : Matrix3 :=
+--   let v0 := m.getColumn 0
+--   let u0 := v0
   
-  let v1 := m.getColumn 1
-  let proj1 := (v1.dot u0 / u0.dot u0) * u0
-  let u1 := v1 - proj1
+--   let v1 := m.getColumn 1
+--   let proj1 := (v1.dot u0 / u0.dot u0) * u0
+--   let u1 := v1 - proj1
   
-  let v2 := m.getColumn 2
-  let proj2_0 := (v2.dot u0 / u0.dot u0) * u0
-  let proj2_1 := (v2.dot u1 / u1.dot u1) * u1
-  let u2 := v2 - proj2_0 - proj2_1
+--   let v2 := m.getColumn 2
+--   let proj2_0 := (v2.dot u0 / u0.dot u0) * u0
+--   let proj2_1 := (v2.dot u1 / u1.dot u1) * u1
+--   let u2 := v2 - proj2_0 - proj2_1
   
-  zeros.setColumn 0 u0 |>.setColumn 1 u1 |>.setColumn 2 u2
+--   zeros.setColumn 0 u0 |>.setColumn 1 u1 |>.setColumn 2 u2
 

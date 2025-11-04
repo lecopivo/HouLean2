@@ -1,4 +1,4 @@
-import HouLean.Meta.AnonymouStruct
+import HouLean.Meta.AnonymousStruct
 
 import Qq 
 -- Tests
@@ -17,7 +17,8 @@ open AnonymousStruct
 variable (v : struct { x : Float, y : Float })
 variable (u : struct { x : Float, y : Float, z : Float })
 
-
+/-- info: { u := 1, v := 2 } : struct {u✝:Float✝, v✝:Float✝} -/
+#guard_msgs in
 #check {u := 1, v := 2 : struct { u : Float, v : Float}}
 
 /-- info: v.x : Float -/
@@ -53,6 +54,13 @@ variable (s : Particle)
 -- Constructor syntax should work
 def myVec : struct { x : Float, y : Float } := { x := 1.0, y := 2.0 }
 
+-- deriving instance Inhabited for AnonStruct
+
+/-- info: instInhabitedAnonStruct -/
+#guard_msgs in
+#synth Inhabited struct {x : Float, y : Float}
+
+
 /-- info: myVec : struct {x✝:Float✝, y✝:Float✝} -/
 #guard_msgs in
 #check myVec
@@ -72,5 +80,13 @@ instance : Add (struct { x : Float, y : Float }) := ⟨fun u v => ⟨u.x+v.x, u.
   let a := foo 0.1
   let b := foo 0.4
   a + b
+
+/-- info: { x := 0.995004, y := 0.099833, z := 0.300000 } -/
+#guard_msgs in
+#eval struct% (foo 0.1) push z := 0.3 
+
+/-- info: { y := 0.099833 } -/
+#guard_msgs in
+#eval struct% (foo 0.1) pop x
 
 end Tests

@@ -54,11 +54,11 @@ structure ImplementedBy where
   trgFun : Expr
 deriving Inhabited
 
-def addImplementedByName (src trg : Name) (argMap : Array (Option Nat)) (kind : AttributeKind) : MetaM Unit := do
-  let srcInfo ← getConstInfo src
-  let trgExpr ← mkConstWithFreshMVarLevels src
+-- def addImplementedByName (src trg : Name) (argMap : Array (Option Nat)) (kind : AttributeKind) : MetaM Unit := do
+--   -- let srcInfo ← getConstInfo src
+--   -- let trgExpr ← mkConstWithFreshMVarLevels src
 
-  throwError "addImplementedByName is not implemented yet!"
+--   throwError "addImplementedByName is not implemented yet!"
   -- -- initializing the types for src and trg in different ways to 
   -- -- handle universes properly (we keep level parameters from `srcInfo` and `trgExpr` will
   -- -- get them from unification)

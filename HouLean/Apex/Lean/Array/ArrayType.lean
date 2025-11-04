@@ -25,7 +25,7 @@ class ArrayType (α : Type) (As : outParam Type) extends
   null : As → As
 
   -- Array building and modification
-  build : {n : Nat} → VariadicArg α n → As
+  -- build : {n : Nat} → VariadicArg α n → As
   append : As → α → As × Int
   insert : As → α → Int → As
   remove : As → Int → As
@@ -70,12 +70,12 @@ instance (priority:=low) {α A As} [ApexType α A] [ArrayType A As] : ArrayType 
   getElem! {d} a i := 
     have : Inhabited A := ⟨toApex d.1⟩
     fromApex (a[i]!)
-  setElem := sorry
+  setElem a i v := setElem a i (toApex v : A)
 
   empty := ArrayType.empty A
   length a := ArrayType.length A a
   null a := a
-  build := sorry
+  -- build a := sorry
   append a v := ArrayType.append a (toApex v)
   insert a v i := ArrayType.insert a (toApex v) i
   remove a i := ArrayType.remove A a i
@@ -96,7 +96,7 @@ instance : ArrayType Bool BoolArray where
   empty := .default
   length := array_LengthBool
   null := NullBoolArray
-  build := array_BuildBool
+--  build := array_BuildBool
   append := array_AppendBool
   insert a v i := array_InsertBool a v i
   remove := array_RemoveBool
@@ -126,7 +126,7 @@ instance : ArrayType Int IntArray where
   empty := .default
   length := array_LengthInt
   null := NullIntArray
-  build := array_BuildInt
+--  build := array_BuildInt
   append := array_AppendInt
   insert a v i := array_InsertInt a v i
   remove := array_RemoveInt
@@ -175,7 +175,7 @@ instance : ArrayType Float FloatArray where
   empty := FloatArray.empty
   length := array_LengthFloat
   null := NullFloatArray
-  build := array_BuildFloat
+--  build := array_BuildFloat
   append := array_AppendFloat
   insert a v i := array_InsertFloat a v i
   remove := array_RemoveFloat
@@ -227,7 +227,7 @@ instance : ArrayType String StringArray where
   empty := .default
   length := array_LengthString
   null := NullStringArray
-  build := array_BuildString
+--  build := array_BuildString
   append := array_AppendString
   insert a v i := array_InsertString a v i
   remove := array_RemoveString
@@ -258,7 +258,7 @@ instance : ArrayType Vector2 Vector2Array where
   empty := .default
   length := array_LengthVector2
   null := NullVector2Array
-  build := array_BuildVector2
+--  build := array_BuildVector2
   append := array_AppendVector2
   insert a v i := array_InsertVector2 a v i
   remove := array_RemoveVector2
@@ -309,7 +309,7 @@ instance : ArrayType Vector3 Vector3Array where
   empty := .default
   length := array_LengthVector3
   null := NullVector3Array
-  build := array_BuildVector3
+--  build := array_BuildVector3
   append := array_AppendVector3
   insert a v i := array_InsertVector3 a v i
   remove := array_RemoveVector3
@@ -360,7 +360,7 @@ instance : ArrayType Vector4 Vector4Array where
   empty := .default
   length := array_LengthVector4
   null := NullVector4Array
-  build := array_BuildVector4
+--  build := array_BuildVector4
   append := array_AppendVector4
   insert a v i := array_InsertVector4 a v i
   remove := array_RemoveVector4
@@ -411,7 +411,7 @@ instance : ArrayType Matrix3 Matrix3Array where
   empty := .default
   length := array_LengthMatrix3
   null := NullMatrix3Array
-  build := array_BuildMatrix3
+--  build := array_BuildMatrix3
   append := array_AppendMatrix3
   insert a v i := array_InsertMatrix3 a v i
   remove := array_RemoveMatrix3
@@ -446,7 +446,7 @@ instance : ArrayType Matrix4 Matrix4Array where
   empty := .default
   length := array_LengthMatrix4
   null := NullMatrix4Array
-  build := array_BuildMatrix4
+--  build := array_BuildMatrix4
   append := array_AppendMatrix4
   insert a v i := array_InsertMatrix4 a v i
   remove := array_RemoveMatrix4
@@ -482,7 +482,7 @@ instance : ArrayType Geometry GeometryArray where
   empty := .default
   length := array_LengthGeometry
   null := NullGeometryArray
-  build := array_BuildGeometry
+--  build := array_BuildGeometry
   append := array_AppendGeometry
   insert a v i := array_InsertGeometry a v i
   remove := array_RemoveGeometry
@@ -499,7 +499,7 @@ instance : ArrayType Dict DictArray where
   empty := .default
   length := array_LengthDict
   null := NullDictArray
-  build := array_BuildDict
+--  build := array_BuildDict
   append := array_AppendDict
   insert a v i := array_InsertDict a v i
   remove := array_RemoveDict
@@ -516,7 +516,7 @@ instance : ArrayType DynamicPath DynamicPathArray where
   empty := .default
   length := array_LengthDynamicPath
   null := NullDynamicPathArray
-  build := array_BuildDynamicPath
+--  build := array_BuildDynamicPath
   append := array_AppendDynamicPath
   insert a v i := array_InsertDynamicPath a v i
   remove := array_RemoveDynamicPath
@@ -533,7 +533,7 @@ instance : ArrayType ApexNodeID ApexNodeIDArray where
   empty := .default
   length := array_LengthApexNodeID
   null := NullApexNodeIDArray
-  build := array_BuildApexNodeID
+--  build := array_BuildApexNodeID
   append := array_AppendApexNodeID
   insert a v i := array_InsertApexNodeID a v i
   remove := array_RemoveApexNodeID
@@ -553,7 +553,7 @@ instance : ArrayType ApexPortID ApexPortIDArray where
   empty := .default
   length := array_LengthApexPortID
   null := NullApexPortIDArray
-  build := array_BuildApexPortID
+--  build := array_BuildApexPortID
   append := array_AppendApexPortID
   insert a v i := array_InsertApexPortID a v i
   remove := array_RemoveApexPortID
@@ -573,7 +573,7 @@ instance : ArrayType FBIKSkeleton FBIKSkeletonArray where
   empty := .default
   length := array_LengthFBIKSkeleton
   null := NullFBIKSkeletonArray
-  build := array_BuildFBIKSkeleton
+--  build := array_BuildFBIKSkeleton
   append := array_AppendFBIKSkeleton
   insert a v i := array_InsertFBIKSkeleton a v i
   remove := array_RemoveFBIKSkeleton
@@ -590,7 +590,7 @@ instance : ArrayType FBIKSolver FBIKSolverArray where
   empty := .default
   length := array_LengthFBIKSolver
   null := NullFBIKSolverArray
-  build := array_BuildFBIKSolver
+--  build := array_BuildFBIKSolver
   append := array_AppendFBIKSolver
   insert a v i := array_InsertFBIKSolver a v i
   remove := array_RemoveFBIKSolver
@@ -607,7 +607,7 @@ instance : ArrayType FBIKTarget FBIKTargetArray where
   empty := .default
   length := array_LengthFBIKTarget
   null := NullFBIKTargetArray
-  build := array_BuildFBIKTarget
+--  build := array_BuildFBIKTarget
   append := array_AppendFBIKTarget
   insert a v i := array_InsertFBIKTarget a v i
   remove := array_RemoveFBIKTarget
@@ -624,7 +624,7 @@ instance : ArrayType SimRootDataId SimRootDataIdArray where
   empty := .default
   length := array_LengthSimRootDataId
   null := NullSimRootDataIdArray
-  build := array_BuildSimRootDataId
+--  build := array_BuildSimRootDataId
   append := array_AppendSimRootDataId
   insert a v i := array_InsertSimRootDataId a v i
   remove := array_RemoveSimRootDataId

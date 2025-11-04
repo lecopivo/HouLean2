@@ -44,7 +44,7 @@ def mkNodeTypeFromLeanFn (fn : Expr) (apexNodeName : String) (outNames : Array S
       | _ => 
         throwError m!"Input argument {x} has invalid type {xType}"
 
-    let yTypes := splitProdType r |>.toArray
+    let yTypes := splitProdType r |>.toArray 
 
     let outNames := 
       if outNames.size == yTypes.size then
