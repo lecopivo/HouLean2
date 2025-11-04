@@ -1,415 +1,291 @@
-{
-  "port_types": {
-    "Float": {
-      "subports": []
-    },
-    "Vector3": {
-      "subports": [
-        {"name": "x", "type": "Float"},
-        {"name": "y", "type": "Float"},
-        {"name": "z", "type": "Float"}
-      ]
-    },
-    "Particle": {
-      "subports": [
-        {"name": "position", "type": "Vector3"},
-        {"name": "velocity", "type": "Vector3"}
-      ]
-    },
-    "Character": {
-      "subports": [
-        {"name": "head", "type": "Particle"},
-        {"name": "torso", "type": "Particle"},
-        {"name": "left_arm", "type": "Particle"},
-        {"name": "right_arm", "type": "Particle"},
-        {"name": "left_leg", "type": "Particle"},
-        {"name": "right_leg", "type": "Particle"}
-      ]
-    }
-  },
-  "node_types": [
-    {
-      "name": "Float_Constant",
-      "inputs": [],
-      "outputs": [
-        {"name": "value", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Add",
-      "inputs": [
-        {"name": "a", "type": "Float"},
-        {"name": "b", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Subtract",
-      "inputs": [
-        {"name": "a", "type": "Float"},
-        {"name": "b", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Multiply",
-      "inputs": [
-        {"name": "a", "type": "Float"},
-        {"name": "b", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Divide",
-      "inputs": [
-        {"name": "a", "type": "Float"},
-        {"name": "b", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Pow",
-      "inputs": [
-        {"name": "base", "type": "Float"},
-        {"name": "exponent", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Sqrt",
-      "inputs": [
-        {"name": "value", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Abs",
-      "inputs": [
-        {"name": "value", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Sin",
-      "inputs": [
-        {"name": "angle", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Cos",
-      "inputs": [
-        {"name": "angle", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Tan",
-      "inputs": [
-        {"name": "angle", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Min",
-      "inputs": [
-        {"name": "a", "type": "Float"},
-        {"name": "b", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Max",
-      "inputs": [
-        {"name": "a", "type": "Float"},
-        {"name": "b", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Float_Clamp",
-      "inputs": [
-        {"name": "value", "type": "Float"},
-        {"name": "min", "type": "Float"},
-        {"name": "max", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Vector3_Constant",
-      "inputs": [],
-      "outputs": [
-        {"name": "vector", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Vector3_Add",
-      "inputs": [
-        {"name": "a", "type": "Vector3"},
-        {"name": "b", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Vector3_Subtract",
-      "inputs": [
-        {"name": "a", "type": "Vector3"},
-        {"name": "b", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Vector3_Scale",
-      "inputs": [
-        {"name": "vector", "type": "Vector3"},
-        {"name": "scalar", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Vector3_Length",
-      "inputs": [
-        {"name": "vector", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "length", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Vector3_Normalize",
-      "inputs": [
-        {"name": "vector", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Vector3_Dot",
-      "inputs": [
-        {"name": "a", "type": "Vector3"},
-        {"name": "b", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Vector3_Cross",
-      "inputs": [
-        {"name": "a", "type": "Vector3"},
-        {"name": "b", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Vector3_Distance",
-      "inputs": [
-        {"name": "a", "type": "Vector3"},
-        {"name": "b", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "distance", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Vector3_Lerp",
-      "inputs": [
-        {"name": "a", "type": "Vector3"},
-        {"name": "b", "type": "Vector3"},
-        {"name": "t", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "result", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Vector3_Compose",
-      "inputs": [
-        {"name": "x", "type": "Float"},
-        {"name": "y", "type": "Float"},
-        {"name": "z", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "vector", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Vector3_Decompose",
-      "inputs": [
-        {"name": "vector", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "x", "type": "Float"},
-        {"name": "y", "type": "Float"},
-        {"name": "z", "type": "Float"}
-      ]
-    },
-    {
-      "name": "Particle_Create",
-      "inputs": [
-        {"name": "position", "type": "Vector3"},
-        {"name": "velocity", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "particle", "type": "Particle"}
-      ]
-    },
-    {
-      "name": "Particle_GetPosition",
-      "inputs": [
-        {"name": "particle", "type": "Particle"}
-      ],
-      "outputs": [
-        {"name": "position", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Particle_GetVelocity",
-      "inputs": [
-        {"name": "particle", "type": "Particle"}
-      ],
-      "outputs": [
-        {"name": "velocity", "type": "Vector3"}
-      ]
-    },
-    {
-      "name": "Particle_SetPosition",
-      "inputs": [
-        {"name": "particle", "type": "Particle"},
-        {"name": "position", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "particle", "type": "Particle"}
-      ]
-    },
-    {
-      "name": "Particle_SetVelocity",
-      "inputs": [
-        {"name": "particle", "type": "Particle"},
-        {"name": "velocity", "type": "Vector3"}
-      ],
-      "outputs": [
-        {"name": "particle", "type": "Particle"}
-      ]
-    },
-    {
-      "name": "Particle_Integrate",
-      "inputs": [
-        {"name": "particle", "type": "Particle"},
-        {"name": "timestep", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "particle", "type": "Particle"}
-      ]
-    },
-    {
-      "name": "Particle_ApplyForce",
-      "inputs": [
-        {"name": "particle", "type": "Particle"},
-        {"name": "force", "type": "Vector3"},
-        {"name": "mass", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "particle", "type": "Particle"}
-      ]
-    },
-    {
-      "name": "Character_Create",
-      "inputs": [
-        {"name": "head", "type": "Particle"},
-        {"name": "torso", "type": "Particle"},
-        {"name": "left_arm", "type": "Particle"},
-        {"name": "right_arm", "type": "Particle"},
-        {"name": "left_leg", "type": "Particle"},
-        {"name": "right_leg", "type": "Particle"}
-      ],
-      "outputs": [
-        {"name": "character", "type": "Character"}
-      ]
-    },
-    {
-      "name": "Character_GetHead",
-      "inputs": [
-        {"name": "character", "type": "Character"}
-      ],
-      "outputs": [
-        {"name": "head", "type": "Particle"}
-      ]
-    },
-    {
-      "name": "Character_SetHead",
-      "inputs": [
-        {"name": "character", "type": "Character"},
-        {"name": "head", "type": "Particle"}
-      ],
-      "outputs": [
-        {"name": "character", "type": "Character"}
-      ]
-    },
-    {
-      "name": "Character_ApplyGlobalForce",
-      "inputs": [
-        {"name": "character", "type": "Character"},
-        {"name": "force", "type": "Vector3"},
-        {"name": "mass", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "character", "type": "Character"}
-      ]
-    },
-    {
-      "name": "Character_Integrate",
-      "inputs": [
-        {"name": "character", "type": "Character"},
-        {"name": "timestep", "type": "Float"}
-      ],
-      "outputs": [
-        {"name": "character", "type": "Character"}
-      ]
-    },
-    {
-      "name": "Character_GetCenterOfMass",
-      "inputs": [
-        {"name": "character", "type": "Character"}
-      ],
-      "outputs": [
-        {"name": "center", "type": "Vector3"}
-      ]
-    }
-  ]
-}
+{"portTypes":
+ [{"builtin": {"type": "String", "name": "string"}},
+  {"builtin": {"type": "Float", "name": "float"}},
+  {"builtin": {"type": "Int", "name": "int"}},
+  {"builtin": {"type": "Array ?_", "name": "array"}},
+  {"builtin": {"type": "Nat", "name": "nat"}},
+  {"struct":
+   {"type": "Vector3",
+    "subports":
+    [{"builtin": {"type": "Float", "name": "x"}},
+     {"builtin": {"type": "Float", "name": "y"}},
+     {"builtin": {"type": "Float", "name": "z"}}],
+    "name": "vector3"}},
+  {"struct":
+   {"type": "Matrix3",
+    "subports":
+    [{"builtin": {"type": "Vector3", "name": "row0"}},
+     {"builtin": {"type": "Vector3", "name": "row1"}},
+     {"builtin": {"type": "Vector3", "name": "row2"}}],
+    "name": "matrix3"}}],
+ "nodeTypes":
+ [{"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_exp",
+   "leanConstant": "Float.exp",
+   "inputs": [{"builtin": {"type": "Float", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_mul",
+   "leanConstant": "Float.mul",
+   "inputs":
+   [{"builtin": {"type": "Float", "name": "a"}},
+    {"builtin": {"type": "Float", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_lerp",
+   "leanConstant": "HouLean.Math.Lerp.lerp",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "x"}},
+    {"builtin": {"type": "?_", "name": "y"}},
+    {"builtin": {"type": "Float", "name": "t"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_tan",
+   "leanConstant": "HouLean.Math.Tan.tan",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Arith_mul",
+   "leanConstant": "HMul.hMul",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "a"}},
+    {"builtin": {"type": "?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_div",
+   "leanConstant": "Float.div",
+   "inputs":
+   [{"builtin": {"type": "Float", "name": "a"}},
+    {"builtin": {"type": "Float", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Array ?_", "name": "array"}}],
+   "name": "Array_push",
+   "leanConstant": "Array.push",
+   "inputs":
+   [{"builtin": {"type": "Array ?_", "name": "a"}},
+    {"builtin": {"type": "?_", "name": "v"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Arith_zero",
+   "leanConstant": "Zero.zero",
+   "inputs": [],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_sqrt",
+   "leanConstant": "HouLean.Math.Sqrt.sqrt",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Array_get",
+   "leanConstant": "Array.get",
+   "inputs":
+   [{"builtin": {"type": "Array ?_", "name": "a"}},
+    {"builtin": {"type": "Nat", "name": "i"}},
+    {"builtin": {"type": "?_ < Array.size ?_", "name": "h"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Arith_sub",
+   "leanConstant": "HSub.hSub",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "a"}},
+    {"builtin": {"type": "?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_cos",
+   "leanConstant": "Float.cos",
+   "inputs": [{"builtin": {"type": "Float", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_neg",
+   "leanConstant": "Float.neg",
+   "inputs": [{"builtin": {"type": "Float", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_normalized",
+   "leanConstant": "HouLean.Math.Normalized.normalized",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_sin",
+   "leanConstant": "Float.sin",
+   "inputs": [{"builtin": {"type": "Float", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "id",
+   "leanConstant": "id",
+   "inputs": [{"builtin": {"type": "?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Arith_div",
+   "leanConstant": "HDiv.hDiv",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "a"}},
+    {"builtin": {"type": "?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs":
+   [{"struct":
+     {"type": "?_ × ?_",
+      "subports":
+      [{"builtin": {"type": "?_", "name": "fst"}},
+       {"builtin": {"type": "?_", "name": "snd"}}],
+      "name": "prod"}}],
+   "name": "Prod_mk",
+   "leanConstant": "Prod.mk",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "fst"}},
+    {"builtin": {"type": "?_", "name": "snd"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_add",
+   "leanConstant": "Float.add",
+   "inputs":
+   [{"builtin": {"type": "Float", "name": "a"}},
+    {"builtin": {"type": "Float", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Arith_one",
+   "leanConstant": "One.one",
+   "inputs": [],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_atan2",
+   "leanConstant": "Float.atan2",
+   "inputs":
+   [{"builtin": {"type": "Float", "name": "y"}},
+    {"builtin": {"type": "Float", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_tan",
+   "leanConstant": "Float.tan",
+   "inputs": [{"builtin": {"type": "Float", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Arith_inv",
+   "leanConstant": "Inv.inv",
+   "inputs": [{"builtin": {"type": "?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Option ?_", "name": "option"}}],
+   "name": "Array_get?",
+   "leanConstant": "Array.get?",
+   "inputs":
+   [{"builtin": {"type": "Array ?_", "name": "xs"}},
+    {"builtin": {"type": "Nat", "name": "i"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Arith_add",
+   "leanConstant": "HAdd.hAdd",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "a"}},
+    {"builtin": {"type": "?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_smoothstep",
+   "leanConstant": "HouLean.Math.Smoothstep.smoothstep",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "edge0"}},
+    {"builtin": {"type": "?_", "name": "edge1"}},
+    {"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Array ?_", "name": "array"}}],
+   "name": "Array_set!",
+   "leanConstant": "Array.set!",
+   "inputs":
+   [{"builtin": {"type": "Array ?_", "name": "xs"}},
+    {"builtin": {"type": "Nat", "name": "i"}},
+    {"builtin": {"type": "?_", "name": "v"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Array ?_", "name": "array"}}],
+   "name": "Array_append",
+   "leanConstant": "Array.append",
+   "inputs":
+   [{"builtin": {"type": "Array ?_", "name": "as"}},
+    {"builtin": {"type": "Array ?_", "name": "bs"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Math_dot",
+   "leanConstant": "HouLean.Math.Dot.dot",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "x"}},
+    {"builtin": {"type": "?_", "name": "y"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Math_length",
+   "leanConstant": "HouLean.Math.Length.length",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Option ?_", "name": "option"}}],
+   "name": "GetElem?_getElem?",
+   "leanConstant": "GetElem?.getElem?",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "a"}},
+    {"builtin": {"type": "?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_cos",
+   "leanConstant": "HouLean.Math.Cos.cos",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs":
+   [{"struct":
+     {"type": "?_ × Float",
+      "subports":
+      [{"builtin": {"type": "?_", "name": "fst"}},
+       {"builtin": {"type": "Float", "name": "snd"}}],
+      "name": "prod"}}],
+   "name": "Math_normalize",
+   "leanConstant": "HouLean.Math.Normalize.normalize",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_sin",
+   "leanConstant": "HouLean.Math.Sin.sin",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_cross",
+   "leanConstant": "HouLean.Math.Cross.cross",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "x"}},
+    {"builtin": {"type": "?_", "name": "y"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "GetElem?_getElem!",
+   "leanConstant": "GetElem?.getElem!",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "xs"}},
+    {"builtin": {"type": "?_", "name": "i"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_exp",
+   "leanConstant": "HouLean.Math.Exp.exp",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Nat", "name": "nat"}}],
+   "name": "Array_size",
+   "leanConstant": "Array.size",
+   "inputs": [{"builtin": {"type": "Array ?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Arith_neg",
+   "leanConstant": "Neg.neg",
+   "inputs": [{"builtin": {"type": "?_", "name": "a"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Math_log",
+   "leanConstant": "HouLean.Math.Log.log",
+   "inputs": [{"builtin": {"type": "?_", "name": "x"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Array_get!",
+   "leanConstant": "Array.get!",
+   "inputs":
+   [{"builtin": {"type": "Array ?_", "name": "a"}},
+    {"builtin": {"type": "Nat", "name": "i"}}],
+   "exposeImplicitArgs": false},
+  {"outputs": [{"builtin": {"type": "Float", "name": "float"}}],
+   "name": "Float_sub",
+   "leanConstant": "Float.sub",
+   "inputs":
+   [{"builtin": {"type": "Float", "name": "a"}},
+    {"builtin": {"type": "Float", "name": "a"}}],
+   "exposeImplicitArgs": false}]}

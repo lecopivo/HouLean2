@@ -1,0 +1,1080 @@
+{
+  "portTypes": [
+    {
+      "builtin": {
+        "name": "type",
+        "type": "Type"
+      }
+    },
+    {
+      "builtin": {
+        "name": "value",
+        "type": "Float"
+      }
+    },
+    {
+      "builtin": {
+        "name": "value",
+        "type": "Int"
+      }
+    },
+    {
+      "struct": {
+        "name": "v",
+        "type": "String",
+        "subports": [
+          {
+            "builtin": {
+              "name": "x",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "y",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "z",
+              "type": "Float"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "builtin": {
+        "name": "wildcard",
+        "type": "?_"
+      }
+    },
+    {
+      "struct": {
+        "name": "v",
+        "type": "Vector3",
+        "subports": [
+          {
+            "builtin": {
+              "name": "x",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "y",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "z",
+              "type": "Float"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "struct": {
+        "name": "particle",
+        "type": "Particle",
+        "subports": [
+          {
+            "builtin": {
+              "name": "position",
+              "type": "Vector3"
+            }
+          },
+          {
+            "builtin": {
+              "name": "veolocity",
+              "type": "Vector3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "struct": {
+        "name": "Cd",
+        "type": "Color",
+        "subports": [
+          {
+            "builtin": {
+              "name": "r",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "g",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "b",
+              "type": "Float"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "struct": {
+        "name": "character",
+        "type": "Character",
+        "subports": [
+          {
+            "builtin": {
+              "name": "head",
+              "type": "Particle"
+            }
+          },
+          {
+            "builtin": {
+              "name": "body",
+              "type": "Particle"
+            }
+          },
+          {
+            "builtin": {
+              "name": "left_arm",
+              "type": "Particle"
+            }
+          },
+          {
+            "builtin": {
+              "name": "right_arm",
+              "type": "Particle"
+            }
+          },
+          {
+            "builtin": {
+              "name": "left_leg",
+              "type": "Particle"
+            }
+          },
+          {
+            "builtin": {
+              "name": "right_leg",
+              "type": "Particle"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "nodeTypes": [
+    {
+      "name": "Float_Add",
+      "leanConstant": "Float.add",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "b",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "add",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "add",
+      "leanConstant": "HAdd.hAdd",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "b",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "add",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "makeVector3",
+      "leanConstant": "HouLean.Vector3.mk",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "y",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "z",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "zero",
+      "leanConstant": "Zero.zero",
+      "exposeImplicitArgs": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "zero",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "one",
+      "leanConstant": "One.one",
+      "exposeImplicitArgs": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "one",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "default",
+      "leanConstant": "Inhabited.default",
+      "exposeImplicitArgs": true,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "type",
+            "type": "Type"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "default",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "value",
+      "leanConstant": "id",
+      "exposeImplicitArgs": true,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "type",
+            "type": "Type"
+          }
+        },
+        {
+          "builtin": {
+            "name": "value",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "value",
+            "type": "?_"
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "a",
+      "type": {
+        "name": "value",
+        "leanConstant": "id",
+        "exposeImplicitArgs": true,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "type",
+              "type": "Type"
+            }
+          },
+          {
+            "builtin": {
+              "name": "value",
+              "type": "?_"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "value",
+              "type": "?_"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        "Float",
+        "1.0"
+      ],
+      "x": -606.76,
+      "y": -39.3278005132165
+    },
+    {
+      "name": "b",
+      "type": {
+        "name": "value",
+        "leanConstant": "id",
+        "exposeImplicitArgs": true,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "type",
+              "type": "Type"
+            }
+          },
+          {
+            "builtin": {
+              "name": "value",
+              "type": "?_"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "value",
+              "type": "?_"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        "Float",
+        "42.0"
+      ],
+      "x": -617.0997159785536,
+      "y": 203.97248350822986
+    },
+    {
+      "name": "add1",
+      "type": {
+        "name": "add",
+        "leanConstant": "HAdd.hAdd",
+        "exposeImplicitArgs": false,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "a",
+              "type": "?_"
+            }
+          },
+          {
+            "builtin": {
+              "name": "b",
+              "type": "?_"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "add",
+              "type": "?_"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        null,
+        null
+      ],
+      "x": -264.61222884281085,
+      "y": 65.00388799693619
+    },
+    {
+      "name": "defaultFloat",
+      "type": {
+        "name": "default",
+        "leanConstant": "Inhabited.default",
+        "exposeImplicitArgs": true,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "type",
+              "type": "Type"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "default",
+              "type": "?_"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        "Float"
+      ],
+      "x": -420.88000000000005,
+      "y": -258.96000000000004
+    },
+    {
+      "name": "add2",
+      "type": {
+        "name": "add",
+        "leanConstant": "HAdd.hAdd",
+        "exposeImplicitArgs": false,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "a",
+              "type": "?_"
+            }
+          },
+          {
+            "builtin": {
+              "name": "b",
+              "type": "?_"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "add",
+              "type": "?_"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        null,
+        null
+      ],
+      "x": -11.650945036067213,
+      "y": -241.88260176104689
+    },
+    {
+      "name": "mkvector",
+      "type": {
+        "name": "makeVector3",
+        "leanConstant": "HouLean.Vector3.mk",
+        "exposeImplicitArgs": false,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "x",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "y",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "z",
+              "type": "Float"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "vector",
+              "type": "Vector3"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        "",
+        "",
+        "a + b + add1"
+      ],
+      "x": 370.37636671318216,
+      "y": -38.86324606579283
+    },
+    {
+      "name": "value",
+      "type": {
+        "name": "value",
+        "leanConstant": "id",
+        "exposeImplicitArgs": true,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "type",
+              "type": "Type"
+            }
+          },
+          {
+            "builtin": {
+              "name": "value",
+              "type": "Vector3"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "value",
+              "type": "Vector3"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        "Vector3",
+        ""
+      ],
+      "x": 768.7594136409219,
+      "y": -181.35912395336467
+    },
+    {
+      "name": "value_1",
+      "type": {
+        "name": "value",
+        "leanConstant": "id",
+        "exposeImplicitArgs": true,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "type",
+              "type": "Type"
+            }
+          },
+          {
+            "builtin": {
+              "name": "value",
+              "type": "Character"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "value",
+              "type": "Character"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        "",
+        ""
+      ],
+      "x": 660.6472321481365,
+      "y": 132.64154034287088
+    },
+    {
+      "name": "value_2",
+      "type": {
+        "name": "value",
+        "leanConstant": "id",
+        "exposeImplicitArgs": true,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "type",
+              "type": "Type"
+            }
+          },
+          {
+            "builtin": {
+              "name": "value",
+              "type": "Character"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "value",
+              "type": "Character"
+            }
+          }
+        ]
+      },
+      "portValues": [
+        "",
+        ""
+      ],
+      "x": 1232.2297082742389,
+      "y": 112.57394987381213
+    }
+  ],
+  "connections": [
+    {
+      "outputNodeName": "a",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "add1",
+      "inputIndex": [
+        0
+      ],
+      "outputRelPos": 0.5,
+      "inputRelPos": 0.3,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "b",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "add1",
+      "inputIndex": [
+        1
+      ],
+      "outputRelPos": 0.5,
+      "inputRelPos": 0.5,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "defaultFloat",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "add2",
+      "inputIndex": [
+        0
+      ],
+      "outputRelPos": 0.5,
+      "inputRelPos": 0.3,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "add1",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "add2",
+      "inputIndex": [
+        1
+      ],
+      "outputRelPos": 0.5,
+      "inputRelPos": 0.6,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "add2",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "mkvector",
+      "inputIndex": [
+        0
+      ],
+      "outputRelPos": 60.0,
+      "inputRelPos": 60.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "add1",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "mkvector",
+      "inputIndex": [
+        1
+      ],
+      "outputRelPos": 60.0,
+      "inputRelPos": 88.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "a",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "mkvector",
+      "inputIndex": [
+        2
+      ],
+      "outputRelPos": 0.5,
+      "inputRelPos": 0.75,
+      "isImplicit": true
+    },
+    {
+      "outputNodeName": "b",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "mkvector",
+      "inputIndex": [
+        2
+      ],
+      "outputRelPos": 0.5,
+      "inputRelPos": 0.75,
+      "isImplicit": true
+    },
+    {
+      "outputNodeName": "add1",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "mkvector",
+      "inputIndex": [
+        2
+      ],
+      "outputRelPos": 0.5,
+      "inputRelPos": 0.75,
+      "isImplicit": true
+    },
+    {
+      "outputNodeName": "mkvector",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "value",
+      "inputIndex": [
+        1
+      ],
+      "outputRelPos": 60.0,
+      "inputRelPos": 88.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "mkvector",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "value_1",
+      "inputIndex": [
+        1,
+        3,
+        0
+      ],
+      "outputRelPos": 60.0,
+      "inputRelPos": 187.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "mkvector",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "value_1",
+      "inputIndex": [
+        1,
+        1,
+        0
+      ],
+      "outputRelPos": 60.0,
+      "inputRelPos": 143.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        1,
+        1
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        1,
+        1
+      ],
+      "outputRelPos": 181.0,
+      "inputRelPos": 209.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        3,
+        0
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        3,
+        0
+      ],
+      "outputRelPos": 247.0,
+      "inputRelPos": 275.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        3,
+        1
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        3,
+        1
+      ],
+      "outputRelPos": 269.0,
+      "inputRelPos": 297.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        2,
+        0
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        2,
+        0
+      ],
+      "outputRelPos": 225.0,
+      "inputRelPos": 253.00000000000003,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        2,
+        1
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        2,
+        1
+      ],
+      "outputRelPos": 247.0,
+      "inputRelPos": 275.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        0,
+        0
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        0,
+        1
+      ],
+      "outputRelPos": 93.0,
+      "inputRelPos": 209.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        0,
+        1
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        0,
+        0
+      ],
+      "outputRelPos": 115.0,
+      "inputRelPos": 121.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "outputRelPos": 175.0,
+      "inputRelPos": 203.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "outputRelPos": 197.0,
+      "inputRelPos": 225.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        1,
+        0,
+        2
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        1,
+        0,
+        2
+      ],
+      "outputRelPos": 219.0,
+      "inputRelPos": 247.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        5
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        5
+      ],
+      "outputRelPos": 473.00000000000006,
+      "inputRelPos": 501.00000000000006,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "value_1",
+      "outputIndex": [
+        0,
+        4
+      ],
+      "inputNodeName": "value_2",
+      "inputIndex": [
+        1,
+        4
+      ],
+      "outputRelPos": 407.00000000000006,
+      "inputRelPos": 435.00000000000006,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "mkvector",
+      "outputIndex": [
+        0,
+        0
+      ],
+      "inputNodeName": "value_1",
+      "inputIndex": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "outputRelPos": 77.0,
+      "inputRelPos": 137.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "mkvector",
+      "outputIndex": [
+        0,
+        1
+      ],
+      "inputNodeName": "value_1",
+      "inputIndex": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "outputRelPos": 99.0,
+      "inputRelPos": 159.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "mkvector",
+      "outputIndex": [
+        0,
+        2
+      ],
+      "inputNodeName": "value_1",
+      "inputIndex": [
+        1,
+        0,
+        0,
+        2
+      ],
+      "outputRelPos": 121.0,
+      "inputRelPos": 181.0,
+      "isImplicit": false
+    }
+  ]
+}

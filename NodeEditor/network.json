@@ -1,228 +1,1689 @@
 {
+  "port_types": {
+    "Float": {
+      "subports": []
+    },
+    "Vector3": {
+      "subports": [
+        {
+          "name": "x",
+          "type": "Float"
+        },
+        {
+          "name": "y",
+          "type": "Float"
+        },
+        {
+          "name": "z",
+          "type": "Float"
+        }
+      ]
+    },
+    "Particle": {
+      "subports": [
+        {
+          "name": "position",
+          "type": "Vector3"
+        },
+        {
+          "name": "velocity",
+          "type": "Vector3"
+        }
+      ]
+    },
+    "?_": {
+      "subports": []
+    },
+    "Character": {
+      "subports": [
+        {
+          "name": "head",
+          "type": "Particle"
+        },
+        {
+          "name": "torso",
+          "type": "Particle"
+        },
+        {
+          "name": "left_arm",
+          "type": "Particle"
+        },
+        {
+          "name": "right_arm",
+          "type": "Particle"
+        },
+        {
+          "name": "left_leg",
+          "type": "Particle"
+        },
+        {
+          "name": "right_leg",
+          "type": "Particle"
+        }
+      ]
+    }
+  },
+  "node_types": [
+    {
+      "name": "Length",
+      "inputs": [
+        {
+          "name": "vector",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "length",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Add",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Vector3"
+        },
+        {
+          "name": "b",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Wildcard",
+      "inputs": [
+        {
+          "name": "input",
+          "type": "?_"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "?_"
+        }
+      ]
+    },
+    {
+      "name": "Float_Constant",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Add",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Float"
+        },
+        {
+          "name": "b",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Subtract",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Float"
+        },
+        {
+          "name": "b",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Multiply",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Float"
+        },
+        {
+          "name": "b",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Divide",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Float"
+        },
+        {
+          "name": "b",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Pow",
+      "inputs": [
+        {
+          "name": "base",
+          "type": "Float"
+        },
+        {
+          "name": "exponent",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Sqrt",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Abs",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Sin",
+      "inputs": [
+        {
+          "name": "angle",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Cos",
+      "inputs": [
+        {
+          "name": "angle",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Tan",
+      "inputs": [
+        {
+          "name": "angle",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Min",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Float"
+        },
+        {
+          "name": "b",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Max",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Float"
+        },
+        {
+          "name": "b",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Float_Clamp",
+      "inputs": [
+        {
+          "name": "value",
+          "type": "Float"
+        },
+        {
+          "name": "min",
+          "type": "Float"
+        },
+        {
+          "name": "max",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Constant",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "vector",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Add",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Vector3"
+        },
+        {
+          "name": "b",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Subtract",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Vector3"
+        },
+        {
+          "name": "b",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Scale",
+      "inputs": [
+        {
+          "name": "vector",
+          "type": "Vector3"
+        },
+        {
+          "name": "scalar",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Length",
+      "inputs": [
+        {
+          "name": "vector",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "length",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Normalize",
+      "inputs": [
+        {
+          "name": "vector",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Dot",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Vector3"
+        },
+        {
+          "name": "b",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Cross",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Vector3"
+        },
+        {
+          "name": "b",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Distance",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Vector3"
+        },
+        {
+          "name": "b",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distance",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Lerp",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Vector3"
+        },
+        {
+          "name": "b",
+          "type": "Vector3"
+        },
+        {
+          "name": "t",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Compose",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "Float"
+        },
+        {
+          "name": "y",
+          "type": "Float"
+        },
+        {
+          "name": "z",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vector",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Vector3_Decompose",
+      "inputs": [
+        {
+          "name": "vector",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "x",
+          "type": "Float"
+        },
+        {
+          "name": "y",
+          "type": "Float"
+        },
+        {
+          "name": "z",
+          "type": "Float"
+        }
+      ]
+    },
+    {
+      "name": "Particle_Create",
+      "inputs": [
+        {
+          "name": "position",
+          "type": "Vector3"
+        },
+        {
+          "name": "velocity",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        }
+      ]
+    },
+    {
+      "name": "Particle_GetPosition",
+      "inputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "position",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Particle_GetVelocity",
+      "inputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "velocity",
+          "type": "Vector3"
+        }
+      ]
+    },
+    {
+      "name": "Particle_SetPosition",
+      "inputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        },
+        {
+          "name": "position",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        }
+      ]
+    },
+    {
+      "name": "Particle_SetVelocity",
+      "inputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        },
+        {
+          "name": "velocity",
+          "type": "Vector3"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        }
+      ]
+    },
+    {
+      "name": "Particle_Integrate",
+      "inputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        },
+        {
+          "name": "timestep",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        }
+      ]
+    },
+    {
+      "name": "Particle_ApplyForce",
+      "inputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        },
+        {
+          "name": "force",
+          "type": "Vector3"
+        },
+        {
+          "name": "mass",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "particle",
+          "type": "Particle"
+        }
+      ]
+    },
+    {
+      "name": "Character_Create",
+      "inputs": [
+        {
+          "name": "head",
+          "type": "Particle"
+        },
+        {
+          "name": "torso",
+          "type": "Particle"
+        },
+        {
+          "name": "left_arm",
+          "type": "Particle"
+        },
+        {
+          "name": "right_arm",
+          "type": "Particle"
+        },
+        {
+          "name": "left_leg",
+          "type": "Particle"
+        },
+        {
+          "name": "right_leg",
+          "type": "Particle"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        }
+      ]
+    },
+    {
+      "name": "Character_GetHead",
+      "inputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "head",
+          "type": "Particle"
+        }
+      ]
+    },
+    {
+      "name": "Character_SetHead",
+      "inputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        },
+        {
+          "name": "head",
+          "type": "Particle"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        }
+      ]
+    },
+    {
+      "name": "Character_ApplyGlobalForce",
+      "inputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        },
+        {
+          "name": "force",
+          "type": "Vector3"
+        },
+        {
+          "name": "mass",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        }
+      ]
+    },
+    {
+      "name": "Character_Integrate",
+      "inputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        },
+        {
+          "name": "timestep",
+          "type": "Float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        }
+      ]
+    },
+    {
+      "name": "Character_GetCenterOfMass",
+      "inputs": [
+        {
+          "name": "character",
+          "type": "Character"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "center",
+          "type": "Vector3"
+        }
+      ]
+    }
+  ],
   "nodes": [
     {
-      "type": "Particle_Create",
-      "name": "Particle_Create",
-      "x": 180.35999999999996,
-      "y": 238.9600000000001
-    },
-    {
-      "type": "Particle_ApplyForce",
-      "name": "Particle_ApplyForce",
-      "x": 950.4799999999996,
-      "y": 193.76000000000008
-    },
-    {
-      "type": "Vector3_Add",
-      "name": "Vector3_Add",
-      "x": 710.9200000000001,
-      "y": 352.7200000000001
-    },
-    {
-      "type": "Float_Sin",
-      "name": "Float_Sin",
-      "x": 456.59999999999997,
-      "y": 518.6400000000001
+      "type": "Character_ApplyGlobalForce",
+      "name": "Character_ApplyGlobalForce",
+      "x": -83.03688327270231,
+      "y": -110.85848098682186,
+      "custom_definition": {
+        "name": "Character_ApplyGlobalForce",
+        "inputs": [
+          {
+            "name": "character",
+            "type": "Character"
+          },
+          {
+            "name": "force",
+            "type": "Vector3"
+          },
+          {
+            "name": "mass",
+            "type": "Float"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "character",
+            "type": "Character"
+          }
+        ]
+      }
     },
     {
       "type": "Character_Create",
       "name": "Character_Create",
-      "x": 1327.2000000000003,
-      "y": 132.16000000000005
+      "x": -567.6132532458355,
+      "y": -130.67584789597765,
+      "custom_definition": {
+        "name": "Character_Create",
+        "inputs": [
+          {
+            "name": "head",
+            "type": "Particle"
+          },
+          {
+            "name": "torso",
+            "type": "Particle"
+          },
+          {
+            "name": "left_arm",
+            "type": "Particle"
+          },
+          {
+            "name": "right_arm",
+            "type": "Particle"
+          },
+          {
+            "name": "left_leg",
+            "type": "Particle"
+          },
+          {
+            "name": "right_leg",
+            "type": "Particle"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "character",
+            "type": "Character"
+          }
+        ]
+      }
     },
     {
-      "type": "Character_Integrate",
-      "name": "Character_Integrate",
-      "x": 1756.0020104635573,
-      "y": 138.65863555393582
+      "type": "Float_Abs",
+      "name": "Float_Abs",
+      "x": 452.2066482306872,
+      "y": -46.9359094967141,
+      "custom_definition": {
+        "name": "Float_Abs",
+        "inputs": [
+          {
+            "name": "value",
+            "type": "Float"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "result",
+            "type": "Float"
+          }
+        ]
+      }
     },
     {
-      "type": "Float_Constant",
-      "name": "Float_Constant",
-      "x": 1320.2944635918366,
-      "y": 472.3636124081629
+      "type": "Particle_Create",
+      "name": "Particle_Create",
+      "x": 451.2042681293149,
+      "y": 150.26498306590582,
+      "custom_definition": {
+        "name": "Particle_Create",
+        "inputs": [
+          {
+            "name": "position",
+            "type": "Vector3"
+          },
+          {
+            "name": "velocity",
+            "type": "Vector3"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "particle",
+            "type": "Particle"
+          }
+        ]
+      }
     },
     {
-      "type": "Character_GetCenterOfMass",
-      "name": "Character_GetCenterOfMass",
-      "x": 2080.0028330699697,
-      "y": 448.00528362390673
+      "type": "Character_Create",
+      "name": "Character_Create_1",
+      "x": -941.6372589309883,
+      "y": -145.6184428715126,
+      "custom_definition": {
+        "name": "Character_Create",
+        "inputs": [
+          {
+            "name": "head",
+            "type": "Particle"
+          },
+          {
+            "name": "torso",
+            "type": "Particle"
+          },
+          {
+            "name": "left_arm",
+            "type": "Particle"
+          },
+          {
+            "name": "right_arm",
+            "type": "Particle"
+          },
+          {
+            "name": "left_leg",
+            "type": "Particle"
+          },
+          {
+            "name": "right_leg",
+            "type": "Particle"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "character",
+            "type": "Character"
+          }
+        ]
+      }
     },
     {
-      "type": "Character_ApplyGlobalForce",
-      "name": "Character_ApplyGlobalForce",
-      "x": 2617.596301632652,
-      "y": 103.43242383673481
+      "type": "Length",
+      "name": "Length",
+      "x": 450.64092286368344,
+      "y": 51.57668084568331,
+      "custom_definition": {
+        "name": "Length",
+        "inputs": [
+          {
+            "name": "vector",
+            "type": "Vector3"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "length",
+            "type": "Float"
+          }
+        ]
+      }
     },
     {
-      "type": "Particle_Integrate",
-      "name": "Particle_Integrate",
-      "x": 2174.0367428571435,
-      "y": -4.952628571428562
+      "type": "MyVector3In",
+      "name": "MyVector3In",
+      "x": 606.4256000000001,
+      "y": 507.60388571428564,
+      "custom_definition": {
+        "name": "MyVector3In",
+        "inputs": [
+          {
+            "name": "value",
+            "type": {
+              "portType": "MyVector3",
+              "subports": [
+                {
+                  "name": "x",
+                  "type": "Float"
+                },
+                {
+                  "name": "y",
+                  "type": "Float"
+                },
+                {
+                  "name": "z",
+                  "type": "Float"
+                }
+              ]
+            }
+          }
+        ],
+        "outputs": []
+      }
+    },
+    {
+      "type": "MyAnotherVector3In",
+      "name": "MyAnotherVector3In",
+      "x": -75.89815217731535,
+      "y": 565.6755747665468,
+      "custom_definition": {
+        "name": "MyAnotherVector3In",
+        "inputs": [
+          {
+            "name": "value",
+            "type": {
+              "portType": "MyAnotherVector3In",
+              "subports": [
+                {
+                  "name": "x",
+                  "type": "Float"
+                },
+                {
+                  "name": "y",
+                  "type": "Float"
+                },
+                {
+                  "name": "z",
+                  "type": "Float"
+                }
+              ]
+            }
+          }
+        ],
+        "outputs": []
+      }
+    },
+    {
+      "type": "MyVector2In",
+      "name": "MyVector2In",
+      "x": 606.8216247787385,
+      "y": 628.3341446272383,
+      "custom_definition": {
+        "name": "MyVector2In",
+        "inputs": [
+          {
+            "name": "value",
+            "type": {
+              "portType": "MyVector3",
+              "subports": [
+                {
+                  "name": "x",
+                  "type": "Float"
+                },
+                {
+                  "name": "y",
+                  "type": "Float"
+                }
+              ]
+            }
+          }
+        ],
+        "outputs": []
+      }
+    },
+    {
+      "type": "MyParticleIn",
+      "name": "MyParticleIn",
+      "x": 605.6862382379213,
+      "y": 406.53773854081635,
+      "custom_definition": {
+        "name": "MyParticleIn",
+        "inputs": [
+          {
+            "name": "particle",
+            "type": {
+              "portType": "MyParticle",
+              "subports": [
+                {
+                  "name": "position",
+                  "type": {
+                    "portType": "MyVector3",
+                    "subports": [
+                      {
+                        "name": "x",
+                        "type": "Float"
+                      },
+                      {
+                        "name": "y",
+                        "type": "Float"
+                      },
+                      {
+                        "name": "z",
+                        "type": "Float"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "velocity",
+                  "type": "Vector3"
+                }
+              ]
+            }
+          }
+        ],
+        "outputs": []
+      }
+    },
+    {
+      "type": "Prod_fst",
+      "name": "Prod_fst",
+      "x": -75.59815350635154,
+      "y": 748.0131373073717,
+      "custom_definition": {
+        "name": "Prod_fst",
+        "inputs": [
+          {
+            "name": "value",
+            "type": {
+              "portType": "MyProd",
+              "subports": [
+                {
+                  "name": "fst",
+                  "type": "?_"
+                },
+                {
+                  "name": "snd",
+                  "type": "?_"
+                }
+              ]
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "name": "fst",
+            "type": "?_"
+          }
+        ]
+      }
+    },
+    {
+      "type": "MyVector2Out",
+      "name": "MyVector2Out",
+      "x": -584.7819289202414,
+      "y": 725.4676878488124,
+      "custom_definition": {
+        "name": "MyVector2Out",
+        "inputs": [],
+        "outputs": [
+          {
+            "name": "value",
+            "type": {
+              "portType": "MyVector3",
+              "subports": [
+                {
+                  "name": "x",
+                  "type": "Float"
+                },
+                {
+                  "name": "y",
+                  "type": "Float"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Prod_fst",
+      "name": "Prod_fst",
+      "x": -74.59461552478128,
+      "y": 867.7418021137025,
+      "custom_definition": {
+        "name": "Prod_fst",
+        "inputs": [
+          {
+            "name": "value",
+            "type": {
+              "portType": "MyProd",
+              "subports": [
+                {
+                  "name": "fst",
+                  "type": "?_"
+                },
+                {
+                  "name": "snd",
+                  "type": "?_"
+                }
+              ]
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "name": "fst",
+            "type": "?_"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Particle_Create",
+      "name": "Particle_Create_1",
+      "x": -586.7243075801754,
+      "y": 866.1759748542272,
+      "custom_definition": {
+        "name": "Particle_Create",
+        "inputs": [
+          {
+            "name": "position",
+            "type": "Vector3"
+          },
+          {
+            "name": "velocity",
+            "type": "Vector3"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "particle",
+            "type": "Particle"
+          }
+        ]
+      }
     }
   ],
   "connections": [
     {
-      "output_node": "Particle_Create",
-      "output_port": "particle",
-      "input_node": "Particle_ApplyForce",
-      "input_port": "particle"
-    },
-    {
-      "output_node": "Particle_Create",
-      "output_port": "particle.position",
-      "input_node": "Vector3_Add",
-      "input_port": "a"
-    },
-    {
-      "output_node": "Particle_Create",
-      "output_port": "particle.velocity.x",
-      "input_node": "Vector3_Add",
-      "input_port": "b.y"
-    },
-    {
-      "output_node": "Particle_Create",
-      "output_port": "particle.velocity.y",
-      "input_node": "Vector3_Add",
-      "input_port": "b.x"
-    },
-    {
-      "output_node": "Particle_Create",
-      "output_port": "particle.velocity.z",
-      "input_node": "Float_Sin",
-      "input_port": "angle"
-    },
-    {
-      "output_node": "Float_Sin",
-      "output_port": "result",
-      "input_node": "Vector3_Add",
-      "input_port": "b.z"
-    },
-    {
-      "output_node": "Vector3_Add",
-      "output_port": "result",
-      "input_node": "Particle_ApplyForce",
-      "input_port": "force"
-    },
-    {
-      "output_node": "Particle_ApplyForce",
-      "output_port": "particle",
-      "input_node": "Character_Create",
-      "input_port": "head"
-    },
-    {
-      "output_node": "Particle_ApplyForce",
-      "output_port": "particle",
-      "input_node": "Character_Create",
-      "input_port": "left_arm"
-    },
-    {
-      "output_node": "Particle_ApplyForce",
-      "output_port": "particle",
-      "input_node": "Character_Create",
-      "input_port": "right_arm"
-    },
-    {
-      "output_node": "Particle_ApplyForce",
-      "output_port": "particle",
-      "input_node": "Character_Create",
-      "input_port": "left_leg"
-    },
-    {
-      "output_node": "Particle_ApplyForce",
-      "output_port": "particle.position",
-      "input_node": "Character_Create",
-      "input_port": "right_leg.velocity"
-    },
-    {
-      "output_node": "Particle_ApplyForce",
-      "output_port": "particle.velocity",
-      "input_node": "Character_Create",
-      "input_port": "right_leg.position"
-    },
-    {
-      "output_node": "Float_Constant",
-      "output_port": "value",
-      "input_node": "Character_Integrate",
-      "input_port": "timestep"
+      "output_node": "Character_ApplyGlobalForce",
+      "output_index_path": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "input_node": "Float_Abs",
+      "input_index_path": [
+        0
+      ,]
+      "output_relative_y": 131.0,
+      "input_relative_y": 60.0
     },
     {
       "output_node": "Character_Create",
-      "output_port": "character",
-      "input_node": "Character_Integrate",
-      "input_port": "character"
+      "output_index_path": [
+        0,
+        0,
+        0,
+        2
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        0,
+        0,
+        2
+      ],
+      "output_relative_y": 153.0,
+      "input_relative_y": 153.0
     },
     {
-      "output_node": "Particle_ApplyForce",
-      "output_port": "particle",
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "output_relative_y": 109.0,
+      "input_relative_y": 131.0
+    },
+    {
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "output_relative_y": 131.0,
+      "input_relative_y": 109.0
+    },
+    {
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        0,
+        1
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        0,
+        1
+      ],
+      "output_relative_y": 181.0,
+      "input_relative_y": 181.0
+    },
+    {
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        1
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        1
+      ],
+      "output_relative_y": 209.0,
+      "input_relative_y": 209.0
+    },
+    {
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        2
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        2
+      ],
+      "output_relative_y": 231.0,
+      "input_relative_y": 231.0
+    },
+    {
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        3
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        3
+      ],
+      "output_relative_y": 253.0,
+      "input_relative_y": 253.0
+    },
+    {
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        4,
+        0
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        4,
+        1
+      ],
+      "output_relative_y": 291.0,
+      "input_relative_y": 313.0
+    },
+    {
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        4,
+        1
+      ],
+      "input_node": "Character_ApplyGlobalForce",
+      "input_index_path": [
+        0,
+        4,
+        0
+      ],
+      "output_relative_y": 313.0,
+      "input_relative_y": 291.0
+    },
+    {
+      "output_node": "Character_Create_1",
+      "output_index_path": [
+        0,
+        0
+      ],
       "input_node": "Character_Create",
-      "input_port": "torso"
+      "input_index_path": [
+        0
+      ],
+      "output_relative_y": 77.0,
+      "input_relative_y": 60.0
     },
     {
-      "output_node": "Character_Integrate",
-      "output_port": "character",
-      "input_node": "Character_GetCenterOfMass",
-      "input_port": "character"
+      "output_node": "Character_ApplyGlobalForce",
+      "output_index_path": [
+        0,
+        4,
+        0
+      ],
+      "input_node": "Particle_Create",
+      "input_index_path": [
+        1
+      ],
+      "output_relative_y": 291.0,
+      "input_relative_y": 88.0
     },
     {
-      "output_node": "Character_Integrate",
-      "output_port": "character.head",
+      "output_node": "Character_ApplyGlobalForce",
+      "output_index_path": [
+        0,
+        2,
+        0
+      ],
+      "input_node": "Length",
+      "input_index_path": [
+        0
+      ],
+      "output_relative_y": 247.0,
+      "input_relative_y": 60.0
+    },
+    {
+      "output_node": "Character_ApplyGlobalForce",
+      "output_index_path": [
+        0,
+        2,
+        0
+      ],
+      "input_node": "Particle_Create",
+      "input_index_path": [
+        0
+      ],
+      "output_relative_y": 247.0,
+      "input_relative_y": 60.0
+    },
+    {
+      "output_node": "Character_Create_1",
+      "output_index_path": [
+        0,
+        1
+      ],
+      "input_node": "Character_Create",
+      "input_index_path": [
+        2
+      ],
+      "output_relative_y": 99.0,
+      "input_relative_y": 116.0
+    },
+    {
+      "output_node": "Character_Create_1",
+      "output_index_path": [
+        0,
+        5,
+        0,
+        0
+      ],
+      "input_node": "Character_Create",
+      "input_index_path": [
+        5,
+        1,
+        2
+      ],
+      "output_relative_y": 219.0,
+      "input_relative_y": 365.0
+    },
+    {
+      "output_node": "Character_Create_1",
+      "output_index_path": [
+        0,
+        5,
+        0,
+        1
+      ],
+      "input_node": "Character_Create",
+      "input_index_path": [
+        5,
+        0,
+        0
+      ],
+      "output_relative_y": 241.0,
+      "input_relative_y": 233.0
+    },
+    {
+      "output_node": "Character_Create_1",
+      "output_index_path": [
+        0,
+        5,
+        0,
+        2
+      ],
+      "input_node": "Character_Create",
+      "input_index_path": [
+        5,
+        0,
+        1
+      ],
+      "output_relative_y": 263.0,
+      "input_relative_y": 255.0
+    },
+    {
+      "output_node": "Character_ApplyGlobalForce",
+      "output_index_path": [
+        0,
+        5,
+        0
+      ],
+      "input_node": "MyVector3In",
+      "input_index_path": [
+        0
+      ],
+      "output_relative_y": 401.0,
+      "input_relative_y": 60.0
+    },
+    {
+      "output_node": "Character_ApplyGlobalForce",
+      "output_index_path": [
+        0,
+        5,
+        1,
+        0
+      ],
+      "input_node": "MyVector2In",
+      "input_index_path": [
+        0,
+        0
+      ],
+      "output_relative_y": 439.0,
+      "input_relative_y": 77.0
+    },
+    {
+      "output_node": "Character_ApplyGlobalForce",
+      "output_index_path": [
+        0,
+        5,
+        1,
+        1
+      ],
+      "input_node": "MyVector2In",
+      "input_index_path": [
+        0,
+        1
+      ],
+      "output_relative_y": 461.0,
+      "input_relative_y": 99.0
+    },
+    {
+      "output_node": "Character_Create",
+      "output_index_path": [
+        0,
+        5
+      ],
       "input_node": "Character_ApplyGlobalForce",
-      "input_port": "character.head"
+      "input_index_path": [
+        0,
+        5
+      ],
+      "output_relative_y": 341.0,
+      "input_relative_y": 341.0
     },
     {
-      "output_node": "Character_Integrate",
-      "output_port": "character.torso",
-      "input_node": "Character_ApplyGlobalForce",
-      "input_port": "character.torso"
+      "output_node": "Character_ApplyGlobalForce",
+      "output_index_path": [
+        0,
+        3
+      ],
+      "input_node": "MyParticleIn",
+      "input_index_path": [
+        0
+      ],
+      "output_relative_y": 297.0,
+      "input_relative_y": 60.0
     },
     {
-      "output_node": "Character_Integrate",
-      "output_port": "character.left_arm",
-      "input_node": "Character_ApplyGlobalForce",
-      "input_port": "character.left_arm"
+      "output_node": "Character_Create_1",
+      "output_index_path": [
+        0,
+        2
+      ],
+      "input_node": "Character_Create",
+      "input_index_path": [
+        3
+      ],
+      "output_relative_y": 121.0,
+      "input_relative_y": 144.0
     },
     {
-      "output_node": "Character_Integrate",
-      "output_port": "character.left_leg",
-      "input_node": "Character_ApplyGlobalForce",
-      "input_port": "character.left_leg"
+      "output_node": "Particle_Create_1",
+      "output_index_path": [
+        0
+      ],
+      "input_node": "Prod_fst",
+      "input_index_path": [
+        0
+      ],
+      "output_relative_y": 60.0,
+      "input_relative_y": 60.0
     },
     {
-      "output_node": "Character_Integrate",
-      "output_port": "character.right_leg",
-      "input_node": "Character_ApplyGlobalForce",
-      "input_port": "character.right_leg"
+      "output_node": "MyVector2Out",
+      "output_index_path": [
+        0
+      ],
+      "input_node": "Prod_fst",
+      "input_index_path": [
+        0
+      ],
+      "output_relative_y": 60.0,
+      "input_relative_y": 60.0
     },
     {
-      "output_node": "Character_Integrate",
-      "output_port": "character.right_arm",
-      "input_node": "Particle_Integrate",
-      "input_port": "particle"
+      "output_node": "MyVector2Out",
+      "output_index_path": [
+        0,
+        0
+      ],
+      "input_node": "MyAnotherVector3In",
+      "input_index_path": [
+        0,
+        0
+      ],
+      "output_relative_y": 77.0,
+      "input_relative_y": 77.0
     },
     {
-      "output_node": "Particle_Integrate",
-      "output_port": "particle",
-      "input_node": "Character_ApplyGlobalForce",
-      "input_port": "character.right_arm"
-    },
-    {
-      "output_node": "Character_GetCenterOfMass",
-      "output_port": "center.z",
-      "input_node": "Character_ApplyGlobalForce",
-      "input_port": "force.z"
-    },
-    {
-      "output_node": "Character_GetCenterOfMass",
-      "output_port": "center.x",
-      "input_node": "Character_ApplyGlobalForce",
-      "input_port": "force.y"
-    },
-    {
-      "output_node": "Character_GetCenterOfMass",
-      "output_port": "center.y",
-      "input_node": "Character_ApplyGlobalForce",
-      "input_port": "force.x"
+      "output_node": "MyVector2Out",
+      "output_index_path": [
+        0,
+        1
+      ],
+      "input_node": "MyAnotherVector3In",
+      "input_index_path": [
+        0,
+        1
+      ],
+      "output_relative_y": 99.0,
+      "input_relative_y": 99.0
     }
   ]
 }

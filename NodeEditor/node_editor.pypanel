@@ -7,17 +7,16 @@
  in a single file. -->
   <interface name="Lean Node Editor" label="Lean Node Editor" icon="MISC_python" showNetworkNavigationBar="false" help_url="">
     <script><![CDATA["""
-Houdini Node Editor Python Pane with Dynamic Typing and Custom Port Types
+Houdini Node Editor Python Pane with Lean 4 JSON Format
 To use: In Houdini, create a new Python Panel and paste this code
 
 Features:
-- Custom per-node port types (define inline in JSON)
-- Nested custom types (e.g., MyParticle contains MyVector3)
-- Structural type matching (MyVector3 connects to Vector3 if structures match)
-- Wildcard type "?_" matches any type
-- Wildcard structures ignore subport names (only check count and type compatibility)
-- Wire expansion with structural compatibility
-- Live JSON editing panel for node types
+- Lean 4 JSON format with builtin/struct port types
+- Full NodeType stored in each node
+- Implicit connections (invisible by default, toggleable)
+- Structural type matching with wildcard support
+- Custom per-node port types
+- Structured node editing panel
 """
 
 import json
@@ -26,7 +25,8 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGraphicsView,
                                QGraphicsScene, QGraphicsItem, QGraphicsRectItem,
                                QGraphicsTextItem, QPushButton, QFileDialog, 
                                QGraphicsPathItem, QInputDialog, QLineEdit, QMenu, 
-                               QLabel, QFrame, QTextEdit, QSplitter, QCheckBox)
+                               QLabel, QFrame, QTextEdit, QSplitter, QCheckBox,
+                               QScrollArea, QGridLayout)
 from PySide6.QtCore import Qt, QRectF, QPointF, QTimer
 from PySide6.QtGui import QPen, QBrush, QColor, QPainterPath, QFont, QPainter, QPainterPathStroker, QLinearGradient
 from PySide6.QtWidgets import QStyle
@@ -43,27 +43,28 @@ HOUDINI_TEXT_DIM = QColor(150, 150, 150)
 HOUDINI_GRID_FINE = QColor(50, 50, 50)
 HOUDINI_GRID_THICK = QColor(60, 60, 60)
 HOUDINI_ERROR = QColor(220, 60, 60)
+HOUDINI_IMPLICIT = QColor(120, 120, 120, 200)
 
 
 def get_type_color(type_name, registry=None, node_type=None):
     """Get color for a port type"""
-    # Known/built-in types with distinct colors
     colors = {
         'Float': QColor(120, 220, 120),
         'Vector3': QColor(100, 180, 255),
         'Particle': QColor(255, 160, 100),
         'Character': QColor(200, 120, 200),
-        '?_': QColor(160, 160, 160),  # Wildcard type - medium gray
+        'Type': QColor(180, 120, 255),
+        'Int': QColor(120, 255, 180),
+        'String': QColor(255, 180, 120),
+        '?_': QColor(160, 160, 160),
     }
     
     if type_name in colors:
         return colors[type_name]
     else:
-        # For custom types, check if they contain wildcards
         if registry and _type_contains_wildcards(type_name, registry, node_type):
-            return QColor(160, 160, 160)  # Wildcard gray
+            return QColor(160, 160, 160)
         else:
-            # Custom types - golden yellow color (clearly distinct from gray)
             return QColor(255, 220, 100)
 
 
@@ -76,7 +77,6 @@ def _type_contains_wildcards(type_name, registry, node_type):
     if not port_type or not port_type.subports:
         return False
     
-    # Check all subports recursively
     for subport_name, subport_type in port_type.subports:
         if _type_contains_wildcards(subport_type, registry, node_type):
             return True
@@ -85,17 +85,19 @@ def _type_contains_wildcards(type_name, registry, node_type):
 
 
 class PortType:
-    def __init__(self, name, subports=None):
+    def __init__(self, name, type_name, subports=None):
         self.name = name
+        self.type_name = type_name
         self.subports = subports or []
 
 
 class NodeType:
-    def __init__(self, name, inputs, outputs, custom_port_types=None):
+    def __init__(self, name, lean_constant, inputs, outputs, expose_implicit_args=False, custom_port_types=None):
         self.name = name
+        self.lean_constant = lean_constant
+        self.expose_implicit_args = expose_implicit_args
         self.inputs = inputs
         self.outputs = outputs
-        # Store custom port types defined inline in this node type
         self.custom_port_types = custom_port_types or {}
 
 
@@ -107,58 +109,72 @@ class NodeTypeRegistry:
     def load_from_json(self, json_data):
         data = json.loads(json_data) if isinstance(json_data, str) else json_data
         
-        for type_name, type_def in data.get('port_types', {}).items():
-            subports = [(sp['name'], sp['type']) for sp in type_def.get('subports', [])]
-            self.port_types[type_name] = PortType(type_name, subports)
+        for port_type_data in data.get('portTypes', []):
+            port_type = self._parse_port_type(port_type_data)
+            if port_type:
+                self.port_types[port_type.type_name] = port_type
         
-        for node_def in data.get('node_types', []):
-            custom_port_types = {}
-            
-            # Helper to recursively extract custom port types
-            def extract_custom_types(port_type_def):
-                """Recursively extract all custom port types from a definition"""
-                if isinstance(port_type_def, dict):
-                    custom_type_name = port_type_def['portType']
-                    subports = []
-                    
-                    for sp in port_type_def.get('subports', []):
-                        sp_name = sp['name']
-                        sp_type = sp['type']
-                        
-                        # Recursively process nested custom types
-                        if isinstance(sp_type, dict):
-                            extract_custom_types(sp_type)
-                            subports.append((sp_name, sp_type['portType']))
-                        else:
-                            subports.append((sp_name, sp_type))
-                    
-                    custom_port_types[custom_type_name] = PortType(custom_type_name, subports)
-            
-            # Parse inputs and extract custom port types
-            inputs = []
-            for inp in node_def.get('inputs', []):
-                port_name = inp['name']
-                port_type = inp['type']
+        for node_def in data.get('nodeTypes', []):
+            node_type = self._parse_node_type(node_def)
+            if node_type:
+                self.node_types[node_type.name] = node_type
+    
+    def _parse_port_type(self, port_data):
+        """Parse PortType from Lean JSON format (builtin or struct)"""
+        if 'builtin' in port_data:
+            builtin = port_data['builtin']
+            return PortType(builtin['name'], builtin['type'], [])
+        elif 'struct' in port_data:
+            struct = port_data['struct']
+            subports = []
+            for sp_data in struct.get('subports', []):
+                sp = self._parse_port_type(sp_data)
+                if sp:
+                    subports.append((sp.name, sp.type_name))
+            return PortType(struct['name'], struct['type'], subports)
+        return None
+    
+    def _parse_node_type(self, node_def):
+        """Parse NodeType from Lean JSON format"""
+        custom_port_types = {}
+        
+        def extract_custom_types(port_data):
+            if 'struct' in port_data:
+                struct = port_data['struct']
+                type_name = struct['type']
+                subports = []
                 
-                if isinstance(port_type, dict):
-                    extract_custom_types(port_type)
-                    inputs.append((port_name, port_type['portType']))
-                else:
-                    inputs.append((port_name, port_type))
-            
-            # Parse outputs and extract custom port types
-            outputs = []
-            for out in node_def.get('outputs', []):
-                port_name = out['name']
-                port_type = out['type']
+                for sp_data in struct.get('subports', []):
+                    sp = self._parse_port_type(sp_data)
+                    if sp:
+                        subports.append((sp.name, sp.type_name))
+                        extract_custom_types(sp_data)
                 
-                if isinstance(port_type, dict):
-                    extract_custom_types(port_type)
-                    outputs.append((port_name, port_type['portType']))
-                else:
-                    outputs.append((port_name, port_type))
-            
-            self.node_types[node_def['name']] = NodeType(node_def['name'], inputs, outputs, custom_port_types)
+                if type_name not in self.port_types:
+                    custom_port_types[type_name] = PortType(struct['name'], type_name, subports)
+        
+        inputs = []
+        for inp_data in node_def.get('inputs', []):
+            inp = self._parse_port_type(inp_data)
+            if inp:
+                inputs.append((inp.name, inp.type_name))
+                extract_custom_types(inp_data)
+        
+        outputs = []
+        for out_data in node_def.get('outputs', []):
+            out = self._parse_port_type(out_data)
+            if out:
+                outputs.append((out.name, out.type_name))
+                extract_custom_types(out_data)
+        
+        return NodeType(
+            node_def['name'],
+            node_def.get('leanConstant', ''),
+            inputs,
+            outputs,
+            node_def.get('exposeImplicitArgs', False),
+            custom_port_types
+        )
     
     def get_port_type(self, type_name, node_type=None):
         """Get port type, checking node-specific custom types first"""
@@ -195,8 +211,7 @@ class SubportWidget(QGraphicsItem):
         if port_type and port_type.subports:
             self.subport_defs = port_type.subports
         
-        # For structural comparison
-        self.allow_structural_matching = True  # Will be set by view
+        self.allow_structural_matching = True
         
         self.setAcceptHoverEvents(True)
         self.setFlag(QGraphicsItem.ItemIsSelectable, False)
@@ -260,7 +275,6 @@ class SubportWidget(QGraphicsItem):
         if self.node == other_port.node:
             return False
         
-        # Check type compatibility
         if not self.types_are_compatible(other_port):
             return False
         
@@ -270,29 +284,24 @@ class SubportWidget(QGraphicsItem):
         return True
     
     def types_are_compatible(self, other_port):
-        """Check if types are compatible (without other connection checks)"""
+        """Check if types are compatible"""
         if self.allow_structural_matching:
             return self._types_structurally_match(other_port)
         else:
-            # Strict name matching
             return self.type_name == other_port.type_name
     
     def _types_structurally_match(self, other_port):
         """Check if two ports have matching structure"""
-        # Wildcard type matches anything
         if self.type_name == "?_" or other_port.type_name == "?_":
             return True
         
-        # If names match exactly, they're compatible
         if self.type_name == other_port.type_name:
             return True
         
-        # Get port type definitions
         my_port_type = self.registry.get_port_type(self.type_name, self.node_type)
         other_port_type = self.registry.get_port_type(other_port.type_name, 
                                                        other_port.node_type if hasattr(other_port, 'node_type') else None)
         
-        # If both are leaf types (no subports), they must have the same name (or be wildcards, already checked)
         if not my_port_type or not my_port_type.subports:
             if not other_port_type or not other_port_type.subports:
                 return self.type_name == other_port.type_name
@@ -301,28 +310,20 @@ class SubportWidget(QGraphicsItem):
         if not other_port_type or not other_port_type.subports:
             return False
         
-        # Both have subports - compare structures
         my_subports = my_port_type.subports
         other_subports = other_port_type.subports
         
-        # Must have same number of subports
         if len(my_subports) != len(other_subports):
             return False
         
-        # Check if either structure has all wildcards - if so, relax name matching
         my_has_wildcards = self._structure_has_wildcards(my_subports)
         other_has_wildcards = self._structure_has_wildcards(other_subports)
         
-        # Check each subport matches
         for (my_name, my_type), (other_name, other_type) in zip(my_subports, other_subports):
-            # If either side has wildcards in structure, don't enforce name matching
             if not (my_has_wildcards or other_has_wildcards):
-                # Strict mode: names must match
                 if my_name != other_name:
                     return False
             
-            # Recursively check subport type compatibility
-            # Create temporary subport widgets to check their structure
             temp_my_subport = SubportWidget(my_name, my_type, self.is_input, self, self.registry, self.node_type)
             temp_other_subport = SubportWidget(other_name, other_type, other_port.is_input, other_port, 
                                                self.registry, other_port.node_type if hasattr(other_port, 'node_type') else None)
@@ -337,7 +338,6 @@ class SubportWidget(QGraphicsItem):
         for name, type_name in subports:
             if type_name == "?_":
                 return True
-            # Check nested structures
             port_type = self.registry.get_port_type(type_name, self.node_type)
             if port_type and port_type.subports:
                 if self._structure_has_wildcards(port_type.subports):
@@ -345,18 +345,19 @@ class SubportWidget(QGraphicsItem):
         return False
     
     def is_occupied(self):
-        if self.connections:
+        # Check only non-implicit connections
+        if any(not conn.is_implicit for conn in self.connections):
             return True
         current = self.parent_port
         while current:
-            if current.connections:
+            if any(not conn.is_implicit for conn in current.connections):
                 return True
             current = current.parent_port if hasattr(current, 'parent_port') else None
         return self._has_connected_descendant()
     
     def _has_connected_descendant(self):
         for subport in self.subport_widgets:
-            if subport.connections or subport._has_connected_descendant():
+            if any(not conn.is_implicit for conn in subport.connections) or subport._has_connected_descendant():
                 return True
         return False
     
@@ -493,8 +494,7 @@ class PortWidget(QGraphicsItem):
         if port_type and port_type.subports:
             self.subport_defs = port_type.subports
         
-        # For structural comparison
-        self.allow_structural_matching = True  # Will be set by view
+        self.allow_structural_matching = True
         
         self.setAcceptHoverEvents(True)
         self.setFlag(QGraphicsItem.ItemIsSelectable, False)
@@ -549,7 +549,6 @@ class PortWidget(QGraphicsItem):
         if self.node == other_port.node:
             return False
         
-        # Check type compatibility
         if not self.types_are_compatible(other_port):
             return False
         
@@ -559,29 +558,24 @@ class PortWidget(QGraphicsItem):
         return True
     
     def types_are_compatible(self, other_port):
-        """Check if types are compatible (without other connection checks)"""
+        """Check if types are compatible"""
         if self.allow_structural_matching:
             return self._types_structurally_match(other_port)
         else:
-            # Strict name matching
             return self.type_name == other_port.type_name
     
     def _types_structurally_match(self, other_port):
         """Check if two ports have matching structure"""
-        # Wildcard type matches anything
         if self.type_name == "?_" or other_port.type_name == "?_":
             return True
         
-        # If names match exactly, they're compatible
         if self.type_name == other_port.type_name:
             return True
         
-        # Get port type definitions
         my_port_type = self.registry.get_port_type(self.type_name, self.node_type)
         other_port_type = self.registry.get_port_type(other_port.type_name, 
                                                        other_port.node_type if hasattr(other_port, 'node_type') else None)
         
-        # If both are leaf types (no subports), they must have the same name (or be wildcards, already checked)
         if not my_port_type or not my_port_type.subports:
             if not other_port_type or not other_port_type.subports:
                 return self.type_name == other_port.type_name
@@ -590,28 +584,20 @@ class PortWidget(QGraphicsItem):
         if not other_port_type or not other_port_type.subports:
             return False
         
-        # Both have subports - compare structures
         my_subports = my_port_type.subports
         other_subports = other_port_type.subports
         
-        # Must have same number of subports
         if len(my_subports) != len(other_subports):
             return False
         
-        # Check if either structure has all wildcards - if so, relax name matching
         my_has_wildcards = self._structure_has_wildcards(my_subports)
         other_has_wildcards = self._structure_has_wildcards(other_subports)
         
-        # Check each subport matches
         for (my_name, my_type), (other_name, other_type) in zip(my_subports, other_subports):
-            # If either side has wildcards in structure, don't enforce name matching
             if not (my_has_wildcards or other_has_wildcards):
-                # Strict mode: names must match
                 if my_name != other_name:
                     return False
             
-            # Recursively check subport type compatibility
-            # Create temporary port widgets to check their structure
             temp_my_port = PortWidget(my_name, my_type, self.registry, self.is_input, None, self.node, self.node_type)
             temp_other_port = PortWidget(other_name, other_type, self.registry, other_port.is_input, None, 
                                          other_port.node, other_port.node_type if hasattr(other_port, 'node_type') else None)
@@ -626,7 +612,6 @@ class PortWidget(QGraphicsItem):
         for name, type_name in subports:
             if type_name == "?_":
                 return True
-            # Check nested structures
             port_type = self.registry.get_port_type(type_name, self.node_type)
             if port_type and port_type.subports:
                 if self._structure_has_wildcards(port_type.subports):
@@ -634,18 +619,19 @@ class PortWidget(QGraphicsItem):
         return False
     
     def is_occupied(self):
-        if self.connections:
+        # Check only non-implicit connections
+        if any(not conn.is_implicit for conn in self.connections):
             return True
         current = self.parent_port
         while current:
-            if current.connections:
+            if any(not conn.is_implicit for conn in current.connections):
                 return True
             current = current.parent_port
         return self._has_connected_descendant()
     
     def _has_connected_descendant(self):
         for subport in self.subport_widgets:
-            if subport.connections or subport._has_connected_descendant():
+            if any(not conn.is_implicit for conn in subport.connections) or subport._has_connected_descendant():
                 return True
         return False
     
@@ -772,12 +758,9 @@ class SubportExpansion(QGraphicsRectItem):
         
         height = len(subports) * PortWidget.SUBPORT_SPACING
         
-        # Position rectangle based on port direction
         if is_input:
-            # For input: rectangle extends to the right (away from node)
             self.setRect(0, 0, self.WIDTH, height)
         else:
-            # For output: rectangle extends to the left (toward node, away from port)
             self.setRect(-self.WIDTH, 0, self.WIDTH, height)
         
         self.setBrush(QBrush(HOUDINI_BG_LIGHT))
@@ -793,13 +776,10 @@ class SubportExpansion(QGraphicsRectItem):
                 subport.setParentItem(self)
             
             if self.is_input:
-                # For input: place subports at the right edge of expansion (away from main port)
                 subport.setPos(self.WIDTH, current_y)
             else:
-                # For output: place subports at the left edge of expansion (away from main port)
                 subport.setPos(0, current_y)
             
-            # Create or update label
             if i < len(self.labels):
                 label = self.labels[i]
             else:
@@ -809,25 +789,18 @@ class SubportExpansion(QGraphicsRectItem):
                 label.setFont(font)
                 self.labels.append(label)
             
-            # Position labels consistently for both input and output
-            node = subport.node
             if self.is_input:
-                # For input: label to the right of the subport
                 label.setPos(self.WIDTH + PortWidget.PORT_RADIUS * 2 + 5, current_y - 8)
             else:
-                # For output: label to the left of the subport
                 label_width = label.boundingRect().width()
                 label.setPos(-PortWidget.PORT_RADIUS * 2 - label_width - 5, current_y - 8)
             
-            # Update nested expansion positions
             if subport.expanded and subport.expansion_widget:
                 node_pos = subport.node.mapFromItem(subport, 0, 0)
                 if self.is_input:
-                    # Input subport expansion goes further right
                     subport.expansion_widget.setPos(node_pos.x() - 2*SubportExpansion.WIDTH,
                                                    node_pos.y() + subport.PORT_RADIUS)
                 else:
-                    # Output subport expansion goes further left
                     subport.expansion_widget.setPos(node_pos.x() + SubportExpansion.WIDTH,
                                                    node_pos.y() + subport.PORT_RADIUS)
             
@@ -837,7 +810,6 @@ class SubportExpansion(QGraphicsRectItem):
         
         new_height = current_y - PortWidget.SUBPORT_SPACING // 2
         
-        # Update rectangle size based on direction
         if self.is_input:
             self.setRect(self.WIDTH, 0, self.WIDTH, new_height)
         else:
@@ -858,13 +830,11 @@ class SubportExpansion(QGraphicsRectItem):
         path = QPainterPath()
         rect = self.rect()
         if self.is_input:
-            # Input: expand hover area to the right
             expanded = QRectF(rect.x() - 5, 
                             rect.y() - 5, 
                             rect.width() + self.HOVER_MARGIN + 100,
                             rect.height() + 10)
         else:
-            # Output: expand hover area to the left
             expanded = QRectF(rect.x() - self.HOVER_MARGIN - 100,
                             rect.y() - 5, 
                             rect.width() + self.HOVER_MARGIN + 100, 
@@ -885,47 +855,46 @@ class SubportExpansion(QGraphicsRectItem):
         if self.parent_port._is_any_expansion_hovered():
             return
         self.parent_port.collapse()
-        
+
 
 class Connection(QGraphicsPathItem):
-    def __init__(self, output_port, input_port, scene, output_index_path=None, input_index_path=None):
+    def __init__(self, output_port, input_port, scene, output_index_path=None, input_index_path=None, is_implicit=False):
         super().__init__()
         self.output_port = output_port
         self.input_port = input_port
         self.output_node = output_port.node if output_port else None
         self.input_node = input_port.node if input_port else None
+        self.is_implicit = is_implicit
         
-        # Store index paths for reconnection
         self.output_index_path = output_index_path or (output_port.get_index_path() if output_port else [])
         self.input_index_path = input_index_path or (input_port.get_index_path() if input_port else [])
         
-        # Store relative positions for invalid connections
         if self.output_node and output_port:
-            self.output_relative_y = output_port.get_scene_pos().y() - self.output_node.pos().y()
+            self.output_rel_pos = output_port.get_scene_pos().y() - self.output_node.pos().y()
         else:
-            self.output_relative_y = 0
+            self.output_rel_pos = 0
             
         if self.input_node and input_port:
-            self.input_relative_y = input_port.get_scene_pos().y() - self.input_node.pos().y()
+            self.input_rel_pos = input_port.get_scene_pos().y() - self.input_node.pos().y()
         else:
-            self.input_relative_y = 0
+            self.input_rel_pos = 0
         
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-        # Don't allow moving wires - they're determined by node positions
+        self.setFlag(QGraphicsItem.ItemIsSelectable, not is_implicit)
         self.setFlag(QGraphicsItem.ItemIsMovable, False)
         
-        # Determine connection validity
         self.output_valid = output_port is not None
         self.input_valid = input_port is not None
         
-        color = get_type_color(output_port.type_name, 
-                              output_port.registry if output_port else None,
-                              output_port.node_type if output_port and hasattr(output_port, 'node_type') else None) if output_port else HOUDINI_ERROR
-        self.normal_pen = QPen(color, 2.5)
+        if is_implicit:
+            self.normal_pen = QPen(HOUDINI_IMPLICIT, 2.0, Qt.DotLine)
+        else:
+            color = get_type_color(output_port.type_name, 
+                                  output_port.registry if output_port else None,
+                                  output_port.node_type if output_port and hasattr(output_port, 'node_type') else None) if output_port else HOUDINI_ERROR
+            self.normal_pen = QPen(color, 2.5)
+        
         self.selected_pen = QPen(HOUDINI_NODE_SELECTED, 3.5)
         self.invalid_pen = QPen(HOUDINI_ERROR, 2.5)
-        
-        # Shadow pen for selection
         self.shadow_pen = QPen(QColor(255, 255, 255, 180), 6.0)
         
         if output_port:
@@ -941,10 +910,9 @@ class Connection(QGraphicsPathItem):
         self.update_path()
     
     def is_valid(self):
-        """Check if connection is valid (both ends exist and types match)"""
+        """Check if connection is valid"""
         if not (self.output_valid and self.input_valid):
             return False
-        # Check type compatibility
         if self.output_port and self.input_port:
             return self.output_port.type_name == self.input_port.type_name
         return False
@@ -955,8 +923,6 @@ class Connection(QGraphicsPathItem):
                 self.output_port.type_name != self.input_port.type_name)
     
     def boundingRect(self):
-        """Override to prevent default selection border"""
-        # Add a bit of padding for the shadow
         if self.isSelected():
             return self.path().boundingRect().adjusted(-4, -4, 4, 4)
         return self.path().boundingRect()
@@ -981,22 +947,19 @@ class Connection(QGraphicsPathItem):
     
     def update_path(self):
         try:
-            # Get positions
             if self.output_port:
                 start = self.output_port.get_scene_pos()
             elif self.output_node:
-                # Use relative position for invalid output
                 start = QPointF(self.output_node.pos().x() + self.output_node.rect().width(),
-                              self.output_node.pos().y() + self.output_relative_y)
+                              self.output_node.pos().y() + self.output_rel_pos)
             else:
                 return
             
             if self.input_port:
                 end = self.input_port.get_scene_pos()
             elif self.input_node:
-                # Use relative position for invalid input
                 end = QPointF(self.input_node.pos().x(),
-                            self.input_node.pos().y() + self.input_relative_y)
+                            self.input_node.pos().y() + self.input_rel_pos)
             else:
                 return
             
@@ -1026,28 +989,29 @@ class Connection(QGraphicsPathItem):
         except (RuntimeError, AttributeError):
             pass
         
-        def try_collapse_hierarchy(port):
-            try:
-                if isinstance(port, SubportWidget):
-                    port.collapse()
-                    if hasattr(port, 'parent_port') and port.parent_port:
-                        try_collapse_hierarchy(port.parent_port)
-                elif isinstance(port, PortWidget):
-                    port.collapse()
-            except RuntimeError:
-                pass
-        
-        if self.output_port:
-            try:
-                try_collapse_hierarchy(self.output_port)
-            except (RuntimeError, AttributeError):
-                pass
+        if not self.is_implicit:
+            def try_collapse_hierarchy(port):
+                try:
+                    if isinstance(port, SubportWidget):
+                        port.collapse()
+                        if hasattr(port, 'parent_port') and port.parent_port:
+                            try_collapse_hierarchy(port.parent_port)
+                    elif isinstance(port, PortWidget):
+                        port.collapse()
+                except RuntimeError:
+                    pass
             
-        if self.input_port:
-            try:
-                try_collapse_hierarchy(self.input_port)
-            except (RuntimeError, AttributeError):
-                pass
+            if self.output_port:
+                try:
+                    try_collapse_hierarchy(self.output_port)
+                except (RuntimeError, AttributeError):
+                    pass
+                
+            if self.input_port:
+                try:
+                    try_collapse_hierarchy(self.input_port)
+                except (RuntimeError, AttributeError):
+                    pass
         
         if self.scene():
             self.scene().removeItem(self)
@@ -1055,14 +1019,16 @@ class Connection(QGraphicsPathItem):
     def paint(self, painter, option, widget):
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # Draw shadow if selected
+        if self.is_implicit:
+            painter.setPen(self.normal_pen)
+            painter.drawPath(self.path())
+            return
+        
         if self.isSelected():
             painter.setPen(self.shadow_pen)
             painter.drawPath(self.path())
         
-        # Draw the main wire
         if self.has_type_mismatch():
-            # Type mismatch - gradient from output color to input color
             output_color = get_type_color(self.output_port.type_name,
                                          self.output_port.registry,
                                          self.output_port.node_type if hasattr(self.output_port, 'node_type') else None)
@@ -1074,21 +1040,17 @@ class Connection(QGraphicsPathItem):
             gradient.setColorAt(1, input_color)
             pen = QPen(QBrush(gradient), 2.5)
         elif not self.is_valid():
-            # Invalid connection (missing port)
             if self.output_valid and not self.input_valid:
-                # Valid output, invalid input - gradient from normal to red
                 gradient = QLinearGradient(self.path().pointAtPercent(0), self.path().pointAtPercent(1))
                 gradient.setColorAt(0, self.normal_pen.color())
                 gradient.setColorAt(1, HOUDINI_ERROR)
                 pen = QPen(QBrush(gradient), 2.5)
             elif not self.output_valid and self.input_valid:
-                # Invalid output, valid input - gradient from red to normal
                 gradient = QLinearGradient(self.path().pointAtPercent(0), self.path().pointAtPercent(1))
                 gradient.setColorAt(0, HOUDINI_ERROR)
                 gradient.setColorAt(1, self.normal_pen.color())
                 pen = QPen(QBrush(gradient), 2.5)
             else:
-                # Both invalid
                 pen = self.invalid_pen
         else:
             pen = self.normal_pen
@@ -1098,6 +1060,9 @@ class Connection(QGraphicsPathItem):
     
     def expand_connection(self):
         """Expand this connection into subport connections"""
+        if self.is_implicit:
+            return []
+        
         if not self.output_port or not self.input_port:
             return []
         
@@ -1117,7 +1082,6 @@ class Connection(QGraphicsPathItem):
             if name in input_subports:
                 out_sp = output_subports[name]
                 in_sp = input_subports[name]
-                # Check type compatibility only (ignore occupation checks during expansion)
                 if out_sp.types_are_compatible(in_sp):
                     conn = Connection(out_sp, in_sp, self.scene())
                     if self.scene():
@@ -1129,64 +1093,49 @@ class Connection(QGraphicsPathItem):
     
     def reconnect(self):
         """Try to reconnect to ports based on stored index paths"""
-        # Remove from old port lists if they exist
         if self.output_port and self in self.output_port.connections:
             self.output_port.connections.remove(self)
         if self.input_port and self in self.input_port.connections:
             self.input_port.connections.remove(self)
         
-        # Try to find new ports
         self.output_port = self._find_port_by_index(self.output_node, self.output_index_path, False)
         self.input_port = self._find_port_by_index(self.input_node, self.input_index_path, True)
         
-        # Update validity state
         self.output_valid = self.output_port is not None
         self.input_valid = self.input_port is not None
         
-        # Update relative positions for current node state
         if self.output_node and self.output_port:
-            self.output_relative_y = self.output_port.get_scene_pos().y() - self.output_node.pos().y()
-        elif self.output_node:
-            # Keep the old relative position for invalid connections
-            pass
+            self.output_rel_pos = self.output_port.get_scene_pos().y() - self.output_node.pos().y()
             
         if self.input_node and self.input_port:
-            self.input_relative_y = self.input_port.get_scene_pos().y() - self.input_node.pos().y()
-        elif self.input_node:
-            # Keep the old relative position for invalid connections
-            pass
+            self.input_rel_pos = self.input_port.get_scene_pos().y() - self.input_node.pos().y()
         
-        # Update pen color based on new port type
-        if self.output_port:
+        if not self.is_implicit and self.output_port:
             color = get_type_color(self.output_port.type_name,
                                   self.output_port.registry,
                                   self.output_port.node_type if hasattr(self.output_port, 'node_type') else None)
             self.normal_pen = QPen(color, 2.5)
-        elif self.input_port:
-            # If no output port, use input port color
+        elif not self.is_implicit and self.input_port:
             color = get_type_color(self.input_port.type_name,
                                   self.input_port.registry,
                                   self.input_port.node_type if hasattr(self.input_port, 'node_type') else None)
             self.normal_pen = QPen(color, 2.5)
         
-        # Add to new port connection lists
         if self.output_port and self not in self.output_port.connections:
             self.output_port.connections.append(self)
         if self.input_port and self not in self.input_port.connections:
             self.input_port.connections.append(self)
         
-        # Expand hierarchies if needed
         if self.output_port and isinstance(self.output_port, SubportWidget):
             self._expand_hierarchy(self.output_port)
         if self.input_port and isinstance(self.input_port, SubportWidget):
             self._expand_hierarchy(self.input_port)
         
-        # Update the visual path
         self.update_path()
         self.update()
     
     def _find_port_by_index(self, node, index_path, is_input):
-        """Find port by index path [port_idx, subport_idx, ...]"""
+        """Find port by index path"""
         if not node or not index_path:
             return None
         
@@ -1215,11 +1164,12 @@ class NodeWidget(QGraphicsRectItem):
     PORT_SPACING = 28
     HEADER_HEIGHT = 32
     
-    def __init__(self, node_type, registry, name=None):
+    def __init__(self, node_type, registry, name=None, port_values=None):
         super().__init__()
         self.node_type = node_type
         self.registry = registry
         self.node_name = name or node_type.name
+        self.port_values = port_values or []
         self.input_ports = []
         self.output_ports = []
         
@@ -1262,133 +1212,65 @@ class NodeWidget(QGraphicsRectItem):
             label.setFont(font)
             port.label = label
     
-    def change_type(self, new_type_name, custom_definition=None):
-        """Change this node to a different type, preserving connections where possible
-        
-        Args:
-            new_type_name: Name for the new type
-            custom_definition: Optional dict with custom node type definition
-        """
-        if custom_definition:
-            # Create a temporary NodeType from the custom definition
-            custom_port_types = {}
-            
-            # Helper to recursively extract custom port types
-            def extract_custom_types(port_type_def):
-                """Recursively extract all custom port types from a definition"""
-                if isinstance(port_type_def, dict):
-                    custom_type_name = port_type_def['portType']
-                    subports = []
-                    
-                    for sp in port_type_def.get('subports', []):
-                        sp_name = sp['name']
-                        sp_type = sp['type']
-                        
-                        # Recursively process nested custom types
-                        if isinstance(sp_type, dict):
-                            extract_custom_types(sp_type)
-                            subports.append((sp_name, sp_type['portType']))
-                        else:
-                            subports.append((sp_name, sp_type))
-                    
-                    custom_port_types[custom_type_name] = PortType(custom_type_name, subports)
-            
-            # Parse inputs and extract custom port types
-            inputs = []
-            for inp in custom_definition.get('inputs', []):
-                port_name = inp['name']
-                port_type = inp['type']
-                
-                if isinstance(port_type, dict):
-                    extract_custom_types(port_type)
-                    inputs.append((port_name, port_type['portType']))
-                else:
-                    inputs.append((port_name, port_type))
-            
-            # Parse outputs and extract custom port types
-            outputs = []
-            for out in custom_definition.get('outputs', []):
-                port_name = out['name']
-                port_type = out['type']
-                
-                if isinstance(port_type, dict):
-                    extract_custom_types(port_type)
-                    outputs.append((port_name, port_type['portType']))
-                else:
-                    outputs.append((port_name, port_type))
-            
-            new_type = NodeType(custom_definition['name'], inputs, outputs, custom_port_types)
-        else:
-            new_type = self.registry.get_node_type(new_type_name)
-            if not new_type:
-                return
-        
-        # Get the view to access all connections
+    def change_type(self, new_node_type):
+        """Change this node to a different type"""
         view = None
         if self.scene() and self.scene().views():
             view = self.scene().views()[0]
         
-        # Collect all connections that reference this node
         all_connections = []
         if view:
             for conn in view.connections:
                 if conn.output_node == self or conn.input_node == self:
                     all_connections.append(conn)
         
-        # Remove connections from old ports' lists
         for port in self.input_ports + self.output_ports:
             self._remove_port_connections(port)
         
-        # Clear old ports completely
         for port in self.input_ports + self.output_ports:
             self._clear_port_completely(port)
         self.input_ports.clear()
         self.output_ports.clear()
         
-        # Update type and name
-        self.node_type = new_type
-        self.node_name = new_type.name
+        self.node_type = new_node_type
+        self.node_name = new_node_type.name
         self.header.setPlainText(self.node_name)
         
-        # Create new ports
+        self.port_values = []
+        
         self._create_ports()
         self.adjust_size_for_expansion()
         
-        # Update structural matching for new ports
         if self.scene() and self.scene().views():
             view = self.scene().views()[0]
             if hasattr(view, '_update_node_ports_matching'):
                 view._update_node_ports_matching(self)
         
-        # Try to reconnect all connections
         for conn in all_connections:
-            conn.reconnect()
+            if not conn.is_implicit:
+                conn.reconnect()
     
     def _remove_port_connections(self, port):
-        """Remove connections from port's list but don't delete from scene"""
+        """Remove connections from port's list"""
         for subport in port.subport_widgets[:]:
             self._remove_port_connections(subport)
         port.connections.clear()
     
     def _clear_port_completely(self, port):
-        """Completely remove a port and all its visual elements"""
-        # Clear subports first
+        """Completely remove a port"""
         for subport in port.subport_widgets[:]:
             self._clear_port_completely(subport)
         
-        # Remove expansion widget
         if hasattr(port, 'expansion_widget') and port.expansion_widget:
             if port.expansion_widget.scene():
                 port.expansion_widget.scene().removeItem(port.expansion_widget)
             port.expansion_widget = None
         
-        # Remove label
         if hasattr(port, 'label') and port.label:
             if port.label.scene():
                 port.label.scene().removeItem(port.label)
             port.label = None
         
-        # Remove port itself
         if port.scene():
             port.scene().removeItem(port)
     
@@ -1491,11 +1373,9 @@ class NodeWidget(QGraphicsRectItem):
     
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionHasChanged:
-            # Update all connections from current ports
             for port in self.input_ports + self.output_ports:
                 self._update_port_connections(port)
             
-            # Also update any invalid connections that reference this node
             if self.scene() and self.scene().views():
                 view = self.scene().views()[0]
                 if hasattr(view, 'connections'):
@@ -1527,14 +1407,12 @@ class NodeWidget(QGraphicsRectItem):
     def paint(self, painter, option, widget):
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # Draw shadow/glow if selected
         if self.isSelected():
             glow_pen = QPen(QColor(255, 255, 255, 180), 6.0)
             painter.setPen(glow_pen)
             painter.setBrush(Qt.NoBrush)
             painter.drawRect(self.rect())
         
-        # Draw the node
         self.setPen(QPen(HOUDINI_NODE_BORDER, 1.5))
         painter.setPen(self.pen())
         painter.setBrush(self.brush())
@@ -1556,57 +1434,42 @@ class NodeWidget(QGraphicsRectItem):
         return all_ports
     
     def to_dict(self):
-        return {
-            'type': self.node_type.name,
-            'name': self.node_name,
-            'x': self.pos().x(),
-            'y': self.pos().y(),
-            'custom_definition': self.get_type_definition()
-        }
-    
-    def get_type_definition(self):
-        """Get the JSON definition of this node's type"""
-        def type_to_dict(type_name):
-            """Recursively convert a type to dict format, handling custom types"""
-            if type_name in self.node_type.custom_port_types:
-                custom_type = self.node_type.custom_port_types[type_name]
-                subports_list = []
-                
+        """Export node in Lean JSON format"""
+        def port_to_lean_json(port_name, port_type_name):
+            if port_type_name in self.node_type.custom_port_types:
+                custom_type = self.node_type.custom_port_types[port_type_name]
+                subports_json = []
                 for sp_name, sp_type in custom_type.subports:
-                    # Recursively handle subport type
-                    if sp_type in self.node_type.custom_port_types:
-                        # Nested custom type
-                        subports_list.append({
-                            'name': sp_name,
-                            'type': type_to_dict(sp_type)
-                        })
-                    else:
-                        # Regular type
-                        subports_list.append({
-                            'name': sp_name,
-                            'type': sp_type
-                        })
-                
+                    subports_json.append(port_to_lean_json(sp_name, sp_type))
                 return {
-                    'portType': custom_type.name,
-                    'subports': subports_list
+                    'struct': {
+                        'name': port_name,
+                        'type': port_type_name,
+                        'subports': subports_json
+                    }
                 }
             else:
-                # Not a custom type, just return the name
-                return type_name
+                return {
+                    'builtin': {
+                        'name': port_name,
+                        'type': port_type_name
+                    }
+                }
         
-        def port_to_dict(port_name, port_type_name):
-            """Convert a port to dict"""
-            type_def = type_to_dict(port_type_name)
-            return {
-                'name': port_name,
-                'type': type_def
-            }
+        type_dict = {
+            'name': self.node_type.name,
+            'leanConstant': self.node_type.lean_constant,
+            'exposeImplicitArgs': self.node_type.expose_implicit_args,
+            'inputs': [port_to_lean_json(name, type_) for name, type_ in self.node_type.inputs],
+            'outputs': [port_to_lean_json(name, type_) for name, type_ in self.node_type.outputs]
+        }
         
         return {
-            'name': self.node_type.name,
-            'inputs': [port_to_dict(name, type_) for name, type_ in self.node_type.inputs],
-            'outputs': [port_to_dict(name, type_) for name, type_ in self.node_type.outputs]
+            'name': self.node_name,
+            'type': type_dict,
+            'portValues': self.port_values,
+            'x': self.pos().x(),
+            'y': self.pos().y()
         }
 
 
@@ -1628,7 +1491,7 @@ class NodeEditorView(QGraphicsView):
         
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
-        self.setDragMode(QGraphicsView.RubberBandDrag)  # Enable rubber band selection
+        self.setDragMode(QGraphicsView.RubberBandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         
@@ -1643,21 +1506,23 @@ class NodeEditorView(QGraphicsView):
         self.pan_start_pos = QPointF()
         self.drag_locked_ports = []
         
-        # Structural type matching setting
         self.allow_structural_matching = True
+        self.show_implicit_connections = False
         
-        # Signal for selection changes
         self.editor_scene.selectionChanged.connect(self.on_selection_changed)
     
     def set_structural_matching(self, enabled):
-        """Enable or disable structural type matching for custom ports"""
         self.allow_structural_matching = enabled
-        # Update all existing ports
         for node in self.nodes:
             self._update_node_ports_matching(node)
     
+    def set_show_implicit(self, enabled):
+        self.show_implicit_connections = enabled
+        for conn in self.connections:
+            if conn.is_implicit:
+                conn.setVisible(enabled)
+    
     def _update_node_ports_matching(self, node):
-        """Update structural matching setting for all ports in a node"""
         def update_port(port):
             port.allow_structural_matching = self.allow_structural_matching
             for subport in port.subport_widgets:
@@ -1667,7 +1532,6 @@ class NodeEditorView(QGraphicsView):
             update_port(port)
     
     def on_selection_changed(self):
-        """Emit signal when selection changes"""
         selected = self.editor_scene.selectedItems()
         selected_nodes = [item for item in selected if isinstance(item, NodeWidget)]
         if hasattr(self, 'selection_changed_callback'):
@@ -1746,7 +1610,6 @@ class NodeEditorView(QGraphicsView):
                     break
             
             if port_item:
-                # Disable rubber band for port dragging
                 self.setDragMode(QGraphicsView.NoDrag)
                 self._lock_port_hierarchy(port_item)
                 self.start_connection(port_item)
@@ -1754,7 +1617,6 @@ class NodeEditorView(QGraphicsView):
                 event.accept()
                 return
             else:
-                # Enable rubber band for selection
                 self.setDragMode(QGraphicsView.RubberBandDrag)
         
         elif event.button() == Qt.MiddleButton:
@@ -1944,7 +1806,6 @@ class NodeEditorView(QGraphicsView):
         menu.exec(self.mapToGlobal(view_pos))
     
     def show_node_type_menu(self, node, view_pos):
-        """Show menu to change node type"""
         menu = QMenu(self)
         menu.setStyleSheet(f"""
             QMenu {{
@@ -1986,71 +1847,15 @@ class NodeEditorView(QGraphicsView):
                 submenu = menu
             
             for node_type_name in sorted(categories[category]):
+                node_type = self.registry.get_node_type(node_type_name)
                 action = submenu.addAction(node_type_name)
-                action.triggered.connect(lambda checked=False, n=node, name=node_type_name: 
-                                       n.change_type(name))
+                action.triggered.connect(lambda checked=False, n=node, nt=node_type: 
+                                       n.change_type(nt))
         
         menu.exec(self.mapToGlobal(view_pos))
     
-    def add_node(self, node_type_name, pos, custom_definition=None):
-        """Add a node to the scene
-        
-        Args:
-            node_type_name: Name of the node type
-            pos: Position to place the node
-            custom_definition: Optional custom type definition dict
-        """
-        if custom_definition:
-            # Create temporary node type from custom definition
-            custom_port_types = {}
-            
-            # Helper to recursively extract custom port types
-            def extract_custom_types(port_type_def):
-                """Recursively extract all custom port types from a definition"""
-                if isinstance(port_type_def, dict):
-                    custom_type_name = port_type_def['portType']
-                    subports = []
-                    
-                    for sp in port_type_def.get('subports', []):
-                        sp_name = sp['name']
-                        sp_type = sp['type']
-                        
-                        # Recursively process nested custom types
-                        if isinstance(sp_type, dict):
-                            extract_custom_types(sp_type)
-                            subports.append((sp_name, sp_type['portType']))
-                        else:
-                            subports.append((sp_name, sp_type))
-                    
-                    custom_port_types[custom_type_name] = PortType(custom_type_name, subports)
-            
-            # Parse inputs
-            inputs = []
-            for inp in custom_definition.get('inputs', []):
-                port_name = inp['name']
-                port_type = inp['type']
-                
-                if isinstance(port_type, dict):
-                    extract_custom_types(port_type)
-                    inputs.append((port_name, port_type['portType']))
-                else:
-                    inputs.append((port_name, port_type))
-            
-            # Parse outputs
-            outputs = []
-            for out in custom_definition.get('outputs', []):
-                port_name = out['name']
-                port_type = out['type']
-                
-                if isinstance(port_type, dict):
-                    extract_custom_types(port_type)
-                    outputs.append((port_name, port_type['portType']))
-                else:
-                    outputs.append((port_name, port_type))
-            
-            node_type = NodeType(custom_definition['name'], inputs, outputs, custom_port_types)
-        else:
-            node_type = self.registry.get_node_type(node_type_name)
+    def add_node(self, node_type_name, pos):
+        node_type = self.registry.get_node_type(node_type_name)
             
         if node_type:
             base_name = node_type.name
@@ -2066,7 +1871,6 @@ class NodeEditorView(QGraphicsView):
             self.editor_scene.addItem(node)
             self.nodes.append(node)
             
-            # Set structural matching for all ports in new node
             self._update_node_ports_matching(node)
             
             return node
@@ -2087,9 +1891,10 @@ class NodeEditorView(QGraphicsView):
                 self.editor_scene.removeItem(item)
             
             elif isinstance(item, Connection):
-                item.remove()
-                if item in self.connections:
-                    self.connections.remove(item)
+                if not item.is_implicit:
+                    item.remove()
+                    if item in self.connections:
+                        self.connections.remove(item)
     
     def rename_selected(self):
         selected = self.editor_scene.selectedItems()
@@ -2105,7 +1910,6 @@ class NodeEditorView(QGraphicsView):
                 break
     
     def change_type_selected(self):
-        """Change the type of selected node"""
         selected = self.editor_scene.selectedItems()
         
         for item in selected:
@@ -2114,14 +1918,15 @@ class NodeEditorView(QGraphicsView):
                 self.show_node_type_menu(item, view_pos)
                 break
     
-    def update_selected_node_type(self, type_definition):
-        """Update selected node with custom type definition"""
+    def update_selected_node_type(self, type_json):
         selected = self.editor_scene.selectedItems()
         
         for item in selected:
             if isinstance(item, NodeWidget):
                 try:
-                    item.change_type(type_definition['name'], type_definition)
+                    node_type = self.registry._parse_node_type(type_json)
+                    if node_type:
+                        item.change_type(node_type)
                 except Exception as e:
                     print(f"Error updating node type: {e}")
                 break
@@ -2163,37 +1968,78 @@ class NodeEditorView(QGraphicsView):
         
         for conn in self.connections:
             connections_data.append({
-                'output_node': conn.output_node.node_name if conn.output_node else None,
-                'output_index_path': conn.output_index_path,
-                'input_node': conn.input_node.node_name if conn.input_node else None,
-                'input_index_path': conn.input_index_path,
-                'output_relative_y': conn.output_relative_y,
-                'input_relative_y': conn.input_relative_y
+                'outputNodeName': conn.output_node.node_name if conn.output_node else None,
+                'outputIndex': conn.output_index_path,
+                'inputNodeName': conn.input_node.node_name if conn.input_node else None,
+                'inputIndex': conn.input_index_path,
+                'outputRelPos': conn.output_rel_pos,
+                'inputRelPos': conn.input_rel_pos,
+                'isImplicit': conn.is_implicit
             })
         
-        port_types_data = {}
+        port_types_data = []
         for type_name, port_type in self.registry.port_types.items():
-            port_types_data[type_name] = {
-                'subports': [{'name': name, 'type': type_} for name, type_ in port_type.subports]
-            }
+            if port_type.subports:
+                subports_json = []
+                for sp_name, sp_type in port_type.subports:
+                    subports_json.append({
+                        'builtin': {'name': sp_name, 'type': sp_type}
+                    })
+                port_types_data.append({
+                    'struct': {
+                        'name': port_type.name,
+                        'type': type_name,
+                        'subports': subports_json
+                    }
+                })
+            else:
+                port_types_data.append({
+                    'builtin': {
+                        'name': port_type.name,
+                        'type': type_name
+                    }
+                })
         
         node_types_data = []
         for node_type in self.registry.node_types.values():
+            def port_to_lean_json(port_name, port_type_name):
+                if port_type_name in node_type.custom_port_types:
+                    custom_type = node_type.custom_port_types[port_type_name]
+                    subports_json = []
+                    for sp_name, sp_type in custom_type.subports:
+                        subports_json.append(port_to_lean_json(sp_name, sp_type))
+                    return {
+                        'struct': {
+                            'name': port_name,
+                            'type': port_type_name,
+                            'subports': subports_json
+                        }
+                    }
+                else:
+                    return {
+                        'builtin': {
+                            'name': port_name,
+                            'type': port_type_name
+                        }
+                    }
+            
             node_types_data.append({
                 'name': node_type.name,
-                'inputs': [{'name': name, 'type': type_} for name, type_ in node_type.inputs],
-                'outputs': [{'name': name, 'type': type_} for name, type_ in node_type.outputs]
+                'leanConstant': node_type.lean_constant,
+                'exposeImplicitArgs': node_type.expose_implicit_args,
+                'inputs': [port_to_lean_json(name, type_) for name, type_ in node_type.inputs],
+                'outputs': [port_to_lean_json(name, type_) for name, type_ in node_type.outputs]
             })
         
         return {
-            'port_types': port_types_data,
-            'node_types': node_types_data,
+            'portTypes': port_types_data,
+            'nodeTypes': node_types_data,
             'nodes': nodes_data,
             'connections': connections_data
         }
     
     def load_from_json(self, data):
-        if 'port_types' in data or 'node_types' in data:
+        if 'portTypes' in data or 'nodeTypes' in data:
             self.registry.load_from_json(data)
         
         for node in self.nodes[:]:
@@ -2210,20 +2056,24 @@ class NodeEditorView(QGraphicsView):
         
         node_map = {}
         for node_data in data.get('nodes', []):
-            custom_def = node_data.get('custom_definition')
-            node = self.add_node(node_data['type'], 
-                               QPointF(node_data['x'], node_data['y']),
-                               custom_definition=custom_def)
-            if node:
-                node.node_name = node_data['name']
-                node.header.setPlainText(node_data['name'])
+            type_data = node_data.get('type', {})
+            node_type = self.registry._parse_node_type(type_data)
+            
+            if node_type:
+                port_values = node_data.get('portValues', [])
+                node = NodeWidget(node_type, self.registry, node_data['name'], port_values)
+                node.setPos(QPointF(node_data['x'], node_data['y']))
+                self.editor_scene.addItem(node)
+                self.nodes.append(node)
+                self._update_node_ports_matching(node)
                 node_map[node_data['name']] = node
         
         for conn_data in data.get('connections', []):
-            output_node = node_map.get(conn_data['output_node'])
-            input_node = node_map.get(conn_data['input_node'])
-            output_index_path = conn_data.get('output_index_path', [])
-            input_index_path = conn_data.get('input_index_path', [])
+            output_node = node_map.get(conn_data['outputNodeName'])
+            input_node = node_map.get(conn_data['inputNodeName'])
+            output_index_path = conn_data.get('outputIndex', [])
+            input_index_path = conn_data.get('inputIndex', [])
+            is_implicit = conn_data.get('isImplicit', False)
             
             if output_node or input_node:
                 output_port = None
@@ -2236,13 +2086,15 @@ class NodeEditorView(QGraphicsView):
                     input_port = self._find_port_by_index(input_node, input_index_path, True)
                 
                 conn = Connection(output_port, input_port, self.editor_scene, 
-                                output_index_path, input_index_path)
+                                output_index_path, input_index_path, is_implicit)
                 conn.output_node = output_node
                 conn.input_node = input_node
-                conn.output_relative_y = conn_data.get('output_relative_y', 0)
-                conn.input_relative_y = conn_data.get('input_relative_y', 0)
+                conn.output_rel_pos = conn_data.get('outputRelPos', 0)
+                conn.input_rel_pos = conn_data.get('inputRelPos', 0)
                 conn.output_valid = output_port is not None
                 conn.input_valid = input_port is not None
+                
+                conn.setVisible(not is_implicit or self.show_implicit_connections)
                 
                 self.editor_scene.addItem(conn)
                 self.connections.append(conn)
@@ -2270,43 +2122,35 @@ class NodeEditorView(QGraphicsView):
         return current_port
     
     def expand_selected_connections(self):
-        """Expand selected connections and select the newly created ones"""
         selected = self.editor_scene.selectedItems()
         
         new_connections = []
         for item in selected:
-            if isinstance(item, Connection):
+            if isinstance(item, Connection) and not item.is_implicit:
                 expanded = item.expand_connection()
                 new_connections.extend(expanded)
-                # Add new connections to tracking list
                 for conn in expanded:
                     if conn not in self.connections:
                         self.connections.append(conn)
-                # Remove old connection from tracking
                 if item in self.connections:
                     self.connections.remove(item)
         
-        # Select all the newly created connections
         for conn in new_connections:
             conn.setSelected(True)
 
     def collapse_selected_connections(self):
-        """Collapse selected subport connections back to parent connections"""
         selected = self.editor_scene.selectedItems()
-        selected_connections = [item for item in selected if isinstance(item, Connection)]
+        selected_connections = [item for item in selected if isinstance(item, Connection) and not item.is_implicit]
         
         if not selected_connections:
             return
         
-        # Group connections by their potential parent ports
-        # Key: (output_parent_port, input_parent_port)
         groups = {}
         
         for conn in selected_connections:
             if not conn.output_port or not conn.input_port:
                 continue
             
-            # Find parent ports
             output_parent = self._get_parent_port(conn.output_port)
             input_parent = self._get_parent_port(conn.input_port)
             
@@ -2318,50 +2162,37 @@ class NodeEditorView(QGraphicsView):
                 groups[key] = []
             groups[key].append(conn)
         
-        # Process each group
         wires_to_flash = []
         new_parent_connections = []
         
         for (_, _, output_parent, input_parent), conns in groups.items():
             result = self._try_collapse_group(output_parent, input_parent, conns)
-            if result == 'success':
-                # The new parent connection is the last one added
-                new_parent_connections.append(result)
-            elif result == 'blocked':
+            if result == 'blocked':
                 wires_to_flash.extend(conns)
             elif isinstance(result, Connection):
-                # Result is the new connection object
                 new_parent_connections.append(result)
         
-        # Select all newly created parent connections
         for conn in new_parent_connections:
             conn.setSelected(True)
         
-        # Flash red wires that couldn't collapse
         if wires_to_flash:
             self._flash_wires_red(wires_to_flash)
     
     def _get_parent_port(self, port):
-        """Get the immediate parent port of a subport, or the port itself if it's top-level"""
         if isinstance(port, SubportWidget):
             return port.parent_port
-        return None  # Top-level ports don't have parents to collapse to
+        return None
     
     def _try_collapse_group(self, output_parent, input_parent, selected_conns):
-        """Try to collapse a group of connections. Returns Connection object on success, 'blocked' or 'skip' on failure"""
-        
-        # Check if parent ports already have a direct connection
         if output_parent.connections or input_parent.connections:
             return 'blocked'
         
-        # Get all subports of the parent
         all_output_subports = output_parent.subport_widgets if output_parent.expanded else []
         all_input_subports = input_parent.subport_widgets if input_parent.expanded else []
         
         if not all_output_subports or not all_input_subports:
             return 'skip'
         
-        # Find which subports are in the selection
         selected_output_subports = set()
         selected_input_subports = set()
         
@@ -2369,46 +2200,36 @@ class NodeEditorView(QGraphicsView):
             selected_output_subports.add(conn.output_port)
             selected_input_subports.add(conn.input_port)
         
-        # Check if any sibling connections exist but weren't selected
         for out_subport in all_output_subports:
             if out_subport.connections and out_subport not in selected_output_subports:
-                # There's a connection we didn't select
                 return 'blocked'
         
         for in_subport in all_input_subports:
             if in_subport.connections and in_subport not in selected_input_subports:
-                # There's a connection we didn't select
                 return 'blocked'
         
-        # All checks passed - perform the collapse
-        # Remove all subport connections
         for conn in selected_conns:
             conn.remove()
             if conn in self.connections:
                 self.connections.remove(conn)
         
-        # Create parent connection
         parent_conn = Connection(output_parent, input_parent, self.editor_scene)
         self.editor_scene.addItem(parent_conn)
         self.connections.append(parent_conn)
         
-        # Collapse the expansions (they'll stay expanded if there are other connections)
         output_parent.collapse()
         input_parent.collapse()
         
         return parent_conn
     
     def _flash_wires_red(self, wires):
-        """Flash wires red to indicate they can't be collapsed"""
         original_pens = {}
         
-        # Store original pens and set to red
         for wire in wires:
             original_pens[wire] = wire.pen()
             wire.setPen(QPen(HOUDINI_ERROR, 3.5))
             wire.update()
         
-        # Use QTimer to restore original pens after a delay
         def restore_pens():
             for wire in wires:
                 if wire in original_pens and wire.scene():
@@ -2445,7 +2266,6 @@ class NodeEditorView(QGraphicsView):
 
 
 class NodeEditorWidget(QWidget):
-    """Main widget for Houdini Python Pane"""
     def __init__(self):
         super().__init__()
         self.registry = NodeTypeRegistry()
@@ -2455,41 +2275,67 @@ class NodeEditorWidget(QWidget):
     
     def _load_default_types(self):
         default_config = {
-            "port_types": {
-                "Float": {"subports": []},
-                "Vector3": {
+            "portTypes": [
+                {"builtin": {"name": "type", "type": "Type"}},
+                {"builtin": {"name": "value", "type": "Float"}},
+                {"builtin": {"name": "value", "type": "Int"}},
+                {"builtin": {"name": "value", "type": "String"}},
+                {"builtin": {"name": "wildcard", "type": "?_"}},
+                {"struct": {
+                    "name": "v",
+                    "type": "Vector3",
                     "subports": [
-                        {"name": "x", "type": "Float"},
-                        {"name": "y", "type": "Float"},
-                        {"name": "z", "type": "Float"}
+                        {"builtin": {"name": "x", "type": "Float"}},
+                        {"builtin": {"name": "y", "type": "Float"}},
+                        {"builtin": {"name": "z", "type": "Float"}}
                     ]
-                },
-                "Particle": {
+                }},
+                {"struct": {
+                    "name": "particle",
+                    "type": "Particle",
                     "subports": [
-                        {"name": "position", "type": "Vector3"},
-                        {"name": "velocity", "type": "Vector3"}
+                        {"builtin": {"name": "position", "type": "Vector3"}},
+                        {"builtin": {"name": "velocity", "type": "Vector3"}}
                     ]
-                },
-                "?_": {"subports": []}
-            },
-            "node_types": [
+                }}
+            ],
+            "nodeTypes": [
                 {
-                    "name": "Length",
-                    "inputs": [{"name": "vector", "type": "Vector3"}],
-                    "outputs": [{"name": "length", "type": "Float"}]
-                },
-                {
-                    "name": "Add",
+                    "name": "Float_Add",
+                    "leanConstant": "Float.add",
+                    "exposeImplicitArgs": False,
                     "inputs": [
-                        {"name": "a", "type": "Vector3"},
-                        {"name": "b", "type": "Vector3"}
+                        {"builtin": {"name": "a", "type": "Float"}},
+                        {"builtin": {"name": "b", "type": "Float"}}
                     ],
-                    "outputs": [{"name": "result", "type": "Vector3"}]
+                    "outputs": [
+                        {"builtin": {"name": "add", "type": "Float"}}
+                    ]
                 },
                 {
-                    "name": "Wildcard",
-                    "inputs": [{"name": "input", "type": "?_"}],
-                    "outputs": [{"name": "output", "type": "?_"}]
+                    "name": "add",
+                    "leanConstant": "HAdd.hAdd",
+                    "exposeImplicitArgs": False,
+                    "inputs": [
+                        {"builtin": {"name": "a", "type": "?_"}},
+                        {"builtin": {"name": "b", "type": "?_"}}
+                    ],
+                    "outputs": [
+                        {"builtin": {"name": "add", "type": "?_"}}
+                    ]
+                },
+                {
+                    "name": "makeVector3",
+                    "leanConstant": "Vector3.mk",
+                    "exposeImplicitArgs": False,
+                    "inputs": [
+                        {"builtin": {"name": "x", "type": "Float"}},
+                        {"builtin": {"name": "y", "type": "Float"}},
+                        {"builtin": {"name": "z", "type": "Float"}}
+                    ],
+                    "outputs": [
+                        {"builtin": {"name": "vector", "type": "Vector3"}}
+                    ]
                 }
             ]
         }
@@ -2571,11 +2417,17 @@ class NodeEditorWidget(QWidget):
         
         toolbar_layout.addSpacing(8)
         
-        # Structural matching checkbox
         self.structural_matching_cb = QCheckBox("Structural Type Matching")
         self.structural_matching_cb.setChecked(True)
         self.structural_matching_cb.toggled.connect(self.on_structural_matching_changed)
         toolbar_layout.addWidget(self.structural_matching_cb)
+        
+        toolbar_layout.addSpacing(8)
+        
+        self.show_implicit_cb = QCheckBox("Show Implicit Connections")
+        self.show_implicit_cb.setChecked(False)
+        self.show_implicit_cb.toggled.connect(self.on_show_implicit_changed)
+        toolbar_layout.addWidget(self.show_implicit_cb)
         
         toolbar_layout.addStretch()
         
@@ -2584,7 +2436,6 @@ class NodeEditorWidget(QWidget):
         
         layout.addWidget(toolbar_frame)
         
-        # Create splitter for main content
         splitter = QSplitter(Qt.Horizontal)
         splitter.setStyleSheet(f"""
             QSplitter::handle {{
@@ -2593,16 +2444,13 @@ class NodeEditorWidget(QWidget):
             }}
         """)
         
-        # Create JSON editor panel
         editor_panel = self._create_editor_panel()
         splitter.addWidget(editor_panel)
         
-        # Create node editor
         self.editor = NodeEditorView(self.registry)
         self.editor.selection_changed_callback = self.on_node_selection_changed
         splitter.addWidget(self.editor)
         
-        # Set initial sizes (20% editor, 80% view)
         splitter.setSizes([200, 800])
         
         layout.addWidget(splitter)
@@ -2610,27 +2458,28 @@ class NodeEditorWidget(QWidget):
         self.editor.centerOn(0, 0)
     
     def _create_editor_panel(self):
-        """Create the JSON editor panel"""
         panel = QFrame()
         panel.setStyleSheet(f"""
             QFrame {{
                 background-color: {HOUDINI_BG_DARK.name()};
                 border-right: 1px solid {HOUDINI_NODE_BORDER.name()};
             }}
-            QTextEdit {{
+            QLineEdit {{
                 background-color: {HOUDINI_BG.name()};
                 color: {HOUDINI_TEXT.name()};
                 border: 1px solid {HOUDINI_NODE_BORDER.name()};
                 border-radius: 3px;
-                padding: 8px;
-                font-family: monospace;
+                padding: 4px 8px;
                 font-size: 11px;
+            }}
+            QLineEdit:disabled {{
+                background-color: {HOUDINI_BG_DARK.name()};
+                color: {HOUDINI_TEXT_DIM.name()};
             }}
             QLabel {{
                 color: {HOUDINI_TEXT.name()};
                 font-size: 11px;
-                font-weight: bold;
-                padding: 8px 4px 4px 4px;
+                padding: 4px 4px 4px 4px;
             }}
             QPushButton {{
                 background-color: {HOUDINI_BG_LIGHT.name()};
@@ -2653,32 +2502,105 @@ class NodeEditorWidget(QWidget):
         """)
         
         panel_layout = QVBoxLayout(panel)
-        panel_layout.setContentsMargins(8, 8, 8, 8)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.setSpacing(0)
         
-        # Title
-        title = QLabel("Node Type Editor")
-        panel_layout.addWidget(title)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet(f"""
+            QScrollArea {{
+                border: none;
+                background-color: {HOUDINI_BG_DARK.name()};
+            }}
+        """)
         
-        # JSON editor
-        self.json_editor = QTextEdit()
-        self.json_editor.setPlaceholderText("Select a node to edit its type definition...")
-        panel_layout.addWidget(self.json_editor)
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(8, 8, 8, 8)
+        content_layout.setSpacing(8)
         
-        # Update button
-        self.update_btn = QPushButton("Update Node Type")
+        title = QLabel("Node Editor")
+        title.setStyleSheet(f"font-weight: bold; font-size: 12px; padding: 4px;")
+        content_layout.addWidget(title)
+        
+        name_label = QLabel("Node Name:")
+        content_layout.addWidget(name_label)
+        self.name_edit = QLineEdit()
+        self.name_edit.setPlaceholderText("Node name...")
+        content_layout.addWidget(self.name_edit)
+        
+        lean_label = QLabel("Lean Constant:")
+        content_layout.addWidget(lean_label)
+        self.lean_edit = QLineEdit()
+        self.lean_edit.setPlaceholderText("Lean.constant.name")
+        content_layout.addWidget(self.lean_edit)
+        
+        type_label = QLabel("Type Name:")
+        content_layout.addWidget(type_label)
+        self.type_name_edit = QLineEdit()
+        self.type_name_edit.setPlaceholderText("TypeName")
+        content_layout.addWidget(self.type_name_edit)
+        
+        inputs_header = QLabel("Input Ports:")
+        inputs_header.setStyleSheet(f"font-weight: bold; font-size: 11px; padding-top: 8px;")
+        content_layout.addWidget(inputs_header)
+        
+        self.inputs_layout = QVBoxLayout()
+        self.inputs_layout.setSpacing(4)
+        content_layout.addLayout(self.inputs_layout)
+        
+        inputs_btn_layout = QHBoxLayout()
+        self.add_input_btn = QPushButton("+")
+        self.add_input_btn.setMaximumWidth(30)
+        self.add_input_btn.clicked.connect(self.add_input_port)
+        self.remove_input_btn = QPushButton("-")
+        self.remove_input_btn.setMaximumWidth(30)
+        self.remove_input_btn.clicked.connect(self.remove_input_port)
+        inputs_btn_layout.addWidget(self.add_input_btn)
+        inputs_btn_layout.addWidget(self.remove_input_btn)
+        inputs_btn_layout.addStretch()
+        content_layout.addLayout(inputs_btn_layout)
+        
+        outputs_header = QLabel("Output Ports:")
+        outputs_header.setStyleSheet(f"font-weight: bold; font-size: 11px; padding-top: 8px;")
+        content_layout.addWidget(outputs_header)
+        
+        self.outputs_layout = QVBoxLayout()
+        self.outputs_layout.setSpacing(4)
+        content_layout.addLayout(self.outputs_layout)
+        
+        outputs_btn_layout = QHBoxLayout()
+        self.add_output_btn = QPushButton("+")
+        self.add_output_btn.setMaximumWidth(30)
+        self.add_output_btn.clicked.connect(self.add_output_port)
+        self.remove_output_btn = QPushButton("-")
+        self.remove_output_btn.setMaximumWidth(30)
+        self.remove_output_btn.clicked.connect(self.remove_output_port)
+        outputs_btn_layout.addWidget(self.add_output_btn)
+        outputs_btn_layout.addWidget(self.remove_output_btn)
+        outputs_btn_layout.addStretch()
+        content_layout.addLayout(outputs_btn_layout)
+        
+        content_layout.addStretch()
+        
+        self.update_btn = QPushButton("Apply Changes")
         self.update_btn.setEnabled(False)
-        self.update_btn.clicked.connect(self.update_node_type)
-        panel_layout.addWidget(self.update_btn)
+        self.update_btn.clicked.connect(self.apply_node_changes)
+        content_layout.addWidget(self.update_btn)
         
-        # Status label
         self.status_label = QLabel("")
         self.status_label.setStyleSheet(f"color: {HOUDINI_TEXT_DIM.name()}; font-size: 10px; padding: 4px;")
-        panel_layout.addWidget(self.status_label)
+        content_layout.addWidget(self.status_label)
+        
+        scroll.setWidget(content)
+        panel_layout.addWidget(scroll)
+        
+        self.input_port_widgets = []
+        self.output_port_widgets = []
         
         return panel
     
     def on_node_selection_changed(self, selected_nodes):
-        """Handle node selection changes"""
         if selected_nodes:
             self.current_selected_node = selected_nodes[0]
             self.load_node_definition()
@@ -2686,57 +2608,223 @@ class NodeEditorWidget(QWidget):
             self.status_label.setText(f"Editing: {self.current_selected_node.node_name}")
         else:
             self.current_selected_node = None
-            self.json_editor.clear()
+            self.clear_editor()
             self.update_btn.setEnabled(False)
             self.status_label.setText("")
     
+    def clear_editor(self):
+        self.name_edit.clear()
+        self.lean_edit.clear()
+        self.type_name_edit.clear()
+        
+        for widget_group in self.input_port_widgets:
+            for widget in widget_group.values():
+                widget.deleteLater()
+        self.input_port_widgets.clear()
+        
+        for widget_group in self.output_port_widgets:
+            for widget in widget_group.values():
+                widget.deleteLater()
+        self.output_port_widgets.clear()
+    
     def load_node_definition(self):
-        """Load the selected node's type definition into the editor"""
         if not self.current_selected_node:
             return
         
-        definition = self.current_selected_node.get_type_definition()
-        json_str = json.dumps(definition, indent=2)
-        self.json_editor.setText(json_str)
+        node = self.current_selected_node
+        
+        self.clear_editor()
+        
+        self.name_edit.setText(node.node_name)
+        self.lean_edit.setText(node.node_type.lean_constant)
+        self.type_name_edit.setText(node.node_type.name)
+        
+        for i, (port_name, port_type) in enumerate(node.node_type.inputs):
+            port_value = ""
+            if i < len(node.port_values):
+                port_value = node.port_values[i]
+            
+            is_occupied = False
+            if i < len(node.input_ports):
+                is_occupied = node.input_ports[i].is_occupied()
+            
+            self.add_input_port_widget(port_name, port_type, port_value, is_occupied)
+        
+        for port_name, port_type in node.node_type.outputs:
+            self.add_output_port_widget(port_name, port_type)
     
-    def update_node_type(self):
-        """Update the selected node with the edited definition"""
+    def add_input_port_widget(self, name="", type_name="", value="", is_occupied=False):
+        container = QFrame()
+        container.setStyleSheet(f"""
+            QFrame {{
+                background-color: {HOUDINI_BG.name()};
+                border: 1px solid {HOUDINI_NODE_BORDER.name()};
+                border-radius: 3px;
+                padding: 4px;
+            }}
+        """)
+        
+        layout = QGridLayout(container)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(4)
+        
+        name_label = QLabel("Name:")
+        name_edit = QLineEdit(name)
+        name_edit.setPlaceholderText("port_name")
+        layout.addWidget(name_label, 0, 0)
+        layout.addWidget(name_edit, 0, 1)
+        
+        type_label = QLabel("Type:")
+        type_edit = QLineEdit(type_name)
+        type_edit.setPlaceholderText("Float")
+        layout.addWidget(type_label, 1, 0)
+        layout.addWidget(type_edit, 1, 1)
+        
+        value_label = QLabel("Value:")
+        value_edit = QLineEdit(value)
+        value_edit.setPlaceholderText("default value")
+        value_edit.setEnabled(not is_occupied)
+        layout.addWidget(value_label, 2, 0)
+        layout.addWidget(value_edit, 2, 1)
+        
+        self.inputs_layout.addWidget(container)
+        
+        self.input_port_widgets.append({
+            'container': container,
+            'name': name_edit,
+            'type': type_edit,
+            'value': value_edit
+        })
+    
+    def add_output_port_widget(self, name="", type_name=""):
+        container = QFrame()
+        container.setStyleSheet(f"""
+            QFrame {{
+                background-color: {HOUDINI_BG.name()};
+                border: 1px solid {HOUDINI_NODE_BORDER.name()};
+                border-radius: 3px;
+                padding: 4px;
+            }}
+        """)
+        
+        layout = QGridLayout(container)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(4)
+        
+        name_label = QLabel("Name:")
+        name_edit = QLineEdit(name)
+        name_edit.setPlaceholderText("port_name")
+        layout.addWidget(name_label, 0, 0)
+        layout.addWidget(name_edit, 0, 1)
+        
+        type_label = QLabel("Type:")
+        type_edit = QLineEdit(type_name)
+        type_edit.setPlaceholderText("Float")
+        layout.addWidget(type_label, 1, 0)
+        layout.addWidget(type_edit, 1, 1)
+        
+        self.outputs_layout.addWidget(container)
+        
+        self.output_port_widgets.append({
+            'container': container,
+            'name': name_edit,
+            'type': type_edit
+        })
+    
+    def add_input_port(self):
+        self.add_input_port_widget()
+    
+    def remove_input_port(self):
+        if self.input_port_widgets:
+            widget_group = self.input_port_widgets.pop()
+            for widget in widget_group.values():
+                widget.deleteLater()
+    
+    def add_output_port(self):
+        self.add_output_port_widget()
+    
+    def remove_output_port(self):
+        if self.output_port_widgets:
+            widget_group = self.output_port_widgets.pop()
+            for widget in widget_group.values():
+                widget.deleteLater()
+    
+    def apply_node_changes(self):
         if not self.current_selected_node:
             return
         
         try:
-            json_str = self.json_editor.toPlainText()
-            definition = json.loads(json_str)
+            node = self.current_selected_node
             
-            # Validate basic structure
-            if 'name' not in definition:
-                self.status_label.setText("Error: Missing 'name' field")
+            node_name = self.name_edit.text().strip()
+            lean_constant = self.lean_edit.text().strip()
+            type_name = self.type_name_edit.text().strip()
+            
+            if not node_name or not type_name:
+                self.status_label.setText("Error: Node name and type name required")
                 self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 10px; padding: 4px;")
                 return
             
-            if 'inputs' not in definition or 'outputs' not in definition:
-                self.status_label.setText("Error: Missing 'inputs' or 'outputs'")
-                self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 10px; padding: 4px;")
-                return
+            inputs = []
+            port_values = []
+            for widget_group in self.input_port_widgets:
+                port_name = widget_group['name'].text().strip()
+                port_type = widget_group['type'].text().strip()
+                port_value = widget_group['value'].text().strip()
+                
+                if not port_name or not port_type:
+                    self.status_label.setText("Error: All ports must have name and type")
+                    self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 10px; padding: 4px;")
+                    return
+                
+                inputs.append({'builtin': {'name': port_name, 'type': port_type}})
+                port_values.append(port_value)
             
-            # Update the node
+            outputs = []
+            for widget_group in self.output_port_widgets:
+                port_name = widget_group['name'].text().strip()
+                port_type = widget_group['type'].text().strip()
+                
+                if not port_name or not port_type:
+                    self.status_label.setText("Error: All ports must have name and type")
+                    self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 10px; padding: 4px;")
+                    return
+                
+                outputs.append({'builtin': {'name': port_name, 'type': port_type}})
+            
+            definition = {
+                'name': type_name,
+                'leanConstant': lean_constant,
+                'exposeImplicitArgs': node.node_type.expose_implicit_args,
+                'inputs': inputs,
+                'outputs': outputs
+            }
+            
             self.editor.update_selected_node_type(definition)
             
-            success_color = get_type_color('Float')  # Use Float's green color for success
-            self.status_label.setText("â Node type updated successfully")
+            node.node_name = node_name
+            node.header.setPlainText(node_name)
+            node.port_values = port_values
+            
+            success_color = get_type_color('Float')
+            self.status_label.setText("â Changes applied successfully")
             self.status_label.setStyleSheet(f"color: {success_color.name()}; font-size: 10px; padding: 4px;")
             
-        except json.JSONDecodeError as e:
-            self.status_label.setText(f"JSON Error: {str(e)}")
-            self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 10px; padding: 4px;")
+            self.load_node_definition()
+            
         except Exception as e:
             self.status_label.setText(f"Error: {str(e)}")
             self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 10px; padding: 4px;")
     
     def on_structural_matching_changed(self, checked):
-        """Handle structural matching checkbox toggle"""
         self.editor.set_structural_matching(checked)
         status_text = "Structural type matching enabled" if checked else "Strict type name matching enabled"
+        self.status_label.setText(status_text)
+        self.status_label.setStyleSheet(f"color: {HOUDINI_TEXT_DIM.name()}; font-size: 10px; padding: 4px;")
+    
+    def on_show_implicit_changed(self, checked):
+        self.editor.set_show_implicit(checked)
+        status_text = "Showing implicit connections" if checked else "Hiding implicit connections"
         self.status_label.setText(status_text)
         self.status_label.setStyleSheet(f"color: {HOUDINI_TEXT_DIM.name()}; font-size: 10px; padding: 4px;")
     
@@ -2808,7 +2896,8 @@ class NodeEditorWidget(QWidget):
 
 
 def createInterface():
-    return NodeEditorWidget()]]></script>
+    return NodeEditorWidget()
+]]></script>
     <includeInPaneTabMenu menu_position="0" create_separator="false"/>
     <includeInToolbarMenu menu_position="208" create_separator="false"/>
     <help><![CDATA[]]></help>
