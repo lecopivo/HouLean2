@@ -1,6 +1,6 @@
 import HouLean.LeanGraph.Extension
 import HouLean.Math
-import HouLean.Meta.AnonymouStruct
+import HouLean.Meta.AnonymousStruct
 
 -- todo: once lean graph is more mature this should be redistributed to other files
 
@@ -26,6 +26,16 @@ attribute [lean_graph_node] Float.exp
 attribute [lean_graph_node] Float.tan
 attribute [lean_graph_node] Float.atan2
 
+attribute [lean_graph_node] Vector3.add
+attribute [lean_graph_node] Vector3.sub
+attribute [lean_graph_node] Vector3.smul
+attribute [lean_graph_node] Vector3.neg
+attribute [lean_graph_node] Vector3.toGeodetic
+attribute [lean_graph_node] Vector3.fromGeodetic
+attribute [lean_graph_node] Vector3.toSpherical
+attribute [lean_graph_node] Vector3.fromSpherical
+
+
 -- attribute [lean_graph_node] Prod.map
 
 attribute [lean_graph_node "Arith_add"] HAdd.hAdd
@@ -36,7 +46,6 @@ attribute [lean_graph_node "Arith_neg"] Neg.neg
 attribute [lean_graph_node "Arith_inv"] Inv.inv
 attribute [lean_graph_node "Arith_one"] One.one
 attribute [lean_graph_node "Arith_zero"] Zero.zero
-
 
 open Math
 attribute [lean_graph_node "Math_sin"] sin
@@ -53,7 +62,6 @@ attribute [lean_graph_node "Math_normalized"] normalized
 attribute [lean_graph_node "Math_lerp"] lerp
 attribute [lean_graph_node "Math_smoothstep"] smoothstep
 
-
 -- attribute [lean_graph_node] GetElem.getElem
 attribute [lean_graph_node] GetElem?.getElem?
 attribute [lean_graph_node] GetElem?.getElem!
@@ -69,11 +77,10 @@ attribute [lean_graph_node] Array.size
 
 set_option trace.HouLean.lean_graph true
 @[lean_graph_node]
-def foo (x y z : Float) : #{r : Float, g : Float, b : Float} := ⟨x,y,z⟩
+def foo (x y z : Float) : struct {r : Float, g : Float, b : Float} := ⟨x,y,z⟩
 
-def foo (x : Float) : struct { a : asfd } := 
 @[lean_graph_node]
-def bar (x y : Float) : #{r : Float, g : Float} := ⟨x,y⟩
+def bar (x y : Float) : struct {r : Float, g : Float} := ⟨x,y⟩
 
 open Lean
 run_meta

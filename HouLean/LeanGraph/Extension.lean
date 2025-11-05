@@ -115,8 +115,6 @@ def mkNodeType (e : Expr) (customName? : Option String := none) : MetaM NodeType
     outputs := #[outputPortType]
   }
 
-initialize registerTraceClass `HouLean.lean_graph
-
 syntax (name:=lean_graph_type) "lean_graph_type" : attr
  
 initialize leanGraphTypeAttr : Unit ←

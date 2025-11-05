@@ -3,21 +3,27 @@ import Std.Data.HashMap
 
 open Lean Elab Command Term Meta Parser
 
+namespace HouLean
 namespace AnonymousStruct
+
+initialize registerTraceClass `HouLean.anon_struct
 
 -- Field information for the struct
 structure FieldInfo where
   name : Name
-  type : Expr
+  type : Expr  -- in case of parameters this is function like `fun (α : Type) => Array α`
   deriving Inhabited, BEq, Hashable
 
 instance : ToString FieldInfo where
   toString fi := s!"{fi.name} : {fi.type}"
 
--- Struct signature for lookup
 structure StructSignature where
+  paramNum : Nat
   fields : Array FieldInfo
   deriving Inhabited, BEq, Hashable
+
+instance : ToString StructSignature where
+  toString sig := toString sig.fields
 
 -- Entry in the environment extension
 structure AnonStructEntry where
@@ -25,22 +31,32 @@ structure AnonStructEntry where
   structName : Name
   deriving Inhabited
 
+structure Extension where
+  sigToName : Std.HashMap StructSignature Name
+  nameToSig : NameMap StructSignature
+deriving Inhabited
+
 -- Environment extension to track anonymous structs
-initialize anonStructExt : SimplePersistentEnvExtension AnonStructEntry (Std.HashMap StructSignature Name) ←
+initialize anonStructExt : SimplePersistentEnvExtension AnonStructEntry Extension ←
   registerSimplePersistentEnvExtension {
     addImportedFn := fun as => 
-      as.foldl (fun acc a => a.foldl (fun m e => m.insert e.signature e.structName) acc) {}
-    addEntryFn := fun m e => m.insert e.signature e.structName
+      as.foldl (fun acc a => a.foldl (fun m e => 
+        {m with sigToName := m.sigToName.insert e.signature e.structName
+                nameToSig := m.nameToSig.insert e.structName e.signature}) acc) default
+    addEntryFn := fun m e => 
+        {m with sigToName := m.sigToName.insert e.signature e.structName
+                nameToSig := m.nameToSig.insert e.structName e.signature}
   }
 
+
+open PrettyPrinter in
 -- Get or create a structure for the given signature
-def getOrCreateStruct (fields : Array FieldInfo) : CommandElabM Name := do
-  let sig : StructSignature := { fields := fields }
+def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
   -- let normSig := sig.normalize
   
   -- Check if we already have this structure
   let env ← getEnv
-  let structMap := anonStructExt.getState env
+  let structMap := (anonStructExt.getState env).sigToName
   
   if let some existingName := structMap[sig]? then
     return existingName
@@ -53,19 +69,43 @@ def getOrCreateStruct (fields : Array FieldInfo) : CommandElabM Name := do
     freshName := (`AnonStruct).appendIndexAfter idx
   
   -- Build field declarations for the structure
+  let mut paramDecls : Array (TSyntax ``Term.bracketedBinder) := #[]
   let mut fieldDecls : Array (TSyntax ``Command.structExplicitBinder) := #[]
-  for fi in fields do
-    let fieldName := mkIdent fi.name
-    let fieldType := fi.type
-    let fieldTypeStx ← liftTermElabM 
-      <| withOptions (fun opt => opt.setBool `pp.notation false) 
-      <| PrettyPrinter.delab fieldType
-    fieldDecls := fieldDecls.push (← `(Command.structExplicitBinder| ($fieldName:ident : $fieldTypeStx)))
+
+  if sig.fields.size != 0 then
+
+    -- make field binders
+    fieldDecls ← liftTermElabM <|
+      lambdaBoundedTelescope (sig.fields[0]!.type) sig.fields.size fun params _ => do
+      sig.fields.mapM (fun fi : FieldInfo => do
+        let fieldName := mkIdent fi.name
+        let fieldType := fi.type.beta params
+        trace[HouLean.anon_struct] m!"field {fieldName} : {fieldType}"
+        let fieldTypeStx ← 
+            withOptions (fun opt => opt.setBool `pp.notation false) do
+                  delab (fi.type.beta params)
+
+        return (← `(Command.structExplicitBinder| ($fieldName:ident : $fieldTypeStx))))
+
+    -- make parameter binders
+    paramDecls ← liftTermElabM <|
+      lambdaBoundedTelescope (sig.fields[0]!.type) sig.fields.size fun params _ => do
+      params.mapM (fun param => do
+        let name : Name ← param.fvarId!.getUserName
+        let id := mkIdent name
+        let type ← inferType param
+        let typeStx ← 
+            withOptions (fun opt => opt.setBool `pp.notation false) do
+                  delab type
+        `(bracketedBinder| ($id:ident : $typeStx)))
+
   
   -- Create and elaborate the structure command
   let id := mkIdent freshName
-  let structCmd ← `(command| structure $id:ident where
+  let structCmd ← `(command| structure $id:ident $paramDecls* where
     $[$fieldDecls]*)
+
+  trace[HouLean.anon_struct] m!"structure command:\n{structCmd}"
   
   elabCommand structCmd
 
@@ -89,59 +129,90 @@ def getOrCreateStruct (fields : Array FieldInfo) : CommandElabM Name := do
 
 
 /-- Anonymous structure. -/
-syntax (name := anonStructType) "struct " "{" (ident ":" term),* "}" : term
+syntax (name := anonStructType) "struct " "{" (ident " : " term),* "}" : term
 
 -- Macro to elaborate anonymous struct types
 elab_rules : term
 | `(struct { $[$names:ident : $types:term],* }) => do
   let types : Array Term := types
   let stx ← `(term| struct { $[$names:ident : $types:term],* })
-  let types ← types.mapM (elabTerm · none)
-  let fields := names.zip types |>.map fun (n, t) => 
-    ({ name := n.getId, type := t } : FieldInfo)
+  let types ← types.mapM (elabTermAndSynthesize · none)
 
-  let structName ← liftCommandElabM (getOrCreateStruct fields)
+  -- collect parameters fvars
+  let (_,s) ← (for type in types do type.collectFVars).run {}
+  let params := s.fvarSet.toArray.map (fun id => Expr.fvar id)
+  let paramTypes ← liftM <| params.mapM inferType -- maybe instantiate mvars?
+
+  trace[HouLean.anon_struct] m!"parameters {params}, types: {paramTypes}"
+
+  -- check that types of parameters do not containt any fvars
+  -- for now, do not support crazy dependently types structures!
+  for type in paramTypes do
+    if type.hasFVar then
+      throwError s!"The type of structure field type can't depend on a parameter!"
+
+  let parametrizedTypes ← liftM <|types.mapM (mkLambdaFVars params)
+  
+  let fields := names.zip parametrizedTypes |>.map fun (n, t) => 
+    ({ name := n.getId, type := t } : FieldInfo)
+  let sig : StructSignature := {
+      paramNum := params.size
+      fields := fields
+    }
+
+  trace[HouLean.anon_struct] m!"struct signature {sig}"
+
+  let structName ← liftCommandElabM (getOrCreateStruct sig)
   let structId := mkIdent structName
   let cmd ← `(command|
     @[app_unexpander $structId]
     def unexpandAnonStruct : Lean.PrettyPrinter.Unexpander
-    | _ => `($stx)
+    | _ => set_option hygiene false in `($stx)
     )
   let _ ← liftCommandElabM (elabCommand cmd)
-  return (.const structName [])
 
--- add commands 
--- struct_push% field_name s val
--- struct_pop% field_name s
+  -- make metavariables for all parameters
+  let t := (← mkConstWithFreshMVarLevels structName)
+  let (paramMVars, _, _) ← forallMetaTelescope (← inferType t)
+  let t := t.beta paramMVars
+
+  -- now we fill all the parameter metavariables by unifying with the original field types
+  withLocalDeclD `x t fun x => do
+    -- go over all field types and unify to fill in the parameter metavariables
+    for t in types, i in [0:types.size] do
+      if (← isDefEq t (← inferType (.proj structName i x))) then
+        continue
+      else
+        throwError m!"faild to back infer parameter types from the field of type {t}"
+
+  return t
+
 
 -- struct_push%: Add a field to a struct
 -- Usage: struct_push% fieldName structVal newFieldVal
-elab "struct%" s:term "push" field:ident ":=" val:term  : term => do
+elab "struct" s:term "push%" field:ident ":=" val:term  : term => do
   -- Elaborate the struct value and the new field value
   let sExpr ← elabTermAndSynthesize s none  >>= instantiateMVars
   let sType ← inferType sExpr  >>= instantiateMVars
   let valExpr ← elabTermAndSynthesize val none >>= instantiateMVars
   let valType ← inferType valExpr >>= instantiateMVars
+
+  if valType.hasFVar then
+    throwError "New field's type can't depend on a parameter yet!"
   
   -- Get fields from existing struct type
-  let env ← getEnv
-  let structMap := anonStructExt.getState env
+  let env ← getEnv   
+  let structMap := (anonStructExt.getState env).nameToSig
   
-  let mut oldFields : Array FieldInfo := #[]
-  let mut oldStructName : Name := Name.anonymous
+  let .const oldStructName _ := sType.getAppFn'
+    | throwError "Expected anonymous struct type, got {sType}"
   
-  match sType with
-  | Expr.const structName _ =>
-    -- Find in our map
-    for (sig, name) in structMap.toList do
-      if name == structName then
-        oldFields := sig.fields
-        oldStructName := structName
-        break
-  | _ => throwError "Expected anonymous struct type, got {sType}"
+  let some oldSig := structMap.find? oldStructName
+    | throwError "Struct not found in anonymous struct registry"
+  let oldFields := oldSig.fields
 
-  if oldStructName.isAnonymous then
-    throwError "Struct not found in anonymous struct registry"
+  if oldSig.paramNum ≠ 0 then
+    throwError "Pushing new elements to parametrized structures is not yet supported!"
   
   -- Check if field already exists
   if oldFields.any (·.name == field.getId) then
@@ -149,10 +220,13 @@ elab "struct%" s:term "push" field:ident ":=" val:term  : term => do
 
   -- Add new field
   let newField : FieldInfo := { name := field.getId, type := valType }
-  let newFields := oldFields.push newField
+  let newSig := {
+    paramNum := 0
+    fields := oldFields.push newField
+    }
 
   -- Create new struct type
-  let newStructName ← liftCommandElabM (getOrCreateStruct newFields)
+  let newStructName ← liftCommandElabM (getOrCreateStruct newSig)
 
   let newStructId := mkIdent newStructName
   let stx ← `({$s with $field:ident := $val : $newStructId:ident})
@@ -161,38 +235,38 @@ elab "struct%" s:term "push" field:ident ":=" val:term  : term => do
 
 -- struct_pop%: Remove a field from a struct
 -- Usage: struct% s pop field
-elab "struct%" s:term "pop" field:ident : term => do
+elab "struct" s:term "pop%" field:ident : term => do
   -- Elaborate the struct value
   let sExpr ← elabTermAndSynthesize s none >>= instantiateMVars
   let sType ← inferType sExpr >>= instantiateMVars
   
   -- Get fields from existing struct type
   let env ← getEnv
-  let structMap := anonStructExt.getState env
+  let structMap := (anonStructExt.getState env).nameToSig
   
-  let mut oldFields : Array FieldInfo := #[]
-  let mut oldStructName : Name := Name.anonymous
+  let .const oldStructName _ := sType.getAppFn'
+    | throwError "Expected anonymous struct type, got {sType}"
   
-  match sType with
-  | Expr.const structName _ =>
-    for (sig, name) in structMap.toList do
-      if name == structName then
-        oldFields := sig.fields
-        oldStructName := structName
-        break
-  | _ => throwError "Expected anonymous struct type, got {sType}"
-  
-  if oldStructName.isAnonymous then
-    throwError "Struct not found in anonymous struct registry"
+  let some oldSig := structMap.find? oldStructName
+    | throwError "Struct not found in anonymous struct registry"
+  let oldFields := oldSig.fields
+
+  if oldSig.paramNum ≠ 0 then
+    throwError "Pop elements from parametrized structures is not yet supported!"
+
   
   -- Remove the specified field
   let newFields := oldFields.filter (·.name != field.getId)
+  let newSig := {
+    paramNum := 0
+    fields := newFields
+  }
   
   if newFields.size == oldFields.size then
     throwError "Field {field.getId} not found in struct"
   
   -- Create new struct type without that field
-  let newStructName ← liftCommandElabM (getOrCreateStruct newFields)
+  let newStructName ← liftCommandElabM (getOrCreateStruct newSig)
   let newStructId := mkIdent newStructName
 
   let stx ← `({$s with : $newStructId})

@@ -6,6 +6,8 @@ open Lean
 
 namespace HouLean.LeanGraph
 
+initialize registerTraceClass `HouLean.lean_graph
+
 inductive PortType where
   | builtin (name type : String)
   | struct  (name type : String) (subports : Array PortType)
