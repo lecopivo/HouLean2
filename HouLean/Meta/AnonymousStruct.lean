@@ -109,17 +109,14 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
   
   elabCommand structCmd
 
-  let cmds := #[
-    ← `(command| deriving instance BEq for $id),
-    ← `(command| deriving instance Inhabited for $id),
-    ← `(command| deriving instance ToJson for $id),
-    ← `(command| deriving instance FromJson for $id)]
-
-  for cmd in cmds do
-    try
-      elabCommand cmd
-    catch _ =>
-      continue
+  let coreMsgs ← liftTermElabM <| Core.getMessageLog
+  let cmdElabMsgs := (← get).messages
+  elabCommand (← `(command| deriving instance BEq for $id))
+  elabCommand (← `(command| deriving instance Inhabited for $id))
+  elabCommand (← `(command| deriving instance ToJson for $id))
+  elabCommand (← `(command| deriving instance FromJson for $id))
+  liftTermElabM <| Core.setMessageLog coreMsgs
+  modify (fun s => {s with messages := cmdElabMsgs})
   
   -- Register in our extension
   modifyEnv fun env => 
@@ -130,6 +127,10 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
 
 /-- Anonymous structure. -/
 syntax (name := anonStructType) "struct " "{" (ident " : " term),* "}" : term
+
+-- todo: provide elaborator or macro for this!
+syntax (name := anonStructVal) "struct " "{" (ident " := " term),* "}" : term
+
 
 -- Macro to elaborate anonymous struct types
 elab_rules : term

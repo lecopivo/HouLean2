@@ -74,3 +74,6 @@ instance {α} [HasPosition α] [HasOrient α] [HasScale α] : HasTransform α wh
     x |> (setP · t.P)
       |> (setorient · t.orient)
       |> (setscale · t.scale)
+
+/-- Name identifying an object. -/
+#known_field name name HasName String

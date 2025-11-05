@@ -234,7 +234,7 @@ partial def traverseGraphCore' (node : Node) : TraverseM Unit := do
 
   let nodeId := mkIdent node.type.leanConstant
   let nodeStx ← `(term| $nodeId $inputs*)
-  withContext do
+  withContext do withoutErrToSorry do
     let val ← elabTerm nodeStx none >>= instantiateMVars
     let type ← inferType val
     addVariable (Name.mkSimple node.name) type val node.name

@@ -2,9 +2,24 @@ import HouLean.Apex.Compile.Extension
 
 open Lean Meta
 
-namespace HouLean.Apex.Compiler
+namespace HouLean
 
-partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do 
+/-- This class maps Lean type `α` to Apex compatible type `β`. 
+
+This extensible type level function mapping α to β is used to 
+transform Lean code to a smaller subset of Lean which is supported
+by Apex compiler. Therefore many APEX compiler extensions can be done
+through providing instances like `ApexType` and one does not have to
+touch the compiler!.
+-/
+class ApexType (α : Type u) (β : outParam (Type v)) where
+  toApex : α → β
+  fromApex : β → α
+
+
+namespace Apex.Compiler
+
+partial def getApexTypeCore? (type : Expr) : MetaM (Option Compiler.ApexType) := do 
 
   let type ← whnfR type
   let (fn, args) := type.getAppFnArgs
@@ -36,7 +51,7 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
     try
       -- type constructores are assumet to have the same arguments
       let type' ← mkAppOptM fn' (argMap.map (fun i? => i?.map (fun i => args[i]!)))
-      return ← getApexType? type'
+      return ← getApexTypeCore? type'
     catch e =>
       throwError m!"Failed replacing {fn} with {fn'} in {type}\n{e.toMessageData}"
 
@@ -52,7 +67,7 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
       let projFunType ← inferType (← mkAppOptM info.projFn (args.map some))
       let .some (_,t) := projFunType.arrow? | return none
 
-      match ← getApexType? t with
+      match ← getApexTypeCore? t with
       | .some (.builtin typeName) =>
         fields := fields.push (.leaf (info.fieldName.toString, typeName))
       | .some (.struct s) => 
@@ -62,6 +77,19 @@ partial def getApexType? (type : Expr) : MetaM (Option ApexType) := do
     return some (.struct (.node fields))
 
   return none
+
+partial def getApexType? (type : Expr) : MetaM (Option Compiler.ApexType) := do
+  let mut type := type
+
+  -- try replacing type with type' synthesizing `HouLean.ApexType 
+  let type' ← mkFreshTypeMVar
+  let cls := mkApp2 (← mkConstWithFreshMVarLevels ``HouLean.ApexType) type type'
+  if let some _ ← synthInstance? cls then
+    type ← instantiateMVars type'
+
+  getApexTypeCore? type
+  
+
 
 /-- Is `type` structure *and* not compiler supported type.
 
@@ -93,10 +121,10 @@ def enforceStaticSize (type : ApexType) : MetaM (Except Expr ApexStaticType) :=
 
 def addBuiltinApexType (type : Expr) (apexName : String) : MetaM Unit := do
   try
-    unless ← isDefEq (← inferType type) (.sort 1) do throwError ""
+    unless (← inferType type).isSort do throwError ""
     compilerExt.add (.apexType type (.builtin apexName))
-  catch _ =>
-    throwError m!"Can't register {type} as APEX builtin type!"
+  catch e =>
+    throwError m!"Can't register {type} as APEX builtin type!\n{e.toMessageData}"
 
 
 syntax (name:=apex_type) "apex_type" str : attr
@@ -110,7 +138,7 @@ initialize apexTypeAttr : Unit ←
       match stx with
       | `(apex_type| apex_type $name) => do
        discard <| MetaM.run do
-         addBuiltinApexType (.const declName []) name.getString
+         addBuiltinApexType (← mkConstWithFreshMVarLevels declName) name.getString
       | _ => Elab.throwUnsupportedSyntax
     erase := fun _declName =>
       throwError "Can't remove `apex_type`, not implemented yet!"

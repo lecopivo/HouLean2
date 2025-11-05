@@ -139,3 +139,65 @@ info: let __src := foo 0.1;
 -- buildStruct% x 0.1 y 0.2 z 0.3
 
 end Tests
+
+open Lean Meta
+def tryCore (go : CoreM α) : CoreM (Except Exception α) := do
+  let oldState ← get
+  let r? ← go.run (← read) (← get) 
+  sorry
+  -- if r?.isSome then
+  --   return r?
+  -- else
+  --   set oldState
+  --   return r?
+
+open Lean Elab Term
+
+run_elab
+  withoutErrToSorry do
+  try
+    let _ ← elabTerm (← `(safdsasdf)) none
+  catch e =>
+    logInfo m!"exception thrown!\n{e.toMessageData}"
+
+
+open Qq in
+run_meta
+  let (e,rest) ← 
+    withLetDecl `a q(Nat) q(1 + 10) fun a => do
+    withLetDecl `b q(Nat) q(42) fun b => do
+    withLetDecl `c q(String) q(42) fun c => do
+      let rest ← mkFreshExprMVar none
+      -- let (xs,_,_) ← forallMetaTelescope (← inferType q(@Prod.mk.{0,0}))
+      -- let r := (Expr.const ``Prod.mk [0,0]).beta (xs[0:2] ++ #[a,rest])
+      return (← mkLambdaFVars #[a,b,c] rest, rest)
+  
+  -- rest.mvarId!.withContext do
+  --   logInfo m!"rest local context:"
+  --   for decl in (← getLCtx) do
+  --     logInfo m!"{decl.userName} : {decl.type}"
+  
+  logInfo m!"e: {e}"
+  logInfo m!"rest: {rest}"
+  let rest2 ← 
+    rest.mvarId!.withContext do
+
+      let bindVal := q((pure 10 : MetaM Nat))
+
+      let (cont, rest2) ← 
+        withLocalDeclD `bindVal q(Nat) fun bindVar => do
+          let rest2 ← mkFreshExprMVar none
+          return (← mkLambdaFVars #[bindVar] rest2, rest2)
+
+      let typesAndInstances := #[← mkFreshExprMVar none, ← mkFreshExprMVar none, ← mkFreshExprMVar none, ← mkFreshExprMVar none]
+      -- let _ ← isDefEq rest bindVal
+      let restVal := (Expr.const ``bind [0,0]).beta (typesAndInstances ++ #[bindVal,cont])
+      logInfo m!"restVal: {restVal}"
+      -- let _ ← isDefEq rest (restVal)
+      return rest2
+
+  logInfo m!"e: {e}"
+  logInfo m!"rest2: {e}"
+         
+    
+#check bind

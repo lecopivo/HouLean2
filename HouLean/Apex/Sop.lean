@@ -1436,41 +1436,1496 @@ structure AttribCreateParams where
   /-- Array of attributes to create -/
   attributes : Array AttribCreateEntry := #[]
 
-/-- Create or modify attributes on geometry
+--/-- Create or modify attributes on geometry
+--
+--Example:
+--```lean
+--let withAttribs = attribCreate {
+--  attributes := #[
+--    { name := "Cd", class' := 2, type := 2, size := 3, value := ⟨1, 0, 0, 0⟩ }
+--  ]
+--} myGeo
+--```
+---/
+-- def attribCreate (params : AttribCreateParams := {}) (geo : Geometry) : Geometry :=
+--   -- Build DictArray from attributes array
+--   sorry
+  -- let numattr := params.attributes.foldl (init := DictArray.default) fun acc entry =>
+  --   let dict := Dict.default
+  --     |>.set "name" entry.name
+  --     |>.set "class" entry.class'
+  --     |>.set "type" entry.type
+  --     |>.set "size" entry.size
+  --     |>.set "default" entry.value
+  --     |>.set "string" entry.string
+  --   acc.append dict
+  
+  -- sop_attribcreate_2_0 geo
+  --   params.group
+  --   params.groupType
+  --   0 -- encodenames
+  --   numattr
+
+-- ============================================================================
+-- Error Node
+-- ============================================================================
+
+/-- Parameters for the Error SOP -/
+structure ErrorParams where
+  /-- Array of error/warning messages to display -/
+  errors : DictArray := default
+
+/-- Display error or warning messages
+Used to create controlled error conditions in your network for debugging or validation.
 
 Example:
 ```lean
-let withAttribs = attribCreate {
-  attributes := #[
-    { name := "Cd", class' := 2, type := 2, size := 3, value := ⟨1, 0, 0, 0⟩ }
-  ]
+let errorGeo = error {
+  errors := -- DictArray with error messages
 } myGeo
 ```
 -/
-def attribCreate (params : AttribCreateParams := {}) (geo : Geometry) : Geometry :=
-  -- Build DictArray from attributes array
-  let numattr := params.attributes.foldl (init := DictArray.default) fun acc entry =>
-    let dict := Dict.default
-      |>.set "name" entry.name
-      |>.set "class" entry.class'
-      |>.set "type" entry.type
-      |>.set "size" entry.size
-      |>.set "default" entry.value
-      |>.set "string" entry.string
-    acc.append dict
-  
-  sop_attribcreate_2_0 geo
+def error (params : ErrorParams := {}) (geo : Geometry) : Geometry :=
+  sop_error geo params.errors
+
+-- ============================================================================
+-- Extract Centroid Node
+-- ============================================================================
+
+/-- Parameters for the Extract Centroid SOP -/
+structure ExtractCentroidParams where
+  /-- Partition type: 0=whole geometry, 1=by attribute -/
+  partitionType : Int := 0
+  /-- Attribute name for partitioning pieces -/
+  pieceAttrib : String := "name"
+  /-- Attribute class: 0=detail, 1=primitive, 2=point, 3=vertex -/
+  class' : Int := 1
+  /-- Centroid computation method: 0=bounding box center, 1=center of mass -/
+  method : Int := 1
+  /-- Output mode: 0=points only, 1=points with geometry -/
+  output : Int := 0
+  /-- Name of attribute to store centroid position -/
+  centroidAttrib : String := "centroid"
+  /-- Space-separated list of attributes to transfer to centroids -/
+  transferAttributes : String := ""
+  /-- Space-separated list of groups to transfer to centroids -/
+  transferGroups : String := ""
+
+/-- Extract centroids (center points) from geometry pieces
+
+Example:
+```lean
+-- Extract centroids from pieces
+let centroids = extractCentroid {
+  partitionType := 1,
+  pieceAttrib := "name",
+  method := 1  -- center of mass
+} piecesGeo
+
+-- Get bounding box centers
+let boxCenters = extractCentroid {
+  method := 0,  -- bbox center
+  output := 0   -- points only
+} myGeo
+```
+-/
+def extractCentroid (params : ExtractCentroidParams := {}) (geo : Geometry) : Geometry :=
+  sop_extractcentroid geo
+    params.partitionType
+    params.pieceAttrib
+    params.class'
+    params.method
+    params.output
+    params.centroidAttrib
+    params.transferAttributes
+    params.transferGroups
+
+-- ============================================================================
+-- Extract Contours Node
+-- ============================================================================
+
+/-- Parameters for the Extract Contours SOP -/
+structure ExtractContoursParams where
+  /-- Primitive group to extract contours from -/
+  group : String := ""
+  /-- Camera path for view-dependent extraction -/
+  camPath : String := "/obj/cam1"
+  /-- Enable frustum culling -/
+  frustumCulling : Bool := false
+  /-- Normal tolerance in degrees for silhouette detection -/
+  normalTolerance : Float := 90.0
+  /-- Extraction mode: 0=silhouettes, 1=creases, 2=borders, 3=all -/
+  mode : Int := 0
+  /-- Name of output edge group -/
+  outputEdgeGroup : String := "contours"
+
+/-- Extract contour edges (silhouettes, creases, borders) from geometry
+
+Example:
+```lean
+-- Extract silhouette edges
+let silhouettes = extractContours {
+  mode := 0,
+  camPath := "/obj/cam1",
+  normalTolerance := 90.0
+} myGeo
+
+-- Extract all contour types
+let allContours = extractContours {
+  mode := 3
+} myGeo
+```
+-/
+def extractContours (params : ExtractContoursParams := {}) (geo : Geometry) : Geometry :=
+  sop_extractcontours geo
+    params.group
+    params.camPath
+    params.frustumCulling.toInt
+    params.normalTolerance
+    params.mode
+    params.outputEdgeGroup
+
+-- ============================================================================
+-- Extract Transform Node
+-- ============================================================================
+
+/-- Parameters for the Extract Transform SOP -/
+structure ExtractTransformParams where
+  /-- Use piece attribute to match geometry pieces -/
+  usePieceAttrib : Bool := true
+  /-- Name of piece attribute for matching -/
+  pieceAttrib : String := "name"
+  /-- Piece attribute class: 0=detail, 1=primitive, 2=point -/
+  pieceAttribClass : Int := 1
+  /-- Extraction method: 0=point-based, 1=primitive-based -/
+  extractionMethod : Int := 0
+  /-- Output transform attributes: 0=matrix, 1=transform components, 2=both -/
+  outputAttribs : Int := 0
+  /-- Compute deformation/distortion measure -/
+  computeDistortion : Bool := false
+  /-- Name of distortion attribute -/
+  distortionAttrib : String := "distortion"
+
+/-- Extract transformation between two geometries
+Computes the transform that takes the first input to match the second input.
+
+Example:
+```lean
+-- Extract transform between rest and deformed geometry
+let withTransform = extractTransform {
+  usePieceAttrib := true,
+  pieceAttrib := "name",
+  outputAttribs := 2  -- output both matrix and components
+} restGeo deformedGeo
+
+-- Compute distortion
+let withDistortion = extractTransform {
+  computeDistortion := true,
+  distortionAttrib := "distortion"
+} geo1 geo2
+```
+-/
+def extractTransform (params : ExtractTransformParams := {}) 
+    (geo0 geo1 : Geometry) : Geometry :=
+  sop_extracttransform geo0 geo1
+    params.usePieceAttrib.toInt
+    params.pieceAttrib
+    params.pieceAttribClass
+    params.extractionMethod
+    params.outputAttribs
+    params.computeDistortion.toInt
+    params.distortionAttrib
+
+-- ============================================================================
+-- Facet Node
+-- ============================================================================
+
+/-- Parameters for the Facet SOP -/
+structure FacetParams where
+  /-- Primitive group to facet -/
+  group : String := ""
+  /-- Group type: 0=guess, 4=primitives -/
+  groupType : Int := 4
+  /-- Pre-compute normals before faceting -/
+  preNormal : Bool := false
+  /-- Make normals unit length -/
+  unitNormals : Bool := false
+  /-- Make unique points (no sharing between primitives) -/
+  uniquePoints : Bool := false
+  /-- Consolidate points within distance -/
+  consolidatePoints : Bool := false
+  /-- Distance threshold for consolidation -/
+  distance : Float := 0.001
+  /-- Use accurate (but slower) consolidation -/
+  accurate : Bool := true
+  /-- Remove inline points along edges -/
+  removeInlinePoints : Bool := false
+  /-- Distance threshold for inline point removal -/
+  inlineDistance : Float := 0.001
+  /-- Fix polygon winding order -/
+  orientPolys : Bool := false
+  /-- Add cusp normals at sharp angles -/
+  cuspNormals : Bool := true
+  /-- Cusp angle threshold in degrees -/
+  cuspAngle : Float := 60.0
+  /-- Remove primitive normals (use point normals only) -/
+  removePrimNormals : Bool := false
+  /-- Make primitives planar -/
+  makePlanar : Bool := false
+  /-- Post-compute normals after faceting -/
+  postNormal : Bool := true
+  /-- Reverse all normals -/
+  reverseNormals : Bool := false
+
+/-- Control point/primitive normals and geometry cleanup
+A versatile node for normal computation, point consolidation, and polygon cleanup.
+
+Example:
+```lean
+-- Compute vertex normals with cusps
+let withNormals = facet {
+  postNormal := true,
+  cuspNormals := true,
+  cuspAngle := 45.0
+} myGeo
+
+-- Make unique points (faceted look)
+let faceted = facet {
+  uniquePoints := true,
+  postNormal := true
+} myGeo
+
+-- Clean up geometry
+let cleaned = facet {
+  consolidatePoints := true,
+  distance := 0.001,
+  removeInlinePoints := true,
+  orientPolys := true
+} messyGeo
+```
+-/
+def facet (params : FacetParams := {}) (geo : Geometry) : Geometry :=
+  sop_facet geo
     params.group
     params.groupType
-    0 -- encodenames
-    numattr
+    params.preNormal.toInt
+    params.unitNormals.toInt
+    params.uniquePoints.toInt
+    params.consolidatePoints.toInt
+    params.distance
+    params.accurate.toInt
+    params.removeInlinePoints.toInt
+    params.inlineDistance
+    params.orientPolys.toInt
+    params.cuspNormals.toInt
+    params.cuspAngle
+    params.removePrimNormals.toInt
+    params.makePlanar.toInt
+    params.postNormal.toInt
+    params.reverseNormals.toInt
+
+-- ============================================================================
+-- File Node
+-- ============================================================================
+
+/-- Parameters for the File SOP -/
+structure FileParams where
+  /-- File mode: 0=read, 1=write -/
+  fileMode : Int := 0
+  /-- File path to read from or write to -/
+  file : String := ""
+  /-- Object pattern filter for loading -/
+  objPattern : String := "*"
+  /-- Geometry data path within file -/
+  geoDataPath : String := ""
+  /-- Missing frame behavior: 0=no geometry, 1=report error -/
+  missingFrame : Int := 0
+  /-- Load type: 0=all, 1=packed, 2=points -/
+  loadType : Int := 0
+  /-- Viewport LOD for packed geometry -/
+  viewportLod : Int := 0
+  /-- Edit packed primitives in viewport -/
+  packedViewerEdit : Bool := false
+  /-- Keep packed primitives expanded -/
+  packExpanded : Bool := false
+  /-- Delay load geometry data -/
+  delayLoad : Bool := false
+  /-- Create directory path if it doesn't exist (for writing) -/
+  mkPath : Bool := true
+  /-- Cache size in MB -/
+  cacheSize : Int := 100
+  /-- Enable prefetching for animation -/
+  prefetch : Bool := false
+  /-- Frame range for sequences -/
+  frameRange : Vector2 := ⟨1, 100⟩
+  /-- Index for single frame loading -/
+  index : Float := 1.0
+  /-- Frame wrapping: 0=clamp, 1=cycle, 2=mirror -/
+  wrap : Int := 0
+  /-- Retry on load failure -/
+  retry : Bool := false
+
+/-- Load or save geometry files
+Supports various formats including .bgeo, .obj, .fbx, .abc, etc.
+
+Example:
+```lean
+-- Load geometry file
+let loaded = file {
+  file := "$HIP/geo/model.bgeo"
+} default
+
+-- Load with packed primitives
+let packed = file {
+  file := "$HIP/geo/scatter.bgeo",
+  loadType := 1,  -- packed
+  viewportLod := 2
+} default
+
+-- Load sequence
+let sequence = file {
+  file := "$HIP/geo/anim.$F4.bgeo",
+  index := 10.0
+} default
+```
+-/
+def file (params : FileParams := {}) (geo : Geometry := default) : Geometry :=
+  sop_file geo
+    params.fileMode
+    params.file
+    params.objPattern
+    params.geoDataPath
+    params.missingFrame
+    params.loadType
+    params.packedViewerEdit.toInt
+    params.viewportLod
+    params.packExpanded.toInt
+    params.delayLoad.toInt
+    params.mkPath.toInt
+    params.cacheSize
+    params.prefetch.toInt
+    params.frameRange
+    params.index
+    params.wrap
+    params.retry.toInt
+
+-- ============================================================================
+-- Fit Node
+-- ============================================================================
+
+/-- Parameters for the Fit SOP -/
+structure FitParams where
+  /-- Point group to fit surface to -/
+  group : String := ""
+  /-- Fitting method: 0=least squares, 1=global interpolate -/
+  method : Int := 0
+  /-- Surface type: 0=NURBS, 1=Bezier -/
+  type : Int := 0
+  /-- Surface topology: 0=rows, 1=columns, 2=rows & columns, 3=triangles -/
+  surfaceType : Int := 2
+  /-- U direction order (degree + 1) -/
+  orderU : Int := 4
+  /-- V direction order (degree + 1) -/
+  orderV : Int := 4
+  /-- Fitting tolerance (for least squares) -/
+  tolerance : Float := 0.1
+  /-- Smoothing factor (0=interpolate, higher=smoother) -/
+  smoothing : Float := 0.0
+  /-- U direction knot multiplicity -/
+  multipleU : Int := 1
+  /-- V direction knot multiplicity -/
+  multipleV : Int := 1
+  /-- Scope: 0=fit all, 1=fit primitive -/
+  scope : Int := 0
+  /-- U parametrization: 0=uniform, 1=chord length, 2=centripetal -/
+  dataParamU : Int := 1
+  /-- V parametrization: 0=uniform, 1=chord length, 2=centripetal -/
+  dataParamV : Int := 1
+  /-- Close surface in U direction -/
+  closeU : Bool := false
+  /-- Close surface in V direction -/
+  closeV : Bool := false
+  /-- Include corner points -/
+  corners : Bool := true
+
+/-- Fit a spline surface (NURBS/Bezier) to points
+
+Example:
+```lean
+-- Fit NURBS surface to points
+let surface = fit {
+  method := 0,  -- least squares
+  orderU := 4,
+  orderV := 4,
+  tolerance := 0.1
+} pointCloud
+
+-- Interpolating surface
+let interpolated = fit {
+  method := 1,  -- global interpolate
+  smoothing := 0.0
+} points
+```
+-/
+def fit (params : FitParams := {}) (geo : Geometry) : Geometry :=
+  sop_fit geo
+    params.group
+    params.method
+    params.type
+    params.surfaceType
+    params.orderU
+    params.orderV
+    params.tolerance
+    params.smoothing
+    params.multipleU
+    params.multipleV
+    params.scope
+    params.dataParamU
+    params.dataParamV
+    params.closeU.toInt
+    params.closeV.toInt
+    params.corners.toInt
+
+-- ============================================================================
+-- Font Node
+-- ============================================================================
+
+/-- Parameters for the Font SOP -/
+structure FontParams where
+  /-- Output type: 0=polygon, 1=NURBS curves, 2=Bezier curves -/
+  type : Int := 0
+  /-- Font file path (.ttf, .otf, etc.) -/
+  fontFile : String := ""
+  /-- Text string to generate -/
+  text : String := "Hello"
+  /-- Horizontal alignment: 0=left, 1=center, 2=right -/
+  hAlign : Int := 1
+  /-- Vertical alignment: 0=bottom, 1=baseline, 2=middle, 3=top -/
+  vAlign : Int := 2
+  /-- Use descender for vertical alignment -/
+  useDescender : Bool := true
+  /-- Translation offset -/
+  translate : Vector3 := ⟨0, 0, 0⟩
+  /-- Rotation in degrees -/
+  rotate : Vector3 := ⟨0, 0, 0⟩
+  /-- Scale in X and Y -/
+  scale : Vector2 := ⟨1, 1⟩
+  /-- Font size -/
+  fontSize : Float := 1.0
+  /-- Character spacing (tracking) -/
+  tracking : Vector2 := ⟨0, 0⟩
+  /-- Enable automatic kerning -/
+  autoKern : Bool := true
+  /-- Oblique/italic angle in degrees -/
+  oblique : Float := 0.0
+  /-- Level of detail (for polygon output) -/
+  lod : Float := 0.1
+  /-- Add holes to characters -/
+  addHoles : Bool := true
+  /-- Add primitive attribute for character identification -/
+  addCharAttrib : Bool := false
+
+/-- Generate 3D text from fonts
+
+Example:
+```lean
+-- Simple text
+let text = font {
+  text := "Hello World",
+  fontSize := 2.0
+}
+
+-- Styled text
+let styled = font {
+  text := "HouLean",
+  fontFile := "$HH/fonts/Arial.ttf",
+  fontSize := 5.0,
+  oblique := 15.0,
+  tracking := ⟨0.1, 0⟩
+}
+
+-- NURBS curves for further processing
+let curves = font {
+  type := 1,  -- NURBS
+  text := "Path",
+  fontSize := 1.0
+}
+```
+-/
+def font (params : FontParams := {}) : Geometry :=
+  sop_font
+    params.type
+    params.fontFile
+    params.text
+    params.hAlign
+    params.vAlign
+    params.useDescender.toInt
+    params.translate
+    params.rotate
+    params.scale
+    params.fontSize
+    params.tracking
+    params.autoKern.toInt
+    params.oblique
+    params.lod
+    params.addHoles.toInt
+    params.addCharAttrib.toInt
+
+-- ============================================================================
+-- Fractal Node
+-- ============================================================================
+
+/-- Parameters for the Fractal SOP -/
+structure FractalParams where
+  /-- Point group to apply fractal displacement to -/
+  group : String := ""
+  /-- Number of fractal subdivisions (octaves) -/
+  divisions : Int := 3
+  /-- Smoothing factor between octaves (0-1) -/
+  smoothing : Float := 0.5
+  /-- Overall displacement scale -/
+  scale : Float := 1.0
+  /-- Random seed for fractal pattern -/
+  seed : Int := 0
+  /-- Fix boundary points (don't displace) -/
+  fixBoundary : Bool := false
+  /-- Add vertex normals -/
+  addVertexNormals : Bool := false
+  /-- Normal attribute name to use for displacement direction -/
+  normalAttrib : String := "N"
+  /-- Displacement direction vector (if no normal attribute) -/
+  direction : Vector3 := ⟨0, 1, 0⟩
+
+/-- Add fractal noise displacement to geometry
+Creates natural-looking terrain and organic surface detail.
+
+Example:
+```lean
+-- Terrain from grid
+let terrain = fractal {
+  divisions := 5,
+  scale := 2.0,
+  smoothing := 0.6
+} gridGeo
+
+-- Organic displacement
+let organic = fractal {
+  divisions := 4,
+  scale := 0.5,
+  seed := 42,
+  normalAttrib := "N"
+} sphereGeo
+
+-- Fixed boundary displacement
+let bordered = fractal {
+  divisions := 3,
+  fixBoundary := true
+} planeGeo
+```
+-/
+def fractal (params : FractalParams := {}) (geo : Geometry) : Geometry :=
+  sop_fractal geo
+    params.group
+    params.divisions
+    params.smoothing
+    params.scale
+    params.seed
+    params.fixBoundary.toInt
+    params.addVertexNormals.toInt
+    params.normalAttrib
+    params.direction
+
+
+-- ============================================================================
+-- Solidify Node
+-- ============================================================================
+
+/-- Parameters for the Solidify SOP -/
+structure SolidifyParams where
+  /-- Tetrahedron group to check for solidity -/
+  tetGroup : String := ""
+  /-- Polygon group (surface geometry) -/
+  polyGroup : String := ""
+  /-- Keep input polygons in output -/
+  keepPolygons : Bool := true
+  /-- Boundary threshold for solid detection -/
+  solidBoundary : Float := 0.0
+  /-- Output solidity attribute -/
+  outputSolidity : Bool := false
+  /-- Name of solidity attribute -/
+  solidityAttrib : String := "solidity"
+
+/-- Determine which tetrahedra are inside solid regions
+
+Example:
+```lean
+let solidified = solidify {
+  tetGroup := "tets",
+  keepPolygons := false,
+  outputSolidity := true
+} tetMesh
+```
+-/
+def solidify (params : SolidifyParams := {}) (geo : Geometry) : Geometry :=
+  sop_solidify geo
+    params.tetGroup
+    params.polyGroup
+    params.keepPolygons.toInt
+    params.solidBoundary
+    params.outputSolidity.toInt
+    params.solidityAttrib
+
+-- ============================================================================
+-- Sort Node
+-- ============================================================================
+
+/-- Parameters for the Sort SOP -/
+structure SortParams where
+  /-- Point group to sort -/
+  ptGroup : String := ""
+  /-- Point sort mode: 0=no change, 1=by X, 2=by Y, 3=by Z, 4=shift, 5=reverse, 6=random, 7=proximity, 8=vertex order, 9=by attribute, 10=by expression -/
+  ptSort : Int := 0
+  /-- Random seed for point sorting -/
+  pointSeed : Int := 0
+  /-- Shift offset for point sorting -/
+  pointOffset : Int := 0
+  /-- Proximity position for point sorting -/
+  pointProximity : Vector3 := ⟨0, 0, 0⟩
+  /-- Object path for proximity reference -/
+  pointObjPath : String := ""
+  /-- Direction vector for directional sorting -/
+  pointDirection : Vector3 := ⟨0, 1, 0⟩
+  /-- Expression value for point sorting -/
+  pointExpr : Float := 0.0
+  /-- Attribute name for attribute-based sorting -/
+  pointAttrib : String := ""
+  /-- Attribute component to sort by -/
+  pointAttribComp : Int := 0
+  /-- Point order string (space-separated indices) -/
+  pointOrder : String := ""
+  /-- Reverse point sort order -/
+  pointReverse : Bool := false
+  /-- Use explicit point indices -/
+  usePointIndices : Bool := false
+  /-- Point indices string -/
+  pointIndices : String := ""
+  /-- Combine with existing point order -/
+  combinePointIndices : Bool := false
+  /-- Primitive group to sort -/
+  primGroup : String := ""
+  /-- Primitive sort mode (same options as point sort) -/
+  primSort : Int := 0
+  /-- Random seed for primitive sorting -/
+  primSeed : Int := 0
+  /-- Shift offset for primitive sorting -/
+  primOffset : Int := 0
+  /-- Proximity position for primitive sorting -/
+  primProximity : Vector3 := ⟨0, 0, 0⟩
+  /-- Object path for primitive proximity reference -/
+  primObjPath : String := ""
+  /-- Direction vector for primitive sorting -/
+  primDirection : Vector3 := ⟨0, 1, 0⟩
+  /-- Expression value for primitive sorting -/
+  primExpr : Float := 0.0
+  /-- Attribute name for primitive attribute-based sorting -/
+  primAttrib : String := ""
+  /-- Primitive attribute component to sort by -/
+  primAttribComp : Int := 0
+  /-- Primitive order string -/
+  primOrder : String := ""
+  /-- Reverse primitive sort order -/
+  primReverse : Bool := false
+  /-- Use explicit primitive indices -/
+  usePrimIndices : Bool := false
+  /-- Primitive indices string -/
+  primIndices : String := ""
+  /-- Combine with existing primitive order -/
+  combinePrimIndices : Bool := false
+  /-- Vertex primitive order: 0=unchanged, 1=reverse -/
+  vertexPrimOrder : Int := 0
+
+/-- Sort points and primitives by various criteria
+
+Example:
+```lean
+-- Sort points by Y coordinate
+let sortedByY = sort {
+  ptSort := 2  -- by Y
+} myGeo
+
+-- Random point order
+let randomized = sort {
+  ptSort := 6,  -- random
+  pointSeed := 42
+} myGeo
+
+-- Sort by distance from origin
+let byProximity = sort {
+  ptSort := 7,  -- proximity
+  pointProximity := ⟨0, 0, 0⟩
+} myGeo
+
+-- Sort by attribute
+let byAttrib = sort {
+  ptSort := 9,  -- by attribute
+  pointAttrib := "id"
+} myGeo
+```
+-/
+def sort (params : SortParams := {}) (geo : Geometry) : Geometry :=
+  sop_sort geo
+    params.ptGroup
+    params.ptSort
+    params.pointSeed
+    params.pointOffset
+    params.pointProximity
+    params.pointObjPath
+    params.pointDirection
+    params.pointExpr
+    params.pointAttrib
+    params.pointAttribComp
+    params.pointOrder
+    params.pointReverse.toInt
+    params.usePointIndices.toInt
+    params.pointIndices
+    params.combinePointIndices.toInt
+    params.primGroup
+    params.primSort
+    params.primSeed
+    params.primOffset
+    params.primProximity
+    params.primObjPath
+    params.primDirection
+    params.primExpr
+    params.primAttrib
+    params.primAttribComp
+    params.primOrder
+    params.primReverse.toInt
+    params.usePrimIndices.toInt
+    params.primIndices
+    params.combinePrimIndices.toInt
+    params.vertexPrimOrder
+
+-- ============================================================================
+-- Split Points Node
+-- ============================================================================
+
+/-- Parameters for the Split Points SOP -/
+structure SplitPointsParams where
+  /-- Group of points to potentially split -/
+  group : String := ""
+  /-- Group type: 0=guess, 3=points -/
+  groupType : Int := 3
+  /-- Use attribute to determine splitting -/
+  useAttribute : Bool := false
+  /-- Attribute name to compare for splitting -/
+  attributeName : String := "N"
+  /-- Tolerance for attribute comparison -/
+  tolerance : Float := 0.0001
+  /-- Promote vertex attributes to points after splitting -/
+  promoteAttributes : Bool := false
+
+/-- Split shared points into unique points per primitive
+Useful for creating hard edges or preventing attribute blending.
+
+Example:
+```lean
+-- Split all points (hard edges everywhere)
+let hardEdges = splitPoints {} myGeo
+
+-- Split based on normal difference
+let splitByNormal = splitPoints {
+  useAttribute := true,
+  attributeName := "N",
+  tolerance := 0.01
+} myGeo
+
+-- Split specific group
+let splitGroup = splitPoints {
+  group := "seam_points"
+} myGeo
+```
+-/
+def splitPoints (params : SplitPointsParams := {}) (geo : Geometry) : Geometry :=
+  sop_splitpoints geo
+    params.group
+    params.groupType
+    params.useAttribute.toInt
+    params.attributeName
+    params.tolerance
+    params.promoteAttributes.toInt
+
+-- ============================================================================
+-- Stash Node
+-- ============================================================================
+
+/-- Parameters for the Stash SOP -/
+structure StashParams where
+  /-- Stashed data item -/
+  stash : DataItem := default
+  /-- File path for stashed data -/
+  stashFile : String := ""
+
+/-- Store geometry in a cached state for later retrieval
+
+Example:
+```lean
+let stashed = stash {
+  stashFile := "$HIP/cache/stash.bgeo"
+} myGeo
+```
+-/
+def stash (params : StashParams := {}) (geo : Geometry) : Geometry :=
+  sop_stash geo params.stash params.stashFile
+
+-- ============================================================================
+-- Surface Splat Node
+-- ============================================================================
+
+/-- Parameters for the Surface Splat SOP -/
+structure SurfaceSplatParams where
+  /-- Mask attribute binding -/
+  bindMask : String := "mask"
+  /-- Negate mask values -/
+  negateMask : Bool := false
+  /-- Width attribute binding -/
+  bindWidth : String := "width"
+  /-- Alpha attribute binding -/
+  bindAlpha : String := "alpha"
+  /-- Soft edge attribute binding -/
+  bindSoftEdge : String := "softedge"
+  /-- Hit attribute binding (stores if splat hit surface) -/
+  bindHit : String := "hit"
+  /-- Hit primitive attribute binding -/
+  bindHitPrim : String := "hitprim"
+  /-- Hit UV attribute binding -/
+  bindHitUV : String := "hituv"
+
+/-- Project and splat attributes from points onto a surface
+Used for painting, texture projection, and attribute transfer.
+
+Example:
+```lean
+-- Simple surface splatting
+let splatted = surfaceSplat {
+  bindWidth := "pscale",
+  bindAlpha := "Alpha"
+} surfaceGeo splatPointsGeo
+
+-- With hit detection
+let withHits = surfaceSplat {
+  bindHit := "hit",
+  bindHitPrim := "hitprim"
+} surfaceGeo pointsGeo
+```
+-/
+def surfaceSplat (params : SurfaceSplatParams := {}) 
+    (surface splat : Geometry) : Geometry :=
+  sop_surfacesplat surface splat
+    params.bindMask
+    params.negateMask.toInt
+    params.bindWidth
+    params.bindAlpha
+    params.bindSoftEdge
+    params.bindHit
+    params.bindHitPrim
+    params.bindHitUV
+
+-- ============================================================================
+-- Sweep Node
+-- ============================================================================
+
+/-- Parameters for the Sweep SOP (version 2.0) -/
+structure SweepParams where
+  /-- Curve group to use as backbone -/
+  curveGroup : String := ""
+  /-- Cross-section group -/
+  crossSectionGroup : String := ""
+  /-- Surface shape: 0=polygon, 1=NURBS, 2=Bezier -/
+  surfaceShape : Int := 0
+  /-- Surface type: varies by shape -/
+  surfaceType : Int := 0
+  /-- Global scale factor -/
+  scale : Float := 1.0
+  /-- Number of columns (divisions along backbone) -/
+  cols : Int := 10
+  /-- Radius for circular cross-section -/
+  radius : Float := 0.1
+  /-- Width for rectangular cross-section -/
+  width : Float := 1.0
+  /-- Reverse cross-section orientation -/
+  reverseCrossSections : Bool := false
+  /-- Stretch cross-section around tight curves -/
+  stretchAroundTurns : Bool := false
+  /-- Maximum stretch factor -/
+  maxStretchAroundTurns : Float := 2.0
+  /-- End cap type: 0=none, 1=flat, 2=rounded -/
+  endCapType : Int := 0
+  /-- Number of divisions in end caps -/
+  capDivs : Int := 4
+  /-- Use triangular poles in rounded caps -/
+  triangularPoles : Bool := false
+  /-- End cap scale factor -/
+  capScale : Float := 1.0
+  /-- End cap roundness (for rounded caps) -/
+  capRoundness : Float := 1.0
+  /-- Create group for end caps -/
+  addEndCapsGroup : Bool := false
+  /-- Name of end caps group -/
+  endCapsGroup : String := "caps"
+  /-- Apply scale ramp along backbone -/
+  applyScale : Bool := false
+  /-- Scale ramp curve -/
+  scaleRamp : FloatRamp := default
+  /-- Rotation order: 0=XYZ, 1=XZY, 2=YXZ, 3=YZX, 4=ZXY, 5=ZYX -/
+  rotationOrder : Int := 0
+  /-- Apply roll (twist) along backbone -/
+  applyRoll : Bool := false
+  /-- Initial roll angle in degrees -/
+  roll : Float := 0.0
+  /-- Number of full twists -/
+  fullTwists : Int := 0
+  /-- Incremental roll per segment -/
+  incrementalRoll : Float := 0.0
+  /-- Roll increment type: 0=per segment, 1=per unit length -/
+  rollPer : Int := 0
+  /-- Roll attribute name -/
+  rollAttrib : String := "roll"
+  /-- Apply yaw rotation -/
+  applyYaw : Bool := false
+  /-- Yaw angle in degrees -/
+  yaw : Float := 0.0
+  /-- Incremental yaw per segment -/
+  incrementalYaw : Float := 0.0
+  /-- Yaw increment type -/
+  yawPer : Int := 0
+  /-- Yaw attribute name -/
+  yawAttrib : String := "yaw"
+  /-- Apply pitch rotation -/
+  applyPitch : Bool := false
+  /-- Pitch angle in degrees -/
+  pitch : Float := 0.0
+  /-- Incremental pitch per segment -/
+  incrementalPitch : Float := 0.0
+  /-- Pitch increment type -/
+  pitchPer : Int := 0
+  /-- Pitch attribute name -/
+  pitchAttrib : String := "pitch"
+  /-- Copy order: 0=cross-section then curve, 1=curve then cross-section -/
+  copyOrder : Int := 0
+  /-- Cross-section identification attribute -/
+  crossSectionAttrib : String := ""
+  /-- Primitive type for output -/
+  primType : Int := 0
+  /-- Unroll closed surfaces -/
+  unrollClosedRowCol : Bool := false
+  /-- Swap row and column directions -/
+  swapRowCol : Bool := false
+  /-- Close surface if no curve input -/
+  closeIfNoCurveInput : Bool := false
+  /-- Tangent calculation type -/
+  tangentType : Int := 0
+  /-- Continuous closed curves -/
+  continuousClosed : Bool := true
+  /-- Extrapolate end tangents -/
+  extrapolateEndTangents : Bool := false
+  /-- Transform by attributes on backbone -/
+  transformByAttribs : Bool := false
+  /-- Compute UV coordinates -/
+  computeUVs : Bool := true
+  /-- Override existing UVs -/
+  overrideExistingUVs : Bool := false
+  /-- Use length-weighted UVs -/
+  lengthWeightedUVs : Bool := true
+  /-- Normalize U coordinates to 0-1 -/
+  normalizeU : Bool := true
+  /-- Normalize V coordinates to 0-1 -/
+  normalizeV : Bool := true
+  /-- Flip U direction -/
+  flipU : Bool := false
+  /-- UV scale factors -/
+  uvScale : Vector2 := ⟨1, 1⟩
+  /-- Use mesh edge lengths for UVs -/
+  useMeshEdgeLengths : Bool := false
+  /-- Proportional scale per curve -/
+  propScalePerCurve : Bool := false
+  /-- Wrap U coordinates -/
+  wrapU : Bool := false
+  /-- Wrap V coordinates -/
+  wrapV : Bool := false
+  /-- Attributes to transfer from backbone -/
+  attribsFromBackbone : String := ""
+  /-- Attributes to transfer from cross-section -/
+  attribsFromCrossSection : String := ""
+  /-- Add point row attribute -/
+  addPtRow : Bool := false
+  /-- Point row attribute name -/
+  ptRowAttrib : String := "row"
+  /-- Add point column attribute -/
+  addPtCol : Bool := false
+  /-- Point column attribute name -/
+  ptColAttrib : String := "col"
+  /-- Add primitive row attribute -/
+  addPrimRow : Bool := false
+  /-- Primitive row attribute name -/
+  primRowAttrib : String := "row"
+  /-- Add primitive column attribute -/
+  addPrimCol : Bool := false
+  /-- Primitive column attribute name -/
+  primColAttrib : String := "col"
+  /-- Add cross-section number attribute -/
+  addCrossSectionNum : Bool := false
+  /-- Cross-section number attribute name -/
+  crossSectionNumAttrib : String := "crosssection"
+  /-- Add curve number attribute -/
+  addCurveNum : Bool := false
+  /-- Curve number attribute name -/
+  curveNumAttrib : String := "curve"
+  /-- Up vector type: 0=vector, 1=attribute, 2=curve normal -/
+  upVectorType : Int := 0
+  /-- Use up vector at start -/
+  upVectorAtStart : Bool := true
+  /-- Use different end up vector -/
+  useEndUpVector : Bool := false
+  /-- Up vector attribute name -/
+  upVectorAttrib : String := "up"
+  /-- End up vector attribute name -/
+  endUpVectorAttrib : String := "up"
+  /-- Up vector direction -/
+  upVector : Vector3 := ⟨0, 1, 0⟩
+  /-- End up vector direction -/
+  endUpVector : Vector3 := ⟨0, 1, 0⟩
+
+/-- Sweep a cross-section along a backbone curve
+Creates surfaces like tubes, pipes, extrusions, and complex swept forms.
+
+Example:
+```lean
+-- Simple tube sweep
+let tube = sweep {
+  cols := 20,
+  radius := 0.5,
+  computeUVs := true
+} backboneCurve circleCrossSection
+
+-- Twisted sweep
+let twisted = sweep {
+  cols := 30,
+  applyRoll := true,
+  fullTwists := 2
+} curve crossSection
+
+-- With end caps
+let capped = sweep {
+  endCapType := 1,  -- flat caps
+  addEndCapsGroup := true,
+  endCapsGroup := "caps"
+} curve crossSection
+```
+-/
+def sweep (params : SweepParams := {}) 
+    (backbone crossSection : Geometry) : Geometry :=
+  sop_sweep_2_0 backbone crossSection
+    params.curveGroup
+    params.crossSectionGroup
+    params.surfaceShape
+    params.surfaceType
+    params.scale
+    params.cols
+    params.radius
+    params.width
+    params.reverseCrossSections.toInt
+    params.stretchAroundTurns.toInt
+    params.maxStretchAroundTurns
+    params.endCapType
+    params.capDivs
+    params.triangularPoles.toInt
+    params.capScale
+    params.capRoundness
+    params.addEndCapsGroup.toInt
+    params.endCapsGroup
+    params.applyScale.toInt
+    params.scaleRamp
+    params.rotationOrder
+    params.applyRoll.toInt
+    params.roll
+    params.fullTwists
+    params.incrementalRoll
+    params.rollPer
+    params.rollAttrib
+    params.applyYaw.toInt
+    params.yaw
+    params.incrementalYaw
+    params.yawPer
+    params.yawAttrib
+    params.applyPitch.toInt
+    params.pitch
+    params.incrementalPitch
+    params.pitchPer
+    params.pitchAttrib
+    params.copyOrder
+    params.crossSectionAttrib
+    params.primType
+    params.unrollClosedRowCol.toInt
+    params.swapRowCol.toInt
+    params.closeIfNoCurveInput.toInt
+    params.tangentType
+    params.continuousClosed.toInt
+    params.extrapolateEndTangents.toInt
+    params.transformByAttribs.toInt
+    params.computeUVs.toInt
+    params.overrideExistingUVs.toInt
+    params.lengthWeightedUVs.toInt
+    params.normalizeU.toInt
+    params.normalizeV.toInt
+    params.flipU.toInt
+    params.uvScale
+    params.useMeshEdgeLengths.toInt
+    params.propScalePerCurve.toInt
+    params.wrapU.toInt
+    params.wrapV.toInt
+    params.attribsFromBackbone
+    params.attribsFromCrossSection
+    params.addPtRow.toInt
+    params.ptRowAttrib
+    params.addPtCol.toInt
+    params.ptColAttrib
+    params.addPrimRow.toInt
+    params.primRowAttrib
+    params.addPrimCol.toInt
+    params.primColAttrib
+    params.addCrossSectionNum.toInt
+    params.crossSectionNumAttrib
+    params.addCurveNum.toInt
+    params.curveNumAttrib
+    params.upVectorType
+    params.upVectorAtStart.toInt
+    params.useEndUpVector.toInt
+    params.upVectorAttrib
+    params.endUpVectorAttrib
+    params.upVector
+    params.endUpVector
+
+-- ============================================================================
+-- Switch Node
+-- ============================================================================
+
+/-- Parameters for the Switch SOP -/
+structure SwitchParams where
+  /-- Array of auxiliary geometries to choose from -/
+  auxGeo : GeometryArray := default
+  /-- Index of input to select (0-based) -/
+  input : Int := 0
+
+/-- Select one geometry from multiple inputs
+
+Example:
+```lean
+let selected = switch {
+  auxGeo := #[geo1, geo2, geo3],
+  input := 1  -- select geo2
+} geo0
+```
+-/
+def switch (params : SwitchParams := {}) (geo : Geometry) : Geometry :=
+  sop_switch geo params.auxGeo params.input
+
+-- ============================================================================
+-- Switch If Node
+-- ============================================================================
+
+/-- Parameters for the Switch If SOP -/
+structure SwitchIfParams where
+  /-- Merge condition: 0=use test results, 1=always merge -/
+  mergeCondition : Int := 0
+  /-- Test input index -/
+  testInput : Int := 0
+  /-- Array of test conditions -/
+  tests : DictArray := default
+
+/-- Conditionally merge geometry based on tests
+
+Example:
+```lean
+let conditional = switchIf {
+  mergeCondition := 0,
+  testInput := 0
+} geo0 geo1
+```
+-/
+def switchIf (params : SwitchIfParams := {}) 
+    (geo0 geo1 : Geometry) : Geometry :=
+  sop_switchif geo0 geo1
+    params.mergeCondition
+    params.testInput
+    params.tests
+
+-- ============================================================================
+-- Tetrahedralize Node
+-- ============================================================================
+
+/-- Parameters for the Tetrahedralize SOP -/
+structure TetrahedralizeParams where
+  /-- Primitive group to tetrahedralize -/
+  group : String := ""
+  /-- Process geometry in batches by piece -/
+  batch : Bool := false
+  /-- Piece attribute for batching -/
+  pieceAttrib : String := "name"
+  /-- Remove input geometry -/
+  removeInput : Bool := true
+  /-- Tetrahedralization mode: 0=solid, 1=surface -/
+  mode : Int := 0
+  /-- Output type: 0=tets, 1=surface -/
+  output : Int := 0
+  /-- Keep input primitives -/
+  keepPrims : Bool := false
+  /-- No boundary modification -/
+  noBoundaryModification : Bool := false
+  /-- One face per tet (for attributes) -/
+  oneFacePerTet : Bool := false
+  /-- Propagate normals to tets -/
+  propagateNormals : Bool := false
+  /-- Add interior/exterior attribute -/
+  interiorAttrib : Bool := false
+  /-- Use quality constraints -/
+  useQuality : Bool := false
+  /-- Radius-edge tolerance for quality -/
+  radiusEdgeTolerance : Float := 2.0
+  /-- Minimum dihedral angle in degrees -/
+  minDihedralAngle : Float := 0.0
+  /-- Use target size attribute -/
+  useTargetSizeAttrib : Bool := false
+  /-- Target size attribute name -/
+  targetSizeAttrib : String := "targetsize"
+  /-- Use uniform max size -/
+  useUniformMaxSize : Bool := false
+  /-- Uniform maximum tet size -/
+  uniformMaxSize : Float := 1.0
+  /-- Use max size attribute -/
+  useMaxSizeAttrib : Bool := false
+  /-- Max size attribute name -/
+  maxSizeAttrib : String := "maxsize"
+  /-- Use maximum iterations -/
+  useMaxIter : Bool := false
+  /-- Maximum refinement iterations -/
+  maxIter : Int := 1000
+  /-- Use maximum Steiner points -/
+  useMaxSteiner : Bool := false
+  /-- Maximum Steiner points to add -/
+  maxSteiner : Int := 10000
+  /-- Optimization iterations -/
+  optIterations : Int := 0
+  /-- Optimize edge/face flips -/
+  optEdgeFace : Bool := false
+  /-- Optimize vertex smoothing -/
+  optVertexSmooth : Bool := false
+  /-- Optimize vertex modification -/
+  optVertexMod : Bool := false
+  /-- Use intersection color -/
+  useIntersectionColor : Bool := false
+  /-- Intersection polygon color -/
+  intersectionPolyColor : Vector3 := ⟨1, 0, 0⟩
+  /-- Use intersection group -/
+  useIntersectionGroup : Bool := false
+  /-- Intersection polygon group -/
+  intersectionPolyGroup : String := "intersect"
+  /-- Track failures -/
+  trackFailures : Bool := false
+  /-- Random seed for tetrahedralization -/
+  randomSeed : Int := 0
+  /-- Precision tolerance -/
+  precisionTolerance : Float := 1e-8
+  /-- Dihedral angle tolerance -/
+  dihedralAngleTolerance : Float := 0.0
+  /-- Maximum attempts -/
+  maxAttempts : Int := 10
+  /-- Use invalid primitive color -/
+  useInvalidColor : Bool := false
+  /-- Invalid primitive color -/
+  invalidPrimColor : Vector3 := ⟨1, 0, 1⟩
+  /-- Use invalid primitive group -/
+  useInvalidGroup : Bool := false
+  /-- Invalid primitive group -/
+  invalidPrimGroup : String := "invalid"
+
+/-- Convert geometry into tetrahedral mesh
+Used for FEM simulation, volume meshing, and solid object representation.
+
+Example:
+```lean
+-- Simple tetrahedralization
+let tets = tetrahedralize {
+  mode := 0,  -- solid
+  output := 0  -- tets
+} surfaceGeo
+
+-- With quality constraints
+let qualityTets = tetrahedralize {
+  useQuality := true,
+  radiusEdgeTolerance := 2.0,
+  minDihedralAngle := 10.0
+} surfaceGeo refGeo
+
+-- Size-controlled tetrahedralization
+let sizedTets = tetrahedralize {
+  useUniformMaxSize := true,
+  uniformMaxSize := 0.1,
+  optIterations := 10
+} surfaceGeo refGeo
+```
+-/
+def tetrahedralize (params : TetrahedralizeParams := {}) 
+    (geo refGeo : Geometry := default) : Geometry :=
+  sop_tetrahedralize geo refGeo
+    params.group
+    params.batch.toInt
+    params.pieceAttrib
+    params.removeInput.toInt
+    params.mode
+    params.output
+    params.keepPrims.toInt
+    params.noBoundaryModification.toInt
+    params.oneFacePerTet.toInt
+    params.propagateNormals.toInt
+    params.interiorAttrib.toInt
+    params.useQuality.toInt
+    params.radiusEdgeTolerance
+    params.minDihedralAngle
+    params.useTargetSizeAttrib.toInt
+    params.targetSizeAttrib
+    params.useUniformMaxSize.toInt
+    params.uniformMaxSize
+    params.useMaxSizeAttrib.toInt
+    params.maxSizeAttrib
+    params.useMaxIter.toInt
+    params.maxIter
+    params.useMaxSteiner.toInt
+    params.maxSteiner
+    params.optIterations
+    params.optEdgeFace.toInt
+    params.optVertexSmooth.toInt
+    params.optVertexMod.toInt
+    params.useIntersectionColor.toInt
+    params.intersectionPolyColor
+    params.useIntersectionGroup.toInt
+    params.intersectionPolyGroup
+    params.trackFailures.toInt
+    params.randomSeed
+    params.precisionTolerance
+    params.dihedralAngleTolerance
+    params.maxAttempts
+    params.useInvalidColor.toInt
+    params.invalidPrimColor
+    params.useInvalidGroup.toInt
+    params.invalidPrimGroup
+
+-- ============================================================================
+-- Tetrasurface Node
+-- ============================================================================
+
+/-- Parameters for the Tetrasurface SOP -/
+structure TetrasurfaceParams where
+  /-- Keep interior primitives -/
+  keepPrimitives : Bool := false
+  /-- Keep interior points -/
+  keepPoints : Bool := false
+  /-- Build output as polygon soup -/
+  buildPolySoup : Bool := false
+
+/-- Extract surface from tetrahedral mesh
+
+Example:
+```lean
+-- Extract surface from tets
+let surface = tetrasurface {} tetMesh
+
+-- Keep interior for visualization
+let withInterior = tetrasurface {
+  keepPrimitives := true
+} tetMesh
+```
+-/
+def tetrasurface (params : TetrasurfaceParams := {}) (geo : Geometry) : Geometry :=
+  sop_tetrasurface geo
+    params.keepPrimitives.toInt
+    params.keepPoints.toInt
+    params.buildPolySoup.toInt
+
+-- ============================================================================
+-- Texture Node
+-- ============================================================================
+
+/-- Parameters for the Texture SOP -/
+structure TextureParams where
+  /-- UV attribute name -/
+  uvAttrib : String := "uv"
+  /-- Primitive group to apply texturing to -/
+  group : String := ""
+  /-- Projection type: 0=perspective, 1=orthographic, 2=polar, 3=cylindrical, 4=spherical -/
+  type : Int := 0
+  /-- Projection axis: 0=X, 1=Y, 2=Z -/
+  axis : Int := 2
+  /-- Camera path for perspective projection -/
+  camPath : String := ""
+  /-- Coordinate space: 0=object, 1=world -/
+  coordinateSpace : Int := 0
+  /-- Scale factors for UV coordinates -/
+  scale : Vector3 := ⟨1, 1, 1⟩
+  /-- Offset for UV coordinates -/
+  offset : Vector3 := ⟨0, 0, 0⟩
+  /-- Rotation angle in degrees -/
+  angle : Float := 0.0
+  /-- Fix UV seams -/
+  fixSeams : Bool := false
+
+/-- Generate or modify UV texture coordinates
+
+Example:
+```lean
+-- Perspective projection from camera
+let withUVs = texture {
+  type := 0,  -- perspective
+  camPath := "/obj/cam1"
+} myGeo
+
+-- Cylindrical mapping
+let cylindrical = texture {
+  type := 3,  -- cylindrical
+  axis := 1,  -- Y axis
+  scale := ⟨1, 2, 1⟩
+} myGeo
+
+-- Orthographic projection
+let ortho = texture {
+  type := 1,  -- orthographic
+  axis := 2,  -- Z axis
+  fixSeams := true
+} myGeo
+```
+-/
+def texture (params : TextureParams := {}) (geo : Geometry) : Geometry :=
+  sop_texture geo
+    params.uvAttrib
+    params.group
+    params.type
+    params.axis
+    params.camPath
+    params.coordinateSpace
+    params.scale
+    params.offset
+    params.angle
+    params.fixSeams.toInt
 
 
 -- ============================================================================
 -- Convenience Namespaces
 -- ============================================================================
 
+end SOP
+
 namespace Geometry
+open SOP
 
 abbrev xform (params : XformParams := {}) (geo : Geometry) : Geometry :=
   SOP.xform params geo
@@ -1513,6 +2968,71 @@ abbrev boolean (params : BooleanParams := {})
     (geoA geoB : Geometry) : Geometry :=
   SOP.boolean params geoA geoB
 
+abbrev error (params : ErrorParams := {}) (geo : Geometry) : Geometry :=
+  SOP.error params geo
+
+abbrev extractCentroid (params : ExtractCentroidParams := {}) (geo : Geometry) : Geometry :=
+  SOP.extractCentroid params geo
+
+abbrev extractContours (params : ExtractContoursParams := {}) (geo : Geometry) : Geometry :=
+  SOP.extractContours params geo
+
+abbrev extractTransform (params : ExtractTransformParams := {}) 
+    (geo0 geo1 : Geometry) : Geometry :=
+  SOP.extractTransform params geo0 geo1
+
+abbrev facet (params : FacetParams := {}) (geo : Geometry) : Geometry :=
+  SOP.facet params geo
+
+abbrev file (params : FileParams := {}) (geo : Geometry := default) : Geometry :=
+  SOP.file params geo
+
+abbrev fit (params : FitParams := {}) (geo : Geometry) : Geometry :=
+  SOP.fit params geo
+
+abbrev font (params : FontParams := {}) : Geometry :=
+  SOP.font params
+
+abbrev fractal (params : FractalParams := {}) (geo : Geometry) : Geometry :=
+  SOP.fractal params geo
+
+abbrev solidify (params : SolidifyParams := {}) (geo : Geometry) : Geometry :=
+  SOP.solidify params geo
+
+abbrev sort (params : SortParams := {}) (geo : Geometry) : Geometry :=
+  SOP.sort params geo
+
+abbrev splitPoints (params : SplitPointsParams := {}) (geo : Geometry) : Geometry :=
+  SOP.splitPoints params geo
+
+abbrev stash (params : StashParams := {}) (geo : Geometry) : Geometry :=
+  SOP.stash params geo
+
+abbrev surfaceSplat (params : SurfaceSplatParams := {}) 
+    (surface splat : Geometry) : Geometry :=
+  SOP.surfaceSplat params surface splat
+
+abbrev sweep (params : SweepParams := {}) 
+    (backbone crossSection : Geometry) : Geometry :=
+  SOP.sweep params backbone crossSection
+
+abbrev switch (params : SwitchParams := {}) (geo : Geometry) : Geometry :=
+  SOP.switch params geo
+
+abbrev switchIf (params : SwitchIfParams := {}) 
+    (geo0 geo1 : Geometry) : Geometry :=
+  SOP.switchIf params geo0 geo1
+
+abbrev tetrahedralize (params : TetrahedralizeParams := {}) 
+    (geo refGeo : Geometry := default) : Geometry :=
+  SOP.tetrahedralize params geo refGeo
+
+abbrev tetrasurface (params : TetrasurfaceParams := {}) (geo : Geometry) : Geometry :=
+  SOP.tetrasurface params geo
+
+abbrev texture (params : TextureParams := {}) (geo : Geometry) : Geometry :=
+  SOP.texture params geo
+
 end Geometry
 
-end HouLean.Apex.SOP
+end HouLean.Apex

@@ -3,17 +3,6 @@ import HouLean.Apex.Generated.Types
 
 namespace HouLean.Apex
 
-/-- This class maps Lean type `α` to Apex compatible type `β`. 
-
-This extensible type level function mapping α to β is used to 
-transform Lean code to a smaller subset of Lean which is supported
-by Apex compiler. Therefore many APEX compiler extensions can be done
-through providing instances like `ApexType` and one does not have to
-touch the compiler!.
--/
-class ApexType (α : Type) (β : outParam Type) where
-  toApex : α → β
-  fromApex : β → α
   -- type : Compiler.ApexType
   -- h_type : β = type.toType
   -- we do not require `toApex ∘ fromApex = id` for example (none : Option Int) can be represented with (0, false) or (1,false)

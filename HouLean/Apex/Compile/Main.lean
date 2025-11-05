@@ -1,4 +1,5 @@
 import HouLean.Apex.Compile.Graph
+import HouLean.Init
 
 open Lean Meta Std
 
@@ -83,7 +84,8 @@ def getUnfoldStackMsg : GraphCompileM MessageData := do
   if stack.isEmpty then
     return m!""
   else
-    return m!", unfolded: {stack.head!} → ... → {stack.getLast!}"
+    let s := stack.toArray.joinl (map:=toString) (· ++ " → " ++ ·)
+    return m!", unfolded: {s}"
 
 def throwErrorWithStack (msg : MessageData) : GraphCompileM α := do
   throwErrorAt (← getRef) m!"{msg}{← getUnfoldStackMsg}"
@@ -503,7 +505,12 @@ partial def compileConstant (e : Expr) :
     return (#[], ← addBool true)
   if (← isDefEq e q(false)) then
     return (#[], ← addBool false)
-  throwErrorWithStack m!"Cannot compile constant: {e}"
+
+  -- discard inputs
+  if let some (_inputs,output) ← tryCompileImplementedBy e #[] then
+    return (#[], output)
+  let (_inputs, output) ← compileNormalApp e #[] e none
+  return (#[],output)
 
 /-- Compile match expressions -/
 partial def compileMatchExpr (e : Expr) (info : MatcherInfo) : 
@@ -553,7 +560,6 @@ partial def tryCompileImplementedBy (fn : Expr) (args : Array Expr) :
         catch err =>
           throwErrorWithStack m!"Failed to apply implemented_by override {fn} -> {fn'}\n{err.toMessageData}"
       return ← compile e'
-
 
   return none
 
