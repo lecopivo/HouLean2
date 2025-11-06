@@ -17,9 +17,9 @@ instance : Visualizer Float {min := 0.0, max := 1.0 : struct {min:Float,max:Floa
 instance : Visualizer Geometry () where
   visualize geo _ := geo
 
-instance : Visualizer Int () where
-  visualize x _ := 
-    SOP.font { text := toString x }
+instance : Visualizer Int { label := "value"  :struct { label : String }} where
+  visualize x opts := 
+    SOP.font { text := opts.label ++ ": " ++ toString x }
 
 abbrev VisualizeM (α : Type) := (Option String) → (α × (Option Geometry))
     
