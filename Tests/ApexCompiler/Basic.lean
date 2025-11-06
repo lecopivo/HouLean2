@@ -1031,3 +1031,146 @@ run_meta
   let e := q(((0:Nat), "hello", 3.14159, true))
   let g ← programToApexGraph e
   IO.println g
+
+
+
+/--
+info: Nodes:
+  0: x : __null__
+  1: value_int : Value<Int>
+  2: value_bool : Value<Bool>
+
+Ports:
+  0: /x/__spare__[in]
+  1: /x/__spare__[out]
+  2: /x/x[in]
+  3: /x/x[out]
+  4: /value_int/parm[in]
+  5: /value_int/value[out]
+  6: /value_bool/parm[in]
+  7: /value_bool/value[out]
+
+Input Ports:
+  2: /x/x[in]
+
+Output Ports:
+  3: /x/x[out]
+  5: /value_int/value[out]
+  7: /value_bool/value[out]
+
+Wires:
+
+Literals:
+  0: int 0 -> 4 ⏎
+  1: bool "false" -> 6
+-/
+#guard_msgs in
+#apex_graph fun x : Int => (x, (none : Option Int))
+
+
+
+/--
+info: Nodes:
+  0: x : __null__
+  1: value_geometry : Value<Geometry>
+  2: value_bool : Value<Bool>
+
+Ports:
+  0: /x/__spare__[in]
+  1: /x/__spare__[out]
+  2: /x/x[in]
+  3: /x/x[out]
+  4: /value_geometry/parm[in]
+  5: /value_geometry/value[out]
+  6: /value_bool/parm[in]
+  7: /value_bool/value[out]
+
+Input Ports:
+  2: /x/x[in]
+
+Output Ports:
+  3: /x/x[out]
+  5: /value_geometry/value[out]
+  7: /value_bool/value[out]
+
+Wires:
+
+Literals:
+  0: bool "false" -> 6
+-/
+#guard_msgs in
+#apex_graph fun x : Int => (x, (none : Option Geometry))
+
+
+
+/--
+info: Nodes:
+  0: x : __null__
+  1: value_int : Value<Int>
+  2: convert_int,float : Convert<Int,Float>
+
+Ports:
+  0: /x/__spare__[in]
+  1: /x/__spare__[out]
+  2: /x/x[in]
+  3: /x/x[out]
+  4: /value_int/parm[in]
+  5: /value_int/value[out]
+  6: /convert_int,float/a0[in]
+  7: /convert_int,float/out0[out]
+
+Input Ports:
+  2: /x/x[in]
+
+Output Ports:
+  7: /convert_int,float/out0[out]
+  7: /convert_int,float/out0[out]
+
+Wires:
+  0: /value_int/value[out] -> /convert_int,float/a0[in]
+
+Literals:
+  0: int 0 -> 4
+-/
+#guard_msgs in
+#apex_graph fun _ : Float => (⟨0,0⟩ : Vector2)
+
+
+/--
+info: Nodes:
+  0: x : __null__
+  1: value_int : Value<Int>
+  2: convert_int,float : Convert<Int,Float>
+  3: floattovector3 : FloatToVector3
+
+Ports:
+  0: /x/__spare__[in]
+  1: /x/__spare__[out]
+  2: /x/x[in]
+  3: /x/x[out]
+  4: /value_int/parm[in]
+  5: /value_int/value[out]
+  6: /convert_int,float/a0[in]
+  7: /convert_int,float/out0[out]
+  8: /floattovector3/x0[in]
+  9: /floattovector3/y1[in]
+  10: /floattovector3/z2[in]
+  11: /floattovector3/out0[out]
+
+Input Ports:
+  2: /x/x[in]
+
+Output Ports:
+  11: /floattovector3/out0[out]
+
+Wires:
+  0: /value_int/value[out] -> /convert_int,float/a0[in]
+  1: /convert_int,float/out0[out] -> /floattovector3/x0[in]
+  2: /convert_int,float/out0[out] -> /floattovector3/y1[in]
+  3: /convert_int,float/out0[out] -> /floattovector3/z2[in]
+
+Literals:
+  0: int 0 -> 4
+-/
+#guard_msgs in
+#apex_graph fun _ : Float => (⟨0,0,0⟩ : Vector3)

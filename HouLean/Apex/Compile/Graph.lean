@@ -286,9 +286,10 @@ Id.run do
   if g.outputPorts.size != 0 then
     s := s ++ s!"graph.addNode(\"output\", \"__output__\")" ++ "\n"
     for outputPortId in g.outputPorts, i in [0:g.outputPorts.size] do
-      let j := g.ports.size + i + 2 + g.inputPorts.size
+      let outputOffset := if g.inputPorts.size != 0 then 2 else 1
+      let j := g.ports.size + i + outputOffset + g.inputPorts.size
       let p := g.ports[outputPortId]!
-      s := s ++ s!"graph.addGraphOutput({g.nodes.size+2}, \"{p.name}{i}\")" ++ "\n"
+      s := s ++ s!"graph.addGraphOutput({g.nodes.size+outputOffset}, \"{p.name}{i}\")" ++ "\n"
       s := s ++ s!"graph.addWire({outputPortId}, {j})" ++ "\n"
 
   for (val, portId) in g.literals do

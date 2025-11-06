@@ -230,6 +230,18 @@ def addBool (val : Bool) : GraphCompileM PortBundle := do
   setBoolPort val input
   return output
 
+def addDefaultGeometry : GraphCompileM PortBundle := do
+  let nodeType : NodeType := {
+    name := "Value<Geometry>"
+    ports := #[
+      {localId := 0, dir := .input, name := "parm", type := .builtin "Geometry"},
+      {localId := 1, dir := .output, name := "value", type := .builtin "Geometry"}
+    ]
+  }
+  let (_, #[.leaf _input], output) ← addNode nodeType #[]
+    | throwErrorWithStack m!"Failed to add Value<Geometry> node"
+  return output
+
 def addForBegin (state : ApexStaticType) : GraphCompileM ForBeginPorts := do
   modifyGraph (fun g => return g.addForBegin state)
 
@@ -462,6 +474,7 @@ partial def whnfC (e : Expr) : MetaM Expr :=
     else
       whnfC e'
 
+
 open Qq in
 mutual
 
@@ -505,6 +518,8 @@ partial def compileConstant (e : Expr) :
     return (#[], ← addBool true)
   if (← isDefEq e q(false)) then
     return (#[], ← addBool false)
+  if (← isDefEq e (.const `HouLean.Apex.Geometry.default [])) then
+    return (#[], ← addDefaultGeometry)
 
   -- discard inputs
   if let some (_inputs,output) ← tryCompileImplementedBy e #[] then

@@ -1895,7 +1895,7 @@ structure FontParams where
   /-- Output type: 0=polygon, 1=NURBS curves, 2=Bezier curves -/
   type : Int := 0
   /-- Font file path (.ttf, .otf, etc.) -/
-  fontFile : String := ""
+  fontFile : String := "Helvetica Bold"
   /-- Text string to generate -/
   text : String := "Hello"
   /-- Horizontal alignment: 0=left, 1=center, 2=right -/

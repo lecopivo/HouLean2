@@ -69,6 +69,7 @@ def lerp.apex_impl (a b : Vector2) (t : Float) : Vector2 := LerpVector2 a b t
 
 attribute [apex_implemented_by HouLean.Vector2.lerp.apex_impl] lerp
 
+
 -- noncomputable
 -- def beq.apex_impl (a b : Vector2) : Bool := EqualsVector2 a b
 

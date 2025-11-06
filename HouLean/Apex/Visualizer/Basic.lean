@@ -21,16 +21,16 @@ instance : Visualizer Int () where
   visualize x _ := 
     SOP.font { text := toString x }
 
-abbrev VisualizeM (α : Type) := (Option String) → ((Option Geometry) × α)
+abbrev VisualizeM (α : Type) := (Option String) → (α × (Option Geometry))
     
 instance : Monad VisualizeM where
-  pure x := fun _ => (none, x)
+  pure x := fun _ => (x, none)
   bind mx f := fun visName? => 
-    let (vis?, x) := (mx visName?)
+    let (x, vis?) := (mx visName?)
     match vis? with
     | some vis => -- got visualization, stop requestiong it
-      let (_,y) := f x none
-      (vis, y)
+      let (y,_) := f x none
+      (y, vis)
     | none => -- no visualization obtained from previous step, keep on looking
       f x visName?
 
@@ -39,10 +39,10 @@ def visualize {α Options} {defaultOpts : Options} [Visualizer α defaultOpts]
     VisualizeM Unit := 
   fun visName? =>
     match visName? with
-    | none => (none, ())
+    | none => ((), none)
     | some visName =>
       if visName == visualizerName then
-        (some (Visualizer.visualize x opts), ())
+        ((), some (Visualizer.visualize x opts))
       else
-        (none, ())
+        ((), none)
 

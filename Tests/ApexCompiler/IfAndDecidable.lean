@@ -4,6 +4,9 @@ open HouLean Apex Compiler
 
 open Lean Qq
 
+set_option trace.HouLean.Apex.compiler true in
+#apex_graph fun c : Bool => if c then 1 else 0
+
 /--
 
 info: Nodes:
