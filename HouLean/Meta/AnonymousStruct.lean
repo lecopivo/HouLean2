@@ -62,11 +62,12 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
     return existingName
   
   -- Generate a fresh name for the structure
-  let mut freshName := `AnonStruct
-  let mut idx := structMap.size
-  while (← getEnv).contains freshName do
-    idx := idx + 1
-    freshName := (`AnonStruct).appendIndexAfter idx
+  let idx := structMap.size
+  let modName ← getMainModule
+  let freshName := Name.append `AnonStruct modName |>.appendAfter (toString idx)
+  -- while (← getEnv).contains freshName do
+  --   idx := idx + 1
+  --   freshName := (`AnonStruct).appendIndexAfter idx
   
   -- Build field declarations for the structure
   let mut paramDecls : Array (TSyntax ``Term.bracketedBinder) := #[]
@@ -113,8 +114,8 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
   let cmdElabMsgs := (← get).messages
   elabCommand (← `(command| deriving instance BEq for $id))
   elabCommand (← `(command| deriving instance Inhabited for $id))
-  elabCommand (← `(command| deriving instance ToJson for $id))
-  elabCommand (← `(command| deriving instance FromJson for $id))
+  -- elabCommand (← `(command| deriving instance ToJson for $id))
+  -- elabCommand (← `(command| deriving instance FromJson for $id))
   liftTermElabM <| Core.setMessageLog coreMsgs
   modify (fun s => {s with messages := cmdElabMsgs})
   
@@ -123,6 +124,16 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
     anonStructExt.addEntry env { signature := sig, structName := freshName }
   
   return freshName
+
+
+/-- Is `type` an anonymous structure? Return signature and parameters -/
+def _root_.HouLean.Meta.isAnonStruct? (type : Expr) : MetaM (Option (StructSignature × Array Expr)) := do
+  let (fn,args) := type.getAppFnArgs
+  let structMap := (anonStructExt.getState (← getEnv)).nameToSig
+  let some sig := structMap.find? fn
+    | return none
+  return (sig, args)
+  
 
 
 /-- Anonymous structure. -/

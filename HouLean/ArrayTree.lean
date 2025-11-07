@@ -1,8 +1,16 @@
 
+-- probably want this definition
+inductive ArrayTree' (LeafData NodeData : Type) where
+  | leaf (val : LeafData)
+  | node (data : NodeData) (children : Array (ArrayTree' LeafData NodeData))
+-- probably want this definition
+-- ApexType is than `ArrayTree' (FieldName×ApexTypeTag) StructName`
+
+
 inductive ArrayTree (α : Type u) where
   | leaf (val : α)
   | node (children : Array (ArrayTree α))
-deriving Inhabited, BEq
+deriving Inhabited, BEq, Repr
 
 def ArrayTree.val! {α} [Inhabited α] (p : ArrayTree α) : α := 
   match p with
@@ -82,3 +90,18 @@ where
 
 def ArrayTree.mapIdx {α β} (p : ArrayTree α) (f : Nat → α → β) : ArrayTree β := 
   p.mapIdxM (m:=Id) f
+
+def ArrayTree.map {α β} (p : ArrayTree α) (f : α → β) : ArrayTree β := 
+  p.mapIdxM (m:=Id) (fun _ => f)
+
+-- partial def ArrayTree.map2M? {m} [Monad m] [MonadMeta Exception m] {α β γ} (a : ArrayTree α) (b : ArrayTree β) (op : α → β → m γ) :
+--     m (ArrayTree γ) := do 
+--   match a, b with
+--   | .leaf a, .leaf b => return .leaf (← op a b)
+--   | .node as, .node bs => 
+--     if as.size != bs.size then
+--       throwError "asd"
+--     else do
+--       let tmp ← as.zip bs |>.mapM (fun (a,b) => map2M? a b op)
+--       return some <|.node tmp
+--   | _, _ => none

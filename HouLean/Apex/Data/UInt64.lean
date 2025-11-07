@@ -3,14 +3,27 @@ import HouLean.Apex.Data.Int
 import HouLean.Apex.Data.Nat
 import HouLean.Apex.Compile.Attr
 
-open HouLean Apex Generated
+open HouLean Apex Generated Compiler
+
+-- todo: rename this file
 
 instance : ApexType UInt64 Int where
-  toApex x := x.toInt64.toInt
-  fromApex x := x.toNat.toUInt64
+  toApex x   := x |> UInt64.toNat |> Int.ofNat
+  fromApex x := x |> Int.toNat    |> Nat.toUInt64
 
--- todo: remove this, `apex_type` attribute should be reserved for built in types ontly
-attribute [apex_type "Int"] UInt64
+run_cmd compilerExt.add (.implementedByName ``Nat.toUInt64 ``id' #[none, some 0])
+run_cmd compilerExt.add (.implementedByName ``UInt64.toNat ``id' #[none, some 0])
+run_cmd compilerExt.add (.implementedByName ``UInt64.ofNat ``id' #[none, some 0])
+
+instance : ApexType Int64 Int where
+  toApex x   := x |> Int64.toInt
+  fromApex x := x |> Int.toInt64
+
+run_cmd compilerExt.add (.implementedByName ``Int64.toInt ``id' #[none, some 0])
+run_cmd compilerExt.add (.implementedByName ``Int.toInt64 ``id' #[none, some 0])
+
+run_cmd compilerExt.add (.implementedByName ``Nat.toInt64 ``id' #[none, some 0])
+
 
 -- Delegate Nat operations to Int
 @[apex_implements UInt64.add]
@@ -21,6 +34,3 @@ def UInt64.mul.apex_impl (x y : UInt64) : UInt64 := fromApex (toApex x * toApex 
 
 @[apex_implements UInt64.toFloat]
 def UInt64.toFloat.apex_impl (x : UInt64) : Float := ConvertIntFloat (toApex x)
-
-@[apex_implements UInt64.ofNat]
-def UInt64.ofNat.apex_impl (x : Nat) : UInt64 := fromApex (toApex x : Int) -- this is stupd but works ...

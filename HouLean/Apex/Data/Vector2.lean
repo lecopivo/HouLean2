@@ -6,34 +6,29 @@ open HouLean.Apex.Generated
 
 namespace HouLean.Vector2
 -- Constructor
-@[apex_implements HouLean.Vector2.mk]
-noncomputable
+@[apex_implements Vector2.mk]
 def mk.apex_impl (x y : Float) : Vector2 := FloatToVector2 x y
 
 -- Component accessors
-noncomputable
-def x.apex_impl (v : Vector2) : Float := GetComponentVector2 v 0
+@[apex_implements Vector2.x]
+def x.apex_impl (v : Vector2) : Float := (Vector2ToFloat v).1
 
-attribute [apex_implemented_by HouLean.Vector2.x.apex_impl] x
-
-noncomputable
-def y.apex_impl (v : Vector2) : Float := GetComponentVector2 v 1
-
-attribute [apex_implemented_by HouLean.Vector2.y.apex_impl] y
+@[apex_implements Vector2.y]
+def y.apex_impl (v : Vector2) : Float := (Vector2ToFloat v).2
 
 -- Arithmetic operations
 noncomputable
-def add.apex_impl (a b : Vector2) : Vector2 := AddVector2 a #v[b]
+def add.apex_impl (a b : Vector2) : Vector2 := AddVector2 a #a[b]
 
 attribute [apex_implemented_by HouLean.Vector2.add.apex_impl] add
 
 noncomputable
-def sub.apex_impl (a b : Vector2) : Vector2 := SubtractVector2 a #v[b]
+def sub.apex_impl (a b : Vector2) : Vector2 := SubtractVector2 a #a[b]
 
 attribute [apex_implemented_by HouLean.Vector2.sub.apex_impl] sub
 
 noncomputable
-def mul.apex_impl (a : Vector2) (s : Float) : Vector2 := MultiplyVector2Float a #v[s]
+def mul.apex_impl (a : Vector2) (s : Float) : Vector2 := MultiplyVector2Float a #a[s]
 
 attribute [apex_implemented_by HouLean.Vector2.mul.apex_impl] hMul
 

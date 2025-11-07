@@ -1,12 +1,8 @@
-import HouLean.Init
-import HouLean.Apex.Generated.Types
+-- import HouLean.Init
+import HouLean.Apex.Compile.Extension
+import HouLean.Apex.Generated.Defs
 
 namespace HouLean.Apex
-
-  -- type : Compiler.ApexType
-  -- h_type : β = type.toType
-  -- we do not require `toApex ∘ fromApex = id` for example (none : Option Int) can be represented with (0, false) or (1,false)
-  -- faithful : fromApex ∘ toApex = id
 
 -- Instruct the compiler to erase toApex and fromApex calls
 open Compiler
@@ -235,3 +231,26 @@ instance : ApexType Vector3Array Vector3Array where
 instance : ApexType Vector4Array Vector4Array where
   toApex x := x
   fromApex x := x
+
+
+-- /-- Every ApexType should also be able to implement this function that just takes -/
+-- class ToVariadicUntyped (α : Type u) (n : outParam Nat) where
+--   toVarUntyped : α → VariadicArg Untyped n
+--   fromVarUntyped : VariadicArg Untyped n → α
+
+-- open ToVariadicUntyped
+
+-- instance : ToVariadicUntyped Float 1 where
+--   toVarUntyped x := #a[.float x]
+--   fromVarUntyped x := 
+--     match x with
+--     | #a[.float x] => x
+--     | _ => panic! "invalid extraction of variadic untyped!"
+
+
+-- instance [ToVariadicUntyped α m] [ToVariadicUntyped β n] : ToVariadicUntyped (α × β) (m + n) where
+--   toVarUntyped := fun (x,y) => (toVarUntyped x).append (toVarUntyped y)
+--   fromVarUntyped := fun xy =>
+--     let x : VariadicArg Untyped m := ⟨xy.1[0:m].toArray, sorry_proof⟩
+--     let y : VariadicArg Untyped n := ⟨xy.1[m:m+n].toArray, sorry_proof⟩
+--     (fromVarUntyped x, fromVarUntyped y)

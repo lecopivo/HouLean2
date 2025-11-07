@@ -1,12 +1,29 @@
 import HouLean
+import HouLean.Apex.Data.Nat
 
 open HouLean Apex ArrayType
 
 private structure Float2 where (x y : Float)
+deriving Inhabited
+
 private structure Float3 where (x y z : Float)
+deriving Inhabited
+
+instance : ApexType Float2 Float2 where
+  toApex := id
+  fromApex := id
+
+instance : ApexType Float3 Float3 where
+  toApex := id
+  fromApex := id
 
 structure Vec3 (α : Type) where
   (x y z : α)
+deriving Inhabited
+
+instance [ApexType α A] : ApexType (Vec3 α) (Vec3 A) where
+  toApex v := ⟨toApex v.x, toApex v.y, toApex v.z⟩
+  fromApex v := ⟨fromApex v.x, fromApex v.y, fromApex v.z⟩
 
 /-- info: Int -/
 #guard_msgs in

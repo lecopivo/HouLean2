@@ -7,19 +7,19 @@ open HouLean.Apex.Generated
 -- Float arithmetic operations
 @[apex_implements Float.add]
 noncomputable
-def Float.add.impl (x y : Float) : Float := AddFloat x #v[y]
+def Float.add.impl (x y : Float) : Float := AddFloat x #a[y]
 
 @[apex_implements Float.sub]
 noncomputable
-def Float.sub.impl (x y : Float) : Float := SubtractFloat x #v[y]
+def Float.sub.impl (x y : Float) : Float := SubtractFloat x #a[y]
 
 @[apex_implements Float.mul]
 noncomputable
-def Float.mul.impl (x y : Float) : Float := MultiplyFloat x #v[y]
+def Float.mul.impl (x y : Float) : Float := MultiplyFloat x #a[y]
 
 @[apex_implements Float.div]
 noncomputable
-def Float.div.impl (x y : Float) : Float := DivideFloat x #v[y]
+def Float.div.impl (x y : Float) : Float := DivideFloat x #a[y]
 
 @[apex_implements Float.neg]
 noncomputable
@@ -98,11 +98,11 @@ def Float.round.impl (x : Float) : Float := Round x 0
 
 @[apex_implements Float.min]
 noncomputable
-def Float.min.impl (x y : Float) : Float := MinFloat x #v[y]
+def Float.min.impl (x y : Float) : Float := MinFloat x #a[y]
 
 @[apex_implements Float.max]
 noncomputable
-def Float.max.impl (x y : Float) : Float := MaxFloat x #v[y]
+def Float.max.impl (x y : Float) : Float := MaxFloat x #a[y]
 
 @[apex_implements Float.clamp]
 noncomputable

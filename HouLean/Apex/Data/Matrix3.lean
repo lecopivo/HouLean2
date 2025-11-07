@@ -3,7 +3,7 @@ import HouLean.Apex.Compile.ImplementedBy
 import HouLean.Data.Matrix3
 import HouLean.Data.Matrix3LinearAlgebra
 
-open HouLean.Apex.Generated
+open HouLean Apex Generated
 
 namespace HouLean.Matrix3
 
@@ -34,23 +34,23 @@ def row2.apex_impl (m : Matrix3) : Vector3 :=
 -- Arithmetic operations
 @[apex_implements HouLean.Matrix3.add]
 noncomputable
-def add.apex_impl (a b : Matrix3) : Matrix3 := AddMatrix3 a #v[b]
+def add.apex_impl (a b : Matrix3) : Matrix3 := AddMatrix3 a #a[b]
 
 @[apex_implements HouLean.Matrix3.sub]
 noncomputable
-def sub.apex_impl (a b : Matrix3) : Matrix3 := SubtractMatrix3 a #v[b]
+def sub.apex_impl (a b : Matrix3) : Matrix3 := SubtractMatrix3 a #a[b]
 
 @[apex_implements HouLean.Matrix3.matmul]
 noncomputable
-def mul.apex_impl (a b : Matrix3) : Matrix3 := MultiplyMatrix3 a #v[b]
+def mul.apex_impl (a b : Matrix3) : Matrix3 := MultiplyMatrix3 a #a[b]
 
 @[apex_implements HouLean.Matrix3.smul]
 noncomputable
-def mulScalar.apex_impl (a : Matrix3) (s : Float) : Matrix3 := MultiplyMatrix3Float a #v[s]
+def mulScalar.apex_impl (a : Matrix3) (s : Float) : Matrix3 := MultiplyMatrix3Float a #a[s]
 
 @[apex_implements HouLean.Matrix3.vecMul]
 noncomputable
-def mulVector.apex_impl (v : Vector3) (m : Matrix3) : Vector3 := MultiplyVector3Matrix3 v #v[m]
+def mulVector.apex_impl (v : Vector3) (m : Matrix3) : Vector3 := MultiplyVector3Matrix3 v #a[m]
 
 @[apex_implements HouLean.Matrix3.transpose]
 noncomputable

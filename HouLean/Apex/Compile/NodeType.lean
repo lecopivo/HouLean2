@@ -1,73 +1,104 @@
 import HouLean.Apex.Compile.ExprType
-import HouLean.Apex.Compile.Meta
+import HouLean.Meta.AnonymousStruct
 
 namespace HouLean.Apex.Compiler
 
 open Lean Meta
 
+partial def localPortsFromType (type : Expr) (name : Name) (off : Nat) (dir : PortDir) : MetaM (ArrayTree LocalPort) := do
+  
+  let type ← whnfR type
+  let (fn, args) := type.getAppFnArgs
 
-def NodeType.inputs (t : NodeType) : Array LocalPort := 
-  t.ports.filter (fun p => p.dir == .input)
+  -- is builtin type?
+  if let some t := ApexTypeTag.fromName fn then
+    return .leaf { 
+      localId := off
+      name := name
+      type := .builtin t
+      dir := dir
+    }
 
-def NodeType.outputs (t : NodeType) : Array LocalPort := 
-  t.ports.filter (fun p => p.dir == .output)
+  -- is VariadicArg
+  if type.isAppOfArity ``VariadicArg' 1 then
+    return .leaf {
+      localId := off
+      name := name
+      type := .variadic none
+      dir := dir
+    }
+
+  -- is variadic of builtin type?
+  if fn == ``VariadicArg ∧ args.size == 2 then
+    let (.const elemType _) ← whnfR (type.getArg! 0) 
+      | throwError m!"invalid variadic type {type}"
+    let type : PortType ← 
+      match ApexTypeTag.fromName elemType with
+      | some t => pure (PortType.variadic t)
+      | none => 
+        if elemType == ``HouLean.Apex.Untyped then
+          pure (.variadic none)
+        else
+          throwError m!"invalid variadic type {type}"
+    return .leaf {
+      localId := off
+      name := name
+      type := type
+      dir := dir
+    }
+
+  if isStructure (← getEnv) fn then
+    let info := getStructureInfo (← getEnv) fn
+    let mut ports : Array (ArrayTree LocalPort) := #[]
+    let mut off := off
+    for fieldName in info.fieldNames, i in [0:info.fieldNames.size] do
+      let fieldType ← withLocalDeclD `s type fun s => do pure (← inferType (.proj fn i s))
+      let port ← localPortsFromType fieldType (name.append fieldName) off dir
+      off := off + port.leafNum
+      ports := ports.push port
+    return .node ports
+  else
+    throwError m!"Invalid port type {type}!"
+
 
 /-- Makes APEX node type from Lean function. 
 
 This is used for buildin APEX nodes to quickly initialize their Lean equivalent. -/
-def mkNodeTypeFromLeanFn (fn : Expr) (apexNodeName : String) (outNames : Array String := #[]) (hasRunData := false) : MetaM NodeType := do
+def mkNodeTypeFromLeanFn (decl : Name) (apexNodeName : String) (hasRunData := false) : MetaM NodeType := do
 
-  forallTelescope (← inferType fn) fun xs r => do
+  let info ← getConstInfo decl
+  forallTelescope info.type fun xs r => do
 
     -- filter only explicit arguments
     let xs ← xs.filterM (fun x => do pure ((← x.fvarId!.getBinderInfo) == .default))
 
-    let mut ports : Array LocalPort := #[]
     let mut off := 0 
 
     if hasRunData then 
-        ports := ports.push { localId := off, name := "rundata", type := .rundata, dir := .output }
         off := 1
 
-    for x in xs, i in [0:xs.size] do
-      let n := (← x.fvarId!.getUserName).eraseMacroScopes.toString ++ toString i
+    let mut inputs : Array (ArrayTree LocalPort) := #[]
+
+    for x in xs do
+      let name ← x.fvarId!.getUserName
       let xType ← inferType x
-      let t? ← getApexType? xType
-      
-      match t? with
-      | some (.builtin typeName) => 
-        ports := ports.push { localId := off, name := n, type := .builtin typeName, dir := .input }
-        off := off + 1
-      | some (.variadic elemTypeName _) => 
-        ports := ports.push { localId := off, name := n, type := .variadic elemTypeName, dir := .input }
-        off := off + 1
-      | _ => 
-        throwError m!"Input argument {x} has invalid type {xType}"
-
-    let yTypes := splitProdType r |>.toArray 
-
-    let outNames := 
-      if outNames.size == yTypes.size then
-        outNames
-      else
-        Array.range yTypes.size |>.map (fun i => s!"out{i}")
-
-    for yType in yTypes, n in outNames do
-      let t? ← getApexType? yType
-      
-      match t? with
-      | some (.builtin typeName) => 
-        ports := ports.push { localId := off, name := n, type := .builtin typeName, dir := .output }
-        off := off + 1
-      | some (.variadic ..) => 
-        throwError m!"Variadic type, {yType}, in the output is not currently supported!"
-      | _ => 
-        throwError m!"Invalid ouput type {yType}"
+      let ports ← localPortsFromType xType name off .input
+      off := off + ports.leafNum
+      inputs := inputs.push ports
     
-    return {
+    let output ← localPortsFromType r .anonymous off .output
+    
+    let type : NodeType := {
       name := apexNodeName
-      ports := ports
+      leanDecl := decl
+      hasRunData := hasRunData
+      inputs := inputs
+      output := output
     }
+    
+    trace[HouLean.Apex.compiler] "{repr type}"
+
+    return type
 
 
 /-- Return `NodeType` corresponding to the given Lean function. -/
@@ -93,7 +124,7 @@ initialize apexNodeAttr : Unit ←
       | `(apex_node| apex_node $name $[has_rundata]?) => discard <| MetaM.run do
         let n := name.getString
         let rundata := stx[2].getOptional?.isSome
-        let nodeType ← mkNodeTypeFromLeanFn (.const declName []) n #[] rundata
+        let nodeType ← mkNodeTypeFromLeanFn declName n rundata
         addNodeType (.const declName []) nodeType
       | _ => Elab.throwUnsupportedSyntax
     erase := fun _declName =>

@@ -6,16 +6,16 @@ open HouLean.Apex.Generated
 
 -- Int arithmetic operations
 @[apex_implements Int.add]
-def Int.add.apex_impl (x y : Int) : Int := AddInt x #v[y]
+def Int.add.apex_impl (x y : Int) : Int := AddInt x #a[y]
 
 @[apex_implements Int.sub]
-def Int.sub.apex_impl (x y : Int) : Int := SubtractInt x #v[y]
+def Int.sub.apex_impl (x y : Int) : Int := SubtractInt x #a[y]
 
 @[apex_implements Int.mul]
-def Int.mul.apex_impl (x y : Int) : Int := MultiplyInt x #v[y]
+def Int.mul.apex_impl (x y : Int) : Int := MultiplyInt x #a[y]
 
 @[apex_implements Int.ediv]
-def Int.div.apex_impl (x y : Int) : Int := DivideInt x #v[y]
+def Int.div.apex_impl (x y : Int) : Int := DivideInt x #a[y]
 
 @[apex_implements Int.neg]
 def Int.neg.apex_impl (x : Int) : Int := NegateInt x
@@ -33,10 +33,10 @@ def Int.decLt.apex_impl (x y : Int) : Bool := LessThanInt x y
 def Int.decLe.apex_impl (x y : Int) : Bool := LessThanOrEqualInt x y
 
 -- todo: somehow make sure that `min x y` uses this
-def Int.min.apex_impl (x y : Int) : Int := MinInt x #v[y]
+def Int.min.apex_impl (x y : Int) : Int := MinInt x #a[y]
 
 -- todo: somehow make sure that `max x y` uses this
-def Int.max.apex_impl (x y : Int) : Int := MaxInt x #v[y]
+def Int.max.apex_impl (x y : Int) : Int := MaxInt x #a[y]
 
 def Int.clamp (x lo hi : Int) : Int := min (max x lo) hi
 
@@ -45,17 +45,17 @@ def Int.clamp.apex_impl (x lo hi : Int) : Int := ClampInt x lo hi
 
 -- Int bitwise operations
 -- noncomputable
--- def Int.land.apex_impl (x y : Int) : Int := BitwiseAnd #v[x, y]
+-- def Int.land.apex_impl (x y : Int) : Int := BitwiseAnd #a[x, y]
 
 -- attribute [apex_implemented_by Int.land.apex_impl] Int.land
 
 -- noncomputable
--- def Int.lor.apex_impl (x y : Int) : Int := BitwiseOr #v[x, y]
+-- def Int.lor.apex_impl (x y : Int) : Int := BitwiseOr #a[x, y]
 
 -- attribute [apex_implemented_by Int.lor.apex_impl] Int.lor
 
 -- noncomputable
--- def Int.lxor.apex_impl (x y : Int) : Int := BitwiseXor #v[x, y]
+-- def Int.lxor.apex_impl (x y : Int) : Int := BitwiseXor #a[x, y]
 
 -- attribute [apex_implemented_by Int.lxor.apex_impl] Int.lxor
 

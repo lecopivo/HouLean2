@@ -87,11 +87,9 @@ instance (priority:=low) {α A As} [ApexType α A] [ArrayType A As] : ArrayType 
 
 -- Array instances for all APEX array types
 
-private def toOption {α} (a : α × Bool) : Option α := Maybe.toOption a
-
 instance : ArrayType Bool BoolArray where
   getElem a i _ := (array_GetBool a i default).1
-  getElem? a i := toOption (array_GetBool a i default)
+  getElem? a i := fromApex (array_GetBool a i default)
   setElem a i v := (array_SetBool a i v).1
   empty := .default
   length := array_LengthBool
@@ -103,8 +101,8 @@ instance : ArrayType Bool BoolArray where
   clear := array_ClearBool
   extend := array_ExtendBool
   reverse := array_ReverseBool
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind Bool BoolArray where
   arrayFind := array_FindBool
@@ -121,7 +119,7 @@ instance : ArraySort Bool BoolArray where
 
 instance : ArrayType Int IntArray where
   getElem a i _ := (array_GetInt a i default).1
-  getElem? a i := toOption (array_GetInt a i default)
+  getElem? a i := fromApex (array_GetInt a i default)
   setElem a i v := (array_SetInt a i v).1
   empty := .default
   length := array_LengthInt
@@ -133,8 +131,8 @@ instance : ArrayType Int IntArray where
   clear := array_ClearInt
   extend := array_ExtendInt
   reverse := array_ReverseInt
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 
 instance : ArrayFind Int IntArray where
@@ -170,7 +168,7 @@ instance : ArraySort Int IntArray where
 
 instance : ArrayType Float FloatArray where
   getElem a i _ := (array_GetFloat a i default).1
-  getElem? a i := toOption (array_GetFloat a i default)
+  getElem? a i := fromApex (array_GetFloat a i default)
   setElem a i v := (array_SetFloat a i v).1
   empty := FloatArray.empty
   length := array_LengthFloat
@@ -182,8 +180,8 @@ instance : ArrayType Float FloatArray where
   clear := array_ClearFloat
   extend := array_ExtendFloat
   reverse := array_ReverseFloat
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 
 instance : ArrayFind Float FloatArray where
@@ -222,7 +220,7 @@ instance : ArraySort Float FloatArray where
 
 instance : ArrayType String StringArray where
   getElem a i _ := (array_GetString a i default).1
-  getElem? a i := toOption (array_GetString a i default)
+  getElem? a i := fromApex (array_GetString a i default)
   setElem a i v := (array_SetString a i v).1
   empty := .default
   length := array_LengthString
@@ -234,8 +232,8 @@ instance : ArrayType String StringArray where
   clear := array_ClearString
   extend := array_ExtendString
   reverse := array_ReverseString
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 
 instance : ArrayFind String StringArray where
@@ -253,7 +251,7 @@ instance : ArraySort String StringArray where
 
 instance : ArrayType Vector2 Vector2Array where
   getElem a i _ := (array_GetVector2 a i default).1
-  getElem? a i := toOption (array_GetVector2 a i default)
+  getElem? a i := fromApex (array_GetVector2 a i default)
   setElem a i v := (array_SetVector2 a i v).1
   empty := .default
   length := array_LengthVector2
@@ -265,8 +263,8 @@ instance : ArrayType Vector2 Vector2Array where
   clear := array_ClearVector2
   extend := array_ExtendVector2
   reverse := array_ReverseVector2
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind Vector2 Vector2Array where
   arrayFind := array_FindVector2
@@ -304,7 +302,7 @@ instance : ArraySort Vector2 Vector2Array where
 
 instance : ArrayType Vector3 Vector3Array where
   getElem a i _ := (array_GetVector3 a i default).1
-  getElem? a i := toOption (array_GetVector3 a i default)
+  getElem? a i := fromApex (array_GetVector3 a i default)
   setElem a i v := (array_SetVector3 a i v).1
   empty := .default
   length := array_LengthVector3
@@ -316,8 +314,8 @@ instance : ArrayType Vector3 Vector3Array where
   clear := array_ClearVector3
   extend := array_ExtendVector3
   reverse := array_ReverseVector3
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind Vector3 Vector3Array where
   arrayFind := array_FindVector3
@@ -355,7 +353,7 @@ instance : ArraySort Vector3 Vector3Array where
 
 instance : ArrayType Vector4 Vector4Array where
   getElem a i _ := (array_GetVector4 a i default).1
-  getElem? a i := toOption (array_GetVector4 a i default)
+  getElem? a i := fromApex (array_GetVector4 a i default)
   setElem a i v := (array_SetVector4 a i v).1
   empty := .default
   length := array_LengthVector4
@@ -367,8 +365,8 @@ instance : ArrayType Vector4 Vector4Array where
   clear := array_ClearVector4
   extend := array_ExtendVector4
   reverse := array_ReverseVector4
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind Vector4 Vector4Array where
   arrayFind := array_FindVector4
@@ -406,7 +404,7 @@ instance : ArraySort Vector4 Vector4Array where
 
 instance : ArrayType Matrix3 Matrix3Array where
   getElem a i _ := (array_GetMatrix3 a i default).1
-  getElem? a i := toOption (array_GetMatrix3 a i default)
+  getElem? a i := fromApex (array_GetMatrix3 a i default)
   setElem a i v := (array_SetMatrix3 a i v).1
   empty := .default
   length := array_LengthMatrix3
@@ -418,8 +416,8 @@ instance : ArrayType Matrix3 Matrix3Array where
   clear := array_ClearMatrix3
   extend := array_ExtendMatrix3
   reverse := array_ReverseMatrix3
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind Matrix3 Matrix3Array where
   arrayFind := array_FindMatrix3
@@ -441,7 +439,7 @@ instance : ArrayLerp Matrix3 Matrix3Array where
 
 instance : ArrayType Matrix4 Matrix4Array where
   getElem a i _ := (array_GetMatrix4 a i default).1
-  getElem? a i := toOption (array_GetMatrix4 a i default)
+  getElem? a i := fromApex (array_GetMatrix4 a i default)
   setElem a i v := (array_SetMatrix4 a i v).1
   empty := .default
   length := array_LengthMatrix4
@@ -453,8 +451,8 @@ instance : ArrayType Matrix4 Matrix4Array where
   clear := array_ClearMatrix4
   extend := array_ExtendMatrix4
   reverse := array_ReverseMatrix4
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind Matrix4 Matrix4Array where
   arrayFind := array_FindMatrix4
@@ -477,7 +475,7 @@ instance : ArrayLerp Matrix4 Matrix4Array where
 -- Simple arrays without arithmetic
 instance : ArrayType Geometry GeometryArray where
   getElem a i _ := (array_GetGeometry a i default).1
-  getElem? a i := toOption (array_GetGeometry a i default)
+  getElem? a i := fromApex (array_GetGeometry a i default)
   setElem a i v := (array_SetGeometry a i v).1
   empty := .default
   length := array_LengthGeometry
@@ -489,12 +487,12 @@ instance : ArrayType Geometry GeometryArray where
   clear := array_ClearGeometry
   extend := array_ExtendGeometry
   reverse := array_ReverseGeometry
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayType Dict DictArray where
   getElem a i _ := (array_GetDict a i default).1
-  getElem? a i := toOption (array_GetDict a i default)
+  getElem? a i := fromApex (array_GetDict a i default)
   setElem a i v := (array_SetDict a i v).1
   empty := .default
   length := array_LengthDict
@@ -506,12 +504,12 @@ instance : ArrayType Dict DictArray where
   clear := array_ClearDict
   extend := array_ExtendDict
   reverse := array_ReverseDict
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayType DynamicPath DynamicPathArray where
   getElem a i _ := (array_GetDynamicPath a i default).1
-  getElem? a i := toOption (array_GetDynamicPath a i default)
+  getElem? a i := fromApex (array_GetDynamicPath a i default)
   setElem a i v := (array_SetDynamicPath a i v).1
   empty := .default
   length := array_LengthDynamicPath
@@ -523,12 +521,12 @@ instance : ArrayType DynamicPath DynamicPathArray where
   clear := array_ClearDynamicPath
   extend := array_ExtendDynamicPath
   reverse := array_ReverseDynamicPath
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayType ApexNodeID ApexNodeIDArray where
   getElem a i _ := (array_GetApexNodeID a i default).1
-  getElem? a i := toOption (array_GetApexNodeID a i default)
+  getElem? a i := fromApex (array_GetApexNodeID a i default)
   setElem a i v := (array_SetApexNodeID a i v).1
   empty := .default
   length := array_LengthApexNodeID
@@ -540,15 +538,15 @@ instance : ArrayType ApexNodeID ApexNodeIDArray where
   clear := array_ClearApexNodeID
   extend := array_ExtendApexNodeID
   reverse := array_ReverseApexNodeID
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind ApexNodeID ApexNodeIDArray where
   arrayFind := array_FindApexNodeID
 
 instance : ArrayType ApexPortID ApexPortIDArray where
   getElem a i _ := (array_GetApexPortID a i default).1
-  getElem? a i := toOption (array_GetApexPortID a i default)
+  getElem? a i := fromApex (array_GetApexPortID a i default)
   setElem a i v := (array_SetApexPortID a i v).1
   empty := .default
   length := array_LengthApexPortID
@@ -560,15 +558,15 @@ instance : ArrayType ApexPortID ApexPortIDArray where
   clear := array_ClearApexPortID
   extend := array_ExtendApexPortID
   reverse := array_ReverseApexPortID
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind ApexPortID ApexPortIDArray where
   arrayFind := array_FindApexPortID
 
 instance : ArrayType FBIKSkeleton FBIKSkeletonArray where
   getElem a i _ := (array_GetFBIKSkeleton a i default).1
-  getElem? a i := toOption (array_GetFBIKSkeleton a i default)
+  getElem? a i := fromApex (array_GetFBIKSkeleton a i default)
   setElem a i v := (array_SetFBIKSkeleton a i v).1
   empty := .default
   length := array_LengthFBIKSkeleton
@@ -580,12 +578,12 @@ instance : ArrayType FBIKSkeleton FBIKSkeletonArray where
   clear := array_ClearFBIKSkeleton
   extend := array_ExtendFBIKSkeleton
   reverse := array_ReverseFBIKSkeleton
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayType FBIKSolver FBIKSolverArray where
   getElem a i _ := (array_GetFBIKSolver a i default).1
-  getElem? a i := toOption (array_GetFBIKSolver a i default)
+  getElem? a i := fromApex (array_GetFBIKSolver a i default)
   setElem a i v := (array_SetFBIKSolver a i v).1
   empty := .default
   length := array_LengthFBIKSolver
@@ -597,12 +595,12 @@ instance : ArrayType FBIKSolver FBIKSolverArray where
   clear := array_ClearFBIKSolver
   extend := array_ExtendFBIKSolver
   reverse := array_ReverseFBIKSolver
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayType FBIKTarget FBIKTargetArray where
   getElem a i _ := (array_GetFBIKTarget a i default).1
-  getElem? a i := toOption (array_GetFBIKTarget a i default)
+  getElem? a i := fromApex (array_GetFBIKTarget a i default)
   setElem a i v := (array_SetFBIKTarget a i v).1
   empty := .default
   length := array_LengthFBIKTarget
@@ -614,12 +612,12 @@ instance : ArrayType FBIKTarget FBIKTargetArray where
   clear := array_ClearFBIKTarget
   extend := array_ExtendFBIKTarget
   reverse := array_ReverseFBIKTarget
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayType SimRootDataId SimRootDataIdArray where
   getElem a i _ := (array_GetSimRootDataId a i default).1
-  getElem? a i := toOption (array_GetSimRootDataId a i default)
+  getElem? a i := fromApex (array_GetSimRootDataId a i default)
   setElem a i v := (array_SetSimRootDataId a i v).1
   empty := .default
   length := array_LengthSimRootDataId
@@ -631,8 +629,8 @@ instance : ArrayType SimRootDataId SimRootDataIdArray where
   clear := array_ClearSimRootDataId
   extend := array_ExtendSimRootDataId
   reverse := array_ReverseSimRootDataId
-  toApex xs := cast silentSorry xs
-  fromApex xs := cast silentSorry xs
+  toApex xs := cast sorry_proof xs
+  fromApex xs := cast sorry_proof xs
 
 instance : ArrayFind SimRootDataId SimRootDataIdArray where
   arrayFind := array_FindSimRootDataId

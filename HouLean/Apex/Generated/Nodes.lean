@@ -1,5 +1,4 @@
 import HouLean.Apex.Compile.NodeType
-import HouLean.Apex.Generated.Types
 
 set_option synthInstance.maxSize 512
 

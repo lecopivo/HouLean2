@@ -143,7 +143,8 @@ initialize implementsAttr : Unit ←
     add   := fun trgName stx attrKind =>
       match stx with
       | `(apex_implements| apex_implements $srcIdent) => discard <| MetaM.run do
-        addImplementedBy (.const srcIdent.getId []) (.const trgName []) attrKind
+        let name ← resolveGlobalConstNoOverload srcIdent
+        addImplementedBy (.const name []) (.const trgName []) attrKind
       | _ => Elab.throwUnsupportedSyntax
     erase := fun _declName =>
       throwError "Can't remove `apex_implements`, not implemented yet!"

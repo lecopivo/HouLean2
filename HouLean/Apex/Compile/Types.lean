@@ -1,25 +1,84 @@
 import Lean
 import HouLean.ArrayTree
 import HouLean.Data
+import HouLean.Apex.Generated.Defs
 
 open Lean
 
-namespace HouLean.Apex
+namespace HouLean
+
+/-- This class maps Lean type `α` to Apex compatible type `β`. 
+
+This extensible type level function mapping α to β is used to 
+transform Lean code to a smaller subset of Lean which is supported
+by Apex compiler. Therefore many APEX compiler extensions can be done
+through providing instances like `ApexType` and one does not have to
+touch the compiler!.
+-/
+class ApexType (α : Type u) (β : outParam (Type v)) where
+  toApex : α → β
+  fromApex : β → α
+
+export ApexType (toApex fromApex)
+
+
+namespace Apex
 
 /-- List of element of type `α` whose length `n` has to be known at the APEX compile time. -/
-def VariadicArg (α : Type u) (n : Nat) := Vector α n
+inductive VariadicArg (α : Type u) : Nat → Type u where
+  | nil : VariadicArg α 0
+  | cons {n} (head : α) (tail : VariadicArg α n) : VariadicArg α (n+1)
+-- def VariadicArg (α : Type u) (n : Nat) := Vector α n
 
-instance {n} {α} [Inhabited α] : Inhabited (VariadicArg α n) := by 
-  unfold VariadicArg; infer_instance
+protected def VariadicArg.default [Inhabited α] : (n : Nat) → VariadicArg α n
+  | 0 => .nil
+  | n+1 => .cons default (.default n)
 
-instance : CoeDep (List α) [] (VariadicArg α 0) where
-  coe := #v[]
-instance (x0 : α) : CoeDep (List α) [x0] (VariadicArg α 1) where
-  coe := #v[x0]
-instance (x0 x1 : α) : CoeDep (List α) [x0,x1] (VariadicArg α 2) where
-  coe := #v[x0,x1]
-instance (x0 x1 x2 : α) : CoeDep (List α) [x0,x1,x2] (VariadicArg α 3) where
-  coe := #v[x0,x1,x2]
+instance {α} [Inhabited α] : Inhabited (VariadicArg α n) := ⟨VariadicArg.default n⟩
+
+syntax "#a[" term,* "]" : term
+macro_rules 
+| `(#a[]) => `(VariadicArg.nil)
+| `(#a[$x:term]) => `(VariadicArg.cons $x .nil)
+| `(#a[$x:term,$xs:term,*]) => `(VariadicArg.cons $x #a[$xs:term,*])
+
+inductive VariadicArg' : List ApexTypeTag  → Type u where
+  | nil : VariadicArg' []
+  | cons {t : ApexTypeTag} {ts : List ApexTypeTag} (head : t.toType) (tail : VariadicArg' ts) : VariadicArg' (t::ts)
+
+class ApexTypeFlatten (α : Type u) (ts : outParam (List ApexTypeTag)) : Type u where
+  apexFlatten : α → VariadicArg' ts
+  apexUnflatten! : VariadicArg' ts → α
+
+export ApexTypeFlatten (apexFlatten apexUnflatten!)
+
+def _root_.HouLean.Apex.Untyped.getFloat! (x : Untyped) : Float := 
+  match x with
+  | .float x => x
+  | _ => panic! s!"Getting float from untyped which has different type!"
+
+def _root_.HouLean.Apex.Untyped.getInt! (x : Untyped) : Int := 
+  match x with
+  | .int x => x
+  | _ => panic! s!"Getting int from untyped which has different type!"
+
+instance : ApexTypeFlatten Float [.float] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten! := fun (.cons x .nil) => x
+
+instance : ApexTypeFlatten Int [.int] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten! := fun (.cons x .nil) => x
+
+unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (α×β) (ts ++ ss) where
+  apexFlatten x := unsafeCast x
+  apexUnflatten! x := unsafeCast x
+
+unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (MProd α β) (ts ++ ss) where
+  apexFlatten x := unsafeCast x
+  apexUnflatten! x := unsafeCast x
+
+
 -- ...
 
 namespace Compiler
@@ -29,29 +88,34 @@ initialize registerTraceClass `HouLean.Apex.compiler
 /-- Name of builtin APEX type. -/
 abbrev TypeName := String
 
+deriving instance Repr for ApexTypeTag
+instance : ToString ApexTypeTag := ⟨fun t => t.toString⟩
+
+
 inductive PortType where
-  | builtin  (typeName : TypeName)
-  | variadic (elemTypeName : TypeName)
+  | builtin  (typeTag : ApexTypeTag)
+  /-- Option beacause we can have `VariadicArg<void>` -/
+  | variadic (elemTypeTag : Option ApexTypeTag)
   | rundata
   | undefined
-deriving Inhabited, BEq
+deriving Inhabited, BEq, Repr
 
-def PortType.builtin! (t : PortType) : String :=
+def PortType.builtin! (t : PortType) : ApexTypeTag :=
   match t with
   | .builtin n => n
   | _ => panic! "invalid use of PortType.buildin!"
 
 inductive PortDir where
   | input | output
-deriving Inhabited, BEq
+deriving Inhabited, BEq, Repr
 
 structure LocalPort where
   /-- local id of a port within node -/
   localId : Nat
-  name : String
+  name : Name
   type : PortType
   dir : PortDir
-deriving Inhabited
+deriving Inhabited, Repr
 
 structure Port extends LocalPort where
   /-- Global id of a port, can be invalid if port is only part of a node specification. -/
@@ -60,24 +124,32 @@ structure Port extends LocalPort where
   nodeId : Nat
 deriving Inhabited
 
+def Port.isVariadic (p : Port) : Bool := 
+  match p.type with
+  | .variadic .. => true
+  | _ => false
+
 /-- APEX type that corresponds to a Lean type. Exact size of variadic types might not be known. -/
-inductive ApexType where
-  | builtin (typeName : TypeName)
-  /-- Variadic type with size expressed as `Expr`. 
+abbrev ApexStruct := ArrayTree (Name × ApexTypeTag)
+instance : ToString ApexStruct := ⟨fun t => t.toString⟩
 
-  During compilation to APEX graph this `n` has to be a literal value. -/
-  | variadic (elemTypeName : TypeName) (n : Expr)
-  -- stores field name and name of the builtin type
-  | struct (bundle : ArrayTree (String×TypeName))
-deriving Inhabited, BEq
+-- inductive ApexType where
+--   | builtin (typeTag : ApexTypeTag)
+--   /-- Variadic type with size expressed as `Expr`. 
 
-def ApexType.toString (t : ApexType) : String :=
-  match t with
-  | .builtin t => t
-  | .variadic t _ => s!"({t},...)"
-  | .struct t => (t.mapIdx (fun _ n => n.2)).toString
+--   During compilation to APEX graph this `n` has to be a literal value. -/
+--   | variadic (elemTypeName : ApexTypeTag) (n : Expr)
+--   -- stores field name and name of the builtin type
+--   | struct (bundle : ArrayTree (String×ApexTypeTag))
+-- deriving Inhabited, BEq
 
-instance : ToString ApexType := ⟨fun t => t.toString⟩
+-- def ApexType.toString (t : ApexType) : String :=
+--   match t with
+--   | .builtin t => t
+--   | .variadic t _ => s!"({t},...)"
+--   | .struct t => (t.mapIdx (fun _ n => n.2)).toString
+
+-- instance : ToString ApexType := ⟨fun t => t.toString⟩
 
 /-- APEX type that corresponds to a Lean type. Size of variadic types is known.
 
@@ -86,14 +158,20 @@ default name of variable of this type and its builtin type name
 abbrev ApexStaticType := ArrayTree (String × TypeName)
 
 structure ApexFunType where
-  inputs : Array ApexType
-  output : ApexType
+  inputs : Array ApexStruct
+  output : ApexStruct
 deriving Inhabited, BEq
 
 structure NodeType where
   name : String
-  ports : Array LocalPort
-deriving Inhabited
+  leanDecl : Name
+  /-- This indicates if a node has additional output port with run data -/
+  hasRunData : Bool
+  /-- Shapes of the inputs, numbers are local indices of the ports -/
+  inputs : Array (ArrayTree LocalPort)
+  /-- Shapes of the output, numbers are local indices of the ports -/
+  output : ArrayTree LocalPort
+deriving Inhabited, Repr
 
 /-- Specify for which port to create subports given their names and types in `subports`
 
@@ -115,9 +193,14 @@ structure Node where
   name : String
   type : NodeType
   globalId : Nat
-  ports : Array PortId
-  subPorts : Array AddSubPortSpec
+  /-- Shapes of the inputs, numbers are local indices of the ports -/
+  inputs : Array (ArrayTree PortId)
+  /-- Shapes of the output, numbers are local indices of the ports -/
+  output : ArrayTree PortId
 deriving Inhabited
+
+
+
 
 -- /-- Type of Lean function in terms of APEX types. -/
 -- deriving Inhabited

@@ -87,44 +87,74 @@ normalTypes = baseTypes.union(arrayTypes).union(variadicTypes)
 # exclude these from generation
 nativeTypes = ["Float", "Bool", "Int", "String", "FloatArray", "Vector2", "Vector3", "Vector4", "Matrix2", "Matrix3", "Matrix4"]
 
-code = """import HouLean.Apex.Compile.ExprType
+codeDefs = """import HouLean.Init
+import HouLean.Data.Defs
 
 namespace HouLean.Apex
 
-axiom silentSorry {α : Sort u} : α
-
 """
 
-code += "\n".join([f"attribute [apex_type \"{t}\"] {t}" for t in nativeTypes])
+code = """import HouLean.Apex.Compile.Extension
+import HouLean.Apex.Generated.Defs
+
+namespace HouLean.Apex.Compiler
+
+open Qq
+
+run_meta
+"""
+
+# code += "\n".join([f"attribute [apex_builtin_type \"{t}\"] {t}" for t in simpleTypesList])
+code += "\n".join([f"  compilerExt.add (.apexBuiltinType (Expr.const ``{t} []) .{decapitalize(t)})" for t in simpleTypesList])
 code += "\n\n"
 
 for type in simpleTypesList:
-    s = f"""
-    
-@[apex_type "{type}"]
+    s_defs = f"""
 opaque {type} : Type := Unit
-
-def {type}.default : {type} := cast silentSorry ()
-instance : Inhabited {type} := ⟨{type}.default⟩
-    
+def {type}.default : {type} := cast sorry_proof ()
+instance : Inhabited {type} := ⟨{type}.default⟩    
 """
+
     if type not in nativeTypes:
-        code += s
+        codeDefs += s_defs
 
 
 
-
+tags = '\n  '.join([f"| {decapitalize(s)}" for s in simpleTypesList])
+tagToType = '\n  '.join([f"| {decapitalize(s)} => {s}" for s in simpleTypesList])
+tagToString = '\n  '.join([f"| {decapitalize(s)} => \"{s}\"" for s in simpleTypesList])
+tagFromName = '\n  '.join([f"| ``{s} => some .{decapitalize(s)}" for s in simpleTypesList])
 ctors = '\n  '.join([f"| {decapitalize(s)} (x : {s})" for s in simpleTypesList])
 s = f"""
+inductive ApexTypeTag where
+  {tags}
+deriving Inhabited, BEq
+
+def ApexTypeTag.toType : ApexTypeTag → Type
+  {tagToType}
+
+def ApexTypeTag.toString : ApexTypeTag → String
+  {tagToString}
+
+open Lean in
+def ApexTypeTag.fromName : Name → Option ApexTypeTag
+  {tagFromName}
+  | _ => none
+
 inductive Untyped where
   {ctors}
 
 instance : Inhabited Untyped := ⟨.float 0⟩
+
 """
-code += s
+codeDefs += s
+
 
 with open("Types.lean", "w", encoding="utf-8") as f:
     f.write(code)
+
+with open("Defs.lean", "w", encoding="utf-8") as f:
+    f.write(codeDefs)
 
 
 ####################################################################################################    

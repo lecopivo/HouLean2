@@ -4,397 +4,293 @@ open HouLean Apex Compiler
 
 open Lean Qq
 
-set_option trace.HouLean.Apex.compiler true in
-#apex_graph fun c : Bool => if c then 1 else 0
-
 /--
-
 info: Nodes:
-  0: x : __null__
-  1: y : __null__
-  2: lessthan_int : LessThan<Int>
+  0: LessThan<Int>1 : LessThan<Int>
+  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
 
 Ports:
-  0: /x/__spare__[in]
-  1: /x/__spare__[out]
-  2: /x/x[in]
-  3: /x/x[out]
-  4: /y/__spare__[in]
-  5: /y/__spare__[out]
-  6: /y/x[in]
-  7: /y/x[out]
-  8: /lessthan_int/a0[in]
-  9: /lessthan_int/b1[in]
-  10: /lessthan_int/out0[out]
+  0: /LessThan<Int>1/a[in]
+  1: /LessThan<Int>1/b[in]
+  2: /LessThan<Int>1/[anonymous][out]
+  3: /TwoWaySwitch<Bool>1/a[in]
+  4: /TwoWaySwitch<Bool>1/b[in]
+  5: /TwoWaySwitch<Bool>1/index[in]
+  6: /TwoWaySwitch<Bool>1/[anonymous][out]
 
-Input Ports:
-  2: /x/x[in]
-  6: /y/x[in]
+Inputs:
+  x[in] -> #[/LessThan<Int>1/a[in]]
+  y[in] -> #[/LessThan<Int>1/b[in]]
 
-Output Ports:
-  10: /lessthan_int/out0[out]
+Outputs:
+  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /x/x[out] -> /lessthan_int/a0[in]
-  1: /y/x[out] -> /lessthan_int/b1[in]
+  0: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
 
 Literals:
+  0: bool "false" -> 3 ⏎
+  1: bool "true" -> 4
 -/
 #guard_msgs in
-run_meta
-  let e := q(fun x y : Int => decide (x < y))
-  let g ← programToApexGraph e
-  IO.println g
+#apex_graph fun x y : Int => decide (x < y)
 
 
 /--
 info: Nodes:
-  0: x : __null__
-  1: y : __null__
-  2: lessthan_int : LessThan<Int>
+  0: LessThan<Int>1 : LessThan<Int>
+  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
 
 Ports:
-  0: /x/__spare__[in]
-  1: /x/__spare__[out]
-  2: /x/x[in]
-  3: /x/x[out]
-  4: /y/__spare__[in]
-  5: /y/__spare__[out]
-  6: /y/x[in]
-  7: /y/x[out]
-  8: /lessthan_int/a0[in]
-  9: /lessthan_int/b1[in]
-  10: /lessthan_int/out0[out]
+  0: /LessThan<Int>1/a[in]
+  1: /LessThan<Int>1/b[in]
+  2: /LessThan<Int>1/[anonymous][out]
+  3: /TwoWaySwitch<Bool>1/a[in]
+  4: /TwoWaySwitch<Bool>1/b[in]
+  5: /TwoWaySwitch<Bool>1/index[in]
+  6: /TwoWaySwitch<Bool>1/[anonymous][out]
 
-Input Ports:
-  2: /x/x[in]
-  6: /y/x[in]
+Inputs:
+  x[in] -> #[/LessThan<Int>1/b[in]]
+  y[in] -> #[/LessThan<Int>1/a[in]]
 
-Output Ports:
-  10: /lessthan_int/out0[out]
+Outputs:
+  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /y/x[out] -> /lessthan_int/a0[in]
-  1: /x/x[out] -> /lessthan_int/b1[in]
+  0: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
 
 Literals:
+  0: bool "false" -> 3 ⏎
+  1: bool "true" -> 4
 -/
 #guard_msgs in
-run_meta
-  let e := q(fun x y : Int => decide (x > y))
-  let g ← programToApexGraph e
-  IO.println g
+#apex_graph fun x y : Int => decide (x > y)
 
 /--
 info: Nodes:
-  0: x : __null__
-  1: y : __null__
-  2: lessthanorequal_int : LessThanOrEqual<Int>
+  0: LessThanOrEqual<Int>1 : LessThanOrEqual<Int>
+  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
 
 Ports:
-  0: /x/__spare__[in]
-  1: /x/__spare__[out]
-  2: /x/x[in]
-  3: /x/x[out]
-  4: /y/__spare__[in]
-  5: /y/__spare__[out]
-  6: /y/x[in]
-  7: /y/x[out]
-  8: /lessthanorequal_int/a0[in]
-  9: /lessthanorequal_int/b1[in]
-  10: /lessthanorequal_int/out0[out]
+  0: /LessThanOrEqual<Int>1/a[in]
+  1: /LessThanOrEqual<Int>1/b[in]
+  2: /LessThanOrEqual<Int>1/[anonymous][out]
+  3: /TwoWaySwitch<Bool>1/a[in]
+  4: /TwoWaySwitch<Bool>1/b[in]
+  5: /TwoWaySwitch<Bool>1/index[in]
+  6: /TwoWaySwitch<Bool>1/[anonymous][out]
 
-Input Ports:
-  2: /x/x[in]
-  6: /y/x[in]
+Inputs:
+  x[in] -> #[/LessThanOrEqual<Int>1/a[in]]
+  y[in] -> #[/LessThanOrEqual<Int>1/b[in]]
 
-Output Ports:
-  10: /lessthanorequal_int/out0[out]
+Outputs:
+  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /x/x[out] -> /lessthanorequal_int/a0[in]
-  1: /y/x[out] -> /lessthanorequal_int/b1[in]
+  0: /LessThanOrEqual<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
 
 Literals:
+  0: bool "false" -> 3 ⏎
+  1: bool "true" -> 4
 -/
 #guard_msgs in
-run_meta
-  let e := q(fun x y : Int => decide (x ≤ y))
-  let g ← programToApexGraph e
-  IO.println g
-
-/--
-info: Nodes:
-  0: x : __null__
-  1: y : __null__
-  2: lessthanorequal_int : LessThanOrEqual<Int>
-
-Ports:
-  0: /x/__spare__[in]
-  1: /x/__spare__[out]
-  2: /x/x[in]
-  3: /x/x[out]
-  4: /y/__spare__[in]
-  5: /y/__spare__[out]
-  6: /y/x[in]
-  7: /y/x[out]
-  8: /lessthanorequal_int/a0[in]
-  9: /lessthanorequal_int/b1[in]
-  10: /lessthanorequal_int/out0[out]
-
-Input Ports:
-  2: /x/x[in]
-  6: /y/x[in]
-
-Output Ports:
-  10: /lessthanorequal_int/out0[out]
-
-Wires:
-  0: /y/x[out] -> /lessthanorequal_int/a0[in]
-  1: /x/x[out] -> /lessthanorequal_int/b1[in]
-
-Literals:
--/
-#guard_msgs in
-run_meta
-  let e := q(fun x y : Int => decide (x ≥ y))
-  let g ← programToApexGraph e
-  IO.println g
-
-/--
-info: Nodes:
-  0: x : __null__
-  1: y : __null__
-  2: equals_int : Equals<Int>
-
-Ports:
-  0: /x/__spare__[in]
-  1: /x/__spare__[out]
-  2: /x/x[in]
-  3: /x/x[out]
-  4: /y/__spare__[in]
-  5: /y/__spare__[out]
-  6: /y/x[in]
-  7: /y/x[out]
-  8: /equals_int/a0[in]
-  9: /equals_int/b1[in]
-  10: /equals_int/out0[out]
-
-Input Ports:
-  2: /x/x[in]
-  6: /y/x[in]
-
-Output Ports:
-  10: /equals_int/out0[out]
-
-Wires:
-  0: /x/x[out] -> /equals_int/a0[in]
-  1: /y/x[out] -> /equals_int/b1[in]
-
-Literals:
--/
-#guard_msgs in
-run_meta
-  let e := q(fun x y : Int => decide (x = y))
-  let g ← programToApexGraph e
-  IO.println g
-
-/--
-info: Nodes:
-  0: x : __null__
-  1: y : __null__
-  2: add_int : Add<Int>
-  3: multiply_int : Multiply<Int>
-  4: lessthan_int : LessThan<Int>
-  5: twowayswitch_int : TwoWaySwitch<Int>
-
-Ports:
-  0: /x/__spare__[in]
-  1: /x/__spare__[out]
-  2: /x/x[in]
-  3: /x/x[out]
-  4: /y/__spare__[in]
-  5: /y/__spare__[out]
-  6: /y/x[in]
-  7: /y/x[out]
-  8: /add_int/a0[in]
-  9: /add_int/b1[in]
-  10: /add_int/out0[out]
-  11: /add_int/x[in]
-  12: /multiply_int/a0[in]
-  13: /multiply_int/b1[in]
-  14: /multiply_int/out0[out]
-  15: /multiply_int/x[in]
-  16: /lessthan_int/a0[in]
-  17: /lessthan_int/b1[in]
-  18: /lessthan_int/out0[out]
-  19: /twowayswitch_int/a0[in]
-  20: /twowayswitch_int/b1[in]
-  21: /twowayswitch_int/index2[in]
-  22: /twowayswitch_int/out0[out]
-
-Input Ports:
-  2: /x/x[in]
-  6: /y/x[in]
-
-Output Ports:
-  22: /twowayswitch_int/out0[out]
-
-Wires:
-  0: /x/x[out] -> /add_int/a0[in]
-  1: /y/x[out] -> /add_int/x[in]
-  2: /x/x[out] -> /multiply_int/a0[in]
-  3: /y/x[out] -> /multiply_int/x[in]
-  4: /x/x[out] -> /lessthan_int/a0[in]
-  5: /y/x[out] -> /lessthan_int/b1[in]
-  6: /add_int/out0[out] -> /twowayswitch_int/a0[in]
-  7: /multiply_int/out0[out] -> /twowayswitch_int/b1[in]
-  8: /lessthan_int/out0[out] -> /twowayswitch_int/index2[in]
-
-Literals:
--/
-#guard_msgs in
-run_meta
-  let e := q(fun x y : Int => if x < y then x + y else x * y)
-  let g ← programToApexGraph e
-  IO.println g
-
-/--
-info: Nodes:
-  0: x : __null__
-  1: y : __null__
-  2: add_int : Add<Int>
-  3: multiply_int : Multiply<Int>
-  4: lessthan_int : LessThan<Int>
-  5: twowayswitch_int : TwoWaySwitch<Int>
-
-Ports:
-  0: /x/__spare__[in]
-  1: /x/__spare__[out]
-  2: /x/x[in]
-  3: /x/x[out]
-  4: /y/__spare__[in]
-  5: /y/__spare__[out]
-  6: /y/x[in]
-  7: /y/x[out]
-  8: /add_int/a0[in]
-  9: /add_int/b1[in]
-  10: /add_int/out0[out]
-  11: /add_int/x[in]
-  12: /multiply_int/a0[in]
-  13: /multiply_int/b1[in]
-  14: /multiply_int/out0[out]
-  15: /multiply_int/x[in]
-  16: /lessthan_int/a0[in]
-  17: /lessthan_int/b1[in]
-  18: /lessthan_int/out0[out]
-  19: /twowayswitch_int/a0[in]
-  20: /twowayswitch_int/b1[in]
-  21: /twowayswitch_int/index2[in]
-  22: /twowayswitch_int/out0[out]
-
-Input Ports:
-  2: /x/x[in]
-  6: /y/x[in]
-
-Output Ports:
-  22: /twowayswitch_int/out0[out]
-
-Wires:
-  0: /x/x[out] -> /add_int/a0[in]
-  1: /y/x[out] -> /add_int/x[in]
-  2: /x/x[out] -> /multiply_int/a0[in]
-  3: /y/x[out] -> /multiply_int/x[in]
-  4: /x/x[out] -> /lessthan_int/a0[in]
-  5: /y/x[out] -> /lessthan_int/b1[in]
-  6: /add_int/out0[out] -> /twowayswitch_int/a0[in]
-  7: /multiply_int/out0[out] -> /twowayswitch_int/b1[in]
-  8: /lessthan_int/out0[out] -> /twowayswitch_int/index2[in]
-
-Literals:
--/
-#guard_msgs in
-run_meta
-  let e := q(fun x y : Int => if _ : x < y then x + y else x * y)
-  let g ← programToApexGraph e
-  IO.println g
+#apex_graph fun x y : Int => decide (x ≤ y)
 
 
 /--
 info: Nodes:
-  0: x : __null__
-  1: y : __null__
-  2: lessthan_float : LessThan<Float>
-  3: twowayswitch_float : TwoWaySwitch<Float>
-  4: twowayswitch_float1 : TwoWaySwitch<Float>
-  5: twowayswitch_float2 : TwoWaySwitch<Float>
-  6: twowayswitch_float3 : TwoWaySwitch<Float>
+  0: LessThanOrEqual<Int>1 : LessThanOrEqual<Int>
+  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
 
 Ports:
-  0: /x/__spare__[in]
-  1: /x/__spare__[out]
-  2: /x/fst[in]
-  3: /x/fst[out]
-  4: /x/snd[in]
-  5: /x/snd[out]
-  6: /y/__spare__[in]
-  7: /y/__spare__[out]
-  8: /y/fst[in]
-  9: /y/fst[out]
-  10: /y/snd[in]
-  11: /y/snd[out]
-  12: /lessthan_float/a0[in]
-  13: /lessthan_float/b1[in]
-  14: /lessthan_float/out0[out]
-  15: /twowayswitch_float/a0[in]
-  16: /twowayswitch_float/b1[in]
-  17: /twowayswitch_float/index2[in]
-  18: /twowayswitch_float/out0[out]
-  19: /twowayswitch_float1/a0[in]
-  20: /twowayswitch_float1/b1[in]
-  21: /twowayswitch_float1/index2[in]
-  22: /twowayswitch_float1/out0[out]
-  23: /twowayswitch_float2/a0[in]
-  24: /twowayswitch_float2/b1[in]
-  25: /twowayswitch_float2/index2[in]
-  26: /twowayswitch_float2/out0[out]
-  27: /twowayswitch_float3/a0[in]
-  28: /twowayswitch_float3/b1[in]
-  29: /twowayswitch_float3/index2[in]
-  30: /twowayswitch_float3/out0[out]
+  0: /LessThanOrEqual<Int>1/a[in]
+  1: /LessThanOrEqual<Int>1/b[in]
+  2: /LessThanOrEqual<Int>1/[anonymous][out]
+  3: /TwoWaySwitch<Bool>1/a[in]
+  4: /TwoWaySwitch<Bool>1/b[in]
+  5: /TwoWaySwitch<Bool>1/index[in]
+  6: /TwoWaySwitch<Bool>1/[anonymous][out]
 
-Input Ports:
-  2: /x/fst[in]
-  4: /x/snd[in]
-  8: /y/fst[in]
-  10: /y/snd[in]
+Inputs:
+  x[in] -> #[/LessThanOrEqual<Int>1/b[in]]
+  y[in] -> #[/LessThanOrEqual<Int>1/a[in]]
 
-Output Ports:
-  18: /twowayswitch_float/out0[out]
-  22: /twowayswitch_float1/out0[out]
-  26: /twowayswitch_float2/out0[out]
-  30: /twowayswitch_float3/out0[out]
+Outputs:
+  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /x/fst[out] -> /lessthan_float/a0[in]
-  1: /y/snd[out] -> /lessthan_float/b1[in]
-  2: /x/fst[out] -> /twowayswitch_float/a0[in]
-  3: /y/fst[out] -> /twowayswitch_float/b1[in]
-  4: /lessthan_float/out0[out] -> /twowayswitch_float/index2[in]
-  5: /x/snd[out] -> /twowayswitch_float1/a0[in]
-  6: /y/snd[out] -> /twowayswitch_float1/b1[in]
-  7: /lessthan_float/out0[out] -> /twowayswitch_float1/index2[in]
-  8: /y/fst[out] -> /twowayswitch_float2/a0[in]
-  9: /x/fst[out] -> /twowayswitch_float2/b1[in]
-  10: /lessthan_float/out0[out] -> /twowayswitch_float2/index2[in]
-  11: /y/snd[out] -> /twowayswitch_float3/a0[in]
-  12: /x/snd[out] -> /twowayswitch_float3/b1[in]
-  13: /lessthan_float/out0[out] -> /twowayswitch_float3/index2[in]
+  0: /LessThanOrEqual<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
+
+Literals:
+  0: bool "false" -> 3 ⏎
+  1: bool "true" -> 4
+-/
+#guard_msgs in
+#apex_graph fun x y : Int => decide (x ≥ y)
+
+
+/--
+info: Nodes:
+  0: Equals<Int>1 : Equals<Int>
+  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
+
+Ports:
+  0: /Equals<Int>1/a[in]
+  1: /Equals<Int>1/b[in]
+  2: /Equals<Int>1/[anonymous][out]
+  3: /TwoWaySwitch<Bool>1/a[in]
+  4: /TwoWaySwitch<Bool>1/b[in]
+  5: /TwoWaySwitch<Bool>1/index[in]
+  6: /TwoWaySwitch<Bool>1/[anonymous][out]
+
+Inputs:
+  x[in] -> #[/Equals<Int>1/a[in]]
+  y[in] -> #[/Equals<Int>1/b[in]]
+
+Outputs:
+  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
+
+Wires:
+  0: /Equals<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
+
+Literals:
+  0: bool "false" -> 3 ⏎
+  1: bool "true" -> 4
+-/
+#guard_msgs in
+#apex_graph fun x y : Int => decide (x = y)
+
+
+/--
+info: Nodes:
+  0: Multiply<Int>1 : Multiply<Int>
+  1: Add<Int>1 : Add<Int>
+  2: LessThan<Int>1 : LessThan<Int>
+  3: TwoWaySwitch<Int>1 : TwoWaySwitch<Int>
+
+Ports:
+  0: /Multiply<Int>1/a[in]
+  1: /Multiply<Int>1/b[in]
+  2: /Multiply<Int>1/[anonymous][out]
+  3: /Add<Int>1/a[in]
+  4: /Add<Int>1/b[in]
+  5: /Add<Int>1/[anonymous][out]
+  6: /LessThan<Int>1/a[in]
+  7: /LessThan<Int>1/b[in]
+  8: /LessThan<Int>1/[anonymous][out]
+  9: /TwoWaySwitch<Int>1/a[in]
+  10: /TwoWaySwitch<Int>1/b[in]
+  11: /TwoWaySwitch<Int>1/index[in]
+  12: /TwoWaySwitch<Int>1/[anonymous][out]
+
+Inputs:
+  x[in] -> #[/Multiply<Int>1/a[in], /Add<Int>1/a[in], /LessThan<Int>1/a[in]]
+  y[in] -> #[/Multiply<Int>1/b[in], /Add<Int>1/b[in], /LessThan<Int>1/b[in]]
+
+Outputs:
+  /TwoWaySwitch<Int>1/[anonymous][out] -> [anonymous][out]
+
+Wires:
+  0: /Multiply<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/a[in]
+  1: /Add<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/b[in]
+  2: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/index[in]
 
 Literals:
 -/
 #guard_msgs in
-run_meta
-  let e := q(fun x y : Float×Float => if x.1 < y.2 then (x,y) else (y,x))
-  let g ← programToApexGraph e
-  IO.println g
+#apex_graph fun x y : Int => if x < y then x + y else x * y
+
+
+/--
+info: Nodes:
+  0: Multiply<Int>1 : Multiply<Int>
+  1: Add<Int>1 : Add<Int>
+  2: LessThan<Int>1 : LessThan<Int>
+  3: TwoWaySwitch<Int>1 : TwoWaySwitch<Int>
+
+Ports:
+  0: /Multiply<Int>1/a[in]
+  1: /Multiply<Int>1/b[in]
+  2: /Multiply<Int>1/[anonymous][out]
+  3: /Add<Int>1/a[in]
+  4: /Add<Int>1/b[in]
+  5: /Add<Int>1/[anonymous][out]
+  6: /LessThan<Int>1/a[in]
+  7: /LessThan<Int>1/b[in]
+  8: /LessThan<Int>1/[anonymous][out]
+  9: /TwoWaySwitch<Int>1/a[in]
+  10: /TwoWaySwitch<Int>1/b[in]
+  11: /TwoWaySwitch<Int>1/index[in]
+  12: /TwoWaySwitch<Int>1/[anonymous][out]
+
+Inputs:
+  x[in] -> #[/Multiply<Int>1/a[in], /Add<Int>1/a[in], /LessThan<Int>1/a[in]]
+  y[in] -> #[/Multiply<Int>1/b[in], /Add<Int>1/b[in], /LessThan<Int>1/b[in]]
+
+Outputs:
+  /TwoWaySwitch<Int>1/[anonymous][out] -> [anonymous][out]
+
+Wires:
+  0: /Multiply<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/a[in]
+  1: /Add<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/b[in]
+  2: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/index[in]
+
+Literals:
+-/
+#guard_msgs in
+#apex_graph fun x y : Int => if _ : x < y then x + y else x * y
+
+
+/--
+info: Nodes:
+  0: LessThan<Float>1 : LessThan<Float>
+  1: TwoWaySwitch<Float>1 : TwoWaySwitch<Float>
+  2: TwoWaySwitch<Float>2 : TwoWaySwitch<Float>
+  3: TwoWaySwitch<Float>3 : TwoWaySwitch<Float>
+  4: TwoWaySwitch<Float>4 : TwoWaySwitch<Float>
+
+Ports:
+  0: /LessThan<Float>1/a[in]
+  1: /LessThan<Float>1/b[in]
+  2: /LessThan<Float>1/[anonymous][out]
+  3: /TwoWaySwitch<Float>1/a[in]
+  4: /TwoWaySwitch<Float>1/b[in]
+  5: /TwoWaySwitch<Float>1/index[in]
+  6: /TwoWaySwitch<Float>1/[anonymous][out]
+  7: /TwoWaySwitch<Float>2/a[in]
+  8: /TwoWaySwitch<Float>2/b[in]
+  9: /TwoWaySwitch<Float>2/index[in]
+  10: /TwoWaySwitch<Float>2/[anonymous][out]
+  11: /TwoWaySwitch<Float>3/a[in]
+  12: /TwoWaySwitch<Float>3/b[in]
+  13: /TwoWaySwitch<Float>3/index[in]
+  14: /TwoWaySwitch<Float>3/[anonymous][out]
+  15: /TwoWaySwitch<Float>4/a[in]
+  16: /TwoWaySwitch<Float>4/b[in]
+  17: /TwoWaySwitch<Float>4/index[in]
+  18: /TwoWaySwitch<Float>4/[anonymous][out]
+
+Inputs:
+  x.fst[in] -> #[/LessThan<Float>1/a[in], /TwoWaySwitch<Float>1/b[in], /TwoWaySwitch<Float>3/a[in]]
+  x.snd[in] -> #[/TwoWaySwitch<Float>2/b[in], /TwoWaySwitch<Float>4/a[in]]
+  y.fst[in] -> #[/TwoWaySwitch<Float>1/a[in], /TwoWaySwitch<Float>3/b[in]]
+  y.snd[in] -> #[/LessThan<Float>1/b[in], /TwoWaySwitch<Float>2/a[in], /TwoWaySwitch<Float>4/b[in]]
+
+Outputs:
+  /TwoWaySwitch<Float>1/[anonymous][out] -> fst.fst[out]
+  /TwoWaySwitch<Float>2/[anonymous][out] -> fst.snd[out]
+  /TwoWaySwitch<Float>3/[anonymous][out] -> snd.fst[out]
+  /TwoWaySwitch<Float>4/[anonymous][out] -> snd.snd[out]
+
+Wires:
+  0: /LessThan<Float>1/[anonymous][out] -> /TwoWaySwitch<Float>1/index[in]
+  1: /LessThan<Float>1/[anonymous][out] -> /TwoWaySwitch<Float>2/index[in]
+  2: /LessThan<Float>1/[anonymous][out] -> /TwoWaySwitch<Float>3/index[in]
+  3: /LessThan<Float>1/[anonymous][out] -> /TwoWaySwitch<Float>4/index[in]
+
+Literals:
+-/
+#guard_msgs in
+#apex_graph fun x y : Float×Float => if x.1 < y.2 then (x,y) else (y,x)

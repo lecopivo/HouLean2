@@ -1,84 +1,60 @@
 import HouLean.Apex.Compile.Extension
-
-open Lean Meta
+import HouLean.Meta.Basic
+import HouLean.Meta.AnonymousStruct
 
 namespace HouLean
 
-/-- This class maps Lean type `α` to Apex compatible type `β`. 
-
-This extensible type level function mapping α to β is used to 
-transform Lean code to a smaller subset of Lean which is supported
-by Apex compiler. Therefore many APEX compiler extensions can be done
-through providing instances like `ApexType` and one does not have to
-touch the compiler!.
--/
-class ApexType (α : Type u) (β : outParam (Type v)) where
-  toApex : α → β
-  fromApex : β → α
-
-
+open Lean Meta
+  
 namespace Apex.Compiler
 
-partial def getApexTypeCore? (type : Expr) : MetaM (Option Compiler.ApexType) := do 
+open Qq
+unsafe def getApexTypeTagListImpl (ts : Expr) : MetaM (List ApexTypeTag) := do
+  evalExpr (List ApexTypeTag) q(List ApexTypeTag) ts
+
+@[implemented_by getApexTypeTagListImpl]
+def getApexTypeTagList (ts : Expr) : MetaM (List ApexTypeTag) := return []
+
+
+partial def getApexTypeCore (type : Expr) (name : Name) : MetaM ApexStruct := do 
 
   let type ← whnfR type
-  let (fn, args) := type.getAppFnArgs
-
-  let m := (compilerExt.getState (← getEnv)).apexTypes
+  let (fn, _) := type.getAppFnArgs
 
   -- is builtin type?
-  if let some t := m[type]? then
-    return t
+  if let some t := ApexTypeTag.fromName fn then
+    return (.leaf (name, t))
 
-  -- is variadic builtin type?
-  if fn == ``VariadicArg ∧ args.size == 2 then
-    let elemType ← whnfR (type.getArg! 0)
-    let n ← whnfD (type.getArg! 1) -- reduce as much as possible
-    -- special case for "VariadicArg<void>"
-    if elemType == .const `HouLean.Apex.Untyped [] then
-      return some (.variadic "void" n)
+  -- is VariadicArg
+  if type.isAppOfArity ``VariadicArg 2 then
+    let some t := (type.getArg! 0).constName?
+      | throwError "Invalid variadic type {type}! Mut be of a built in type!"
+    let some t := ApexTypeTag.fromName t
+      | throwError "Invalid variadic type {type}! Not of a builtin type!"
+    let some n := (← whnf (type.getArg! 1)).rawNatLit?
+      | throwError "Invalid variadic type {type}! Size must be known at compile time!"
+    let xs := Array.range n |>.map (fun i => ArrayTree.leaf (name.appendAfter (toString i), t))
+    return .node xs
 
-    let some (.builtin elemTypeName) := m[elemType]? 
-      | return none
-    return some (.variadic elemTypeName n)
+  -- is VariadicArg
+  if type.isAppOfArity ``VariadicArg' 1 then
+    let ts := (← getApexTypeTagList (type.getArg! 0)).toArray
+    let xs := ts.zip (Array.range (ts.size)) |>.map (fun (t,i) => ArrayTree.leaf (name.appendAfter (toString i), t))    
+    return .node xs
 
-  if (← inferType type).isProp then
-    return some (.struct (.node #[]))
-
-  -- implemented by
-  let s := compilerExt.getState (← getEnv)
-  if let some (fn',argMap) := s.implementedByName.find? fn then
-    try
-      -- type constructores are assumet to have the same arguments
-      let type' ← mkAppOptM fn' (argMap.map (fun i? => i?.map (fun i => args[i]!)))
-      return ← getApexTypeCore? type'
-    catch e =>
-      throwError m!"Failed replacing {fn} with {fn'} in {type}\n{e.toMessageData}"
-
-  
-  -- Handle structure types
-  let mut fields : Array (ArrayTree (String×TypeName)) := #[]
   if isStructure (← getEnv) fn then
     let info := getStructureInfo (← getEnv) fn
+    let mut fields : Array ApexStruct := #[]
+    for fieldName in info.fieldNames, i in [0:info.fieldNames.size] do
+      let fieldType ← withLocalDeclD `s type fun s => do pure (← inferType (.proj fn i s))
+      let field ← getApexTypeCore fieldType (name.append fieldName)
+      fields := fields.push field
+    return .node fields
+  else
+    throwError m!"Invalid APEX type {type}!"
 
-    for n in info.fieldNames do
-      let some info := getFieldInfo? (← getEnv) fn n | return none
 
-      let projFunType ← inferType (← mkAppOptM info.projFn (args.map some))
-      let .some (_,t) := projFunType.arrow? | return none
-
-      match ← getApexTypeCore? t with
-      | .some (.builtin typeName) =>
-        fields := fields.push (.leaf (info.fieldName.toString, typeName))
-      | .some (.struct s) => 
-        fields := fields.push (s.mapIdx (fun _ (fn, tn) => (info.fieldName.eraseMacroScopes.toString ++ "_" ++ fn, tn)))
-      | _ => return none
-
-    return some (.struct (.node fields))
-
-  return none
-
-partial def getApexType? (type : Expr) : MetaM (Option Compiler.ApexType) := do
+partial def getApexType? (type : Expr) (name := Name.anonymous) : MetaM (Option ApexStruct) := do
   let mut type := type
 
   -- try replacing type with type' synthesizing `HouLean.ApexType 
@@ -87,70 +63,72 @@ partial def getApexType? (type : Expr) : MetaM (Option Compiler.ApexType) := do
   if let some _ ← synthInstance? cls then
     type ← instantiateMVars type'
 
-  getApexTypeCore? type
-  
-
-
-/-- Is `type` structure *and* not compiler supported type.
-
-Type like `Array String` is a structure by at some point we will treat it as an 
-atomic type and used it instead of `StringArray`.
--/
-def isStructureType (type : Expr) : MetaM Bool := do
-  let s := compilerExt.getState (← getEnv)
-
-  -- Apex compiler supported type
-  if s.apexTypes.contains type then
-    return false
-
-  let .const fn _ := type.getAppFn | return false
-  return isStructure (← getEnv) fn
-  
-
-/-- Tries to determine size of all variadic types. If fails it returns the `e : Expr` that
-was not possible to turn into `Nat` literal. -/
-def enforceStaticSize (type : ApexType) : MetaM (Except Expr ApexStaticType) := 
-  match type with
-  | .builtin n => return .ok (.leaf ("x", n))
-  | .struct t => return .ok t
-  | .variadic name n => do
-    let .lit (Literal.natVal n) ← whnfD n
-      | return .error n
-    return .ok (.node (Array.range n |>.map (fun i =>  (.leaf (s!"x{i}",name)))))
-
-
-def addBuiltinApexType (type : Expr) (apexName : String) : MetaM Unit := do
   try
-    unless (← inferType type).isSort do throwError ""
-    compilerExt.add (.apexType type (.builtin apexName))
+    getApexTypeCore type name
   catch e =>
-    throwError m!"Can't register {type} as APEX builtin type!\n{e.toMessageData}"
+    logError e.toMessageData
+    return none
 
 
-syntax (name:=apex_type) "apex_type" str : attr
+-- /-- Is `type` structure *and* not compiler supported type.
+
+-- Type like `Array String` is a structure by at some point we will treat it as an 
+-- atomic type and used it instead of `StringArray`.
+-- -/
+-- def isStructureType (type : Expr) : MetaM Bool := do
+--   let s := compilerExt.getState (← getEnv)
+--   let .const fn _ := type.getAppFn | return false
+--   -- Apex compiler supported type
+--   if s.apexTypes.contains type then
+--     return false
+--   return isStructure (← getEnv) fn
+  
+
+-- /-- Tries to determine size of all variadic types. If fails it returns the `e : Expr` that
+-- was not possible to turn into `Nat` literal. -/
+-- def enforceStaticSize (type : ApexType) : MetaM (Except Expr ApexStaticType) := 
+--   match type with
+--   | .builtin n => return .ok (.leaf ("x", n))
+--   | .struct t => return .ok t
+--   | .variadic name n => do
+--     let .lit (Literal.natVal n) ← whnfD n
+--       | return .error n
+--     return .ok (.node (Array.range n |>.map (fun i =>  (.leaf (s!"x{i}",name)))))
+-- run_meta
+
+
+-- def addBuiltinApexType (type : Expr) (typeTag : ApexTypeTag) : MetaM Unit := do
+--   try
+--     unless (← inferType type).isSort do throwError ""
+--     compilerExt.add (.apexBuiltinType type typeTag)
+--   catch e =>
+--     throwError m!"Can't register {type} as APEX builtin type!\n{e.toMessageData}"
+
+
+-- syntax (name:=apex_builtin_type) "apex_builtin_type" term : attr
  
-initialize apexTypeAttr : Unit ←
-  registerBuiltinAttribute {
-    name  := `apex_type
-    descr := "Mark Lean type as builin APEX type."
-    applicationTime := AttributeApplicationTime.afterCompilation
-    add   := fun declName stx attrKind =>
-      match stx with
-      | `(apex_type| apex_type $name) => do
-       discard <| MetaM.run do
-         addBuiltinApexType (← mkConstWithFreshMVarLevels declName) name.getString
-      | _ => Elab.throwUnsupportedSyntax
-    erase := fun _declName =>
-      throwError "Can't remove `apex_type`, not implemented yet!"
-  }
-
-
+-- open Lean Elab Term in
+-- initialize apexTypeAttr : Unit ←
+--   registerBuiltinAttribute {
+--     name  := `apex_builtin_type
+--     descr := "Mark Lean type as builin APEX type."
+--     applicationTime := AttributeApplicationTime.afterCompilation
+--     add   := fun declName stx attrKind =>
+--       match stx with
+--       | `(apex_builtin_type| apex_builtin_type $name) => do
+--        discard <| TermElabM.run do
+--          addBuiltinApexType (← mkConstWithFreshMVarLevels declName) name.getString
+--       | _ => Elab.throwUnsupportedSyntax
+--     erase := fun _declName =>
+--       throwError "Can't remove `apex_type`, not implemented yet!"
+--   }
 
 open Lean Elab Term Command in
 /-- Check APEX type of Lean type -/
 elab "#apex_type" x:term : command => do
   liftTermElabM do
     let x ← elabTerm x none
-    let some t ← getApexType? x 
-      | throwError m!"{x} is not an APEX type"
-    logInfo m!"{t}"
+    let some t ← getApexType? x default
+      | logError "{x} is not an APEX type"
+    let t := t.mapIdx (fun _ (_,t) => t)
+    logInfo m!"{t.toString}"

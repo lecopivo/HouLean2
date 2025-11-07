@@ -5,7 +5,7 @@ import HouLean.Apex.Compile.ImplementedBy
 
 open HouLean Apex Compiler
 
-namespace HouLean
+namespace HouLean.Apex.Compiler
 
 -- @[apex_implements Option] -- this should work too as `argMap` is trivial here
 abbrev Maybe (α : Type u) := α × Bool
@@ -41,17 +41,18 @@ unsafe def Maybe.optionRec {α : Type u} [Inhabited α]
   else
     unsafeCast n
 
-end HouLean
+end HouLean.Apex.Compiler
 
 instance {α A} [Inhabited α] [ApexType α A] : ApexType (Option α) (Maybe A) where
   toApex x := x.toMaybe.map toApex
   fromApex x := x.toOption.map fromApex
 
-run_meta compilerExt.add (.implementedByName ``Option ``Maybe #[some 0]) default
+-- constructors and recursor
 run_meta compilerExt.add (.implementedByName ``Option.some ``Maybe.some #[some 0, some 1]) default
 run_meta compilerExt.add (.implementedByName ``Option.none ``Maybe.none #[some 0, none]) default
-run_meta compilerExt.add (.implementedByName ``Option.toMaybe ``id' #[none, some 2]) default
 run_meta compilerExt.add (.implementedByName ``Option.rec ``Maybe.optionRec #[some 0, none, some 1, some 2, some 3, some 4]) default
 
+-- compilation morphism
+run_meta compilerExt.add (.implementedByName ``Option.toMaybe ``id' #[none, some 2]) default
 run_meta compilerExt.add (.implementedByName ``Maybe.toOption ``id' #[none, some 1]) default
 

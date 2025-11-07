@@ -46,3 +46,7 @@ def visualize {α Options} {defaultOpts : Options} [Visualizer α defaultOpts]
       else
         ((), none)
 
+
+def withVisualizer (vis : String) (go : VisualizeM Geometry) : Geometry :=
+  let (geo, vis?) := go vis
+  Geometry.mergePacked #a[geo, vis?.getD default] |>.setDetailAttrib "__geometry_with_visualizer" (1:Int)

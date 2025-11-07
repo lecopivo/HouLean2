@@ -1,11 +1,12 @@
 import HouLean.Apex.Compile.Types
+import HouLean.Apex.Generated.Defs
 
 open Lean Meta
 
 namespace HouLean.Apex.Compiler
 
 inductive SingleExtension where
-  | apexType (leanType : Expr) (type : ApexType)
+  | apexBuiltinType (leanType : Name) (type : ApexTypeTag)
   /-- During compilation we replace `src` with `trg`.
 
   These functions might not have the same Lean type but they should
@@ -36,10 +37,11 @@ deriving Inhabited
 
 /-- Enviroment extension that holds all necessary information for the APEX compiler. -/
 structure Extension where
-  apexTypes : ExprMap ApexType
+  /-- Builtin APEX types, other types are registered with `ApexType` class -/
+  apexTypes : NameMap ApexTypeTag 
   implementedByName : NameMap (Name × Array (Option Nat))
   implementedByExpr : ExprMap Expr
-  nodeTypes : ExprMap NodeType
+  nodeTypes : ExprMap NodeType -- this should be just a `NameMap NodeType` !
   toUnfold : NameSet
 deriving Inhabited
 
@@ -51,7 +53,7 @@ initialize compilerExt : CompilerExt ←
     initial := default
     addEntry := fun es e =>
       match e with
-      | .apexType leanType apexType =>
+      | .apexBuiltinType leanType apexType =>
         {es with apexTypes := es.apexTypes.insert leanType apexType}
       | .implementedByName src trg argMap =>
         {es with implementedByName := es.implementedByName.insert src (trg, argMap)}
