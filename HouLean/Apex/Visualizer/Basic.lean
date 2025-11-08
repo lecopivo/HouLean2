@@ -21,32 +21,18 @@ instance : Visualizer Int { label := "value"  :struct { label : String }} where
   visualize x opts := 
     SOP.font { text := opts.label ++ ": " ++ toString x }
 
-abbrev VisualizeM (α : Type) := (Option String) → (α × (Option Geometry))
-    
-instance : Monad VisualizeM where
-  pure x := fun _ => (x, none)
-  bind mx f := fun visName? => 
-    let (x, vis?) := (mx visName?)
-    match vis? with
-    | some vis => -- got visualization, stop requestiong it
-      let (y,_) := f x none
-      (y, vis)
-    | none => -- no visualization obtained from previous step, keep on looking
-      f x visName?
+abbrev VisualizeM := ReaderT String <| StateM Geometry
 
 def visualize {α Options} {defaultOpts : Options} [Visualizer α defaultOpts]
     (visualizerName : String) (x : α) (opts := defaultOpts) :
     VisualizeM Unit := 
-  fun visName? =>
-    match visName? with
-    | none => ((), none)
-    | some visName =>
-      if visName == visualizerName then
-        ((), some (Visualizer.visualize x opts))
-      else
-        ((), none)
-
+  fun toVisualize vis =>
+    if toVisualize == visualizerName then
+      ((), (vis.merge #a[Visualizer.visualize x opts]))
+    else
+      ((), vis)
 
 def withVisualizer (vis : String) (go : VisualizeM Geometry) : Geometry :=
-  let (geo, vis?) := go vis
-  Geometry.mergePacked #a[geo, vis?.getD default] |>.setDetailAttrib "__geometry_with_visualizer" (1:Int)
+  let (vis, geo) := go vis Geometry.default
+  let vis := Geometry.mergePacked #a[vis] |>.setPointAttrib 0 "__visualizer" (1:Int)
+  geo.merge #a[vis]

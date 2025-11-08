@@ -267,6 +267,15 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
     let g := g.ensurePortSize trg (j+1)
     return { g with wires := g.wires.push (.port src, .subport trg j) }
 
+  | .subport src i, .port trg =>
+    let g := g.ensurePortSize src (i+1)
+    return { g with wires := g.wires.push (.subport src i, .port trg) }
+
+  | .subport src i, .subport trg j =>
+    let g := g.ensurePortSize src (i+1)
+    let g := g.ensurePortSize trg (j+1)
+    return { g with wires := g.wires.push (.subport src i, .subport trg j) }
+
   | .literal val, .subport id ..
   | .literal val, .port id =>
     unless g.ports[id]!.dir == .input do

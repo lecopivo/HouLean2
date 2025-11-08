@@ -437,6 +437,37 @@ partial def whnfC (e : Expr) : MetaM Expr :=
     else
       whnfC e'
 
+open Qq in
+unsafe def reduceToLiteralImpl (e : Expr) : MetaM (Option LiteralVal) := do
+  if e.hasMVar ∨ e.hasFVar then
+    return none
+  
+  try 
+    let t ← inferType e
+
+    if ← isDefEq t q(Int) then
+      let val ← evalExpr Int q(Int) e
+      return some (.int val)
+
+    if ← isDefEq t q(Float) then
+      let val ← evalExpr Float q(Float) e
+      return some (.float val)
+
+    if ← isDefEq t q(String) then
+      let val ← evalExpr String q(String) e
+      return some (.str val)
+
+    if ← isDefEq t q(Bool) then
+      let val ← evalExpr Bool q(Int) e
+      return some (.bool val)
+  
+    return none
+  catch _ =>
+    return none
+
+@[implemented_by reduceToLiteralImpl]
+def tryReduceToLiteral (e : Expr) : MetaM (Option LiteralVal) := return none
+
 
 open Qq in
 mutual
@@ -815,6 +846,9 @@ partial def toApexGraph (e : Expr) :
   
   withTraceNode `HouLean.Apex.compiler 
       (fun r => return m!"[{ExceptToEmoji.toEmoji r}] {e}") do
+
+    if let some val ← tryReduceToLiteral e then
+      return (#[], .leaf (.literal val))
     
     let e' ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfC e
     if e != e' then trace[HouLean.Apex.compiler] m!"reduced to: {e'}"
@@ -957,5 +991,9 @@ elab t:"#apex_graph" x:term : command => do
 -- #apex_graph (fun x : Float => (x,(0.0:Float)))
 -- #apex_graph (fun x : Float×Float => (x,(42.1234:Float),x.2,x.1))
 
+-- todo: move this somewhere
+run_meta compilerExt.add (.implementedByName ``apexFlatten ``id' #[none, some 3])
+run_meta compilerExt.add (.implementedByName ``apexUnflatten ``id' #[none, some 3])
 
 end HouLean.Apex.Compiler
+

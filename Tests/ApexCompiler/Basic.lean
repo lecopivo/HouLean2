@@ -218,6 +218,33 @@ Literals:
 
 /--
 info: Nodes:
+  0: AddInt : Add<Int>
+  1: value : Value<Int>
+
+Ports:
+  0: /AddInt/a[in]
+  1: /AddInt/b[⋯][in]
+  2: /AddInt/[anonymous][out]
+  3: /value/parm[in]
+  4: /value/value[out]
+
+Inputs:
+  x[in] -> #[/AddInt/a[in]]
+
+Outputs:
+  /AddInt/[anonymous][out] -> [anonymous][out]
+
+Wires:
+  0: /value/value[out] -> /AddInt/b[0][in]
+
+Literals:
+  0: int 30 -> /value/parm[in]
+-/
+#guard_msgs in
+#apex_graph fun x : Int => x + (10 + 20)
+
+/--
+info: Nodes:
 
 Ports:
 
@@ -625,18 +652,15 @@ Literals:
 
 /--
 info: Nodes:
-  0: ConvertIntFloat : Convert<Int,Float>
-  1: FloatToVector2 : FloatToVector2
-  2: _x : Value<Float>
+  0: FloatToVector2 : FloatToVector2
+  1: _x : Value<Float>
 
 Ports:
-  0: /ConvertIntFloat/a[in]
-  1: /ConvertIntFloat/[anonymous][out]
-  2: /FloatToVector2/x[in]
-  3: /FloatToVector2/y[in]
-  4: /FloatToVector2/[anonymous][out]
-  5: /_x/parm[in]
-  6: /_x/[anonymous][out]
+  0: /FloatToVector2/x[in]
+  1: /FloatToVector2/y[in]
+  2: /FloatToVector2/[anonymous][out]
+  3: /_x/parm[in]
+  4: /_x/[anonymous][out]
 
 Inputs:
   _x[in] -> #[/_x/parm[in]]
@@ -645,11 +669,10 @@ Outputs:
   /FloatToVector2/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /ConvertIntFloat/[anonymous][out] -> /FloatToVector2/x[in]
-  1: /ConvertIntFloat/[anonymous][out] -> /FloatToVector2/y[in]
 
 Literals:
-  0: int 0 -> /ConvertIntFloat/a[in]
+  0: float 0.000000 -> /FloatToVector2/x[in] ⏎
+  1: float 0.000000 -> /FloatToVector2/y[in]
 -/
 #guard_msgs in
 #apex_graph fun _x : Float => (⟨0,0⟩ : Vector2)
@@ -657,19 +680,16 @@ Literals:
 
 /--
 info: Nodes:
-  0: ConvertIntFloat : Convert<Int,Float>
-  1: FloatToVector3 : FloatToVector3
-  2: _x : Value<Float>
+  0: FloatToVector3 : FloatToVector3
+  1: _x : Value<Float>
 
 Ports:
-  0: /ConvertIntFloat/a[in]
-  1: /ConvertIntFloat/[anonymous][out]
-  2: /FloatToVector3/x[in]
-  3: /FloatToVector3/y[in]
-  4: /FloatToVector3/z[in]
-  5: /FloatToVector3/[anonymous][out]
-  6: /_x/parm[in]
-  7: /_x/[anonymous][out]
+  0: /FloatToVector3/x[in]
+  1: /FloatToVector3/y[in]
+  2: /FloatToVector3/z[in]
+  3: /FloatToVector3/[anonymous][out]
+  4: /_x/parm[in]
+  5: /_x/[anonymous][out]
 
 Inputs:
   _x[in] -> #[/_x/parm[in]]
@@ -678,12 +698,11 @@ Outputs:
   /FloatToVector3/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /ConvertIntFloat/[anonymous][out] -> /FloatToVector3/x[in]
-  1: /ConvertIntFloat/[anonymous][out] -> /FloatToVector3/y[in]
-  2: /ConvertIntFloat/[anonymous][out] -> /FloatToVector3/z[in]
 
 Literals:
-  0: int 0 -> /ConvertIntFloat/a[in]
+  0: float 0.000000 -> /FloatToVector3/x[in] ⏎
+  1: float 0.000000 -> /FloatToVector3/y[in] ⏎
+  2: float 0.000000 -> /FloatToVector3/z[in]
 -/
 #guard_msgs in
 #apex_graph fun _x : Float => (⟨0,0,0⟩ : Vector3)

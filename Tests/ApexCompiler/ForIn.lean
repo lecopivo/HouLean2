@@ -24,7 +24,6 @@ set_option trace.HouLean.Apex.compiler true in
   let s := variadicId s
   let (a,b) := apexUnflatten (α:=Int×Int) s
   a + b
-#check PortPtr
 
 set_option trace.HouLean.Apex.compiler true in
 #apex_graph fun (x : Int) =>
@@ -34,27 +33,31 @@ set_option trace.HouLean.Apex.compiler true in
   let (x,y) := apexUnflatten (α:=Int×Int) (Generated.ForEnd r.scope s)
   x + y
 
-#exit
-
 set_option trace.HouLean.Apex.compiler true in
 #apex_graph fun (x : Int) => Id.run do
   let mut x : Int := x
   for _ in [0:10] do
     x := x + x
-  return x
-
-variable (a b : Int) (x y : Float)
-
-#check (VariadicArg'.cons (t:=.float) x (.cons (t:=.int) a .nil))
-#check apexFlatten (a,b,x)
-
+  return x*2
 
 @[apex]
 def run (x : Int) := Id.run do
   let mut x : Int := x
   for _ in [0:10] do
     x := x + x
-  return x
+  return x*2
+
+variable (a b : Int) (x y : Float)
+
+#check (VariadicArg'.cons (t:=.float) x (.cons (t:=.int) a .nil))
+#check apexFlatten (a,b,x)
+
+@[apex]
+def run' (x : Int) := Id.run do
+  let mut x : Int := x
+  for _ in [0:10] do
+    x := x + x
+  return x^2
 
 #check Lean.Meta.Simp.DStep
 open Qq Lean Meta
