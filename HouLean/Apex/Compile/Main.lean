@@ -445,6 +445,10 @@ unsafe def reduceToLiteralImpl (e : Expr) : MetaM (Option LiteralVal) := do
   try 
     let t ← inferType e
 
+    if ← isDefEq t q(Nat) then
+      let val ← evalExpr Nat q(Nat) e
+      return some (.int (Int.ofNat val))
+
     if ← isDefEq t q(Int) then
       let val ← evalExpr Int q(Int) e
       return some (.int val)
@@ -847,12 +851,12 @@ partial def toApexGraph (e : Expr) :
   withTraceNode `HouLean.Apex.compiler 
       (fun r => return m!"[{ExceptToEmoji.toEmoji r}] {e}") do
 
-    if let some val ← tryReduceToLiteral e then
-      return (#[], .leaf (.literal val))
-    
     let e' ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfC e
     if e != e' then trace[HouLean.Apex.compiler] m!"reduced to: {e'}"
     let e := e'
+
+    if let some val ← tryReduceToLiteral e then
+      return (#[], .leaf (.literal val))
 
     match e with
     | .bvar _ => 

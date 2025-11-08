@@ -386,7 +386,7 @@ structure SphereParams where
   /-- Primitive type: 0=Polygon, 1=Polygon Mesh, 2=Mesh, 3=NURBS, 4=Bezier -/
   type : Int := 0
   /-- Surface type: varies by primitive type -/
-  surfaceType : Int := 0
+  surfaceType : Int := 4
   /-- Radius along X, Y, and Z axes (use different values for ellipsoids) -/
   radius : Vector3 := ⟨1, 1, 1⟩
   /-- Center position of the sphere in world space -/
@@ -396,21 +396,21 @@ structure SphereParams where
   /-- Uniform scale factor applied after radius -/
   scale : Float := 1.0
   /-- Orientation axis: 0=X axis, 1=Y axis, 2=Z axis -/
-  orient : Int := 2
+  orient : Int := 1
   /-- Frequency: number of unique points (1=standard, higher=more variation) -/
-  frequency : Int := 1
+  frequency : Int := 2
   /-- U order for NURBS/Bezier (degree + 1) -/
   orderU : Int := 4
   /-- V order for NURBS/Bezier (degree + 1) -/
   orderV : Int := 4
   /-- Create imperfect sphere (adds slight irregularities) -/
-  imperfect : Bool := false
+  imperfect : Bool := true
   /-- Add point at top pole (for polygon mesh) -/
   upole : Bool := false
   /-- Use accurate sphere tessellation (vs. fast approximation) -/
   accurate : Bool := true
   /-- Use triangles at poles instead of n-gons -/
-  triangularPoles : Bool := false
+  triangularPoles : Bool := true
   /-- Number of rows (latitude divisions) -/
   rows : Int := 13
   /-- Number of columns (longitude divisions) -/
