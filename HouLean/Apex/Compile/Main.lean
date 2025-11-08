@@ -462,8 +462,32 @@ unsafe def reduceToLiteralImpl (e : Expr) : MetaM (Option LiteralVal) := do
       return some (.str val)
 
     if ← isDefEq t q(Bool) then
-      let val ← evalExpr Bool q(Int) e
+      let val ← evalExpr Bool q(Bool) e
       return some (.bool val)
+
+    if ← isDefEq t q(Vector2) then
+      let val ← evalExpr Vector2 q(Vector2) e
+      return some (.vector2 val)
+
+    if ← isDefEq t q(Vector3) then
+      let val ← evalExpr Vector3 q(Vector3) e
+      return some (.vector3 val)
+
+    if ← isDefEq t q(Vector4) then
+      let val ← evalExpr Vector4 q(Vector4) e
+      return some (.vector4 val)
+
+    -- if ← isDefEq t q(Matrix2) then
+    --   let val ← evalExpr Matrix2 q(Matrix2) e
+    --   return some (.matrix2 val)
+
+    if ← isDefEq t q(Matrix3) then
+      let val ← evalExpr Matrix3 q(Matrix3) e
+      return some (.matrix3 val)
+
+    if ← isDefEq t q(Matrix4) then
+      let val ← evalExpr Matrix4 q(Matrix4) e
+      return some (.matrix4 val)
   
     return none
   catch _ =>
@@ -549,7 +573,7 @@ partial def compileConstant (e : Expr) :
   if (← isDefEq e q(false)) then
     return (#[], .leaf (.literal (.bool false)))
   if (← isDefEq e (.const `HouLean.Apex.Geometry.default [])) then
-    return (#[], ← addDefaultGeometry)
+    return (#[], .leaf (.literal .empty_geometry))
 
   -- discard inputs
   if let some (_inputs,output) ← tryCompileImplementedBy e #[] then

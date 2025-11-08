@@ -10,6 +10,13 @@ inductive LiteralVal
   | float (val : Float)
   | str (str : String)
   | bool (str : Bool)
+  | vector2 (val : Vector2)
+  | vector3 (val : Vector3)
+  | vector4 (val : Vector4)
+  -- | matrix2 (val : Matrix2)
+  | matrix3 (val : Matrix3)
+  | matrix4 (val : Matrix4)
+  | empty_geometry
 deriving Inhabited, Repr
 
 def LiteralVal.toString : LiteralVal → String
@@ -17,6 +24,17 @@ def LiteralVal.toString : LiteralVal → String
   | .float val => s!"{val}"
   | .str val => val.quote
   | .bool val => s!"{val}".capitalize -- designed to be consumable by Python
+  | .vector2 v => s!"hou.Vector2({v.x},{v.y})"
+  | .vector3 v => s!"hou.Vector3({v.x},{v.y},{v.z})"
+  | .vector4 v => s!"hou.Vector4({v.x},{v.y},{v.z},{v.w})"
+  -- | .matrix2 m => s!"hou.Matrix2(({m.row0.x},{m.row0.y},{m.row1.x},{m.row1.y}))"
+  | .matrix3 m => s!"hou.Matrix3(({m.row0.x},{m.row0.y},{m.row0.z},{m.row1.x},{m.row1.y},{m.row2.z},{m.row2.x},{m.row2.y},{m.row2.z}))"
+  | .matrix4 m => s!"hou.Matrix4(({m.row0.x},{m.row0.y},{m.row0.z},{m.row0.w},{m.row1.x},{m.row1.y},{m.row1.z},{m.row1.w},{m.row2.x},{m.row2.y},{m.row2.z},{m.row2.w},{m.row3.x},{m.row3.y},{m.row3.z},{m.row3.w}))"
+  | .empty_geometry => "empty_geometry"
+
+def LiteralVal.isEmptyGeometry : LiteralVal → Bool
+  | .empty_geometry => true
+  | _ => false
 
 inductive OutputConnection
   | port  (globalId : Nat)
@@ -98,6 +116,20 @@ instance : ToString ApexGraph := ⟨fun g =>
         s := s ++ s!"  {i}: str \"{str}\" -> {portStr} \n"
       | .bool b =>
         s := s ++ s!"  {i}: bool \"{b}\" -> {portStr} \n"
+      | .vector2 v =>
+        s := s ++ s!"  {i}: vector2 \"{repr v}\" -> {portStr} \n"
+      | .vector3 v =>
+        s := s ++ s!"  {i}: vector3 \"{repr v}\" -> {portStr} \n"
+      | .vector4 v =>
+        s := s ++ s!"  {i}: vector4 \"{repr v}\" -> {portStr} \n"
+      -- | .matrix2 v =>
+      --   s := s ++ s!"  {i}: matrix2 \"{repr v}\" -> {portStr} \n"
+      | .matrix3 v =>
+        s := s ++ s!"  {i}: matrix3 \"{repr v}\" -> {portStr} \n"
+      | .matrix4 v =>
+        s := s ++ s!"  {i}: matrix4 \"{repr v}\" -> {portStr} \n"
+      | .empty_geometry =>
+        s := s ++ s!"  {i}: emptY_geometry -> {portStr} \n"
     return s⟩
 
 -- def ApexGraph.addInt (g : ApexGraph) (val : Int) (port : Port) : ApexGraph :=
@@ -139,10 +171,7 @@ inductive PortPtr where
 deriving Inhabited, Repr
 
 protected def PortPtr.toString : PortPtr → String
-  | literal (.int val)
-  | literal (.float val)
-  | literal (.str val)
-  | literal (.bool val) => s!"lit[{val}]"
+  | literal val => s!"lit[{val.toString}]"
   | port id => toString id
   | subport id localId => s!"{id}[{localId}]"
   | input id => s!"in[{id}]"
@@ -253,6 +282,13 @@ def LiteralVal.typeTag (val : LiteralVal) : ApexTypeTag :=
   | .int .. => .int
   | .bool .. => .bool
   | .str .. => .string
+  | .vector2 .. => .vector2
+  | .vector3 .. => .vector3
+  | .vector4 .. => .vector4
+  -- | .matrix2 .. => .matrix2
+  | .matrix3 .. => .matrix3
+  | .matrix4 .. => .matrix4
+  | .empty_geometry => .geometry
 
 def ApexGraph.ensurePortSize (g : ApexGraph) (globalPortId : Nat) (size : Nat) : ApexGraph := 
   let nodeId := g.ports[globalPortId]!.nodeId
@@ -281,6 +317,9 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
     unless g.ports[id]!.dir == .input do
       throw s!"Assigning literal value to output port!\n{repr src} -> {repr trg}"
 
+    if val.isEmptyGeometry then
+      return g
+
     let trgPort := g.ports[id]!
     if ¬trgPort.isVariadic then
       return { g with literals := g.literals.push (val, .port id) }
@@ -302,6 +341,9 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
     return {g with outputs := g.outputs.push (port, .port src)}
 
   | .literal val, .output name =>
+    if val.isEmptyGeometry then
+      return g
+  
     let port : LocalPort := default
     let port := {port with
       localId := g.outputs.size
@@ -566,6 +608,8 @@ Id.run do
 
   s := s ++ "\n# Set Literal Values" ++ "\n"
   for (val, portId) in g.literals do
+    if val.isEmptyGeometry then
+      continue
     match portId with
     | .port id =>
       let p := g.ports[id]!
