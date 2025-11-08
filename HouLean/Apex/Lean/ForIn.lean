@@ -10,7 +10,7 @@ namespace Generated
 
 @[apex_node "ForBegin" has_rundata]
 opaque ForBegin (iterations : Int) {ts} (spare : VariadicArg' ts) : 
-  Int × Int × VariadicArg' ts := cast sorry_proof ()
+  struct {scope : Int, index : Int,  spare : VariadicArg' ts} := cast sorry_proof ()
 
 @[apex_node "ForEnd" has_rundata]
 opaque ForEnd (scope : Int) {ts} (spare : VariadicArg' ts) : 
@@ -32,10 +32,10 @@ instance [ApexTypeFlatten α ts] : ForLoop Id α Std.Range Nat where
     let n := range.size
     let ⟨scope, index, x⟩ := ForBegin (Int.ofNat n) (apexFlatten x)
     let index' := (range.start + index * range.step).toNat
-    return ⟨scope, index', apexUnflatten! x⟩
+    return ⟨scope, index', apexUnflatten x⟩
   forEnd scope state := 
     let state := ForEnd scope (apexFlatten state)
-    (apexUnflatten! state : α)
+    (apexUnflatten state : α)
 
 -- StateT monad instance
 instance [Monad m] (State' : Type) 
@@ -56,4 +56,10 @@ unsafe def ForIn.forIn.apex_impl {m : Type → Type} {Range : Type} {Index : Typ
   
 run_meta compilerExt.add (.implementedByName ``ForIn.forIn ``ForIn.forIn.apex_impl 
   #[some 0, some 1, some 2, some 3, some 4, some 5, none, some 6, some 7, some 8])
+
+
   
+-- todo: move this
+instance [ApexType α A] : ApexType (Id α) A where
+  toApex x := toApex (α:=α) x
+  fromApex x := fromApex (α:=α) x

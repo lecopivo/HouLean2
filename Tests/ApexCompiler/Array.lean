@@ -7,14 +7,17 @@ open Lean Qq
 
 /--
 info: Nodes:
+  0: [anonymous] : Value<FloatArray>
 
 Ports:
+  0: /[anonymous]/parm[in]
+  1: /[anonymous]/[anonymous][out]
 
 Inputs:
-  x[in] -> #[]
+  x[in] -> #[/[anonymous]/parm[in]]
 
 Outputs:
-  x[in] -> [anonymous][out]
+  /[anonymous]/[anonymous][out] -> [anonymous][out]
 
 Wires:
 
@@ -25,20 +28,20 @@ Literals:
 
 /--
 info: Nodes:
-  0: array::Append<Float>1 : array::Append<Float>
+  0: array_AppendFloat : array::Append<Float>
 
 Ports:
-  0: /array::Append<Float>1/array[in]
-  1: /array::Append<Float>1/value[in]
-  2: /array::Append<Float>1/fst[out]
-  3: /array::Append<Float>1/snd[out]
+  0: /array_AppendFloat/array[in]
+  1: /array_AppendFloat/value[in]
+  2: /array_AppendFloat/fst[out]
+  3: /array_AppendFloat/snd[out]
 
 Inputs:
-  x[in] -> #[/array::Append<Float>1/array[in]]
-  y[in] -> #[/array::Append<Float>1/value[in]]
+  x[in] -> #[/array_AppendFloat/array[in]]
+  y[in] -> #[/array_AppendFloat/value[in]]
 
 Outputs:
-  /array::Append<Float>1/fst[out] -> [anonymous][out]
+  /array_AppendFloat/fst[out] -> [anonymous][out]
 
 Wires:
 
@@ -50,19 +53,19 @@ Literals:
 
 /--
 info: Nodes:
-  0: array::Add<Float>1 : array::Add<Float>
+  0: array_AddFloat : array::Add<Float>
 
 Ports:
-  0: /array::Add<Float>1/[anonymous][out]
-  1: /array::Add<Float>1/a[in]
-  2: /array::Add<Float>1/b[in]
-  3: /array::Add<Float>1/[anonymous][out]
+  0: /array_AddFloat/[anonymous][out]
+  1: /array_AddFloat/a[in]
+  2: /array_AddFloat/b[in]
+  3: /array_AddFloat/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/array::Add<Float>1/a[in], /array::Add<Float>1/b[in]]
+  x[in] -> #[/array_AddFloat/a[in], /array_AddFloat/b[in]]
 
 Outputs:
-  /array::Add<Float>1/[anonymous][out] -> [anonymous][out]
+  /array_AddFloat/[anonymous][out] -> [anonymous][out]
 
 Wires:
 
@@ -73,19 +76,19 @@ Literals:
 
 /--
 info: Nodes:
-  0: array::Multiply<Float>1 : array::Multiply<Float>
+  0: array_MultiplyFloat : array::Multiply<Float>
 
 Ports:
-  0: /array::Multiply<Float>1/[anonymous][out]
-  1: /array::Multiply<Float>1/a[in]
-  2: /array::Multiply<Float>1/b[in]
-  3: /array::Multiply<Float>1/[anonymous][out]
+  0: /array_MultiplyFloat/[anonymous][out]
+  1: /array_MultiplyFloat/a[in]
+  2: /array_MultiplyFloat/b[in]
+  3: /array_MultiplyFloat/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/array::Multiply<Float>1/a[in], /array::Multiply<Float>1/b[in]]
+  x[in] -> #[/array_MultiplyFloat/a[in], /array_MultiplyFloat/b[in]]
 
 Outputs:
-  /array::Multiply<Float>1/[anonymous][out] -> [anonymous][out]
+  /array_MultiplyFloat/[anonymous][out] -> [anonymous][out]
 
 Wires:
 
@@ -97,97 +100,101 @@ Literals:
 
 /--
 info: Nodes:
-  0: Convert<Int,Float>1 : Convert<Int,Float>
-  1: array::Get<Float>1 : array::Get<Float>
-  2: array::Length<Float>1 : array::Length<Float>
-  3: Max<Int>1 : Max<Int>
-  4: LessThan<Int>1 : LessThan<Int>
-  5: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
-  6: TwoWaySwitch<Float>1 : TwoWaySwitch<Float>
-  7: TwoWaySwitch<Bool>2 : TwoWaySwitch<Bool>
+  0: ConvertIntFloat : Convert<Int,Float>
+  1: array_GetFloat : array::Get<Float>
+  2: array_LengthFloat : array::Length<Float>
+  3: MaxInt : Max<Int>
+  4: value : Value<Int>
+  5: LessThanInt : LessThan<Int>
+  6: TwoWaySwitchBool : TwoWaySwitch<Bool>
+  7: TwoWaySwitchFloat : TwoWaySwitch<Float>
+  8: TwoWaySwitchBool1 : TwoWaySwitch<Bool>
 
 Ports:
-  0: /Convert<Int,Float>1/a[in]
-  1: /Convert<Int,Float>1/[anonymous][out]
-  2: /array::Get<Float>1/array[in]
-  3: /array::Get<Float>1/index[in]
-  4: /array::Get<Float>1/default[in]
-  5: /array::Get<Float>1/fst[out]
-  6: /array::Get<Float>1/snd[out]
-  7: /array::Length<Float>1/array[in]
-  8: /array::Length<Float>1/[anonymous][out]
-  9: /Max<Int>1/a[in]
-  10: /Max<Int>1/b[in]
-  11: /Max<Int>1/[anonymous][out]
-  12: /LessThan<Int>1/a[in]
-  13: /LessThan<Int>1/b[in]
-  14: /LessThan<Int>1/[anonymous][out]
-  15: /TwoWaySwitch<Bool>1/a[in]
-  16: /TwoWaySwitch<Bool>1/b[in]
-  17: /TwoWaySwitch<Bool>1/index[in]
-  18: /TwoWaySwitch<Bool>1/[anonymous][out]
-  19: /TwoWaySwitch<Float>1/a[in]
-  20: /TwoWaySwitch<Float>1/b[in]
-  21: /TwoWaySwitch<Float>1/index[in]
-  22: /TwoWaySwitch<Float>1/[anonymous][out]
-  23: /TwoWaySwitch<Bool>2/a[in]
-  24: /TwoWaySwitch<Bool>2/b[in]
-  25: /TwoWaySwitch<Bool>2/index[in]
-  26: /TwoWaySwitch<Bool>2/[anonymous][out]
+  0: /ConvertIntFloat/a[in]
+  1: /ConvertIntFloat/[anonymous][out]
+  2: /array_GetFloat/array[in]
+  3: /array_GetFloat/index[in]
+  4: /array_GetFloat/default[in]
+  5: /array_GetFloat/fst[out]
+  6: /array_GetFloat/snd[out]
+  7: /array_LengthFloat/array[in]
+  8: /array_LengthFloat/[anonymous][out]
+  9: /MaxInt/a[in]
+  10: /MaxInt/b[in]
+  11: /MaxInt/[anonymous][out]
+  12: /value/parm[in]
+  13: /value/value[out]
+  14: /LessThanInt/a[in]
+  15: /LessThanInt/b[in]
+  16: /LessThanInt/[anonymous][out]
+  17: /TwoWaySwitchBool/a[in]
+  18: /TwoWaySwitchBool/b[in]
+  19: /TwoWaySwitchBool/index[in]
+  20: /TwoWaySwitchBool/[anonymous][out]
+  21: /TwoWaySwitchFloat/a[in]
+  22: /TwoWaySwitchFloat/b[in]
+  23: /TwoWaySwitchFloat/index[in]
+  24: /TwoWaySwitchFloat/[anonymous][out]
+  25: /TwoWaySwitchBool1/a[in]
+  26: /TwoWaySwitchBool1/b[in]
+  27: /TwoWaySwitchBool1/index[in]
+  28: /TwoWaySwitchBool1/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/array::Get<Float>1/array[in], /array::Length<Float>1/array[in]]
+  x[in] -> #[/array_GetFloat/array[in], /array_LengthFloat/array[in]]
 
 Outputs:
-  /TwoWaySwitch<Float>1/[anonymous][out] -> fst[out]
-  /TwoWaySwitch<Bool>2/[anonymous][out] -> snd[out]
+  /TwoWaySwitchFloat/[anonymous][out] -> fst[out]
+  /TwoWaySwitchBool1/[anonymous][out] -> snd[out]
 
 Wires:
-  0: /Convert<Int,Float>1/[anonymous][out] -> /array::Get<Float>1/default[in]
-  1: /array::Length<Float>1/[anonymous][out] -> /Max<Int>1/a[in]
-  2: /Max<Int>1/[anonymous][out] -> /LessThan<Int>1/b[in]
-  3: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
-  4: /Convert<Int,Float>1/[anonymous][out] -> /TwoWaySwitch<Float>1/a[in]
-  5: /array::Get<Float>1/fst[out] -> /TwoWaySwitch<Float>1/b[in]
-  6: /TwoWaySwitch<Bool>1/[anonymous][out] -> /TwoWaySwitch<Float>1/index[in]
-  7: /TwoWaySwitch<Bool>1/[anonymous][out] -> /TwoWaySwitch<Bool>2/index[in]
+  0: /ConvertIntFloat/[anonymous][out] -> /array_GetFloat/default[in]
+  1: /array_LengthFloat/[anonymous][out] -> /MaxInt/a[in]
+  2: /value/value[out] -> /MaxInt/b[in]
+  3: /MaxInt/[anonymous][out] -> /LessThanInt/b[in]
+  4: /LessThanInt/[anonymous][out] -> /TwoWaySwitchBool/index[in]
+  5: /ConvertIntFloat/[anonymous][out] -> /TwoWaySwitchFloat/a[in]
+  6: /array_GetFloat/fst[out] -> /TwoWaySwitchFloat/b[in]
+  7: /TwoWaySwitchBool/[anonymous][out] -> /TwoWaySwitchFloat/index[in]
+  8: /TwoWaySwitchBool/[anonymous][out] -> /TwoWaySwitchBool1/index[in]
 
 Literals:
   0: int 0 -> 0 ⏎
   1: int 0 -> 3 ⏎
-  2: int 0 -> 10 ⏎
-  3: int 0 -> 12 ⏎
-  4: bool "false" -> 15 ⏎
-  5: bool "true" -> 16 ⏎
-  6: bool "false" -> 23 ⏎
-  7: bool "true" -> 24
+  2: int 0 -> 12 ⏎
+  3: int 0 -> 14 ⏎
+  4: bool "false" -> 17 ⏎
+  5: bool "true" -> 18 ⏎
+  6: bool "false" -> 25 ⏎
+  7: bool "true" -> 26
 -/
 #guard_msgs in
 #apex_graph fun (x : Array Float) => x[0]?
 
 /--
 info: Nodes:
-  0: Convert<Int,Float>1 : Convert<Int,Float>
-  1: array::Get<Float>1 : array::Get<Float>
+  0: ConvertIntFloat : Convert<Int,Float>
+  1: array_GetFloat : array::Get<Float>
 
 Ports:
-  0: /Convert<Int,Float>1/a[in]
-  1: /Convert<Int,Float>1/[anonymous][out]
-  2: /array::Get<Float>1/array[in]
-  3: /array::Get<Float>1/index[in]
-  4: /array::Get<Float>1/default[in]
-  5: /array::Get<Float>1/fst[out]
-  6: /array::Get<Float>1/snd[out]
+  0: /ConvertIntFloat/a[in]
+  1: /ConvertIntFloat/[anonymous][out]
+  2: /array_GetFloat/array[in]
+  3: /array_GetFloat/index[in]
+  4: /array_GetFloat/default[in]
+  5: /array_GetFloat/fst[out]
+  6: /array_GetFloat/snd[out]
 
 Inputs:
-  x[in] -> #[/array::Get<Float>1/array[in]]
-  i[in] -> #[/array::Get<Float>1/index[in]]
+  x[in] -> #[/array_GetFloat/array[in]]
+  i[in] -> #[/array_GetFloat/index[in]]
 
 Outputs:
-  /array::Get<Float>1/fst[out] -> [anonymous][out]
+  /array_GetFloat/fst[out] -> [anonymous][out]
 
 Wires:
-  0: /Convert<Int,Float>1/[anonymous][out] -> /array::Get<Float>1/default[in]
+  0: /ConvertIntFloat/[anonymous][out] -> /array_GetFloat/default[in]
 
 Literals:
   0: int 0 -> 0
@@ -198,26 +205,26 @@ Literals:
 
 /--
 info: Nodes:
-  0: array::Add<Float>1 : array::Add<Float>
-  1: array::Add<Float>2 : array::Add<Float>
+  0: array_AddFloat : array::Add<Float>
+  1: array_AddFloat1 : array::Add<Float>
 
 Ports:
-  0: /array::Add<Float>1/[anonymous][out]
-  1: /array::Add<Float>1/a[in]
-  2: /array::Add<Float>1/b[in]
-  3: /array::Add<Float>1/[anonymous][out]
-  4: /array::Add<Float>2/[anonymous][out]
-  5: /array::Add<Float>2/a[in]
-  6: /array::Add<Float>2/b[in]
-  7: /array::Add<Float>2/[anonymous][out]
+  0: /array_AddFloat/[anonymous][out]
+  1: /array_AddFloat/a[in]
+  2: /array_AddFloat/b[in]
+  3: /array_AddFloat/[anonymous][out]
+  4: /array_AddFloat1/[anonymous][out]
+  5: /array_AddFloat1/a[in]
+  6: /array_AddFloat1/b[in]
+  7: /array_AddFloat1/[anonymous][out]
 
 Inputs:
-  x.fst[in] -> #[/array::Add<Float>1/a[in], /array::Add<Float>1/b[in]]
-  x.snd[in] -> #[/array::Add<Float>2/a[in], /array::Add<Float>2/b[in]]
+  x.fst[in] -> #[/array_AddFloat/a[in], /array_AddFloat/b[in]]
+  x.snd[in] -> #[/array_AddFloat1/a[in], /array_AddFloat1/b[in]]
 
 Outputs:
-  /array::Add<Float>1/[anonymous][out] -> fst[out]
-  /array::Add<Float>2/[anonymous][out] -> snd[out]
+  /array_AddFloat/[anonymous][out] -> fst[out]
+  /array_AddFloat1/[anonymous][out] -> snd[out]
 
 Wires:
 
@@ -228,55 +235,55 @@ Literals:
 
 /--
 info: Nodes:
-  0: array::Add<Float>1 : array::Add<Float>
-  1: array::Add<Float>2 : array::Add<Float>
-  2: array::Add<Int>1 : array::Add<Int>
-  3: array::Append<Float>1 : array::Append<Float>
-  4: array::Append<Float>2 : array::Append<Float>
-  5: array::Append<Int>1 : array::Append<Int>
+  0: array_AddFloat : array::Add<Float>
+  1: array_AddFloat1 : array::Add<Float>
+  2: array_AddInt : array::Add<Int>
+  3: array_AppendFloat : array::Append<Float>
+  4: array_AppendFloat1 : array::Append<Float>
+  5: array_AppendInt : array::Append<Int>
 
 Ports:
-  0: /array::Add<Float>1/[anonymous][out]
-  1: /array::Add<Float>1/a[in]
-  2: /array::Add<Float>1/b[in]
-  3: /array::Add<Float>1/[anonymous][out]
-  4: /array::Add<Float>2/[anonymous][out]
-  5: /array::Add<Float>2/a[in]
-  6: /array::Add<Float>2/b[in]
-  7: /array::Add<Float>2/[anonymous][out]
-  8: /array::Add<Int>1/[anonymous][out]
-  9: /array::Add<Int>1/a[in]
-  10: /array::Add<Int>1/b[in]
-  11: /array::Add<Int>1/[anonymous][out]
-  12: /array::Append<Float>1/array[in]
-  13: /array::Append<Float>1/value[in]
-  14: /array::Append<Float>1/fst[out]
-  15: /array::Append<Float>1/snd[out]
-  16: /array::Append<Float>2/array[in]
-  17: /array::Append<Float>2/value[in]
-  18: /array::Append<Float>2/fst[out]
-  19: /array::Append<Float>2/snd[out]
-  20: /array::Append<Int>1/array[in]
-  21: /array::Append<Int>1/value[in]
-  22: /array::Append<Int>1/fst[out]
-  23: /array::Append<Int>1/snd[out]
+  0: /array_AddFloat/[anonymous][out]
+  1: /array_AddFloat/a[in]
+  2: /array_AddFloat/b[in]
+  3: /array_AddFloat/[anonymous][out]
+  4: /array_AddFloat1/[anonymous][out]
+  5: /array_AddFloat1/a[in]
+  6: /array_AddFloat1/b[in]
+  7: /array_AddFloat1/[anonymous][out]
+  8: /array_AddInt/[anonymous][out]
+  9: /array_AddInt/a[in]
+  10: /array_AddInt/b[in]
+  11: /array_AddInt/[anonymous][out]
+  12: /array_AppendFloat/array[in]
+  13: /array_AppendFloat/value[in]
+  14: /array_AppendFloat/fst[out]
+  15: /array_AppendFloat/snd[out]
+  16: /array_AppendFloat1/array[in]
+  17: /array_AppendFloat1/value[in]
+  18: /array_AppendFloat1/fst[out]
+  19: /array_AppendFloat1/snd[out]
+  20: /array_AppendInt/array[in]
+  21: /array_AppendInt/value[in]
+  22: /array_AppendInt/fst[out]
+  23: /array_AppendInt/snd[out]
 
 Inputs:
-  x.fst[in] -> #[/array::Add<Float>1/a[in], /array::Add<Float>1/b[in]]
-  x.snd.fst[in] -> #[/array::Add<Float>2/a[in], /array::Add<Float>2/b[in]]
-  x.snd.snd[in] -> #[/array::Add<Int>1/a[in], /array::Add<Int>1/b[in]]
-  a[in] -> #[/array::Append<Float>1/value[in], /array::Append<Float>2/value[in]]
-  i[in] -> #[/array::Append<Int>1/value[in]]
+  x.fst[in] -> #[/array_AddFloat/a[in], /array_AddFloat/b[in]]
+  x.snd.fst[in] -> #[/array_AddFloat1/a[in], /array_AddFloat1/b[in]]
+  x.snd.snd[in] -> #[/array_AddInt/a[in], /array_AddInt/b[in]]
+  a[in] -> #[/array_AppendFloat/value[in], /array_AppendFloat1/value[in]]
+  i[in] -> #[/array_AppendInt/value[in]]
 
 Outputs:
-  /array::Append<Float>1/fst[out] -> fst[out]
-  /array::Append<Float>2/fst[out] -> snd.fst[out]
-  /array::Append<Int>1/fst[out] -> snd.snd[out]
+  /array_AppendFloat/fst[out] -> fst[out]
+  /array_AppendFloat1/fst[out] -> snd.fst[out]
+  /array_AppendInt/fst[out] -> snd.snd[out]
 
 Wires:
-  0: /array::Add<Float>1/[anonymous][out] -> /array::Append<Float>1/array[in]
-  1: /array::Add<Float>2/[anonymous][out] -> /array::Append<Float>2/array[in]
-  2: /array::Add<Int>1/[anonymous][out] -> /array::Append<Int>1/array[in]
+  0: /array_AddFloat/[anonymous][out] -> /array_AppendFloat/array[in]
+  1: /array_AddFloat1/[anonymous][out] -> /array_AppendFloat1/array[in]
+  2: /array_AddInt/[anonymous][out] -> /array_AppendInt/array[in]
 
 Literals:
 -/

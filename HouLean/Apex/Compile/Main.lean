@@ -89,7 +89,7 @@ def getUnfoldStackMsg : GraphCompileM MessageData := do
     return m!", unfolded: {s}"
 
 def throwErrorWithStack (msg : MessageData) : GraphCompileM α := do
-  throwErrorAt (← getRef) m!"{msg}{← getUnfoldStackMsg}"
+  throwErrorAt (← getRef) m!"{msg}\n{← getUnfoldStackMsg}"
 
 /-- Add a node to the graph with optional subports -/
 def addNode (nodeType : NodeType)  (nodeName : Name) : 
@@ -187,9 +187,11 @@ def makeSingleConnection (src trg : PortPtr) : GraphCompileM Unit := do
 
 def isVariadic (p : PortPtr) : GraphCompileM Bool := do
   match p with
-  | .globalId id => 
+  | .port id => 
     let p : Port := (← get).graph.ports[id]!
     return p.isVariadic
+  | .subport .. =>
+    return true
   | .input id => 
     let t := (← get).graph.inputs[id]!.1
     match t.type with
@@ -542,11 +544,44 @@ partial def compileMatchExpr (e : Expr) (info : MatcherInfo) :
         trace[HouLean.Apex.compiler] "reduced to: {e'}"
         compile e'
 
+/-- Internal override for `toApex`, `fromApex`, `apexFlatten`, `apexUnflatten`. -/
+partial def tryInternalOverride (fn : Expr) (args : Array Expr) :
+    GraphCompileM (Option (Array PortBundle × PortBundle)) := do
+  
+  let (.const fname _) := fn | return none
+  
+  if fname == ``toApex ∧ args.size == 4 then
+    return ← compile args[3]!
+
+  if fname == ``fromApex ∧ args.size == 4 then
+    return ← compile args[3]!
+
+  if fname == ``apexFlatten ∧ args.size == 4 then
+    let (inputs, output) ← compile args[3]!
+    unless inputs.size == 0 do throwError "APEX compiler bug in {decl_name%}!"
+    return some (inputs, .node (output.flatten.map (ArrayTree.leaf)))
+
+  if fname == ``apexUnflatten ∧ args.size == 4 then
+    let (inputs, output) ← compile args[3]!
+    let some t ← getApexType? args[0]! | throwError "Invalid APEX type {args[0]!}!"
+
+    let .leaf (.port outputId) := output
+      | throwError "Trying to unflatten back into {args[0]!}, only a single port expected but got {output.toString}!"
+
+    -- recover the shape of the type
+    let output := t.mapIdx (fun i _ => PortPtr.subport outputId i)
+    return (inputs, output)
+    
+  return none
+
 /-- Try to compile using implemented_by override -/
 partial def tryCompileImplementedBy (fn : Expr) (args : Array Expr) : 
     GraphCompileM (Option (Array PortBundle × PortBundle)) := do
 
   let s := compilerExt.getState (← getEnv)
+
+  if let some r ← tryInternalOverride fn args then
+    return r
 
   -- Direct expr level overrides
   if let some fn' := s.implementedByExpr[fn]? then
@@ -599,7 +634,7 @@ partial def compileProjectionFn (fname : Name) (args : Array Expr) :
   return (#[], si)
 
 /-- Compile for-loop -/
-partial def compileForLoop (_e : Expr) (args : Array Expr) : 
+partial def compileForLoop (_e : Expr) (_args : Array Expr) : 
     GraphCompileM (Array PortBundle × PortBundle) := do
   trace[HouLean.Apex.compiler] "Compiling for-loop"
   
@@ -733,7 +768,7 @@ partial def compileProjection (s : Name) (i : Nat) (x : Expr) :
     let x' := x
     let (_, x) ← compile x
     let some si := x.child? i
-      | throwErrorWithStack m!"Invalid projection {i} of {x'}: {x.toString}"
+      | throwErrorWithStack m!"Invalid projection {i} of ({x'} : {← inferType x'})\nshape is: {x.toString}"
     return (#[], si)
   else
     let info := getStructureInfo (← getEnv) s
@@ -829,7 +864,7 @@ def addValueNode (t : PortType) (nodeName : Name) : GraphCompileM (PortId × Por
     | throwError s!"APEX compiler bug in {decl_name%}, invalid type!"
   let some nodeType ← getValueNode? tag
     | throwError s!"APEX compiler bug in {decl_name%}, can't find value node for {tag.toString}"
-  let ⟨_, #[.leaf (.globalId inputId)], .leaf (.globalId outputId)⟩ ← addNode nodeType nodeName
+  let ⟨_, #[.leaf (.port inputId)], .leaf (.port outputId)⟩ ← addNode nodeType nodeName
     | throwError s!"APEX compiler bug in {decl_name%}, invalid shape of value node!"
 
   return (inputId, outputId)
@@ -851,13 +886,13 @@ def fixInputOutputTypes : GraphCompileM Unit := do
     match oldOutput with
     | .input inputId => 
       let (valueIn, valueOut) ← addValueNode p.type p.name
-      makeSingleConnection (.input inputId) (.globalId valueIn)
+      makeSingleConnection (.input inputId) (.port valueIn)
       newOutputs := newOutputs.push (p, .port valueOut)
 
     | .literal val => 
       let (valueIn, valueOut) ← addValueNode p.type p.name
       newOutputs := newOutputs.push (p, .port valueOut)
-      makeSingleConnection (.literal val) (.globalId valueIn)
+      makeSingleConnection (.literal val) (.port valueIn)
 
     | _ => 
       newOutputs := newOutputs.push (p,oldOutput)
@@ -870,7 +905,7 @@ def fixInputOutputTypes : GraphCompileM Unit := do
 
     if trgs.size = 0 then
       let (valueIn, _) ← addValueNode inputPort.type inputPort.name
-      makeSingleConnection (.input inputPort.localId) (.globalId valueIn)
+      makeSingleConnection (.input inputPort.localId) (.port valueIn)
 
 
 def programToApexGraph (e : Expr) : MetaM ApexGraph := do
@@ -881,7 +916,7 @@ def programToApexGraph (e : Expr) : MetaM ApexGraph := do
     if inputs.size = 0 then
       let some t ← getApexType? e
         | throwError "Invalid APEX type of {e}"
-      let outputPorts : PortBundle :=  t.mapIdx (fun t x => sorry)
+      let outputPorts : PortBundle :=  t.mapIdx (fun _ (n,_) => PortPtr.output n)
       makeConnection output outputPorts
 
     fixInputOutputTypes

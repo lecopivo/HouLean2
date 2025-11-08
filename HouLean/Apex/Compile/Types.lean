@@ -48,9 +48,9 @@ inductive VariadicArg' : List ApexTypeTag  → Type u where
 
 class ApexTypeFlatten (α : Type u) (ts : outParam (List ApexTypeTag)) : Type u where
   apexFlatten : α → VariadicArg' ts
-  apexUnflatten! : VariadicArg' ts → α
+  apexUnflatten : VariadicArg' ts → α
 
-export ApexTypeFlatten (apexFlatten apexUnflatten!)
+export ApexTypeFlatten (apexFlatten apexUnflatten)
 
 def _root_.HouLean.Apex.Untyped.getFloat! (x : Untyped) : Float := 
   match x with
@@ -64,19 +64,19 @@ def _root_.HouLean.Apex.Untyped.getInt! (x : Untyped) : Int :=
 
 instance : ApexTypeFlatten Float [.float] where
   apexFlatten x := .cons x .nil
-  apexUnflatten! := fun (.cons x .nil) => x
+  apexUnflatten := fun (.cons x .nil) => x
 
 instance : ApexTypeFlatten Int [.int] where
   apexFlatten x := .cons x .nil
-  apexUnflatten! := fun (.cons x .nil) => x
+  apexUnflatten := fun (.cons x .nil) => x
 
 unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (α×β) (ts ++ ss) where
-  apexFlatten x := unsafeCast x
-  apexUnflatten! x := unsafeCast x
+  apexFlatten x := sorry
+  apexUnflatten x := sorry
 
 unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (MProd α β) (ts ++ ss) where
-  apexFlatten x := unsafeCast x
-  apexUnflatten! x := unsafeCast x
+  apexFlatten x := sorry
+  apexUnflatten x := sorry
 
 
 -- ...

@@ -65,9 +65,10 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
   let idx := structMap.size
   let modName ← getMainModule
   let freshName := Name.append `AnonStruct modName |>.appendAfter (toString idx)
-  -- while (← getEnv).contains freshName do
-  --   idx := idx + 1
-  --   freshName := (`AnonStruct).appendIndexAfter idx
+  
+  -- this does not work as I would be combining names with different macro scopes 
+  -- during APEX graph comiplations, but that is a bug in the compilation 
+  -- let freshName ← liftTermElabM <| mkFreshUserName `AnonStruct
   
   -- Build field declarations for the structure
   let mut paramDecls : Array (TSyntax ``Term.bracketedBinder) := #[]

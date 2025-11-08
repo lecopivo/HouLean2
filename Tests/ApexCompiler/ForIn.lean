@@ -2,20 +2,71 @@ import HouLean
 
 open HouLean Apex Compiler
 
-run_meta compilerExt.add (.implementedByName ``apexFlatten ``id' #[none, some 3])
-run_meta compilerExt.add (.implementedByName ``apexUnflatten! ``id' #[none, some 3])
+-- run_meta compilerExt.add (.implementedByName ``apexFlatten ``id' #[none, some 3])
+-- run_meta compilerExt.add (.implementedByName ``apexUnflatten! ``id' #[none, some 3])
 
-instance [ApexType α A] : ApexType (Id α) A where
-  toApex x := toApex (α:=α) x
-  fromApex x := fromApex (α:=α) x
-e
+-- instance [ApexType α A] : ApexType (Id α) A where
+--   toApex x := toApex (α:=α) x
+--   fromApex x := fromApex (α:=α) x
+
+-- prevent from whnfC to reduce these!
+-- todo: make `apex_irreducible`
+run_meta compilerExt.add (.implementedByName ``apexFlatten ``id' #[none, some 3])
+run_meta compilerExt.add (.implementedByName ``apexUnflatten ``id' #[none, some 3])
+
+
+@[apex_node "VariadicIdentity"]
+def variadicId {ts} (x : VariadicArg' ts) := x
+
+set_option trace.HouLean.Apex.compiler true in
+#apex_graph fun (x : Int) =>
+  let s := apexFlatten (x,x)
+  let s := variadicId s
+  let (a,b) := apexUnflatten (α:=Int×Int) s
+  a + b
+#check PortPtr
+
+set_option trace.HouLean.Apex.compiler true in
+#apex_graph fun (x : Int) =>
+  let r := Generated.ForBegin x (apexFlatten (x,x))
+  let (a,b) := apexUnflatten (α:=Int×Int) r.spare
+  let s := apexFlatten (a+b, a*b)
+  let (x,y) := apexUnflatten (α:=Int×Int) (Generated.ForEnd r.scope s)
+  x + y
+
+#exit
+
 set_option trace.HouLean.Apex.compiler true in
 #apex_graph fun (x : Int) => Id.run do
   let mut x : Int := x
-  for _ in [0:5] do
+  for _ in [0:10] do
     x := x + x
   return x
 
+variable (a b : Int) (x y : Float)
+
+#check (VariadicArg'.cons (t:=.float) x (.cons (t:=.int) a .nil))
+#check apexFlatten (a,b,x)
+
+
+@[apex]
+def run (x : Int) := Id.run do
+  let mut x : Int := x
+  for _ in [0:10] do
+    x := x + x
+  return x
+
+#check Lean.Meta.Simp.DStep
+open Qq Lean Meta
+run_meta
+  
+  let e := q(toString 2314 ++ " hello Lean " ++ toString 3.42)
+
+  unless ¬e.hasFVar ∧ ¬e.hasMVar do
+    log "mvars or fvars"
+
+  let s ← evalExpr String q(String) e
+  logInfo s
 
 #exit
 

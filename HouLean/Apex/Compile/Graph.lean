@@ -120,7 +120,9 @@ inductive PortPtr where
   /-- Connecting an input port to literal value will set that port to the literal value -/
   | literal (val : LiteralVal)
   /-- Global id of a port -/
-  | globalId (id : Nat)
+  | port (id : Nat)
+  /-- Global id of a port -/
+  | subport (id : Nat) (localId : Nat)
   /-- Input port -/
   | input (id : Nat)
   /-- Output port -/
@@ -132,7 +134,8 @@ protected def PortPtr.toString : PortPtr → String
   | literal (.float val)
   | literal (.str val)
   | literal (.bool val) => s!"lit[{val}]"
-  | globalId id => toString id
+  | port id => toString id
+  | subport id localId => s!"{id}[{localId}]"
   | input id => s!"in[{id}]"
   | output id => s!"out[{id}]"
 
@@ -203,8 +206,8 @@ def ApexGraph.addNode (g : ApexGraph) (nodeType : NodeType) (nodeName : String) 
   return {
     graph := g
     nodeId := nodeOff
-    inputs := inputs.map (fun input => input.map (fun p => .globalId p.globalId))
-    output := output.map (fun p => .globalId p.globalId)
+    inputs := inputs.map (fun input => input.map (fun p => .port p.globalId))
+    output := output.map (fun p => .port p.globalId)
   }
 
 def ApexGraph.addValueNode (g : ApexGraph) (t : ApexTypeTag) : ApexGraph × PortId × PortId :=
@@ -227,7 +230,7 @@ def ApexGraph.addValueNode (g : ApexGraph) (t : ApexTypeTag) : ApexGraph × Port
     inputs := #[.leaf inputPort]
     output := .leaf outputPort
   }
-  if let ⟨g,_,#[.leaf (.globalId inputId)], .leaf (.globalId outputId)⟩ := g.addNode type "value" then
+  if let ⟨g,_,#[.leaf (.port inputId)], .leaf (.port outputId)⟩ := g.addNode type "value" then
     (g, inputId, outputId)
   else
     panic! s!"APEX compiler bug in {decl_name%}, something went wrong adding value node!"
@@ -242,10 +245,10 @@ def LiteralVal.typeTag (val : LiteralVal) : ApexTypeTag :=
 
 partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except String ApexGraph := do
   match src, trg with
-  | .globalId src, .globalId trg =>
+  | .port src, .port trg =>
     return { g with wires := g.wires.push (src, trg) }
 
-  | .literal val, .globalId trg =>
+  | .literal val, .port trg =>
     unless g.ports[trg]!.dir == .input do
       throw s!"Assigning literal value to output port!\n{repr src} -> {repr trg}"
 
@@ -254,11 +257,11 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
       return { g with literals := g.literals.push (val, trg) }
     else
       let (g,valueIn, valueOut) := g.addValueNode val.typeTag
-      let g ← g.addConnection (.literal val) (.globalId valueIn)
-      let g ← g.addConnection (.globalId valueOut) (.globalId trg)
+      let g ← g.addConnection (.literal val) (.port valueIn)
+      let g ← g.addConnection (.port valueOut) (.port trg)
       return g
 
-  | .globalId src, .output name =>
+  | .port src, .output name =>
     unless g.ports[src]!.dir == .output do
       throw s!"Graph output can be connected only to output port!\n{repr src} -> {repr trg}"
 
@@ -287,7 +290,7 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
     unless id < g.inputs.size do
       throw s!"Connecting to non-existent input port!\n{repr src} -> {repr trg}"
     match trg with
-    | .globalId trg => 
+    | .port trg => 
       unless g.ports[trg]!.dir == .input do
         throw s!"Graph input can be connected only to input port!\n{repr src} -> {repr trg}"
 
@@ -466,7 +469,7 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
 def formatStrName (name : String) : String := name.replace "." "_"
 def formatName (name : Name) : String := formatStrName (toString name.eraseMacroScopes)
 
-def ensureUniqueName (nodeId : Nat) (dir : PortDir) (name : Name) : String := formatName name
+def ensureUniqueName (_nodeId : Nat) (_dir : PortDir) (name : Name) : String := formatName name
   
 def ApexGraph.pythonBuildScript (g : ApexGraph) : String := 
 Id.run do
