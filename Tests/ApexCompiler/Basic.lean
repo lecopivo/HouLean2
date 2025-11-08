@@ -33,11 +33,11 @@ info: Nodes:
 
 Ports:
   0: /AddFloat/a[in]
-  1: /AddFloat/b[in]
+  1: /AddFloat/b[⋯][in]
   2: /AddFloat/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/AddFloat/a[in], /AddFloat/b[in]]
+  x[in] -> #[/AddFloat/a[in], /AddFloat/b[0][in]]
 
 Outputs:
   /AddFloat/[anonymous][out] -> [anonymous][out]
@@ -52,19 +52,98 @@ Literals:
 
 /--
 info: Nodes:
+  0: AddInt : Add<Int>
+  1: value : Value<Int>
+
+Ports:
+  0: /AddInt/a[in]
+  1: /AddInt/b[⋯][in]
+  2: /AddInt/[anonymous][out]
+  3: /value/parm[in]
+  4: /value/value[out]
+
+Inputs:
+  x[in] -> #[/AddInt/a[in]]
+
+Outputs:
+  /AddInt/[anonymous][out] -> [anonymous][out]
+
+Wires:
+  0: /value/value[out] -> /AddInt/b[0][in]
+
+Literals:
+  0: int 0 -> /value/parm[in]
+-/
+#guard_msgs in
+#apex_graph fun x : Int => x + 0
+
+
+
+/--
+info: Nodes:
+  0: AddInt : Add<Int>
+
+Ports:
+  0: /AddInt/a[in]
+  1: /AddInt/b[⋯][in]
+  2: /AddInt/[anonymous][out]
+
+Inputs:
+  x[in] -> #[/AddInt/b[0][in]]
+
+Outputs:
+  /AddInt/[anonymous][out] -> [anonymous][out]
+
+Wires:
+
+Literals:
+  0: int 0 -> /AddInt/a[in]
+-/
+#guard_msgs in
+#apex_graph fun x : Int => 0 + x
+
+
+/--
+info: Nodes:
+  0: [anonymous] : Value<Int>
+  1: _x : Value<Int>
+
+Ports:
+  0: /[anonymous]/parm[in]
+  1: /[anonymous]/[anonymous][out]
+  2: /_x/parm[in]
+  3: /_x/[anonymous][out]
+
+Inputs:
+  _x[in] -> #[/_x/parm[in]]
+
+Outputs:
+  /[anonymous]/[anonymous][out] -> [anonymous][out]
+
+Wires:
+
+Literals:
+  0: int 0 -> /[anonymous]/parm[in]
+-/
+#guard_msgs in
+#apex_graph fun _x : Int => 0
+
+
+/--
+info: Nodes:
   0: AddFloat : Add<Float>
   1: MultiplyFloat : Multiply<Float>
 
 Ports:
   0: /AddFloat/a[in]
-  1: /AddFloat/b[in]
+  1: /AddFloat/b[⋯][in]
   2: /AddFloat/[anonymous][out]
   3: /MultiplyFloat/a[in]
-  4: /MultiplyFloat/b[in]
+  4: /MultiplyFloat/b[⋯][in]
   5: /MultiplyFloat/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/AddFloat/a[in], /AddFloat/b[in], /MultiplyFloat/b[in]]
+  x[in] -> #[/AddFloat/a[in], /AddFloat/b[0][in], /MultiplyFloat/b[0][in]]
 
 Outputs:
   /MultiplyFloat/[anonymous][out] -> [anonymous][out]
@@ -84,11 +163,11 @@ info: Nodes:
 
 Ports:
   0: /AddFloat/a[in]
-  1: /AddFloat/b[in]
+  1: /AddFloat/b[⋯][in]
   2: /AddFloat/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/AddFloat/a[in], /AddFloat/b[in], /AddFloat/b[in], /AddFloat/b[in]]
+  x[in] -> #[/AddFloat/a[in], /AddFloat/b[0][in], /AddFloat/b[1][in], /AddFloat/b[2][in]]
 
 Outputs:
   /AddFloat/[anonymous][out] -> [anonymous][out]
@@ -109,18 +188,18 @@ info: Nodes:
 
 Ports:
   0: /DivideFloat/a[in]
-  1: /DivideFloat/b[in]
+  1: /DivideFloat/b[⋯][in]
   2: /DivideFloat/[anonymous][out]
   3: /LerpFloat/a[in]
   4: /LerpFloat/b[in]
   5: /LerpFloat/bias[in]
   6: /LerpFloat/[anonymous][out]
   7: /MultiplyFloat/a[in]
-  8: /MultiplyFloat/b[in]
+  8: /MultiplyFloat/b[⋯][in]
   9: /MultiplyFloat/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/DivideFloat/a[in], /DivideFloat/b[in], /LerpFloat/a[in]]
+  x[in] -> #[/DivideFloat/a[in], /DivideFloat/b[0][in], /LerpFloat/a[in]]
 
 Outputs:
   /MultiplyFloat/[anonymous][out] -> [anonymous][out]
@@ -128,10 +207,10 @@ Outputs:
 Wires:
   0: /DivideFloat/[anonymous][out] -> /LerpFloat/b[in]
   1: /DivideFloat/[anonymous][out] -> /MultiplyFloat/a[in]
-  2: /LerpFloat/[anonymous][out] -> /MultiplyFloat/b[in]
+  2: /LerpFloat/[anonymous][out] -> /MultiplyFloat/b[0][in]
 
 Literals:
-  0: float 0.300000 -> 5
+  0: float 0.300000 -> /LerpFloat/bias[in]
 -/
 #guard_msgs in
 #apex_graph fun x : Float => let y := x/x; y*x.lerp y 0.3
@@ -382,12 +461,12 @@ info: Nodes:
 
 Ports:
   0: /AddFloat/a[in]
-  1: /AddFloat/b[in]
+  1: /AddFloat/b[⋯][in]
   2: /AddFloat/[anonymous][out]
 
 Inputs:
   x[in] -> #[/AddFloat/a[in]]
-  y[in] -> #[/AddFloat/b[in]]
+  y[in] -> #[/AddFloat/b[0][in]]
 
 Outputs:
   /AddFloat/[anonymous][out] -> [anonymous][out]
@@ -406,12 +485,12 @@ info: Nodes:
 
 Ports:
   0: /AddInt/a[in]
-  1: /AddInt/b[in]
+  1: /AddInt/b[⋯][in]
   2: /AddInt/[anonymous][out]
 
 Inputs:
   x[in] -> #[/AddInt/a[in]]
-  y[in] -> #[/AddInt/b[in]]
+  y[in] -> #[/AddInt/b[0][in]]
 
 Outputs:
   /AddInt/[anonymous][out] -> [anonymous][out]
@@ -469,10 +548,10 @@ Outputs:
 Wires:
 
 Literals:
-  0: int 0 -> 0 ⏎
-  1: str "hello" -> 2 ⏎
-  2: float 3.141590 -> 4 ⏎
-  3: bool "true" -> 6
+  0: int 0 -> /fst/parm[in] ⏎
+  1: str "hello" -> /snd.fst/parm[in] ⏎
+  2: float 3.141590 -> /snd.snd.fst/parm[in] ⏎
+  3: bool "true" -> /snd.snd.snd/parm[in]
 -/
 #guard_msgs in 
 #apex_graph (fun _x : Int => ((0:Nat), "hello", 3.14159, true))
@@ -504,8 +583,8 @@ Outputs:
 Wires:
 
 Literals:
-  0: int 0 -> 2 ⏎
-  1: bool "false" -> 4
+  0: int 0 -> /snd.fst/parm[in] ⏎
+  1: bool "false" -> /snd.snd/parm[in]
 -/
 #guard_msgs in
 #apex_graph fun x : Int => (x, (none : Option Int))
@@ -537,7 +616,7 @@ Outputs:
 Wires:
 
 Literals:
-  0: bool "false" -> 4
+  0: bool "false" -> /snd.snd/parm[in]
 -/
 #guard_msgs in
 #apex_graph fun x : Int => (x, (none : Option Geometry))
@@ -570,7 +649,7 @@ Wires:
   1: /ConvertIntFloat/[anonymous][out] -> /FloatToVector2/y[in]
 
 Literals:
-  0: int 0 -> 0
+  0: int 0 -> /ConvertIntFloat/a[in]
 -/
 #guard_msgs in
 #apex_graph fun _x : Float => (⟨0,0⟩ : Vector2)
@@ -604,7 +683,7 @@ Wires:
   2: /ConvertIntFloat/[anonymous][out] -> /FloatToVector3/z[in]
 
 Literals:
-  0: int 0 -> 0
+  0: int 0 -> /ConvertIntFloat/a[in]
 -/
 #guard_msgs in
 #apex_graph fun _x : Float => (⟨0,0,0⟩ : Vector3)
@@ -621,7 +700,7 @@ info: Nodes:
 
 Ports:
   0: /AddString/a[in]
-  1: /AddString/b[in]
+  1: /AddString/b[⋯][in]
   2: /AddString/[anonymous][out]
   3: /value/parm[in]
   4: /value/value[out]
@@ -635,11 +714,11 @@ Outputs:
   /AddString/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /value/value[out] -> /AddString/b[in]
+  0: /value/value[out] -> /AddString/b[0][in]
 
 Literals:
-  0: str "a" -> 0 ⏎
-  1: str "b" -> 3
+  0: str "a" -> /AddString/a[in] ⏎
+  1: str "b" -> /value/parm[in]
 -/
 #guard_msgs in
 #apex_graph fun _x : Float => "a" ++ "b"

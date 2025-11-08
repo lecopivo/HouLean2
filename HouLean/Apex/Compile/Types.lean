@@ -94,7 +94,8 @@ instance : ToString ApexTypeTag := ⟨fun t => t.toString⟩
 
 inductive PortType where
   | builtin  (typeTag : ApexTypeTag)
-  /-- Option beacause we can have `VariadicArg<void>` -/
+  /-- Option beacause we can have `VariadicArg<void>`
+  `size` is currently known number of subports -/
   | variadic (elemTypeTag : Option ApexTypeTag)
   | rundata
   | undefined
@@ -104,6 +105,11 @@ def PortType.builtin! (t : PortType) : ApexTypeTag :=
   match t with
   | .builtin n => n
   | _ => panic! "invalid use of PortType.buildin!"
+
+def PortType.isVariadic (t : PortType) : Bool :=
+  match t with
+  | .variadic .. => true
+  | _ => false
 
 inductive PortDir where
   | input | output
@@ -171,6 +177,7 @@ structure NodeType where
   inputs : Array (ArrayTree LocalPort)
   /-- Shapes of the output, numbers are local indices of the ports -/
   output : ArrayTree LocalPort
+  variadicPortGroups : Array (Array Nat)
 deriving Inhabited, Repr
 
 /-- Specify for which port to create subports given their names and types in `subports`
@@ -186,7 +193,10 @@ structure AddSubPortSpec where
   subports : Array (String×TypeName)
 deriving Inhabited
 
-abbrev PortId := Nat
+inductive PortId where
+  | port (id : Nat)
+  | subport (id : Nat) (localId : Nat)
+deriving Inhabited, BEq, Repr
 
 /-- Concrete node that lives in some APEX graph. -/
 structure Node where
@@ -194,12 +204,23 @@ structure Node where
   type : NodeType
   globalId : Nat
   /-- Shapes of the inputs, numbers are local indices of the ports -/
-  inputs : Array (ArrayTree PortId)
+  inputs : Array (ArrayTree Nat)
   /-- Shapes of the output, numbers are local indices of the ports -/
-  output : ArrayTree PortId
+  output : ArrayTree Nat
+  /-- Number of subports for of nodes ports. Ports are grouped into groups are they might share the same size
+  and `apex.Graph.addSubPort` should be called only on one of them. -/
+  subportSizes : Array (Nat × Array Nat)
 deriving Inhabited
 
 
+def Node.ensureSubportSize (node : Node) (globalId : Nat) (newSize : Nat) : Node := 
+  {node with
+    subportSizes := node.subportSizes.map (fun (size,ports) => 
+      if ports.contains globalId then
+        (max size newSize, ports)
+      else
+        (size, ports))}
+      
 
 
 -- /-- Type of Lean function in terms of APEX types. -/

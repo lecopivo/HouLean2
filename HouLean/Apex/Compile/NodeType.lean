@@ -87,6 +87,10 @@ def mkNodeTypeFromLeanFn (decl : Name) (apexNodeName : String) (hasRunData := fa
       inputs := inputs.push ports
     
     let output ← localPortsFromType r .anonymous off .output
+
+    -- right now all nodes with non-trivial variadic port groups are hand crafted
+    let ports := (inputs.map (fun input => input.flatten)).flatten ++ output.flatten
+    let variadicPortGroups := ports.filterMap (fun p => if p.type.isVariadic then some #[p.localId] else none)
     
     let type : NodeType := {
       name := apexNodeName
@@ -94,10 +98,10 @@ def mkNodeTypeFromLeanFn (decl : Name) (apexNodeName : String) (hasRunData := fa
       hasRunData := hasRunData
       inputs := inputs
       output := output
+      variadicPortGroups := variadicPortGroups
     }
     
     trace[HouLean.Apex.compiler] "{repr type}"
-
     return type
 
 

@@ -209,14 +209,17 @@ def makeConnection (src trg : PortBundle) : GraphCompileM Unit := do
     else do
       for a in as, b in bs do
         makeConnection a b
-  | .leaf _, .node _ => 
-    throwError "Can't make a connection {src.toString} → {trg.toString}, invalid shape. case left, node"
-  | .node xs, .leaf p => 
-    if ← isVariadic p then
-      for x in xs do
-        makeConnection x (.leaf p)
+  | .node .., .leaf (.port p) => 
+    if ← isVariadic (.port p) then
+      let xs := src.flatten
+      for x in xs, i in [0:xs.size] do
+        makeSingleConnection x (.subport p i)
     else
       throwError "Can't make a connection {src.toString} → {trg.toString}, invalid shape. case node, leaf"
+  | .leaf _, .node _ => 
+    throwError "Can't make a connection {src.toString} → {trg.toString}, invalid shape. case left, node"
+  | _, _ =>
+    throwError "Can't make a connection {src.toString} → {trg.toString}, invalid shape."
 
 -- /-- Create a fresh port type give a  -/
 -- def mkOutput (t : PortType) : GraphCompileM Nat := do
@@ -858,7 +861,7 @@ def PortType.typeTag? (t : PortType) : Option ApexTypeTag :=
   | .variadic t? => t?
   | _ => none
 
-def addValueNode (t : PortType) (nodeName : Name) : GraphCompileM (PortId × PortId) := do
+def addValueNode (t : PortType) (nodeName : Name) : GraphCompileM (Nat × Nat) := do
 
   let some tag := t.typeTag?
     | throwError s!"APEX compiler bug in {decl_name%}, invalid type!"
