@@ -118,10 +118,10 @@ class ServerManager:
                 from urllib import request as urllib_request
             except ImportError:
                 import urllib2 as urllib_request
-                
+
             test_payload = {
-                "command": "typecheck",
-                "data": {"nodes": [], "connections": []}
+                "command": "compile",
+                "data": {"inline": { "code" : ""}}
             }
             
             req = urllib_request.Request(
@@ -129,9 +129,11 @@ class ServerManager:
                 data=json.dumps(test_payload).encode('utf-8'),
                 headers={'Content-Type': 'application/json'}
             )
-            
+
             response = urllib_request.urlopen(req, timeout=1.0)
-            return response.getcode() == 200
+            response_code = response.getcode()
+            print(f"response code is: {response_code}")
+            return response_code == 200
             
         except:
             return False

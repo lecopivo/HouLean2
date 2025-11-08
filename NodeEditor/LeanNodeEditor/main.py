@@ -18,6 +18,8 @@ from .colors import *
 from .node_types import NodeTypeRegistry
 from .view import NodeEditorView
 from .serialization import save_to_json, load_from_json
+from .async_type_checker import AsyncTypeChecker
+from .server_manager import ServerManager
 
 
 def get_default_types():
@@ -94,6 +96,17 @@ class NodeEditorWidget(QWidget):
         super().__init__()
         self.registry = NodeTypeRegistry()
         self.registry.load_from_json(get_default_types())
+
+        # Type checker setup
+        self.server_manager = None
+        self.type_checker = None
+        self.pending_type_check = False
+        self.type_check_timer = None
+        self.last_graph_state = None
+
+        # Initialize type checker on startup
+        self._initialize_type_checker()        
+        
         self._create_ui()
         self.current_selected_node = None
     
@@ -589,6 +602,33 @@ class NodeEditorWidget(QWidget):
         layout.addWidget(desc_label)
         
         return section
+
+    
+    # Network Type Checking
+
+    def _initialize_type_checker(self):
+        """Initialize and start the type checker server."""
+        try:
+            # Update this path to your actual Lean server executable
+            server_path = "/home/tskrivan/Documents/HouLean/.lake/build/bin/houlean"
+
+            self.server_manager = ServerManager(server_path)
+
+            if self.server_manager.start():
+                self.type_checker = AsyncTypeChecker(self.server_manager.server_url)
+                self.type_checker.start()
+                print("Type checker initialized successfully")
+            else:
+                print("Failed to start type checker server")
+                self.server_manager = None
+
+        except Exception as e:
+            print("Error initializing type checker: {}".format(e))
+            self.server_manager = None
+            self.type_checker = None
+
+
+    # Node Network Manipulation        
     
     def on_node_selection_changed(self, selected_nodes):
         if selected_nodes:
