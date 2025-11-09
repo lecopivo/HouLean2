@@ -372,8 +372,8 @@ class PortWidget(QGraphicsItem):
         if self.node == other_port.node:
             return False
         
-        if not self.types_are_compatible(other_port):
-            return False
+        # if not self.types_are_compatible(other_port):
+        #     return False
         
         input_port = self if self.is_input else other_port
         if input_port.is_occupied():

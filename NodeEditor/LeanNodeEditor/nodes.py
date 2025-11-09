@@ -100,7 +100,41 @@ class NodeWidget(QGraphicsRectItem):
         for conn in all_connections:
             if not conn.is_implicit:
                 conn.reconnect()
-    
+
+    def update_ports(self, new_node_type):
+        """Change this node to a different type"""
+        view = None
+        if self.scene() and self.scene().views():
+            view = self.scene().views()[0]
+        
+        all_connections = []
+        if view:
+            for conn in view.connections:
+                if conn.output_node == self or conn.input_node == self:
+                    all_connections.append(conn)
+        
+        for port in self.input_ports + self.output_ports:
+            self._remove_port_connections(port)
+        
+        for port in self.input_ports + self.output_ports:
+            self._clear_port_completely(port)
+        self.input_ports.clear()
+        self.output_ports.clear()
+        
+        self.node_type = new_node_type
+            
+        self._create_ports()
+        self.adjust_size_for_expansion()
+        
+        if self.scene() and self.scene().views():
+            view = self.scene().views()[0]
+            if hasattr(view, '_update_node_ports_matching'):
+                view._update_node_ports_matching(self)
+        
+        for conn in all_connections:
+            if not conn.is_implicit:
+                conn.reconnect()
+                
     def _remove_port_connections(self, port):
         """Remove connections from port's list"""
         for subport in port.subport_widgets[:]:

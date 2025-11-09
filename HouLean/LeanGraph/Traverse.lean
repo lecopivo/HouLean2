@@ -1,112 +1,80 @@
 import HouLean.LeanGraph.LeanGraph
 import HouLean.LeanGraph.Extension
+import HouLean.LeanGraph.Init
+import HouLean.Meta.Exact
 
-open Lean Meta
+open Lean Meta Elab Term 
 
 namespace HouLean
-
 namespace LeanGraph.Traverse
 
+/-- Trace class for LeanGraph elaboration -/
+register_option trace.HouLean.LeanGraph.elab : Bool := {
+  defValue := false
+  descr := "trace elaboration of LeanGraph nodes to Lean expressions"
+}
+
+/-- State maintained during graph traversal -/
 structure State where
-  unvisitedNodes : List String := []
-  nodesToVisit : List String := []
-  visitedNodes : Std.HashMap String FVarId := {} -- node name to fvar
-  currentTopNode : String -- we keep track of the current top node to detect loops
-  code : String := ""
-  graph : LeanGraph -- graph to update types and implicit wires on
-  lctx : LocalContext
-  insts : LocalInstances
-  vars : Array Expr
-  nodeNameToVar : Std.HashMap String Expr
-deriving Inhabited
+  /-- Nodes that have been fully processed, mapping to their fvar -/
+  visitedNodes : Std.HashMap String FVarId := {}
+  /-- Let-bound variables that have been introduced -/
+  vars : Array Expr := #[]
+  deriving Inhabited
 
+/-- Context for graph traversal -/
 structure Context where
+  /-- All nodes in the graph by name -/
   nodeMap : Std.HashMap String Node
-  portTypes : Std.HashMap String PortType
+  /-- Port type definitions by type name -/
+  portTypes : NameMap PortType
+  /-- Connections indexed by input node name -/
   inputConnections : Std.HashMap String (Array Connection)
+  /-- Connections indexed by output node name -/
   outputConnections : Std.HashMap String (Array Connection)
-
-open Lean Elab Term Meta
-abbrev TraverseM := ReaderT Context <| StateT State <| TermElabM 
-
-def addVariable (name : Name) (type val : Expr) (nodeName : String) : TraverseM Unit := do
-  withLCtx (← get).lctx (← get).insts do
-    withLetDecl name type val fun var => do
-      let lctx ← getLCtx
-      let insts ← getLocalInstances
-      modify (fun s => {s with 
-        lctx, insts, 
-        vars := s.vars.push var
-        nodeNameToVar := s.nodeNameToVar.insert nodeName var})
+  /-- Nodes currently being processed (for cycle detection) -/
+  nodesBeingProcessed : Lean.PersistentHashSet String
 
 
-def withContext (go : TraverseM α) : TraverseM α := do
-  withLCtx (← get).lctx (← get).insts go
+abbrev TraverseM := ReaderT Context <| StateT State <| TermElabM
 
-partial def getNodeToVisit : TraverseM (Option Node) := do
-  let s ← get
-  
-  match s.nodesToVisit with
-  | [] => return none
-  | n :: ns => 
-    set {s with nodesToVisit := ns}
-    if s.visitedNodes.contains n then
-      getNodeToVisit
-    else
-      let ctx ← read
-      let some node := ctx.nodeMap[n]?
-        | throwError "getNodeToVisit: invalid node name. This is a bug!"
-      return node
+/-- Mark `nodeName` as being processed. Throws error if already being processed (cycle detection). -/
+def withProcessingNode (nodeName : String) (go : TraverseM α) : TraverseM α := do
+  if (← read).nodesBeingProcessed.contains nodeName then
+    throwError "Loop detected! Trying to compile {nodeName} while compiling its dependencies!"
+  trace[HouLean.LeanGraph.elab] "Processing node: {nodeName}"
+  withReader (fun ctx => {ctx with nodesBeingProcessed := ctx.nodesBeingProcessed.insert nodeName}) go
 
-def getInputConnections (nodeName : String) : TraverseM (Array Connection) := do
-  if let some wires := (← read).inputConnections[nodeName]? then
-    return wires
-  else
-    return #[]
-
-def pushNode (nodeName : String) : TraverseM Unit := do
-  if (← get).visitedNodes.contains nodeName then
-    pure ()
-  else
-    modify (fun s => {s with nodesToVisit := nodeName :: s.nodesToVisit})
-
-def addLine (code : String) : TraverseM Unit := do
-  modify (fun s => {s with code := s.code ++ code ++ "\n"})
-
-partial def getSubports (port : PortType) : TraverseM (Array PortType) := 
+/-- Recursively extract subports from a port type -/
+partial def getSubports (port : PortType) : CoreM (Array PortType) := do
   match port with
-  | .struct _ _ subports => return subports
+  | .struct _ _ subports => 
+    trace[HouLean.LeanGraph.elab] "Port has {subports.size} subports"
+    return subports
   | .builtin _ typeName => do
-    let ctx ← read
-    if let some port' := ctx.portTypes[typeName]? then
-      getSubports port'
+    -- let ctx ← read
+    let s := leanGraphExt.getState (← getEnv) 
+    let portTypes := s.portTypes
+    if let some port' := portTypes.get? typeName.toName then
+      trace[HouLean.LeanGraph.elab] "Resolving builtin type: {typeName}"
+      match port' with
+      | .builtin .. => return #[]
+      | _ => getSubports port'
     else
+      trace[HouLean.LeanGraph.elab] "Builtin type {typeName} has no subports"
       return #[]
 
-partial def buildOutputProj (node : Node) (index : List Nat) : TraverseM String := do
-  match index with
-  | [] => return "invalid_index"
-  | i :: is =>
-    let some port := node.type.outputs[i]?
-      | return "proj_out_of_bounds"
-    go port node.name is
-where
-  go (port : PortType) (s : String) (index : List Nat) : TraverseM String := do
-    match index with
-    | [] => return s
-    | i :: is =>
-      let subports ← getSubports port
-      let some subport := subports[i]?
-        | return "proj_out_of_bounds"
-      go subport (s ++ "." ++ subport.name) is
 
-partial def buildOutputProj' (node : Node) (index : List Nat) : TraverseM Term := do
+/-- Build a projection expression for accessing a node's output port.
+    `index` is a hierarchical path through nested struct ports. -/
+partial def buildOutputProj (node : Node) (index : List Nat) : TraverseM Term := do
   match index with
-  | [] => throwError m!"invalud projection {index} of {node.type}"
+  | [] => throwError "Invalid projection: empty index for {node.type}"
   | i :: is =>
     let some port := node.type.outputs[i]?
-      | throwError m!"projection out of bounds, {index} in {node.type}"
+      | throwError "Projection out of bounds: index {i} not found in {node.type}"
     let nodeId := mkIdent (Name.mkSimple node.name)
+    trace[HouLean.LeanGraph.elab] "Building projection: {node.name}.{index}"
     go port nodeId is
 where
   go (port : PortType) (s : Term) (index : List Nat) : TraverseM Term := do
@@ -115,174 +83,195 @@ where
     | i :: is =>
       let subports ← getSubports port
       let some subport := subports[i]?
-        | throwError m!"projection out of bounds, {index} in {port}"
+        | throwError "Subport projection out of bounds: index {i} not found in {port}"
       let subportId := mkIdent (Name.mkSimple subport.name)
       go subport (← `($s.$subportId)) is
 
-
-partial def buildArg (drop : Nat) (port : PortType) (wires : Array Connection) : TraverseM String := do
+/-- Build argument expression for a node input port.
+    Handles both direct connections and nested struct constructions.
+    `drop` indicates the current depth in the port hierarchy. -/
+partial def buildArg (drop : Nat) (port : PortType) (wires : Array Connection) : TraverseM Term := do
   if wires.size = 0 then
-    return "?_"
-  else 
-    -- only one connection and at the right level!
-    if wires.size = 1 then
-      let w := wires[0]!
-      if w.inputIndex.length = drop then
-        let proj ← buildOutputProj (← read).nodeMap[w.outputNodeName]! w.outputIndex
-        return proj
-    
-    let mut args : Array String := #[]
-    let subports ← getSubports port
-    for subport in subports, i in [0:subports.size] do
-      let wires' := wires.filter (fun w => (w.inputIndex.drop drop).head? == some i)
-      args := args.push (← buildArg (drop+1) subport wires')
-    return "⟨" ++ args.joinl (map := id) (· ++ ", " ++ ·) ++ "⟩"
-
-
-partial def buildArg' (drop : Nat) (port : PortType) (wires : Array Connection) : TraverseM Term := do
-  if wires.size = 0 then
+    trace[HouLean.LeanGraph.elab] "No wires connected, using hole"
     return ← `(?_)
-  else 
-    -- only one connection and at the right level!
-    if wires.size = 1 then
-      let w := wires[0]!
-      if w.inputIndex.length = drop then
-        let proj ← buildOutputProj' (← read).nodeMap[w.outputNodeName]! w.outputIndex
-        return proj
-    
-    let mut args : Array Term := #[]
-    let subports ← getSubports port
-    for subport in subports, i in [0:subports.size] do
-      let wires' := wires.filter (fun w => (w.inputIndex.drop drop).head? == some i)
-      args := args.push (← buildArg' (drop+1) subport wires')
-    return ← `(⟨$args,*⟩)
   
+  -- Single wire at the correct level - direct connection
+  if wires.size = 1 then
+    let w := wires[0]!
+    if w.inputIndex.length = drop then
+      trace[HouLean.LeanGraph.elab] "Direct connection from {w.outputNodeName}"
+      let proj ← buildOutputProj (← read).nodeMap[w.outputNodeName]! w.outputIndex
+      return proj
+  
+  -- Multiple wires or nested connection - build struct
+  trace[HouLean.LeanGraph.elab] "Building struct with {wires.size} connections at depth {drop}"
+  let mut args : Array Term := #[]
+  let subports ← getSubports port
+  for subport in subports, i in [0:subports.size] do
+    let wires' := wires.filter (fun w => (w.inputIndex.drop drop).head? == some i)
+    args := args.push (← buildArg (drop+1) subport wires')
+  return ← `(⟨$args,*⟩)
 
-partial def traverseGraphCore (node : Node) : TraverseM Unit := do
-  Meta.withIncRecDepth do
-  let s ← get
-  if s.visitedNodes.contains node.name then
-    return ()
+/-- Process a node in the graph, generating a let-binding.
+    
+    Assigns the elaborated node to a let-binding and returns a new metavariable
+    for the continuation. Performs depth-first traversal to ensure dependencies
+    are processed first. -/
+partial def processNode (node : Node) (rest : MVarId) : TraverseM MVarId := 
+  withProcessingNode node.name do
+    -- Skip if already visited
+    if (← get).visitedNodes.contains node.name then
+      trace[HouLean.LeanGraph.elab] "Node {node.name} already visited, skipping"
+      return rest
 
-  let ctx ← read
-  let wires ← getInputConnections node.name
-  let wires := wires.qsort (fun w w' => w.inputIndex < w'.inputIndex)
-  -- todo: somehow sort int inputs
-  for wire in wires do
-    let some outputNode := ctx.nodeMap[wire.outputNodeName]?
-      | throwError "invalid node!"
-    traverseGraphCore outputNode
+    -- Depth-first search: process all dependencies first
+    let inputConnections := (← read).inputConnections[node.name]?.getD #[]
+    let nodeMap := (← read).nodeMap
+    let deps := inputConnections.filterMap (fun wire => nodeMap[wire.outputNodeName]?)
+    
+    trace[HouLean.LeanGraph.elab] "Node {node.name} has {deps.size} dependencies"
+    let rest ← deps.foldlM (init := rest) (fun (r : MVarId) node => processNode node r)
 
-  let wires := wires.filter (fun w => ¬w.isImplicit)
-  -- build application
-  let mut inputs : Array (String) := #[]
-  for inputPort in node.type.inputs, i in [0:node.type.inputs.size], val? in node.portValues do
-    let wires' := wires.filter (fun w => w.inputIndex.head? == some i)
+    -- Work in context where all previous nodes exist as free variables
+    rest.withContext do
+      let fName := node.type.leanConstant
+      trace[HouLean.LeanGraph.elab] "Elaborating node {node.name} as {fName}"
+      
+      let fn ← mkConstWithFreshMVarLevels fName
+      let (allArgs, _, _) ← forallMetaTelescope (← inferType fn)
 
-    -- no connected wire but we have a value
-    if wires'.size = 0 then
-      if let some val := val? then
-        if val != "" then 
-          inputs := inputs.push s!"{val}"
-          continue
+      let fInfo ← getFunInfo fn
+      let args := (fInfo.paramInfo.zip allArgs).filterMap 
+        (fun (info, arg) => if info.isExplicit then some arg else none)
 
-    inputs := inputs.push (← buildArg 1 inputPort wires')
+      let mut argsStx : Array Term := #[]
+      
+      -- Build argument expressions
+      for arg in args, i in [0:args.size], port in node.type.inputs do
+        let wires := inputConnections.filter (fun w => w.inputIndex.head? == some i)
 
-  addLine s!"let {node.name} := {node.type.leanConstant} {inputs.joinl (map:= ("("++·++")")) (· ++ " " ++ ·)}"
+        -- Check for default value if no wires connected
+        if wires.size = 0 then
+          if let some val := node.portValues[i]?.join then
+            if val != "" then 
+              trace[HouLean.LeanGraph.elab] "Using default value for port {i}: {val}"
+              match Parser.runParserCategory (← getEnv) `term val "<default_value>" with
+              | .error .. => pure ()
+              | .ok stx => 
+                argsStx := argsStx.push ⟨stx⟩
+                continue
 
-  modify (fun s => {s with visitedNodes := s.visitedNodes.insert node.name default})
+        -- Build argument from connections
+        let argStx ← buildArg 1 port wires
+        argsStx := argsStx.push argStx
+        
+        try 
+          let argExpr ← 
+            rest.withContext <|
+              elabTerm argStx (← inferType arg)
+          arg.mvarId!.assignIfDefEq argExpr
+        catch e =>
+          trace[HouLean.LeanGraph.elab] "Failed to elaborate argument {i}: {e.toMessageData}"
+          logError e.toMessageData
 
-partial def traverseGraphCore' (node : Node) : TraverseM Unit := do
-  Meta.withIncRecDepth do
-  let s ← get
-  if s.visitedNodes.contains node.name then
-    return ()
+      -- Elaborate the complete node expression
+      let fnIdent := mkIdent node.type.leanConstant
+      let nodeVal ← elabTerm (← `(term| $fnIdent:ident $argsStx*)) none
 
-  trace[HouLean.lean_graph] m!"visiting node: {node.name}"
+      let nodeId := Name.mkSimple node.name
+      let nodeType ← inferType nodeVal >>= instantiateMVars
+      
+      trace[HouLean.LeanGraph.elab] "Node type: {nodeType}"
+      
+      withLetDecl nodeId nodeType nodeVal fun nodeVar => do
+        -- Register the new variable
+        modify (fun s => {s with 
+          vars := s.vars.push nodeVar, 
+          -- nodeNameToVar := s.nodeNameToVar.insert node.name nodeVar
+          visitedNodes := s.visitedNodes.insert node.name nodeVar.fvarId!})
+        
+        let rest2 ← mkFreshExprMVar none
+        rest.assign (← mkLambdaFVars (←get).vars rest2)
 
-  let ctx ← read
-  let wires ← getInputConnections node.name
-  let wires := wires.qsort (fun w w' => w.inputIndex < w'.inputIndex)
+        return rest2.mvarId!
 
-  trace[HouLean.lean_graph] m!"number of inpute wires: {wires.size}"
-  -- todo: somehow sort int inputs
-  for wire in wires do
-    let some outputNode := ctx.nodeMap[wire.outputNodeName]?
-      | throwError "invalid node!"
-    traverseGraphCore' outputNode
-
-  let wires := wires.filter (fun w => ¬w.isImplicit)
-  -- build application
-  let mut inputs : Array Term := #[]
-  let portValues := node.portValues ++ Array.replicate (node.type.inputs.size - node.portValues.size) none
-  for inputPort in node.type.inputs, i in [0:node.type.inputs.size], val? in portValues do
-    let wires' := wires.filter (fun w => w.inputIndex.head? == some i)
-    trace[HouLean.lean_graph] m!"port: {inputPort.name}, wires: {wires'.size}}}"
-    -- no connected wire but we have a value
-    if wires'.size = 0 then
-      if let some val := val? then
-        if val != "" then 
-          match Parser.runParserCategory (← getEnv) `term val "<code>" with
-          | .error e => 
-            throwError m!"Failed parsing expression value: {val}\n{e}"
-          | .ok s =>
-            inputs := inputs.push ⟨s⟩
-            continue
-
-    inputs := inputs.push (← buildArg' 1 inputPort wires')
-
-
-  let nodeId := mkIdent node.type.leanConstant
-  let nodeStx ← `(term| $nodeId $inputs*)
-  withContext do withoutErrToSorry do
-    let val ← elabTerm nodeStx none >>= instantiateMVars
-    let type ← inferType val
-    addVariable (Name.mkSimple node.name) type val node.name
-  addLine s!"let {node.name} := {toString (← PrettyPrinter.ppTerm nodeStx)}"
-  modify (fun s => {s with visitedNodes := s.visitedNodes.insert node.name default})
-
-
-def buildContext (graph : LeanGraph) : Context := Id.run do
+/-- Build the traversal context from a LeanGraph -/
+def buildContext (graph : LeanGraph) : CoreM Context := do
   let nodeMap := Std.HashMap.ofList (graph.nodes.map (fun n => (n.name, n)) |>.toList)
-  let portTypes := Std.HashMap.ofList (graph.portTypes.map (fun n => (n.typeName, n)) |>.toList)
+
+  let s := leanGraphExt.getState (← getEnv) 
+  let portTypes := s.portTypes  -- Std.HashMap.ofList (graph.portTypes.map (fun n => (n.typeName, n)) |>.toList)
+  
   let mut inputConnections : Std.HashMap String (Array Connection) := {}
   let mut outputConnections : Std.HashMap String (Array Connection) := {}
   
-  
   for wire in graph.connections do
-    inputConnections := inputConnections.alter wire.inputNodeName
-      fun wires? => 
-        match wires? with
-        | some wires => some (wires.push wire)
-        | none => some #[wire]
-    outputConnections := outputConnections.alter wire.outputNodeName
-      fun wires? => 
-        match wires? with
-        | some wires => some (wires.push wire)
-        | none => some #[wire]
+    inputConnections := inputConnections.alter wire.inputNodeName fun wires? => 
+      some (wires?.getD #[] |>.push wire)
+    outputConnections := outputConnections.alter wire.outputNodeName fun wires? => 
+      some (wires?.getD #[] |>.push wire)
+  
   return {
     nodeMap
     portTypes
     inputConnections
     outputConnections
+    nodesBeingProcessed := {}
   }
 
 end LeanGraph.Traverse
 
-open Elab Term LeanGraph Traverse in
-def traverseGraph (graph : LeanGraph) : TermElabM Unit := do
-  let ctx := buildContext graph
-  let go : TraverseM Unit := do
-    for node in graph.nodes.reverse do
-      traverseGraphCore node
-  let (_,s) ← go ctx default
 
 
-open Elab Term LeanGraph Traverse in
-def traverseGraph' (graph : LeanGraph) : TermElabM Traverse.State := do
-  let ctx := buildContext graph
-  let go : TraverseM Unit := do
+open LeanGraph Traverse in
+def LeanGraph.typeCheck (graph : LeanGraph) : TermElabM LeanGraph := do
+
+  let go : TraverseM MVarId := do
+  
+    -- process all nodes
+    let mut rest := (← mkFreshExprMVar none).mvarId!
     for node in graph.nodes.reverse do
-      traverseGraphCore' node
-  let (_,s) ← go ctx default
-  return s
+      rest ← processNode node rest
+
+    return rest
+
+  let ctx ← buildContext graph
+  let (rest,⟨nodeToFVar,_⟩) ← go ctx {}
+
+  
+  -- update Node Types
+  rest.withContext do
+    let mut nodes := graph.nodes
+    for i in [0:nodes.size] do
+      let mut node := nodes[i]!
+      nodes := nodes.set! i node
+
+      let var := nodeToFVar[node.name]?.get!
+      let val := (← var.getValue?).get!
+      
+      let (fn, args) := val.withApp (fun fn args => (fn,args))
+
+      let (ins, out) ← 
+        forallTelescope (← inferType fn) fun xs _ => do
+
+        let mut inputPorts : Array PortType := #[]
+
+        for arg in args, x in xs do
+          let name ← x.fvarId!.getUserName
+          let bi ← x.fvarId!.getBinderInfo
+
+          -- skip non-explicit arguments
+          unless bi.isExplicit do continue
+
+          let inputPort ← mkPortType (← instantiateMVars (← inferType arg)) false (toString name.eraseMacroScopes)
+          inputPorts := inputPorts.push inputPort
+
+        let outputPort ← mkPortType (← instantiateMVars (← inferType val)) false "output"
+          
+        return (inputPorts, outputPort)
+
+      nodes := nodes.set! i {node with type := {node.type with inputs := ins, outputs := #[out]}}
+
+    return {graph with nodes := nodes}
+        
+end HouLean

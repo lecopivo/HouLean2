@@ -35,9 +35,6 @@ instance : ToString PortType := ⟨PortType.toString⟩
 structure NodeType where
   name : String
   leanConstant : Name
-  /-- Expose implicit arguments of Lean function in the node
-  editor -/
-  exposeImplicitArgs := false
   inputs : Array PortType
   outputs : Array PortType
 deriving ToJson, FromJson, Inhabited, Repr

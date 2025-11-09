@@ -67,6 +67,7 @@ partial def mkPortType (t : Expr) (forceBuiltin := false) (userName? : Option St
   let name := userName?.getD fn.getString!.toLower
   let typeName ← withOptions (fun opt => opt.setBool `pp.mvars false) do ppExpr t
   let typeName := toString typeName
+  let typeName := toString fn
   
   if ¬(isStructure (← getEnv) fn) || (← isKnownPortType fn) || forceBuiltin then
     return .builtin name typeName
@@ -115,6 +116,7 @@ def mkNodeType (e : Expr) (customName? : Option String := none) : MetaM NodeType
     outputs := #[outputPortType]
   }
 
+/-- Annotates Lean types that should be recognized by LeanGraph. -/
 syntax (name:=lean_graph_type) "lean_graph_type" : attr
  
 initialize leanGraphTypeAttr : Unit ←
@@ -133,6 +135,11 @@ initialize leanGraphTypeAttr : Unit ←
       throwError "Can't remove `apex_type`, not implemented yet!"
   }
 
+
+/-- Annotates Lean types that should be recognized by LeanGraph and should not be further split into its members.
+
+For example, elementary types list `Float`, `UInt64`, or even `Array ?_` should be marked as `builtin` such that
+we do not expose `Float.val`, `UInt64.toBitVec` or `Array.toList` -/
 syntax (name:=lean_graph_type_builtin) "lean_graph_type_builtin" : attr
  
 initialize leanGraphTypeBuiltinAttr : Unit ←
@@ -193,6 +200,8 @@ scoped elab "#port_type" x:term : command => do
   let t ← elabTerm x none
   let t ← mkPortType t
   logInfo m!"{t}"
+
+end HouLean
 
 
 -- syntax (name:=apex_type) "lean_graph_node" str : attr

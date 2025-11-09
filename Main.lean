@@ -1,5 +1,6 @@
 import HouLean.Apex.Compile.Main
 import HouLean.LeanGraph.LeanGraph
+import HouLean.LeanGraph.Traverse3
 import HouLean
 import Qq
 import Lean.Data.Json
@@ -94,6 +95,28 @@ unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompi
 
   return r
 
+open Lean Elab Term in
+unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO TypeCheckResult := do
+
+  let ctx : Core.Context := {fileName := "<input>", fileMap := .ofString ""}
+  let s : Core.State := { env := env } 
+
+  let (graph, sCore, _sMeta, _sElab) ← TermElabM.toIO 
+    (ctxCore := ctx) (sCore := s) (ctxMeta := {}) (sMeta := {}) (ctx := {}) (s := {}) do
+    try
+      let graph ← graph.typeCheck
+      return graph
+    catch e =>
+      logError m!"Compilation to APEX graph failed!\n{e.toMessageData}"
+      return graph
+
+  let coreMsgs ← sCore.messages.toArray.mapM (·.toJson)
+  
+  return {
+    graph := graph
+    messages := coreMsgs
+  }
+
 unsafe def handleRequest (req : Request) (env : Environment) : IO Response :=
   match req with
   | .compile (.file path) => 
@@ -111,8 +134,9 @@ unsafe def handleRequest (req : Request) (env : Environment) : IO Response :=
       catch e =>
         return .error s!"Compilation error: {e}"
       
-  | .typecheck data =>
-      return .typecheck { graph := data, messages := #[] }
+  | .typecheck graph =>
+      return .typecheck (← typeCheckGraph graph env)
+
   | .ping => return .pong
   | .quit => return .quitting
 
@@ -155,6 +179,7 @@ unsafe def compileOnce (env : Environment) (codeOrFile : String) : IO Unit := do
   (← IO.getStdout).flush
 
 unsafe def main (args : List String) : IO UInt32 := do
+
   -- Initialize Lean environment
   initSearchPath (← findSysroot)
     [ "/home/tskrivan/Documents/HouLean/.lake/build/lib/lean",

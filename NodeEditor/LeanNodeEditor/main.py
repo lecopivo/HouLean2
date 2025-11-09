@@ -837,6 +837,13 @@ class NodeEditorWidget(QWidget):
             self.last_graph_state = graph_data
             self.pending_type_check = True
 
+            payload = {
+                "typecheck": {
+                    "data" : graph_data
+                }
+            }
+            print(f"sending request:\n{payload}")
+
             # Submit async request
             self.type_checker.check_types(
                 graph_data,
@@ -882,12 +889,12 @@ class NodeEditorWidget(QWidget):
         nodes = graph["nodes"]
 
         for new_node, old_node in zip(nodes, self.editor.nodes):
-            # update nodes type
-            new_name = new_node["name"]
-            old_name = old_node.node_name
-            print(f"updating node {old_name}, (the name should match: {new_name})")
-            node_type = self.registry._parse_node_type(new_node["type"])
-            old_node.change_type(node_type)
+           # update nodes type
+           new_name = new_node["name"]
+           old_name = old_node.node_name
+           print(f"updating node {old_name}, (the name should match: {new_name})")
+           node_type = self.registry._parse_node_type(new_node["type"])
+           old_node.update_ports(node_type)
         
         # if response.get("status") != "success":
         #     error_msg = response.get("result", "Unknown error")

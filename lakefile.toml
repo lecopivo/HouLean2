@@ -18,4 +18,4 @@ supportInterpreter = true
 [[require]]
 name = "Qq"
 git = "https://github.com/leanprover-community/quote4"
-rev = "v4.22.0"
+rev = "v4.24.0"

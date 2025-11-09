@@ -140,7 +140,7 @@ elab_rules : command
         let strId ← resolveGlobalConstNoOverload (mkIdent strName)
         let declId := strId.append (.mkSimple funName)
         let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) f + 1)
-        let decl ← Lean.mkDefinitionValInferrringUnsafe declId [] F f hints
+        let decl ← Lean.mkDefinitionValInferringUnsafe declId [] F f hints
         addDeclarationRangesFromSyntax declId id
 
         
@@ -148,7 +148,7 @@ elab_rules : command
         match doc with
         | some doc => 
           addDecl (Declaration.defnDecl decl)
-          addDocString declId doc
+          addDocString declId (mkNullNode bs) doc
           compileDecl (Declaration.defnDecl decl)
         | none =>
           addAndCompile (Declaration.defnDecl decl)
@@ -160,11 +160,12 @@ elab_rules : command
       if (←getEnv).contains instName then
         throwError "Enviroment already contains {instName}"
       let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) inst + 1)
-      let decl ← Lean.mkDefinitionValInferrringUnsafe instName [] classExpr inst hints
+      let decl ← Lean.mkDefinitionValInferringUnsafe instName [] classExpr inst hints
       addAndCompile (Declaration.defnDecl decl)
       addInstance instName AttributeKind.global (eval_prio default)
       addDeclarationRangesFromSyntax instName id
     else
       throwError m!"Invalid function type {F}, expected {funType}!"
+
 
 end HouLean.Meta

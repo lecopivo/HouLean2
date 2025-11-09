@@ -86,3 +86,5 @@ open Lean
 run_meta
   let types ← LeanGraph.getGraphTypes
   IO.println (toJson types)
+
+end HouLean
