@@ -1,30 +1,64 @@
 import HouLean.Apex.Compile.Main
+import HouLean.LeanGraph.LeanGraph
 import HouLean
 import Qq
 import Lean.Data.Json
 
 open Lean Meta Elab Command
-open HouLean.Apex.Compiler
-
-structure ToApexGraphCompilationResult where
-  messages : Array Json
-  result : Option String
-deriving ToJson
+open HouLean Apex.Compiler
 
 inductive CodeToCompile
   | file (path : System.FilePath)
   | inline (code : String)
-  deriving ToJson, FromJson
+deriving ToJson, FromJson, Inhabited
 
-structure Request where
-  command : String
-  data : Option CodeToCompile
-  deriving ToJson, FromJson
+inductive Request where
+  | compile (data : CodeToCompile)
+  | typecheck (data : LeanGraph)
+  | ping
+  | quit
+deriving ToJson, FromJson, Inhabited
 
-structure Response where
-  status : String
-  result : Json
-  deriving ToJson, FromJson
+def Request.continue : Request → Bool
+  | quit => false
+  | _ => true
+
+#eval toJson (.compile default : Request)
+
+def program : String := 
+"import HouLean
+
+#check \"hello from compiler\"
+
+def run (x : Int) : Int := x + x
+"
+
+#eval toJson (.compile (.inline program) : Request)
+#eval toJson (.typecheck { nodes := #[default]
+                           portTypes := #[default]
+                           nodeTypes := #[default]
+                           connections := #[default]} : Request)
+#eval toJson (.quit : Request)
+
+
+structure ToApexGraphCompilationResult where
+  messages : Array Json
+  result : Option String
+deriving ToJson, FromJson, Inhabited
+
+structure TypeCheckResult where
+  graph : LeanGraph
+  messages : Array Json
+deriving ToJson, FromJson, Inhabited
+
+inductive Response where
+  | compile (data : ToApexGraphCompilationResult)
+  | typecheck (data : TypeCheckResult)
+  | error (msg : String)
+  | pong
+  | quitting
+  deriving ToJson, FromJson, Inhabited
+
 
 unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompilationResult := do
   -- Strip imports
@@ -61,32 +95,27 @@ unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompi
   return r
 
 unsafe def handleRequest (req : Request) (env : Environment) : IO Response :=
-  match req.command with
-  | "compile" => 
-    match req.data with
-    | some (.file path) =>
+  match req with
+  | .compile (.file path) => 
       try 
         let code ← IO.FS.readFile path
         let result ← compileCode code env
-        return { status := "success", result := toJson result }
+        return (.compile result)
       catch e =>
-        return { status := "error", result := Json.str s!"Error reading file: {e}" }
+        return .error s!"Compilation error:\n{e}"
         
-    | some (.inline code) => 
+  | .compile (.inline code) => 
       try
         let result ← compileCode code env
-        return { status := "success", result := toJson result }
+        return .compile result
       catch e =>
-        return { status := "error", result := Json.str s!"Compilation error: {e}" }
-        
-    | none => 
-      return { status := "error", result := Json.str "Missing code to compile" }
+        return .error s!"Compilation error: {e}"
       
-  | "quit" =>
-      return { status := "shutdown", result := Json.str "Server shutting down" }
-      
-  | _ => 
-      return { status := "error", result := Json.str "Unknown command" }
+  | .typecheck data =>
+      return .typecheck { graph := data, messages := #[] }
+  | .ping => return .pong
+  | .quit => return .quitting
+
 
 unsafe def processRequest (line : String) (env : Environment) : IO Bool := do
   if line.trim.isEmpty then
@@ -94,14 +123,14 @@ unsafe def processRequest (line : String) (env : Environment) : IO Bool := do
   
   match Json.parse line with
   | .error err => 
-      let errResp : Response := { status := "error", result := Json.str s!"Parse error: {err}" }
+      let errResp : Response := .error s!"Parse error: {err}"
       IO.println (ToJson.toJson errResp).compress
       (← IO.getStdout).flush
       return true
   | .ok json =>
       match FromJson.fromJson? json with
       | .error err =>
-          let errResp : Response := { status := "error", result := Json.str s!"Invalid format: {err}" }
+          let errResp : Response := .error s!"Invalid format: {err}"
           IO.println (ToJson.toJson errResp).compress
           (← IO.getStdout).flush
           return true
@@ -110,7 +139,7 @@ unsafe def processRequest (line : String) (env : Environment) : IO Bool := do
           IO.println (ToJson.toJson response).compress
           (← IO.getStdout).flush
           -- Return false to stop if command is "quit"
-          return req.command != "quit"
+          return req.continue
 
 unsafe def serverLoop (env : Environment) : IO Unit := do
   let stdin ← IO.getStdin
@@ -120,10 +149,7 @@ unsafe def serverLoop (env : Environment) : IO Unit := do
     if !c then break
 
 unsafe def compileOnce (env : Environment) (codeOrFile : String) : IO Unit := do
-  let req : Request := {
-    command := "compile"
-    data := some (if codeOrFile.endsWith ".lean" then .file codeOrFile else .inline codeOrFile)
-  }
+  let req : Request := .compile (if codeOrFile.endsWith ".lean" then .file codeOrFile else .inline codeOrFile)
   let response ← handleRequest req env
   IO.println (ToJson.toJson response).compress
   (← IO.getStdout).flush
@@ -143,9 +169,10 @@ unsafe def main (args : List String) : IO UInt32 := do
   else if h : args.length > 0 then
     compileOnce env (args.getLast (by grind))
   else
-    let errResp : Response := { status := "error", result := Json.str s!"Missing input code!" } 
+    let errResp : Response := .error s!"Missing input code!"
     IO.println (toJson errResp)
     return 0
-    
 
   return 0
+
+

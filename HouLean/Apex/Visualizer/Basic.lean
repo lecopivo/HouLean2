@@ -36,3 +36,4 @@ def withVisualizer (vis : String) (go : VisualizeM Geometry) : Geometry :=
   let (vis, geo) := go vis Geometry.default
   let vis := Geometry.mergePacked #a[vis] |>.setPointAttrib 0 "__visualizer" (1:Int)
   geo.merge #a[vis]
+

@@ -149,8 +149,9 @@ class AsyncTypeChecker:
             # original server doesn't support it. We'll assume responses come
             # back in order (FIFO).
             payload = {
-                "command": "typecheck",
-                "data": req.graph_data
+                "typecheck": {
+                    "data" : req.graph_data
+                }
             }
             
             json_line = json.dumps(payload) + '\n'

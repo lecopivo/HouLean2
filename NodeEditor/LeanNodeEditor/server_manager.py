@@ -90,7 +90,7 @@ class ServerManager:
             # Try graceful shutdown first by sending quit command
             if self.process.poll() is None:  # Process still running
                 try:
-                    quit_cmd = json.dumps({"command": "quit", "data": None}) + '\n'
+                    quit_cmd = json.dumps("quit") + '\n'
                     self.process.stdin.write(quit_cmd)
                     self.process.stdin.flush()
                     
@@ -128,10 +128,9 @@ class ServerManager:
             
         try:
             # Send a test typecheck request with empty graph
-            test_payload = {
-                "command": "typecheck",
-                "data": {"nodes": [], "connections": []}
-            }
+            test_payload = "ping"
+
+            print(f"sending test request {test_payload}")
             
             request_line = json.dumps(test_payload) + '\n'
             self.process.stdin.write(request_line)
@@ -145,15 +144,16 @@ class ServerManager:
                 if ready:
                     response_line = self.process.stdout.readline()
                     if response_line:
+                        print(f"recievwd {response_line}")
                         response = json.loads(response_line)
-                        return response.get("status") in ["success", "error"]
+                        return response == "pong"
             else:
                 # Windows - just try to read with timeout
                 # This is less reliable but works
                 response_line = self.process.stdout.readline()
                 if response_line:
                     response = json.loads(response_line)
-                    return response.get("status") in ["success", "error"]
+                    return response == "pong"
                     
             return False
             

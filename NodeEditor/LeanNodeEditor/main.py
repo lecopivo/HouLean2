@@ -105,6 +105,9 @@ class NodeEditorWidget(QWidget):
         self.pending_type_check = False
         self.type_check_timer = None
         self.last_graph_state = None
+
+        # Track currently loaded node
+        self.current_hou_node = None        
         
         # Connect signal to slot
         self.type_check_response_signal.connect(self._apply_type_check_results)        
@@ -115,6 +118,160 @@ class NodeEditorWidget(QWidget):
         # Initialize type checker on startup
         self._initialize_type_checker()
 
+        # Set up Houdini node selection watcher
+        self._setup_selection_watcher()
+    
+    def _setup_selection_watcher(self):
+        """Set up a timer to watch for Houdini node selection changes."""
+        from PySide6.QtCore import QTimer
+        
+        self.selection_timer = QTimer()
+        self.selection_timer.timeout.connect(self._check_houdini_selection)
+        self.selection_timer.start(200)  # Check every 200ms
+    
+    def _check_houdini_selection(self):
+        """Check if Houdini node selection has changed."""
+        try:
+            # Check if current node still exists
+            if self.current_hou_node is not None:
+                try:
+                    # Try to access a property to see if node still exists
+                    _ = self.current_hou_node.path()
+                except hou.ObjectWasDeleted:
+                    # Current node was deleted, clear it
+                    self.current_hou_node = None
+                    self._clear_editor()
+                    self.status_label.setText("Node was deleted")
+
+            selected = hou.selectedNodes()
+
+            # Get the first selected node (or None)
+            new_selection = selected[0] if selected else None
+
+            # Check if selection changed
+            if new_selection != self.current_hou_node:
+                # Save current network to old node before switching
+                if self.current_hou_node is not None:
+                    try:
+                        self._auto_save_to_node(self.current_hou_node)
+                    except hou.ObjectWasDeleted:
+                        pass  # Old node was deleted, skip save
+
+                # Update tracked node
+                self.current_hou_node = new_selection
+
+                # Load network from new node or clear if none selected
+                if self.current_hou_node is not None:
+                    self._auto_load_from_node(self.current_hou_node)
+                else:
+                    # No selection - clear the editor
+                    self._clear_editor()
+                    self.status_label.setText("")
+
+        except hou.ObjectWasDeleted:
+            # The node we're checking was deleted
+            self.current_hou_node = None
+            self._clear_editor()
+            self.status_label.setText("Node was deleted")
+        except Exception as e:
+            print("Error checking Houdini selection: {}".format(e))
+            import traceback
+            traceback.print_exc()
+
+    def _auto_save_to_node(self, node):
+        """Automatically save current network to a Houdini node."""
+        try:
+            # Only save if the node has a 'network' parameter
+            if not node.parm('network'):
+                print("Node {} has no 'network' parameter - skipping auto-save".format(node.path()))
+                return
+
+            # Serialize and save
+            data = save_to_json(self.editor)
+            json_str = json.dumps(data, indent=2)
+            node.parm('network').set(json_str)
+
+            print("Auto-saved network to: {}".format(node.path()))
+
+        except Exception as e:
+            print("Error auto-saving to node: {}".format(e))
+
+    def _auto_load_from_node(self, node):
+        """Automatically load network from a Houdini node."""
+        try:
+            # Check if node has network parameter
+            if not node.parm('network'):
+                print("Node {} has no 'network' parameter - clearing editor".format(node.path()))
+                self._clear_editor()
+                self.status_label.setText("{} has no network".format(node.name()))
+                return
+
+            json_str = node.parm('network').eval()
+
+            if not json_str or json_str.strip() == "":
+                print("Node {} has empty network parameter - clearing editor".format(node.path()))
+                self._clear_editor()
+                self.status_label.setText("{} has empty network".format(node.name()))
+                return
+
+            # Load the network
+            data = json.loads(json_str)
+            load_from_json(self.editor, data)
+
+            print("Auto-loaded network from: {}".format(node.path()))
+            self.status_label.setText("Loaded from {}".format(node.name()))
+
+        except json.JSONDecodeError as e:
+            print("Failed to parse network data from {}: {}".format(node.path(), e))
+            self.status_label.setText("Error loading from {}".format(node.name()))
+        except Exception as e:
+            print("Error auto-loading from node: {}".format(e))
+
+    def _clear_editor(self):
+        """Clear the editor when no node is selected or node has no network."""
+        # Remove all nodes (this will also remove their connections)
+        for node in list(self.editor.nodes):
+            # Remove all connections for this node
+            all_ports = node.get_all_ports()
+            for port in all_ports:
+                for conn in list(port.connections):
+                    conn.remove()
+                    if conn in self.editor.connections:
+                        self.editor.connections.remove(conn)
+
+            # Remove the node itself
+            self.editor.editor_scene.removeItem(node)
+
+        # Clear the nodes list
+        self.editor.nodes.clear()
+
+        # Clear any remaining connections
+        self.editor.connections.clear()
+
+        # Update the scene
+        self.editor.editor_scene.update()
+        self.editor.viewport().update()
+    
+    def closeEvent(self, event):
+        """Clean up when editor is closed."""
+        # Stop selection watcher
+        if hasattr(self, 'selection_timer'):
+            self.selection_timer.stop()
+        
+        # Save to current node before closing
+        if self.current_hou_node is not None:
+            self._auto_save_to_node(self.current_hou_node)
+        
+        # Stop type checker
+        if self.type_checker:
+            self.type_checker.stop()
+            
+        # Stop server
+        if self.server_manager:
+            self.server_manager.stop()
+            
+        # Call parent closeEvent
+        super(NodeEditorWidget, self).closeEvent(event)        
     
     def _create_ui(self):
         layout = QVBoxLayout(self)
@@ -669,6 +826,10 @@ class NodeEditorWidget(QWidget):
             # For now we dump everything
             graph_data = save_to_json(self.editor)
 
+            # do not send port and node types
+            graph_data["portTypes"] = []
+            graph_data["nodeTypes"] = []
+
             # Check if graph actually changed
             if graph_data == self.last_graph_state:
                 return
@@ -713,15 +874,26 @@ class NodeEditorWidget(QWidget):
             return
 
         # just reload graph from it self, does that cause problems?
-        data = save_to_json(self.editor)
-        load_from_json(self.editor, data)
+        # data = save_to_json(self.editor)
+        # load_from_json(self.editor, data)
+        msgs = response["typecheck"]["data"]["messages"]
+        graph = response["typecheck"]["data"]["graph"]
 
+        nodes = graph["nodes"]
+
+        for new_node, old_node in zip(nodes, self.editor.nodes):
+            # update nodes type
+            new_name = new_node["name"]
+            old_name = old_node.node_name
+            print(f"updating node {old_name}, (the name should match: {new_name})")
+            node_type = self.registry._parse_node_type(new_node["type"])
+            old_node.change_type(node_type)
         
-        if response.get("status") != "success":
-            error_msg = response.get("result", "Unknown error")
-            print("Type check error: {}".format(error_msg))
-            self.status_label.setText("Type check error: {}".format(error_msg))
-            return
+        # if response.get("status") != "success":
+        #     error_msg = response.get("result", "Unknown error")
+        #     print("Type check error: {}".format(error_msg))
+        #     self.status_label.setText("Type check error: {}".format(error_msg))
+        #     return
 
         self.status_label.setText("Type check completed!")
         
