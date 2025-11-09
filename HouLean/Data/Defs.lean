@@ -1,3 +1,7 @@
+import Lean
+
+open Lean Meta
+
 namespace HouLean
 
 structure Vector2 where
@@ -40,6 +44,13 @@ deriving Inhabited, Repr
 /-- Rigid transformation with scaling. 
 -/
 structure RigidScaleTransform where
+  translate : Vector3
+  orient : Vector4
+  scale : Float
+
+/-- Rigid transformation with scaling. 
+-/
+structure ScrewTransform where
   translate : Vector3
   axisAngle : Vector3
   scale : Float
