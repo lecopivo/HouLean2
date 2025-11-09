@@ -22,9 +22,9 @@ def get_type_color(type_name, registry=None, node_type=None):
     """Get color for a port type"""
     colors = {
         'Float': QColor(120, 220, 120),
-        'Vector3': QColor(100, 180, 255),
+        'HouLean.Vector3': QColor(100, 180, 255),
         'Particle': QColor(255, 160, 100),
-        'Character': QColor(200, 120, 200),
+        'Array': QColor(200, 120, 200),
         'Type': QColor(180, 120, 255),
         'Int': QColor(120, 255, 180),
         'String': QColor(255, 180, 120),
@@ -37,7 +37,7 @@ def get_type_color(type_name, registry=None, node_type=None):
         if registry and _type_contains_wildcards(type_name, registry, node_type):
             return QColor(160, 160, 160)
         else:
-            return QColor(255, 220, 100)
+            return QColor(255, 240, 230)
 
 
 def _type_contains_wildcards(type_name, registry, node_type):
@@ -49,8 +49,8 @@ def _type_contains_wildcards(type_name, registry, node_type):
     if not port_type or not port_type.subports:
         return False
     
-    for subport_name, subport_type in port_type.subports:
-        if _type_contains_wildcards(subport_type, registry, node_type):
-            return True
+    # for subport_name, subport_type in port_type.subports:
+    #     if _type_contains_wildcards(subport_type, registry, node_type):
+    #         return True
     
     return False

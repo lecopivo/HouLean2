@@ -133,7 +133,7 @@ class NodeEditorView(QGraphicsView):
         parent = self.parent()
         if self.parent_widget and hasattr(self.parent_widget, 'request_type_check'):
             print("Triggering type check!")
-            self.parent_widget.request_type_check()        
+            self.parent_widget.request_type_check()
         else:
             print("Can't trigger type check because I'm orphan!")
     

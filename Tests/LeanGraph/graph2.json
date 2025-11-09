@@ -1,0 +1,1635 @@
+{
+  "portTypes": [
+    {
+      "builtin": {
+        "name": "type",
+        "type": "Type"
+      }
+    },
+    {
+      "builtin": {
+        "name": "float",
+        "type": "Float"
+      }
+    },
+    {
+      "builtin": {
+        "name": "int",
+        "type": "Int"
+      }
+    },
+    {
+      "builtin": {
+        "name": "string",
+        "type": "String"
+      }
+    },
+    {
+      "builtin": {
+        "name": "wildcard",
+        "type": "?_"
+      }
+    },
+    {
+      "struct": {
+        "name": "vector3",
+        "type": "Vector3",
+        "subports": [
+          {
+            "builtin": {
+              "name": "x",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "y",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "z",
+              "type": "Float"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "struct": {
+        "name": "particle",
+        "type": "Particle",
+        "subports": [
+          {
+            "builtin": {
+              "name": "position",
+              "type": "Vector3"
+            }
+          },
+          {
+            "builtin": {
+              "name": "velocity",
+              "type": "Vector3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "builtin": {
+        "name": "array",
+        "type": "Array ?_"
+      }
+    },
+    {
+      "builtin": {
+        "name": "nat",
+        "type": "Nat"
+      }
+    },
+    {
+      "struct": {
+        "name": "matrix3",
+        "type": "Matrix3",
+        "subports": [
+          {
+            "builtin": {
+              "name": "row0",
+              "type": "Vector3"
+            }
+          },
+          {
+            "builtin": {
+              "name": "row1",
+              "type": "Vector3"
+            }
+          },
+          {
+            "builtin": {
+              "name": "row2",
+              "type": "Vector3"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "nodeTypes": [
+    {
+      "name": "Float_Add",
+      "leanConstant": "Float.add",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "b",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "add",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "add",
+      "leanConstant": "HAdd.hAdd",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "b",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "add",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "makeVector3",
+      "leanConstant": "Vector3.mk",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "y",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "z",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_exp",
+      "leanConstant": "Float.exp",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_mul",
+      "leanConstant": "Float.mul",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_lerp",
+      "leanConstant": "HouLean.Math.Lerp.lerp",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "y",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "t",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_tan",
+      "leanConstant": "HouLean.Math.Tan.tan",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arith_mul",
+      "leanConstant": "HMul.hMul",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_div",
+      "leanConstant": "Float.div",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_Vector3_sub",
+      "leanConstant": "HouLean.Vector3.sub",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Vector3"
+          }
+        },
+        {
+          "builtin": {
+            "name": "b",
+            "type": "Vector3"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Array_push",
+      "leanConstant": "Array.push",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Array ?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "v",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "array",
+            "type": "Array ?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arith_zero",
+      "leanConstant": "Zero.zero",
+      "exposeImplicitArgs": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_sqrt",
+      "leanConstant": "HouLean.Math.Sqrt.sqrt",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_Vector3_toGeodetic",
+      "leanConstant": "HouLean.Vector3.toGeodetic",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "v",
+            "type": "Vector3"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Array_get",
+      "leanConstant": "Array.get",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Array ?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "i",
+            "type": "Nat"
+          }
+        },
+        {
+          "builtin": {
+            "name": "h",
+            "type": "?_ < Array.size ?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_Vector3_toSpherical",
+      "leanConstant": "HouLean.Vector3.toSpherical",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "v",
+            "type": "Vector3"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_Vector3_fromSpherical",
+      "leanConstant": "HouLean.Vector3.fromSpherical",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "spherical",
+            "type": "Vector3"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arith_sub",
+      "leanConstant": "HSub.hSub",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_cos",
+      "leanConstant": "Float.cos",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_neg",
+      "leanConstant": "Float.neg",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_normalized",
+      "leanConstant": "HouLean.Math.Normalized.normalized",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_sin",
+      "leanConstant": "Float.sin",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "id",
+      "leanConstant": "id",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arith_div",
+      "leanConstant": "HDiv.hDiv",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Prod_mk",
+      "leanConstant": "Prod.mk",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "fst",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "snd",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "struct": {
+            "name": "prod",
+            "type": "?_ \u00d7 ?_",
+            "subports": [
+              {
+                "builtin": {
+                  "name": "fst",
+                  "type": "?_"
+                }
+              },
+              {
+                "builtin": {
+                  "name": "snd",
+                  "type": "?_"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_add",
+      "leanConstant": "Float.add",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_Vector3_add",
+      "leanConstant": "HouLean.Vector3.add",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Vector3"
+          }
+        },
+        {
+          "builtin": {
+            "name": "b",
+            "type": "Vector3"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_Vector3_neg",
+      "leanConstant": "HouLean.Vector3.neg",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Vector3"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_bar",
+      "leanConstant": "HouLean.bar",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "y",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "struct": {
+            "name": "anonstruct_2",
+            "type": "struct {r:Float, g:Float}",
+            "subports": [
+              {
+                "builtin": {
+                  "name": "r",
+                  "type": "Float"
+                }
+              },
+              {
+                "builtin": {
+                  "name": "g",
+                  "type": "Float"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arith_one",
+      "leanConstant": "One.one",
+      "exposeImplicitArgs": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_atan2",
+      "leanConstant": "Float.atan2",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "y",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "x",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_tan",
+      "leanConstant": "Float.tan",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arith_inv",
+      "leanConstant": "Inv.inv",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_Vector3_smul",
+      "leanConstant": "HouLean.Vector3.smul",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Vector3"
+          }
+        },
+        {
+          "builtin": {
+            "name": "s",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Array_get?",
+      "leanConstant": "Array.get?",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "xs",
+            "type": "Array ?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "i",
+            "type": "Nat"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "option",
+            "type": "Option ?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arith_add",
+      "leanConstant": "HAdd.hAdd",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_smoothstep",
+      "leanConstant": "HouLean.Math.Smoothstep.smoothstep",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "edge0",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "edge1",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_Vector3_fromGeodetic",
+      "leanConstant": "HouLean.Vector3.fromGeodetic",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "geodetic",
+            "type": "Vector3"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Array_set!",
+      "leanConstant": "Array.set!",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "xs",
+            "type": "Array ?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "i",
+            "type": "Nat"
+          }
+        },
+        {
+          "builtin": {
+            "name": "v",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "array",
+            "type": "Array ?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Array_append",
+      "leanConstant": "Array.append",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "as",
+            "type": "Array ?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "bs",
+            "type": "Array ?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "array",
+            "type": "Array ?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_dot",
+      "leanConstant": "HouLean.Math.Dot.dot",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "y",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_length",
+      "leanConstant": "HouLean.Math.Length.length",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GetElem?_getElem?",
+      "leanConstant": "GetElem?.getElem?",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "option",
+            "type": "Option ?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_cos",
+      "leanConstant": "HouLean.Math.Cos.cos",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_normalize",
+      "leanConstant": "HouLean.Math.Normalize.normalize",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "struct": {
+            "name": "prod",
+            "type": "?_ \u00d7 Float",
+            "subports": [
+              {
+                "builtin": {
+                  "name": "fst",
+                  "type": "?_"
+                }
+              },
+              {
+                "builtin": {
+                  "name": "snd",
+                  "type": "Float"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_sin",
+      "leanConstant": "HouLean.Math.Sin.sin",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_cross",
+      "leanConstant": "HouLean.Math.Cross.cross",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "Vector3"
+          }
+        },
+        {
+          "builtin": {
+            "name": "y",
+            "type": "Vector3"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "vector3",
+            "type": "Vector3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GetElem?_getElem!",
+      "leanConstant": "GetElem?.getElem!",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "xs",
+            "type": "?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "i",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_exp",
+      "leanConstant": "HouLean.Math.Exp.exp",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Array_size",
+      "leanConstant": "Array.size",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Array ?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "nat",
+            "type": "Nat"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arith_neg",
+      "leanConstant": "Neg.neg",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "HouLean_foo",
+      "leanConstant": "HouLean.foo",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "y",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "z",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "struct": {
+            "name": "anonstruct",
+            "type": "struct {r:Float, g:Float, b:Float}",
+            "subports": [
+              {
+                "builtin": {
+                  "name": "r",
+                  "type": "Float"
+                }
+              },
+              {
+                "builtin": {
+                  "name": "g",
+                  "type": "Float"
+                }
+              },
+              {
+                "builtin": {
+                  "name": "b",
+                  "type": "Float"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math_log",
+      "leanConstant": "HouLean.Math.Log.log",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "x",
+            "type": "?_"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Array_get!",
+      "leanConstant": "Array.get!",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Array ?_"
+          }
+        },
+        {
+          "builtin": {
+            "name": "i",
+            "type": "Nat"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "output",
+            "type": "?_"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Float_sub",
+      "leanConstant": "Float.sub",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        },
+        {
+          "builtin": {
+            "name": "a",
+            "type": "Float"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "float",
+            "type": "Float"
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Float_Add",
+      "type": {
+        "name": "Float_Add",
+        "leanConstant": "Float.add",
+        "exposeImplicitArgs": false,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "a",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "b",
+              "type": "Float"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "add",
+              "type": "Float"
+            }
+          }
+        ]
+      },
+      "portValues": [],
+      "x": 398.22610216501823,
+      "y": -10.500687865199623
+    },
+    {
+      "name": "Float_Add2",
+      "type": {
+        "name": "Float_Add2",
+        "leanConstant": "Float.add",
+        "exposeImplicitArgs": false,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "a",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "b",
+              "type": "Float"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "add",
+              "type": "Float"
+            }
+          }
+        ]
+      },
+      "portValues": [],
+      "x": 734.1362424622623,
+      "y": -9.936654404051822
+    }
+  ],
+  "connections": [
+    {
+      "outputNodeName": "Float_Add",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "Float_Add2",
+      "inputIndex": [
+        0
+      ],
+      "outputRelPos": 60.0,
+      "inputRelPos": 60.0,
+      "isImplicit": false
+    },
+    {
+      "outputNodeName": "Float_Add",
+      "outputIndex": [
+        0
+      ],
+      "inputNodeName": "Float_Add2",
+      "inputIndex": [
+        1
+      ],
+      "outputRelPos": 60.0,
+      "inputRelPos": 88.0,
+      "isImplicit": false
+    }
+  ]
+}

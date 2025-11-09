@@ -25,69 +25,8 @@ from .server_manager import ServerManager
 def get_default_types():
     """Get default node and port type configuration"""
     return {
-        "portTypes": [
-            {"builtin": {"name": "type", "type": "Type"}},
-            {"builtin": {"name": "value", "type": "Float"}},
-            {"builtin": {"name": "value", "type": "Int"}},
-            {"builtin": {"name": "value", "type": "String"}},
-            {"builtin": {"name": "wildcard", "type": "?_"}},
-            {"struct": {
-                "name": "v",
-                "type": "Vector3",
-                "subports": [
-                    {"builtin": {"name": "x", "type": "Float"}},
-                    {"builtin": {"name": "y", "type": "Float"}},
-                    {"builtin": {"name": "z", "type": "Float"}}
-                ]
-            }},
-            {"struct": {
-                "name": "particle",
-                "type": "Particle",
-                "subports": [
-                    {"builtin": {"name": "position", "type": "Vector3"}},
-                    {"builtin": {"name": "velocity", "type": "Vector3"}}
-                ]
-            }}
-        ],
-        "nodeTypes": [
-            {
-                "name": "Float_Add",
-                "leanConstant": "Float.add",
-                "exposeImplicitArgs": False,
-                "inputs": [
-                    {"builtin": {"name": "a", "type": "Float"}},
-                    {"builtin": {"name": "b", "type": "Float"}}
-                ],
-                "outputs": [
-                    {"builtin": {"name": "add", "type": "Float"}}
-                ]
-            },
-            {
-                "name": "add",
-                "leanConstant": "HAdd.hAdd",
-                "exposeImplicitArgs": False,
-                "inputs": [
-                    {"builtin": {"name": "a", "type": "?_"}},
-                    {"builtin": {"name": "b", "type": "?_"}}
-                ],
-                "outputs": [
-                    {"builtin": {"name": "add", "type": "?_"}}
-                ]
-            },
-            {
-                "name": "makeVector3",
-                "leanConstant": "Vector3.mk",
-                "exposeImplicitArgs": False,
-                "inputs": [
-                    {"builtin": {"name": "x", "type": "Float"}},
-                    {"builtin": {"name": "y", "type": "Float"}},
-                    {"builtin": {"name": "z", "type": "Float"}}
-                ],
-                "outputs": [
-                    {"builtin": {"name": "vector", "type": "Vector3"}}
-                ]
-            }
-        ]
+        "portTypes": [],
+        "nodeTypes": []
     }
 
 
@@ -97,6 +36,10 @@ class NodeEditorWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.registry = NodeTypeRegistry()
+        with open("/home/tskrivan/Documents/HouLean/NodeEditor/types.json", 'r') as f:
+            data = json.load(f)
+            self.registry.load_from_json(data)
+        
         self.registry.load_from_json(get_default_types())
 
         # Type checker setup
@@ -1102,6 +1045,7 @@ class NodeEditorWidget(QWidget):
             self.status_label.setStyleSheet(f"color: {success_color.name()}; font-size: 12px; padding: 8px;")
             
             self.load_node_definition()
+            self.request_type_check()
             
         except Exception as e:
             self.status_label.setText(f"Error: {str(e)}")

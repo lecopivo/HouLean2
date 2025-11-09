@@ -34,7 +34,7 @@ def isKnownPortType (name : Name) : CoreM Bool := do
   return s.portTypes.contains name
   
 def nameToHoudiniString (name : Name) : String :=
-  let s := name.toString.replace "." "_"
+  let s := name.toString.replace "." "_" |>.stripPrefix "HouLean_" |>.stripPrefix "Apex_"
   s
 
 def explicitArgsOfConstant (decl : Name) : MetaM (Array Nat) := do
@@ -56,18 +56,28 @@ def PortType.setName (t : PortType) (n : String) : PortType :=
 partial def mkPortType (t : Expr) (forceBuiltin := false) (userName? : Option String := none) : MetaM PortType := do
   unless (← whnf (← inferType t)).isSort do
     throwError m!"Can't produce port type for {t}, not a type!"
+  let mut t := t
+
+  if t.isAppOfArity ``optParam 2 then
+    t := t.getArg! 0
+
   if t.isMVar then
     return .builtin (userName?.getD "output") "?_" -- only output ports do not have userName? provided
 
+
   let (fn, args) := (← whnfR t).getAppFnArgs
+
+  if t.isSort then
+    return (.builtin "type" "Type")
 
   if fn.isAnonymous then
     throwError m!"Invalid expression {t} to get port type of!"
 
   let name := userName?.getD fn.getString!.toLower
   let typeName ← withOptions (fun opt => opt.setBool `pp.mvars false) do ppExpr t
-  let typeName := toString typeName
-  let typeName := toString fn
+  let _typeName := toString typeName
+  let argStr ← args.foldlM (init:="") (fun s arg => do return s ++ s!" {← ppExpr arg}")
+  let typeName := toString fn ++ argStr
   
   if ¬(isStructure (← getEnv) fn) || (← isKnownPortType fn) || forceBuiltin then
     return .builtin name typeName
@@ -92,8 +102,9 @@ def mkNodeType (e : Expr) (customName? : Option String := none) : MetaM NodeType
   let (fn, args) := e.getAppFnArgs
   let info ← getFunInfo (← mkConstWithFreshMVarLevels fn)
 
-  unless args.size == info.getArity do
-    throwError m!"In expression:\n  {e}\nmkNodeType currently assumes that the number of applied arguments, {args.size}, is equal to the arity of {fn}, {info.getArity}!"
+  let paramInfo := info.paramInfo[0:args.size].toArray
+  -- unless args.size == info.getArity do
+  --   throwError m!"In expression:\n  {e}\nmkNodeType currently assumes that the number of applied arguments, {args.size}, is equal to the arity of {fn}, {info.getArity}!"
   
   let cinfo ← getConstInfo fn
 
@@ -103,7 +114,7 @@ def mkNodeType (e : Expr) (customName? : Option String := none) : MetaM NodeType
   let names := names.map (fun n => n.eraseMacroScopes)
 
   -- filter explicit arguments
-  let xs  := info.paramInfo.zip (args.zip names)
+  let xs  := paramInfo.zip (args.zip names)
     |>.filterMap (fun (i,(arg,name)) => if i.isExplicit then some (arg,name) else none)
 
   let inputPortTypes ← xs.mapM (fun (x,name) => inferType x >>= (mkPortType · false name.toString))

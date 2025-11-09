@@ -30,6 +30,8 @@ inductive StructEnd
 
 
 axiom sorryProofAxiom {P : Prop} : P
+axiom sorryTermAxiom {P : Sort u} : P
+
 
 /-- Same as `sorry` but makes sure that the term is of type `Prop`.
 
@@ -42,7 +44,6 @@ macro "sorry_proof" : term => do  `(sorryProofAxiom)
 `sorry_proof` is very useful when writing programs such that you do not accidantelly add `sorry`
 which would prevent compiler fomr generating executable code. -/
 macro "sorry_proof" : tactic => `(tactic| exact sorry_proof)
-
 
 def _root_.Array.joinlM [Monad m] [Inhabited β] (xs : Array α) (map : α → m β) (op : β → β → m β) : m β := do
   if h : 0 < xs.size then

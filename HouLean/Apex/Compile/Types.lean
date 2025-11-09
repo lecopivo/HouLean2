@@ -70,10 +70,12 @@ instance : ApexTypeFlatten Int [.int] where
   apexFlatten x := .cons x .nil
   apexUnflatten := fun (.cons x .nil) => x
 
+set_option warn.sorry false in
 unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (α×β) (ts ++ ss) where
   apexFlatten x := sorry
   apexUnflatten x := sorry
 
+set_option warn.sorry false in
 unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (MProd α β) (ts ++ ss) where
   apexFlatten x := sorry
   apexUnflatten x := sorry

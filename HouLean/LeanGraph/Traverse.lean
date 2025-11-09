@@ -1,6 +1,7 @@
 import HouLean.LeanGraph.LeanGraph
 import HouLean.LeanGraph.Extension
 import HouLean.LeanGraph.Init
+import HouLean.LeanGraph.LambdaNodes
 import HouLean.Meta.Exact
 
 open Lean Meta Elab Term 
@@ -110,7 +111,8 @@ partial def buildArg (drop : Nat) (port : PortType) (wires : Array Connection) :
   for subport in subports, i in [0:subports.size] do
     let wires' := wires.filter (fun w => (w.inputIndex.drop drop).head? == some i)
     args := args.push (← buildArg (drop+1) subport wires')
-  return ← `(⟨$args,*⟩)
+  let typeId := mkIdent port.typeName.toName
+  return ← `((⟨$args,*⟩ : $typeId))
 
 /-- Process a node in the graph, generating a let-binding.
     
@@ -147,7 +149,7 @@ partial def processNode (node : Node) (rest : MVarId) : TraverseM MVarId :=
       let mut argsStx : Array Term := #[]
       
       -- Build argument expressions
-      for arg in args, i in [0:args.size], port in node.type.inputs do
+      for _arg in args, i in [0:args.size], port in node.type.inputs do
         let wires := inputConnections.filter (fun w => w.inputIndex.head? == some i)
 
         -- Check for default value if no wires connected
@@ -164,15 +166,6 @@ partial def processNode (node : Node) (rest : MVarId) : TraverseM MVarId :=
         -- Build argument from connections
         let argStx ← buildArg 1 port wires
         argsStx := argsStx.push argStx
-        
-        try 
-          let argExpr ← 
-            rest.withContext <|
-              elabTerm argStx (← inferType arg)
-          arg.mvarId!.assignIfDefEq argExpr
-        catch e =>
-          trace[HouLean.LeanGraph.elab] "Failed to elaborate argument {i}: {e.toMessageData}"
-          logError e.toMessageData
 
       -- Elaborate the complete node expression
       let fnIdent := mkIdent node.type.leanConstant

@@ -15,6 +15,11 @@ name = "compileToApexGraph"
 root = "CompileToApexGraph"
 supportInterpreter = true
 
+[[lean_exe]]
+name = "exportTypes"
+root = "ExportTypes"
+supportInterpreter = true
+
 [[require]]
 name = "Qq"
 git = "https://github.com/leanprover-community/quote4"

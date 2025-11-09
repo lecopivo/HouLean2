@@ -1,6 +1,6 @@
 import HouLean.Apex.Compile.Main
 import HouLean.LeanGraph.LeanGraph
-import HouLean.LeanGraph.Traverse3
+import HouLean.LeanGraph.Traverse
 import HouLean
 import Qq
 import Lean.Data.Json
@@ -24,7 +24,6 @@ def Request.continue : Request → Bool
   | quit => false
   | _ => true
 
-#eval toJson (.compile default : Request)
 
 def program : String := 
 "import HouLean
@@ -33,13 +32,13 @@ def program : String :=
 
 def run (x : Int) : Int := x + x
 "
-
-#eval toJson (.compile (.inline program) : Request)
-#eval toJson (.typecheck { nodes := #[default]
-                           portTypes := #[default]
-                           nodeTypes := #[default]
-                           connections := #[default]} : Request)
-#eval toJson (.quit : Request)
+-- #eval toJson (.compile default : Request)
+-- #eval toJson (.compile (.inline program) : Request)
+-- #eval toJson (.typecheck { nodes := #[default]
+--                            portTypes := #[default]
+--                            nodeTypes := #[default]
+--                            connections := #[default]} : Request)
+-- #eval toJson (.quit : Request)
 
 
 structure ToApexGraphCompilationResult where

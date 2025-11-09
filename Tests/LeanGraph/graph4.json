@@ -1,0 +1,100 @@
+{
+  "portTypes": [],
+  "nodeTypes": [],
+  "nodes": [
+    {
+      "name": "Float_Add",
+      "type": {
+        "name": "Float_Add",
+        "leanConstant": "Float.add",
+        "exposeImplicitArgs": false,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "a",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "a",
+              "type": "Float"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "output",
+              "type": "Float"
+            }
+          }
+        ]
+      },
+      "portValues": [],
+      "x": 168.5702653925018,
+      "y": 215.0690790577284
+    },
+    {
+      "name": "Math_cos",
+      "type": {
+        "name": "Math_cos",
+        "leanConstant": "HouLean.Math.Cos.cos",
+        "exposeImplicitArgs": false,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "x",
+              "type": "?_"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "output",
+              "type": "?_"
+            }
+          }
+        ]
+      },
+      "portValues": [],
+      "x": 768.4948979591836,
+      "y": 243.94132653061223
+    },
+    {
+      "name": "Float_Add_1",
+      "type": {
+        "name": "Float_Add",
+        "leanConstant": "Float.add",
+        "exposeImplicitArgs": false,
+        "inputs": [
+          {
+            "builtin": {
+              "name": "a",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "a",
+              "type": "Float"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "builtin": {
+              "name": "output",
+              "type": "Float"
+            }
+          }
+        ]
+      },
+      "portValues": [],
+      "x": 459.9808673469387,
+      "y": 426.49872448979585
+    }
+  ],
+  "connections": []
+}

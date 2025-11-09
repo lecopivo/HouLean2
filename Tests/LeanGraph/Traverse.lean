@@ -9,7 +9,7 @@ set_option trace.HouLean.LeanGraph.elab true
 
 
 run_elab
-  let s ← IO.FS.withFile "Tests/LeanGraph/graph4.json" .read fun file => do
+  let s ← IO.FS.withFile "Tests/LeanGraph/graph5.json" .read fun file => do
     file.readToEnd
 
   let .ok json := Json.parse s
