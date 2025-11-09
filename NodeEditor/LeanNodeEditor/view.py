@@ -21,9 +21,10 @@ class NodeEditorScene(QGraphicsScene):
 
 
 class NodeEditorView(QGraphicsView):
-    def __init__(self, registry):
+    def __init__(self, registry, parent_widget=None):
         super().__init__()
         self.registry = registry
+        self.parent_widget = parent_widget
         self.editor_scene = NodeEditorScene()
         self.setScene(self.editor_scene)
         
@@ -126,6 +127,15 @@ class NodeEditorView(QGraphicsView):
     
     def _is_port_locked(self, port):
         return port in self.drag_locked_ports
+
+    def _trigger_type_check(self):
+        """Notify parent widget to type check"""
+        parent = self.parent()
+        if self.parent_widget and hasattr(self.parent_widget, 'request_type_check'):
+            print("Triggering type check!")
+            self.parent_widget.request_type_check()        
+        else:
+            print("Can't trigger type check because I'm orphan!")
     
     def contextMenuEvent(self, event):
         item = self.itemAt(event.pos())
@@ -270,6 +280,7 @@ class NodeEditorView(QGraphicsView):
                             conn = Connection(output_port, input_port, self.editor_scene)
                             self.editor_scene.addItem(conn)
                             self.connections.append(conn)
+                            self._trigger_type_check()
                     except RuntimeError:
                         pass
                 
@@ -410,6 +421,7 @@ class NodeEditorView(QGraphicsView):
             self.nodes.append(node)
             
             self._update_node_ports_matching(node)
+            self._trigger_type_check()
             
             return node
     
@@ -433,6 +445,8 @@ class NodeEditorView(QGraphicsView):
                     item.remove()
                     if item in self.connections:
                         self.connections.remove(item)
+
+        self._trigger_type_check()                        
     
     def rename_selected(self):
         from PySide6.QtWidgets import QInputDialog, QLineEdit

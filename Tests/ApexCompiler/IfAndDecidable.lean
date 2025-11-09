@@ -6,31 +6,31 @@ open Lean Qq
 
 /--
 info: Nodes:
-  0: LessThan<Int>1 : LessThan<Int>
-  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
+  0: LessThanInt : LessThan<Int>
+  1: TwoWaySwitchBool : TwoWaySwitch<Bool>
 
 Ports:
-  0: /LessThan<Int>1/a[in]
-  1: /LessThan<Int>1/b[in]
-  2: /LessThan<Int>1/[anonymous][out]
-  3: /TwoWaySwitch<Bool>1/a[in]
-  4: /TwoWaySwitch<Bool>1/b[in]
-  5: /TwoWaySwitch<Bool>1/index[in]
-  6: /TwoWaySwitch<Bool>1/[anonymous][out]
+  0: /LessThanInt/a[in]
+  1: /LessThanInt/b[in]
+  2: /LessThanInt/[anonymous][out]
+  3: /TwoWaySwitchBool/a[in]
+  4: /TwoWaySwitchBool/b[in]
+  5: /TwoWaySwitchBool/index[in]
+  6: /TwoWaySwitchBool/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/LessThan<Int>1/a[in]]
-  y[in] -> #[/LessThan<Int>1/b[in]]
+  x[in] -> #[/LessThanInt/a[in]]
+  y[in] -> #[/LessThanInt/b[in]]
 
 Outputs:
-  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
+  /TwoWaySwitchBool/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
+  0: /LessThanInt/[anonymous][out] -> /TwoWaySwitchBool/index[in]
 
 Literals:
-  0: bool "false" -> 3 ⏎
-  1: bool "true" -> 4
+  0: bool "false" -> /TwoWaySwitchBool/a[in] ⏎
+  1: bool "true" -> /TwoWaySwitchBool/b[in]
 -/
 #guard_msgs in
 #apex_graph fun x y : Int => decide (x < y)
@@ -38,62 +38,114 @@ Literals:
 
 /--
 info: Nodes:
-  0: LessThan<Int>1 : LessThan<Int>
-  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
+  0: TwoWaySwitchInt : TwoWaySwitch<Int>
 
 Ports:
-  0: /LessThan<Int>1/a[in]
-  1: /LessThan<Int>1/b[in]
-  2: /LessThan<Int>1/[anonymous][out]
-  3: /TwoWaySwitch<Bool>1/a[in]
-  4: /TwoWaySwitch<Bool>1/b[in]
-  5: /TwoWaySwitch<Bool>1/index[in]
-  6: /TwoWaySwitch<Bool>1/[anonymous][out]
+  0: /TwoWaySwitchInt/a[in]
+  1: /TwoWaySwitchInt/b[in]
+  2: /TwoWaySwitchInt/index[in]
+  3: /TwoWaySwitchInt/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/LessThan<Int>1/b[in]]
-  y[in] -> #[/LessThan<Int>1/a[in]]
+  x[in] -> #[/TwoWaySwitchInt/b[in]]
+  y[in] -> #[/TwoWaySwitchInt/a[in]]
 
 Outputs:
-  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
+  /TwoWaySwitchInt/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
 
 Literals:
-  0: bool "false" -> 3 ⏎
-  1: bool "true" -> 4
+  0: bool "true" -> /TwoWaySwitchInt/index[in]
+-/
+#guard_msgs in
+#apex_graph fun x y : Int => if true then x else y -- todo: the if statement should get eliminated!
+
+
+/--
+info: Nodes:
+  0: TwoWaySwitchInt : TwoWaySwitch<Int>
+
+Ports:
+  0: /TwoWaySwitchInt/a[in]
+  1: /TwoWaySwitchInt/b[in]
+  2: /TwoWaySwitchInt/index[in]
+  3: /TwoWaySwitchInt/[anonymous][out]
+
+Inputs:
+  x[in] -> #[/TwoWaySwitchInt/b[in]]
+  y[in] -> #[/TwoWaySwitchInt/a[in]]
+
+Outputs:
+  /TwoWaySwitchInt/[anonymous][out] -> [anonymous][out]
+
+Wires:
+
+Literals:
+  0: bool "false" -> /TwoWaySwitchInt/index[in]
+-/
+#guard_msgs in
+#apex_graph fun x y : Int => if false then x else y -- todo: the if statement should get eliminated!
+
+
+/--
+info: Nodes:
+  0: LessThanInt : LessThan<Int>
+  1: TwoWaySwitchBool : TwoWaySwitch<Bool>
+
+Ports:
+  0: /LessThanInt/a[in]
+  1: /LessThanInt/b[in]
+  2: /LessThanInt/[anonymous][out]
+  3: /TwoWaySwitchBool/a[in]
+  4: /TwoWaySwitchBool/b[in]
+  5: /TwoWaySwitchBool/index[in]
+  6: /TwoWaySwitchBool/[anonymous][out]
+
+Inputs:
+  x[in] -> #[/LessThanInt/b[in]]
+  y[in] -> #[/LessThanInt/a[in]]
+
+Outputs:
+  /TwoWaySwitchBool/[anonymous][out] -> [anonymous][out]
+
+Wires:
+  0: /LessThanInt/[anonymous][out] -> /TwoWaySwitchBool/index[in]
+
+Literals:
+  0: bool "false" -> /TwoWaySwitchBool/a[in] ⏎
+  1: bool "true" -> /TwoWaySwitchBool/b[in]
 -/
 #guard_msgs in
 #apex_graph fun x y : Int => decide (x > y)
 
 /--
 info: Nodes:
-  0: LessThanOrEqual<Int>1 : LessThanOrEqual<Int>
-  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
+  0: LessThanOrEqualInt : LessThanOrEqual<Int>
+  1: TwoWaySwitchBool : TwoWaySwitch<Bool>
 
 Ports:
-  0: /LessThanOrEqual<Int>1/a[in]
-  1: /LessThanOrEqual<Int>1/b[in]
-  2: /LessThanOrEqual<Int>1/[anonymous][out]
-  3: /TwoWaySwitch<Bool>1/a[in]
-  4: /TwoWaySwitch<Bool>1/b[in]
-  5: /TwoWaySwitch<Bool>1/index[in]
-  6: /TwoWaySwitch<Bool>1/[anonymous][out]
+  0: /LessThanOrEqualInt/a[in]
+  1: /LessThanOrEqualInt/b[in]
+  2: /LessThanOrEqualInt/[anonymous][out]
+  3: /TwoWaySwitchBool/a[in]
+  4: /TwoWaySwitchBool/b[in]
+  5: /TwoWaySwitchBool/index[in]
+  6: /TwoWaySwitchBool/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/LessThanOrEqual<Int>1/a[in]]
-  y[in] -> #[/LessThanOrEqual<Int>1/b[in]]
+  x[in] -> #[/LessThanOrEqualInt/a[in]]
+  y[in] -> #[/LessThanOrEqualInt/b[in]]
 
 Outputs:
-  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
+  /TwoWaySwitchBool/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /LessThanOrEqual<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
+  0: /LessThanOrEqualInt/[anonymous][out] -> /TwoWaySwitchBool/index[in]
 
 Literals:
-  0: bool "false" -> 3 ⏎
-  1: bool "true" -> 4
+  0: bool "false" -> /TwoWaySwitchBool/a[in] ⏎
+  1: bool "true" -> /TwoWaySwitchBool/b[in]
 -/
 #guard_msgs in
 #apex_graph fun x y : Int => decide (x ≤ y)
@@ -101,31 +153,31 @@ Literals:
 
 /--
 info: Nodes:
-  0: LessThanOrEqual<Int>1 : LessThanOrEqual<Int>
-  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
+  0: LessThanOrEqualInt : LessThanOrEqual<Int>
+  1: TwoWaySwitchBool : TwoWaySwitch<Bool>
 
 Ports:
-  0: /LessThanOrEqual<Int>1/a[in]
-  1: /LessThanOrEqual<Int>1/b[in]
-  2: /LessThanOrEqual<Int>1/[anonymous][out]
-  3: /TwoWaySwitch<Bool>1/a[in]
-  4: /TwoWaySwitch<Bool>1/b[in]
-  5: /TwoWaySwitch<Bool>1/index[in]
-  6: /TwoWaySwitch<Bool>1/[anonymous][out]
+  0: /LessThanOrEqualInt/a[in]
+  1: /LessThanOrEqualInt/b[in]
+  2: /LessThanOrEqualInt/[anonymous][out]
+  3: /TwoWaySwitchBool/a[in]
+  4: /TwoWaySwitchBool/b[in]
+  5: /TwoWaySwitchBool/index[in]
+  6: /TwoWaySwitchBool/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/LessThanOrEqual<Int>1/b[in]]
-  y[in] -> #[/LessThanOrEqual<Int>1/a[in]]
+  x[in] -> #[/LessThanOrEqualInt/b[in]]
+  y[in] -> #[/LessThanOrEqualInt/a[in]]
 
 Outputs:
-  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
+  /TwoWaySwitchBool/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /LessThanOrEqual<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
+  0: /LessThanOrEqualInt/[anonymous][out] -> /TwoWaySwitchBool/index[in]
 
 Literals:
-  0: bool "false" -> 3 ⏎
-  1: bool "true" -> 4
+  0: bool "false" -> /TwoWaySwitchBool/a[in] ⏎
+  1: bool "true" -> /TwoWaySwitchBool/b[in]
 -/
 #guard_msgs in
 #apex_graph fun x y : Int => decide (x ≥ y)
@@ -133,31 +185,31 @@ Literals:
 
 /--
 info: Nodes:
-  0: Equals<Int>1 : Equals<Int>
-  1: TwoWaySwitch<Bool>1 : TwoWaySwitch<Bool>
+  0: EqualsInt : Equals<Int>
+  1: TwoWaySwitchBool : TwoWaySwitch<Bool>
 
 Ports:
-  0: /Equals<Int>1/a[in]
-  1: /Equals<Int>1/b[in]
-  2: /Equals<Int>1/[anonymous][out]
-  3: /TwoWaySwitch<Bool>1/a[in]
-  4: /TwoWaySwitch<Bool>1/b[in]
-  5: /TwoWaySwitch<Bool>1/index[in]
-  6: /TwoWaySwitch<Bool>1/[anonymous][out]
+  0: /EqualsInt/a[in]
+  1: /EqualsInt/b[in]
+  2: /EqualsInt/[anonymous][out]
+  3: /TwoWaySwitchBool/a[in]
+  4: /TwoWaySwitchBool/b[in]
+  5: /TwoWaySwitchBool/index[in]
+  6: /TwoWaySwitchBool/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/Equals<Int>1/a[in]]
-  y[in] -> #[/Equals<Int>1/b[in]]
+  x[in] -> #[/EqualsInt/a[in]]
+  y[in] -> #[/EqualsInt/b[in]]
 
 Outputs:
-  /TwoWaySwitch<Bool>1/[anonymous][out] -> [anonymous][out]
+  /TwoWaySwitchBool/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /Equals<Int>1/[anonymous][out] -> /TwoWaySwitch<Bool>1/index[in]
+  0: /EqualsInt/[anonymous][out] -> /TwoWaySwitchBool/index[in]
 
 Literals:
-  0: bool "false" -> 3 ⏎
-  1: bool "true" -> 4
+  0: bool "false" -> /TwoWaySwitchBool/a[in] ⏎
+  1: bool "true" -> /TwoWaySwitchBool/b[in]
 -/
 #guard_msgs in
 #apex_graph fun x y : Int => decide (x = y)
@@ -165,37 +217,37 @@ Literals:
 
 /--
 info: Nodes:
-  0: Multiply<Int>1 : Multiply<Int>
-  1: Add<Int>1 : Add<Int>
-  2: LessThan<Int>1 : LessThan<Int>
-  3: TwoWaySwitch<Int>1 : TwoWaySwitch<Int>
+  0: MultiplyInt : Multiply<Int>
+  1: AddInt : Add<Int>
+  2: LessThanInt : LessThan<Int>
+  3: TwoWaySwitchInt : TwoWaySwitch<Int>
 
 Ports:
-  0: /Multiply<Int>1/a[in]
-  1: /Multiply<Int>1/b[in]
-  2: /Multiply<Int>1/[anonymous][out]
-  3: /Add<Int>1/a[in]
-  4: /Add<Int>1/b[in]
-  5: /Add<Int>1/[anonymous][out]
-  6: /LessThan<Int>1/a[in]
-  7: /LessThan<Int>1/b[in]
-  8: /LessThan<Int>1/[anonymous][out]
-  9: /TwoWaySwitch<Int>1/a[in]
-  10: /TwoWaySwitch<Int>1/b[in]
-  11: /TwoWaySwitch<Int>1/index[in]
-  12: /TwoWaySwitch<Int>1/[anonymous][out]
+  0: /MultiplyInt/a[in]
+  1: /MultiplyInt/b[⋯][in]
+  2: /MultiplyInt/[anonymous][out]
+  3: /AddInt/a[in]
+  4: /AddInt/b[⋯][in]
+  5: /AddInt/[anonymous][out]
+  6: /LessThanInt/a[in]
+  7: /LessThanInt/b[in]
+  8: /LessThanInt/[anonymous][out]
+  9: /TwoWaySwitchInt/a[in]
+  10: /TwoWaySwitchInt/b[in]
+  11: /TwoWaySwitchInt/index[in]
+  12: /TwoWaySwitchInt/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/Multiply<Int>1/a[in], /Add<Int>1/a[in], /LessThan<Int>1/a[in]]
-  y[in] -> #[/Multiply<Int>1/b[in], /Add<Int>1/b[in], /LessThan<Int>1/b[in]]
+  x[in] -> #[/MultiplyInt/a[in], /AddInt/a[in], /LessThanInt/a[in]]
+  y[in] -> #[/MultiplyInt/b[0][in], /AddInt/b[0][in], /LessThanInt/b[in]]
 
 Outputs:
-  /TwoWaySwitch<Int>1/[anonymous][out] -> [anonymous][out]
+  /TwoWaySwitchInt/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /Multiply<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/a[in]
-  1: /Add<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/b[in]
-  2: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/index[in]
+  0: /MultiplyInt/[anonymous][out] -> /TwoWaySwitchInt/a[in]
+  1: /AddInt/[anonymous][out] -> /TwoWaySwitchInt/b[in]
+  2: /LessThanInt/[anonymous][out] -> /TwoWaySwitchInt/index[in]
 
 Literals:
 -/
@@ -205,37 +257,37 @@ Literals:
 
 /--
 info: Nodes:
-  0: Multiply<Int>1 : Multiply<Int>
-  1: Add<Int>1 : Add<Int>
-  2: LessThan<Int>1 : LessThan<Int>
-  3: TwoWaySwitch<Int>1 : TwoWaySwitch<Int>
+  0: MultiplyInt : Multiply<Int>
+  1: AddInt : Add<Int>
+  2: LessThanInt : LessThan<Int>
+  3: TwoWaySwitchInt : TwoWaySwitch<Int>
 
 Ports:
-  0: /Multiply<Int>1/a[in]
-  1: /Multiply<Int>1/b[in]
-  2: /Multiply<Int>1/[anonymous][out]
-  3: /Add<Int>1/a[in]
-  4: /Add<Int>1/b[in]
-  5: /Add<Int>1/[anonymous][out]
-  6: /LessThan<Int>1/a[in]
-  7: /LessThan<Int>1/b[in]
-  8: /LessThan<Int>1/[anonymous][out]
-  9: /TwoWaySwitch<Int>1/a[in]
-  10: /TwoWaySwitch<Int>1/b[in]
-  11: /TwoWaySwitch<Int>1/index[in]
-  12: /TwoWaySwitch<Int>1/[anonymous][out]
+  0: /MultiplyInt/a[in]
+  1: /MultiplyInt/b[⋯][in]
+  2: /MultiplyInt/[anonymous][out]
+  3: /AddInt/a[in]
+  4: /AddInt/b[⋯][in]
+  5: /AddInt/[anonymous][out]
+  6: /LessThanInt/a[in]
+  7: /LessThanInt/b[in]
+  8: /LessThanInt/[anonymous][out]
+  9: /TwoWaySwitchInt/a[in]
+  10: /TwoWaySwitchInt/b[in]
+  11: /TwoWaySwitchInt/index[in]
+  12: /TwoWaySwitchInt/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/Multiply<Int>1/a[in], /Add<Int>1/a[in], /LessThan<Int>1/a[in]]
-  y[in] -> #[/Multiply<Int>1/b[in], /Add<Int>1/b[in], /LessThan<Int>1/b[in]]
+  x[in] -> #[/MultiplyInt/a[in], /AddInt/a[in], /LessThanInt/a[in]]
+  y[in] -> #[/MultiplyInt/b[0][in], /AddInt/b[0][in], /LessThanInt/b[in]]
 
 Outputs:
-  /TwoWaySwitch<Int>1/[anonymous][out] -> [anonymous][out]
+  /TwoWaySwitchInt/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /Multiply<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/a[in]
-  1: /Add<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/b[in]
-  2: /LessThan<Int>1/[anonymous][out] -> /TwoWaySwitch<Int>1/index[in]
+  0: /MultiplyInt/[anonymous][out] -> /TwoWaySwitchInt/a[in]
+  1: /AddInt/[anonymous][out] -> /TwoWaySwitchInt/b[in]
+  2: /LessThanInt/[anonymous][out] -> /TwoWaySwitchInt/index[in]
 
 Literals:
 -/
@@ -245,50 +297,50 @@ Literals:
 
 /--
 info: Nodes:
-  0: LessThan<Float>1 : LessThan<Float>
-  1: TwoWaySwitch<Float>1 : TwoWaySwitch<Float>
-  2: TwoWaySwitch<Float>2 : TwoWaySwitch<Float>
-  3: TwoWaySwitch<Float>3 : TwoWaySwitch<Float>
-  4: TwoWaySwitch<Float>4 : TwoWaySwitch<Float>
+  0: LessThanFloat : LessThan<Float>
+  1: TwoWaySwitchFloat : TwoWaySwitch<Float>
+  2: TwoWaySwitchFloat1 : TwoWaySwitch<Float>
+  3: TwoWaySwitchFloat2 : TwoWaySwitch<Float>
+  4: TwoWaySwitchFloat3 : TwoWaySwitch<Float>
 
 Ports:
-  0: /LessThan<Float>1/a[in]
-  1: /LessThan<Float>1/b[in]
-  2: /LessThan<Float>1/[anonymous][out]
-  3: /TwoWaySwitch<Float>1/a[in]
-  4: /TwoWaySwitch<Float>1/b[in]
-  5: /TwoWaySwitch<Float>1/index[in]
-  6: /TwoWaySwitch<Float>1/[anonymous][out]
-  7: /TwoWaySwitch<Float>2/a[in]
-  8: /TwoWaySwitch<Float>2/b[in]
-  9: /TwoWaySwitch<Float>2/index[in]
-  10: /TwoWaySwitch<Float>2/[anonymous][out]
-  11: /TwoWaySwitch<Float>3/a[in]
-  12: /TwoWaySwitch<Float>3/b[in]
-  13: /TwoWaySwitch<Float>3/index[in]
-  14: /TwoWaySwitch<Float>3/[anonymous][out]
-  15: /TwoWaySwitch<Float>4/a[in]
-  16: /TwoWaySwitch<Float>4/b[in]
-  17: /TwoWaySwitch<Float>4/index[in]
-  18: /TwoWaySwitch<Float>4/[anonymous][out]
+  0: /LessThanFloat/a[in]
+  1: /LessThanFloat/b[in]
+  2: /LessThanFloat/[anonymous][out]
+  3: /TwoWaySwitchFloat/a[in]
+  4: /TwoWaySwitchFloat/b[in]
+  5: /TwoWaySwitchFloat/index[in]
+  6: /TwoWaySwitchFloat/[anonymous][out]
+  7: /TwoWaySwitchFloat1/a[in]
+  8: /TwoWaySwitchFloat1/b[in]
+  9: /TwoWaySwitchFloat1/index[in]
+  10: /TwoWaySwitchFloat1/[anonymous][out]
+  11: /TwoWaySwitchFloat2/a[in]
+  12: /TwoWaySwitchFloat2/b[in]
+  13: /TwoWaySwitchFloat2/index[in]
+  14: /TwoWaySwitchFloat2/[anonymous][out]
+  15: /TwoWaySwitchFloat3/a[in]
+  16: /TwoWaySwitchFloat3/b[in]
+  17: /TwoWaySwitchFloat3/index[in]
+  18: /TwoWaySwitchFloat3/[anonymous][out]
 
 Inputs:
-  x.fst[in] -> #[/LessThan<Float>1/a[in], /TwoWaySwitch<Float>1/b[in], /TwoWaySwitch<Float>3/a[in]]
-  x.snd[in] -> #[/TwoWaySwitch<Float>2/b[in], /TwoWaySwitch<Float>4/a[in]]
-  y.fst[in] -> #[/TwoWaySwitch<Float>1/a[in], /TwoWaySwitch<Float>3/b[in]]
-  y.snd[in] -> #[/LessThan<Float>1/b[in], /TwoWaySwitch<Float>2/a[in], /TwoWaySwitch<Float>4/b[in]]
+  x.fst[in] -> #[/LessThanFloat/a[in], /TwoWaySwitchFloat/b[in], /TwoWaySwitchFloat2/a[in]]
+  x.snd[in] -> #[/TwoWaySwitchFloat1/b[in], /TwoWaySwitchFloat3/a[in]]
+  y.fst[in] -> #[/TwoWaySwitchFloat/a[in], /TwoWaySwitchFloat2/b[in]]
+  y.snd[in] -> #[/LessThanFloat/b[in], /TwoWaySwitchFloat1/a[in], /TwoWaySwitchFloat3/b[in]]
 
 Outputs:
-  /TwoWaySwitch<Float>1/[anonymous][out] -> fst.fst[out]
-  /TwoWaySwitch<Float>2/[anonymous][out] -> fst.snd[out]
-  /TwoWaySwitch<Float>3/[anonymous][out] -> snd.fst[out]
-  /TwoWaySwitch<Float>4/[anonymous][out] -> snd.snd[out]
+  /TwoWaySwitchFloat/[anonymous][out] -> fst.fst[out]
+  /TwoWaySwitchFloat1/[anonymous][out] -> fst.snd[out]
+  /TwoWaySwitchFloat2/[anonymous][out] -> snd.fst[out]
+  /TwoWaySwitchFloat3/[anonymous][out] -> snd.snd[out]
 
 Wires:
-  0: /LessThan<Float>1/[anonymous][out] -> /TwoWaySwitch<Float>1/index[in]
-  1: /LessThan<Float>1/[anonymous][out] -> /TwoWaySwitch<Float>2/index[in]
-  2: /LessThan<Float>1/[anonymous][out] -> /TwoWaySwitch<Float>3/index[in]
-  3: /LessThan<Float>1/[anonymous][out] -> /TwoWaySwitch<Float>4/index[in]
+  0: /LessThanFloat/[anonymous][out] -> /TwoWaySwitchFloat/index[in]
+  1: /LessThanFloat/[anonymous][out] -> /TwoWaySwitchFloat1/index[in]
+  2: /LessThanFloat/[anonymous][out] -> /TwoWaySwitchFloat2/index[in]
+  3: /LessThanFloat/[anonymous][out] -> /TwoWaySwitchFloat3/index[in]
 
 Literals:
 -/

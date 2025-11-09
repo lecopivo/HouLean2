@@ -11,7 +11,7 @@ import hou
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
                                QFileDialog, QLabel, QFrame, QSplitter, QCheckBox,
                                QScrollArea, QGridLayout, QLineEdit)
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal, QObject
 from PySide6.QtGui import QFont
 
 from .colors import *
@@ -92,6 +92,8 @@ def get_default_types():
 
 
 class NodeEditorWidget(QWidget):
+    type_check_response_signal = Signal(object)
+    
     def __init__(self):
         super().__init__()
         self.registry = NodeTypeRegistry()
@@ -103,12 +105,16 @@ class NodeEditorWidget(QWidget):
         self.pending_type_check = False
         self.type_check_timer = None
         self.last_graph_state = None
-
-        # Initialize type checker on startup
-        self._initialize_type_checker()        
+        
+        # Connect signal to slot
+        self.type_check_response_signal.connect(self._apply_type_check_results)        
         
         self._create_ui()
         self.current_selected_node = None
+
+        # Initialize type checker on startup
+        self._initialize_type_checker()
+
     
     def _create_ui(self):
         layout = QVBoxLayout(self)
@@ -129,7 +135,7 @@ class NodeEditorWidget(QWidget):
         editor_panel = self._create_editor_panel()
         splitter.addWidget(editor_panel)
         
-        self.editor = NodeEditorView(self.registry)
+        self.editor = NodeEditorView(self.registry, parent_widget=self)
         self.editor.selection_changed_callback = self.on_node_selection_changed
         splitter.addWidget(self.editor)
         
@@ -609,25 +615,116 @@ class NodeEditorWidget(QWidget):
     def _initialize_type_checker(self):
         """Initialize and start the type checker server."""
         try:
-            # Update this path to your actual Lean server executable
+            # TODO: Update this path to your actual Lean server executable
+            # For example: "/home/tskrivan/Documents/HouLean/.lake/build/bin/houlean-server"
             server_path = "/home/tskrivan/Documents/HouLean/.lake/build/bin/houlean"
 
             self.server_manager = ServerManager(server_path)
 
             if self.server_manager.start():
-                self.type_checker = AsyncTypeChecker(self.server_manager.server_url)
+                # Pass the server process to the type checker
+                self.type_checker = AsyncTypeChecker(self.server_manager.process)
                 self.type_checker.start()
                 print("Type checker initialized successfully")
+                self.status_label.setText("Type checker ready")
             else:
                 print("Failed to start type checker server")
+                self.status_label.setText("Type checker unavailable")
                 self.server_manager = None
 
         except Exception as e:
             print("Error initializing type checker: {}".format(e))
+            import traceback
+            traceback.print_exc()
+            self.status_label.setText("Type checker error: {}".format(e))
             self.server_manager = None
             self.type_checker = None
 
+    def request_type_check(self):
+        """Request a type check with debouncing to avoid excessive checks."""
+        if not self.type_checker:
+            return
 
+        # Cancel existing timer if any
+        if self.type_check_timer:
+            try:
+                self.type_check_timer.cancel()
+            except:
+                pass
+
+        # Schedule type check after 500ms of inactivity
+        import threading
+        self.type_check_timer = threading.Timer(0.1, self._perform_type_check)
+        self.type_check_timer.start()            
+
+        
+    def _perform_type_check(self):
+        """Perform the actual type check."""
+        if self.pending_type_check:
+            # Already have a type check in progress, skip
+            return
+
+        try:
+            # Serialize current graph state
+            # For now we dump everything
+            graph_data = save_to_json(self.editor)
+
+            # Check if graph actually changed
+            if graph_data == self.last_graph_state:
+                return
+
+            self.last_graph_state = graph_data
+            self.pending_type_check = True
+
+            # Submit async request
+            self.type_checker.check_types(
+                graph_data,
+                self._handle_type_check_response
+            )
+
+        except Exception as e:
+            print("Error performing type check: {}".format(e))
+            self.pending_type_check = False
+
+            
+    def _handle_type_check_response(self, response):
+        """Handle type check response from server (called from worker thread)."""
+        self.pending_type_check = False
+
+        print(f"handling response {response}")
+
+        if response is None:
+            print("Type check failed")
+            self.status_label.setText("Type check failed - server error")
+            return
+
+        print(f"handling response 2")
+
+        # Emit signal - this is thread-safe!
+        self.type_check_response_signal.emit(response)
+
+    def _apply_type_check_results(self, response):
+        """Apply type check results to the UI (must be called on main thread)."""
+
+        print(f"applying response {response}")
+
+        if response is None:
+            self.status_label.setText("Type check failed - server error")
+            return
+
+        # just reload graph from it self, does that cause problems?
+        data = save_to_json(self.editor)
+        load_from_json(self.editor, data)
+
+        
+        if response.get("status") != "success":
+            error_msg = response.get("result", "Unknown error")
+            print("Type check error: {}".format(error_msg))
+            self.status_label.setText("Type check error: {}".format(error_msg))
+            return
+
+        self.status_label.setText("Type check completed!")
+        
     # Node Network Manipulation        
     
     def on_node_selection_changed(self, selected_nodes):
