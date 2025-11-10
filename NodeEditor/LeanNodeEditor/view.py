@@ -27,6 +27,10 @@ class NodeEditorView(QGraphicsView):
         self.parent_widget = parent_widget
         self.editor_scene = NodeEditorScene()
         self.setScene(self.editor_scene)
+
+        # Add menu caches
+        self._node_creation_menu = None
+        self._node_type_menu = None
         
         self.setRenderHint(QPainter.Antialiasing)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
@@ -49,7 +53,120 @@ class NodeEditorView(QGraphicsView):
         self.show_implicit_connections = False
         
         self.editor_scene.selectionChanged.connect(self.on_selection_changed)
+
+    def _build_node_creation_menu(self):
+        """Build and cache the node creation menu structure"""
+        if self._node_creation_menu is not None:
+            return self._node_creation_menu
+
+        menu = QMenu(self)
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {HOUDINI_BG.name()};
+                color: {HOUDINI_TEXT.name()};
+                border: 1px solid {HOUDINI_NODE_BORDER.name()};
+                padding: 4px;
+            }}
+            QMenu::item {{
+                padding: 6px 25px 6px 15px;
+                border-radius: 3px;
+            }}
+            QMenu::item:selected {{
+                background-color: {HOUDINI_BG_LIGHT.name()};
+            }}
+            QMenu::separator {{
+                height: 1px;
+                background: {HOUDINI_NODE_BORDER.name()};
+                margin: 4px 0px;
+            }}
+        """)
+
+        categories = {}
+        for node_type_name in sorted(self.registry.node_types.keys()):
+            if '_' in node_type_name:
+                category = node_type_name.split('_')[0]
+            else:
+                category = "Other"
+
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(node_type_name)
+
+        for category in sorted(categories.keys()):
+            if len(categories) > 1:
+                submenu = menu.addMenu(category)
+                submenu.setStyleSheet(menu.styleSheet())
+            else:
+                submenu = menu
+
+            for node_type_name in sorted(categories[category]):
+                action = submenu.addAction(node_type_name)
+                action.triggered.connect(
+                    lambda checked=False, name=node_type_name: 
+                    self.add_node(name, self._last_scene_pos)
+                )
+
+        self._node_creation_menu = menu
+        return menu
+
+    def _build_node_type_menu(self, node):
+        """Build and cache the node type change menu"""
+        if self._node_type_menu is not None:
+            return self._node_type_menu
+        
+        menu = QMenu(self)
+        menu.setStyleSheet(f"""
+            QMenu {{
+                background-color: {HOUDINI_BG.name()};
+                color: {HOUDINI_TEXT.name()};
+                border: 1px solid {HOUDINI_NODE_BORDER.name()};
+                padding: 4px;
+            }}
+            QMenu::item {{
+                padding: 6px 25px 6px 15px;
+                border-radius: 3px;
+            }}
+            QMenu::item:selected {{
+                background-color: {HOUDINI_BG_LIGHT.name()};
+            }}
+            QMenu::separator {{
+                height: 1px;
+                background: {HOUDINI_NODE_BORDER.name()};
+                margin: 4px 0px;
+            }}
+        """)
+        
+        categories = {}
+        for node_type_name in sorted(self.registry.node_types.keys()):
+            if '_' in node_type_name:
+                category = node_type_name.split('_')[0]
+            else:
+                category = "Other"
+            
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(node_type_name)
+        
+        for category in sorted(categories.keys()):
+            if len(categories) > 1:
+                submenu = menu.addMenu(category)
+                submenu.setStyleSheet(menu.styleSheet())
+            else:
+                submenu = menu
+            
+            for node_type_name in sorted(categories[category]):
+                node_type = self.registry.get_node_type(node_type_name)
+                action = submenu.addAction(node_type_name)
+                action.triggered.connect(
+                    lambda checked=False, nt=node_type: 
+                    self._cached_node.change_type(nt)
+                )
+        
+        self._node_type_menu = menu
+        return menu
     
+    
+        
     def set_structural_matching(self, enabled):
         self.allow_structural_matching = enabled
         for node in self.nodes:
@@ -305,102 +422,20 @@ class NodeEditorView(QGraphicsView):
         self.editor_scene.addItem(self.editor_scene.temp_connection)
     
     def show_node_creation_menu(self, view_pos):
-        menu = QMenu(self)
-        menu.setStyleSheet(f"""
-            QMenu {{
-                background-color: {HOUDINI_BG.name()};
-                color: {HOUDINI_TEXT.name()};
-                border: 1px solid {HOUDINI_NODE_BORDER.name()};
-                padding: 4px;
-            }}
-            QMenu::item {{
-                padding: 6px 25px 6px 15px;
-                border-radius: 3px;
-            }}
-            QMenu::item:selected {{
-                background-color: {HOUDINI_BG_LIGHT.name()};
-            }}
-            QMenu::separator {{
-                height: 1px;
-                background: {HOUDINI_NODE_BORDER.name()};
-                margin: 4px 0px;
-            }}
-        """)
-        
         scene_pos = self.mapToScene(view_pos)
-        
-        categories = {}
-        for node_type_name in sorted(self.registry.node_types.keys()):
-            if '_' in node_type_name:
-                category = node_type_name.split('_')[0]
-            else:
-                category = "Other"
-            
-            if category not in categories:
-                categories[category] = []
-            categories[category].append(node_type_name)
-        
-        for category in sorted(categories.keys()):
-            if len(categories) > 1:
-                submenu = menu.addMenu(category)
-                submenu.setStyleSheet(menu.styleSheet())
-            else:
-                submenu = menu
-            
-            for node_type_name in sorted(categories[category]):
-                action = submenu.addAction(node_type_name)
-                action.triggered.connect(lambda checked=False, name=node_type_name, pos=scene_pos: 
-                                       self.add_node(name, pos))
-        
+        self._last_scene_pos = scene_pos
+
+        menu = self._build_node_creation_menu()
         menu.exec(self.mapToGlobal(view_pos))
+
+    def invalidate_menu_cache(self):
+        """Call this when node types change (e.g., after loading types.json)"""
+        self._node_creation_menu = None
+        self._node_type_menu = None        
     
     def show_node_type_menu(self, node, view_pos):
-        menu = QMenu(self)
-        menu.setStyleSheet(f"""
-            QMenu {{
-                background-color: {HOUDINI_BG.name()};
-                color: {HOUDINI_TEXT.name()};
-                border: 1px solid {HOUDINI_NODE_BORDER.name()};
-                padding: 4px;
-            }}
-            QMenu::item {{
-                padding: 6px 25px 6px 15px;
-                border-radius: 3px;
-            }}
-            QMenu::item:selected {{
-                background-color: {HOUDINI_BG_LIGHT.name()};
-            }}
-            QMenu::separator {{
-                height: 1px;
-                background: {HOUDINI_NODE_BORDER.name()};
-                margin: 4px 0px;
-            }}
-        """)
-        
-        categories = {}
-        for node_type_name in sorted(self.registry.node_types.keys()):
-            if '_' in node_type_name:
-                category = node_type_name.split('_')[0]
-            else:
-                category = "Other"
-            
-            if category not in categories:
-                categories[category] = []
-            categories[category].append(node_type_name)
-        
-        for category in sorted(categories.keys()):
-            if len(categories) > 1:
-                submenu = menu.addMenu(category)
-                submenu.setStyleSheet(menu.styleSheet())
-            else:
-                submenu = menu
-            
-            for node_type_name in sorted(categories[category]):
-                node_type = self.registry.get_node_type(node_type_name)
-                action = submenu.addAction(node_type_name)
-                action.triggered.connect(lambda checked=False, n=node, nt=node_type: 
-                                       n.change_type(nt))
-        
+        self._cached_node = node  # Store for lambda
+        menu = self._build_node_type_menu(node)
         menu.exec(self.mapToGlobal(view_pos))
     
     def add_node(self, node_type_name, pos):

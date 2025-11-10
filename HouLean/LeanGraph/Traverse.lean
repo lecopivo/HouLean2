@@ -261,8 +261,16 @@ partial def processNode (node : Node) (rest : MVarId) : TraverseM MVarId :=
 
       let mut argsStx : Array Term := #[]
       
+
+      -- complete ports at least full arity of the function
+      let missingPorts ← args[node.type.inputs.size:].toArray.mapM (fun arg => do
+        let name := (← arg.mvarId!.getDecl).userName
+        let port ← mkPortType (← inferType arg) false name.eraseMacroScopes.toString
+        return port)
+      let inputPorts := node.type.inputs ++ missingPorts
+
       -- Build argument expressions
-      for i in [0:node.type.inputs.size], port in node.type.inputs do
+      for i in [0:max node.type.inputs.size args.size], port in inputPorts do
         let wires := inputConnections.filter (fun w => w.inputIndex.head? == some i)
 
         -- Check for default value if no wires connected
