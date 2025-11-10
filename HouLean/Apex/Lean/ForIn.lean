@@ -20,6 +20,7 @@ end Generated
 
 --------------------------------------------------------------------------------------------------------
 
+
 class ForLoop (m : Type → Type) (State : Type) (Range : Type) (Index : outParam (Type)) where
   forBegin : Range → State → m (struct {scope : Int, index : Index, spare : State})
   forEnd : Int → State → m State
@@ -53,13 +54,23 @@ unsafe def ForIn.forIn.apex_impl {m : Type → Type} {Range : Type} {Index : Typ
   let r ← forBegin range init
   let state ← f r.index r.spare
   forEnd Range r.scope state.value
+
+unsafe def ForIn.forIn.apex_impl_with_pass_through {m : Type → Type} {Range : Type} {Index : Type} {Context : Type}
+    [ForIn m Range Index] {State : Type} [Monad m] [ForLoop m (State×Context) Range Index]
+    (range : Range) (init : State) (ctx : Context) (f : Context → Index → State → m (ForInStep State)) : m State := do
+  let r ← forBegin range (init, ctx)
+  let ctx := r.spare.2
+  let state ← f ctx r.index r.spare.1
+  let (s,_) ← forEnd Range r.scope (state.value,ctx)
+  return s
   
+-- we should keep this as it prevent `whnfC` to reduce it! even though the implemented by will be
+-- surpassed by `compileForLoop` in the compiler
 run_meta compilerExt.add (.implementedByName ``ForIn.forIn ``ForIn.forIn.apex_impl 
   #[some 0, some 1, some 2, some 3, some 4, some 5, none, some 6, some 7, some 8])
 
-
-  
 -- todo: move this
 instance [ApexType α A] : ApexType (Id α) A where
   toApex x := toApex (α:=α) x
   fromApex x := fromApex (α:=α) x
+

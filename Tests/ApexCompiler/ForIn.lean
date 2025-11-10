@@ -18,14 +18,15 @@ run_meta compilerExt.add (.implementedByName ``apexUnflatten ``id' #[none, some 
 @[apex_node "VariadicIdentity"]
 def variadicId {ts} (x : VariadicArg' ts) := x
 
-set_option trace.HouLean.Apex.compiler true in
+
+
 #apex_graph fun (x : Int) =>
   let s := apexFlatten (x,x)
   let s := variadicId s
   let (a,b) := apexUnflatten (α:=Int×Int) s
   a + b
 
-set_option trace.HouLean.Apex.compiler true in
+
 #apex_graph fun (x : Int) =>
   let r := Generated.ForBegin x (apexFlatten (x,x))
   let (a,b) := apexUnflatten (α:=Int×Int) r.spare
@@ -33,12 +34,12 @@ set_option trace.HouLean.Apex.compiler true in
   let (x,y) := apexUnflatten (α:=Int×Int) (Generated.ForEnd r.scope s)
   x + y
 
-set_option trace.HouLean.Apex.compiler true in
+
 #apex_graph fun (x : Int) => Id.run do
   let mut x : Int := x
   for _ in [0:10] do
     x := x + x
-  return x*2
+  return x
 
 @[apex]
 def run (x : Int) := Id.run do
@@ -70,6 +71,22 @@ run_meta
 
   let s ← evalExpr String q(String) e
   logInfo s
+
+
+
+set_option trace.HouLean.Apex.compiler true in
+@[apex]
+def runGeo (geo : Geometry) : Geometry := Id.run do
+  let mut geo := geo  
+  let (_,size,min,_,_) := geo.boundingBox
+  for i in [0:geo.numPoints.toNat] do
+    let P : Vector3 := geo.pointAttrib (Int.ofNat i) "P"
+    let relP := (P - min).compDiv size
+    geo := geo.setPointAttrib (Int.ofNat i) "Cd" relP
+  return geo
+
+
+  
 
 #exit
 

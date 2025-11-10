@@ -7,6 +7,6 @@ open HouLean.Apex Generated
 @[apex_implements String.append]
 def String.append.apex_impl (x y : String) : String := AddString x #a[y]
 
-@[apex_implements String.decEq]
-def String.decEq.apex_impl (x y : String) : Bool := EqualsString x y 
+--@ [apex_implements String.decEq]
+-- def String.decEq.apex_impl (x y : String) : Bool := EqualsString x y 
 

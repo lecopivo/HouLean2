@@ -150,7 +150,7 @@ def withProcessingNode (nodeName : String) (go : TraverseM α) : TraverseM α :=
   if (← read).nodesBeingProcessed.contains nodeName then
     throwError "Loop detected! Trying to compile {nodeName} while compiling its dependencies!"
   withTraceNode `HouLean.LeanGraph.typecheck
-     (fun r => return m!"Processing Node {nodeName}") do
+     (fun _ => return m!"Processing Node {nodeName}") do
     withReader (fun ctx => {ctx with nodesBeingProcessed := ctx.nodesBeingProcessed.insert nodeName}) go
 
 /-- Recursively extract subports from a port type -/

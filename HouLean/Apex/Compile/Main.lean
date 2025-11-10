@@ -1,5 +1,8 @@
 import HouLean.Apex.Compile.Graph
 import HouLean.Apex.Compile.ImplementedBy
+import HouLean.Apex.Lean.ForIn
+import HouLean.Apex.Lean.Ite
+import HouLean.Apex.Compile.Meta
 import HouLean.Init
 
 open Lean Meta Std
@@ -66,20 +69,6 @@ def getFreshNodeName (name : String) : GraphCompileM String := do
     modify (fun s => {s with nameCounter := nameCounter.insert name 1})
     return name
 
--- def arrayToBundle (ps : Array PortBundle) : PortBundle :=
---   if ps.size = 1 then
---     ps[0]!
---   else
---     .node ps
-
--- partial def arrayToProdBundle (ps : Array PortBundle) : PortBundle :=
---   if ps.size = 0 then
---     .node #[]
---   else if ps.size = 1 then
---     ps[0]!
---   else
---     .node #[ps[0]!, arrayToProdBundle ps[1:].toArray]
-
 def getUnfoldStackMsg : GraphCompileM MessageData := do
   let stack := (← read).unfoldStack
   if stack.isEmpty then
@@ -100,84 +89,10 @@ def addNode (nodeType : NodeType)  (nodeName : Name) :
      let r := (g.addNode nodeType userName)
      pure <| (r.graph, struct r pop% graph))
 
--- def setIntPort (val : Int) (id : PortId) : GraphCompileM Unit := do
---   modifyGraph (fun g => return ({g with literals := g.literals.push (.int val, id)}, ()))
-
--- def setFloatPort (val : Float) (id : PortId) : GraphCompileM Unit := do
---   modifyGraph (fun g => return ({g with literals := g.literals.push (.float val, id)}, ()))
-
--- def setStringPort (val : String) (id : PortId) : GraphCompileM Unit := do
---   modifyGraph (fun g => return ({g with literals := g.literals.push (.str val, id)}, ()))
-
--- def setBoolPort (val : Bool) (id : PortId) : GraphCompileM Unit := do
---   modifyGraph (fun g => return ({g with literals := g.literals.push (.bool val, id)}, ()))
-
--- /-- Add an integer constant node -/
--- def addInt (val : Int) : GraphCompileM PortBundle := do
---   let nodeType : NodeType := {
---     name := "Value<Int>"
---     ports := #[
---       {localId := 0, dir := .input, name := "parm", type := .builtin "Int"},
---       {localId := 1, dir := .output, name := "value", type := .builtin "Int"}
---     ]
---   }
---   let (_, #[.leaf input], output) ← addNode nodeType #[]
---     | throwErrorWithStack m!"Failed to add Value<Int> node"
---   setIntPort val input
---   return output
-
--- /-- Add a float constant node -/
--- def addFloat (val : Float) : GraphCompileM PortBundle := do
---   let nodeType : NodeType := {
---     name := "Value<Float>"
---     ports := #[
---       {localId := 0, dir := .input, name := "parm", type := .builtin "Float"},
---       {localId := 1, dir := .output, name := "value", type := .builtin "Float"}
---     ]
---   }
---   let (_, #[.leaf input], output) ← addNode nodeType #[]
---     | throwErrorWithStack m!"Failed to add Value<Float> node"
---   setFloatPort val input
---   return output
-
--- /-- Add a string constant node -/
--- def addString (val : String) : GraphCompileM PortBundle := do
---   let nodeType : NodeType := {
---     name := "Value<String>"
---     ports := #[
---       {localId := 0, dir := .input, name := "parm", type := .builtin "String"},
---       {localId := 1, dir := .output, name := "value", type := .builtin "String"}
---     ]
---   }
---   let (_, #[.leaf input], output) ← addNode nodeType #[]
---     | throwErrorWithStack m!"Failed to add Value<String> node"
---   setStringPort val input
---   return output
-
--- /-- Add a bool constant node -/
--- def addBool (val : Bool) : GraphCompileM PortBundle := do
---   let nodeType : NodeType := {
---     name := "Value<Bool>"
---     ports := #[
---       {localId := 0, dir := .input, name := "parm", type := .builtin "Float"},
---       {localId := 1, dir := .output, name := "value", type := .builtin "Float"}
---     ]
---   }
---   let (_, #[.leaf input], output) ← addNode nodeType #[]
---     | throwErrorWithStack m!"Failed to add Value<Bool> node"
---   setBoolPort val input
---   return output
-
 def addDefaultGeometry : GraphCompileM PortBundle := do
   let some t ← getNodeType (.const ``Generated.ValueGeometry [])
     | throwError "APEX compiler bug in {decl_name%}!"
   return (← addNode t `empty_geometry).output
-
--- def addForBegin (state : ApexStaticType) : GraphCompileM ForBeginPorts := do
---   modifyGraph (fun g => return g.addForBegin state)
-
--- def addForEnd (state : ApexStaticType) : GraphCompileM ForEndPorts := do
---   modifyGraph (fun g => return g.addForEnd state)
 
 def makeSingleConnection (src trg : PortPtr) : GraphCompileM Unit := do
   modifyGraph (fun g => 
@@ -220,105 +135,6 @@ def makeConnection (src trg : PortBundle) : GraphCompileM Unit := do
     throwError "Can't make a connection {src.toString} → {trg.toString}, invalid shape. case left, node"
   | _, _ =>
     throwError "Can't make a connection {src.toString} → {trg.toString}, invalid shape."
-
--- /-- Create a fresh port type give a  -/
--- def mkOutput (t : PortType) : GraphCompileM Nat := do
---   sorry
-
--- def connectOutput (bundle : PortBundle) : GraphCompileM PortBundle := do
---   bundle.mapIdxM (fun i p => do
---     match p with
---     | .globalId id =>
---       let p : Port := sorry --getPort id
---       let id ← mkSingleConnection 
---       return .output id
---     | .output .. => 
---        return p)
-  
-
-  -- let _ ← modifyGraph (fun g => 
-  --   return (g.addConnections src trg, ()))
-  -- return true
-
--- def makeConnections (src trg : Array PortBundle) : GraphCompileM Bool := do
---   if src.size != trg.size then
---     return false
-
---   for s in src, t in trg do
---     unless ← makeConnection s t do
---       return false
-
---   return true
-
--- /-- Add identity node for a given type, returns input and output port bundle -/
--- def addIdentity (type : Expr) (userName? : Option String := none) : 
---     GraphCompileM (PortBundle × PortBundle) := do
---   let some apexType ← getApexType? type
---     | throwErrorWithStack m!"Cannot get APEX type for {type}"
-
---   match ← enforceStaticSize apexType with
---   | .error n => 
---     throwErrorWithStack m!"Cannot determine static size of {type}, the number {n} should be a compile time constant"
---   | .ok type => 
-
---     let mut g := (← get).graph
-
---     let localPorts : Array LocalPort := #[
---       { localId := 0, name := "__spare__", type := .undefined, dir := .input},
---       { localId := 1, name := "__spare__", type := .undefined, dir := .output}
---     ]
-
---     let nodeType : NodeType := {
---       name := "__null__"
---       ports := localPorts
---     }
-
---     let nodeOff := g.nodes.size
---     let portOff := g.ports.size
-
---     let ports := localPorts.map (fun p => 
---       {p with globalId := portOff + p.localId, nodeId := nodeOff : Port})
-
---     let stateIn : ArrayTree Port := type.mapIdx fun i (name,typeName) => 
---       { localId  := 2*i + localPorts.size, 
---         globalId := 2*i + localPorts.size + portOff
---         nodeId := nodeOff
---         name := name
---         type := .builtin typeName
---         dir := .input : Port}
-
---     let stateOut : ArrayTree Port := type.mapIdx fun i (name,typeName) => 
---       { localId  := 2*i + 1 + localPorts.size, 
---         globalId := 2*i + 1 + localPorts.size + portOff
---         nodeId := nodeOff
---         name := name
---         type := .builtin typeName
---         dir := .output : Port}
-
---     let statePorts := stateIn.flatten.zip stateOut.flatten |>.map (fun (x,y) => #[x,y]) |>.flatten
---     let ports := ports ++ statePorts
-
---     let node : Node := {
---       type := nodeType
---       globalId := nodeOff
---       name := (← getFreshNodeName (userName?.getD "null"))
---       ports := ports.map (fun p => p.globalId)
---       subPorts := #[{
---         inputPortId  := some (portOff + 0)
---         outputPortId := some (portOff + 1)
---         subports := stateIn.flatten.map (fun p => (p.name, p.type.builtin!))
---         }]
---     }
-
---     g := {g with
---       nodes := g.nodes.push node
---       ports := g.ports ++ ports
---     }
-
---     modify (fun s => {s with graph := g})
-
---     return (stateIn.mapIdx (fun _ p => p.globalId), 
---             stateOut.mapIdx (fun _ p => p.globalId))
 
 def addInputPort (name : Name) (type : PortType) : GraphCompileM Nat :=
   modifyGraph (fun g => pure (g.addInput name type))
@@ -429,7 +245,7 @@ get reduced. Also match statements hoist their discriminants into let binders be
 reducing them.
 -/
 partial def whnfC (e : Expr) : MetaM Expr :=
-  withConfig (fun cfg => {cfg with iota := false, zeta := true}) do
+  withConfig (fun cfg => {cfg with iota := false, zeta := false}) do
     let e' ← whnfHeadPred e doUnfold
     let e' ← letBindMatchDiscrs e' true
     if e.equal e' then
@@ -493,9 +309,27 @@ unsafe def reduceToLiteralImpl (e : Expr) : MetaM (Option LiteralVal) := do
   catch _ =>
     return none
 
+open Qq in
+unsafe def reduceToBoolImpl (e : Expr) : MetaM (Option Bool) := do
+  if e.hasMVar ∨ e.hasFVar then
+    return none
+  
+  try 
+    let t ← inferType e
+
+    if ← isDefEq t q(Bool) then
+      let val ← evalExpr Bool q(Bool) e
+      return some val
+  
+    return none
+  catch _ =>
+    return none
+
 @[implemented_by reduceToLiteralImpl]
 def tryReduceToLiteral (e : Expr) : MetaM (Option LiteralVal) := return none
 
+@[implemented_by reduceToBoolImpl]
+def tryReduceBool (e : Expr) : MetaM (Option Bool) := return none
 
 open Qq in
 mutual
@@ -696,51 +530,72 @@ partial def compileProjectionFn (fname : Name) (args : Array Expr) :
   return (#[], si)
 
 /-- Compile for-loop -/
-partial def compileForLoop (_e : Expr) (_args : Array Expr) : 
+partial def compileForLoop (e : Expr) (args : Array Expr) : 
     GraphCompileM (Array PortBundle × PortBundle) := do
   trace[HouLean.Apex.compiler] "Compiling for-loop"
+
+  let monad := args[0]!
+  let Range := args[1]!
+  let Index := args[2]!
+  let instForIn := args[3]!
+  let State := args[4]!
+  let instMonad := args[5]!
+  let range := args[6]!
+  let init := args[7]!
+  let f := args[8]!
+
+  let (f',ctx) ← abstractAllFVars f
+
+  let Context ← inferType ctx
+
+  let e' ← mkAppOptM ``ForIn.forIn.apex_impl_with_pass_through 
+    #[some monad, some Range, some Index, some Context, some instForIn, 
+      some State, some instMonad, none /- instance of ForLoop -/,
+      some range, some init, some ctx, some f']
+
+  trace[HouLean.Apex.compiler] "Replaced for loop:\n{e}\n==>\n{e'}"
+
+  return ← compile e'
+
+partial def compileIte (expr : Expr) (args : Array Expr) : 
+    GraphCompileM (Array PortBundle × PortBundle) := do
+  trace[HouLean.Apex.compiler] "Compiling if .. then .. else .."
+
+  let type := args[0]!
+  let cProp := args[1]!
+  let _instDec := args[2]!
+  let mut t := args[3]!
+  let mut e := args[4]!
+
+  if expr.isAppOf ``dite then
+    t := t.app (← mkSorry cProp false)
+    e := e.app (← mkSorry ((Expr.const ``Not []).app cProp) false)
+
+  let condition ← mkAppOptM ``decide.apex_impl #[some cProp, none]
   
-  throwError "for loops are not supported right now"
-  -- let monad := args[0]!
-  -- let range ← whnf args[3]!
+  if let some c ← tryReduceBool condition then
+    if c then
+      return ← compile t
+    else
+      return ← compile e
 
-  -- unless ← isDefEq monad q(@Id : Type → Type) do
-  --   throwErrorWithStack m!"Unsupported monad {monad} in for loop"
+  let (t',tctx) ← abstractAllFVars t
+  let (e',ectx) ← abstractAllFVars e
 
-  -- unless range.isAppOfArity' ``Std.Range.mk 4 do
-  --   throwErrorWithStack m!"Unsupported range {range} in for loop"
+  let TContext ← inferType tctx
+  let EContext ← inferType ectx
 
-  -- let b ← whnf (range.getArg! 0)
-  -- let s ← whnf (range.getArg! 2)
-  -- unless ← isDefEq b q(0 : Nat) do
-  --   throwErrorWithStack m!"Invalid range start: {b}"
-  -- unless ← isDefEq s q(1 : Nat) do
-  --   throwErrorWithStack m!"Invalid range step: {s}"
+  let expr' ← mkAppOptM ``ite.apex_impl_with_pass_through
+    #[some type, some condition, 
+      some TContext, none, none, 
+      some EContext, none, none, 
+      none, none, none,
+      some t', some e', tctx, ectx]
 
-  -- let (_, iterations) ← compile (range.getArg! 1)
-  -- let (loopIns, loopOut) ← compile args[4]!
-  -- let (_, input) ← compile args[5]!
+  trace[HouLean.Apex.compiler] "Replaced for if:\n{expr}\n==>\n{expr'}"
 
-  -- let loopIndexIn := loopIns[0]!
-  -- let loopIn := loopIns[2]!
+  return ← compile expr'
 
-  -- let stateShape ← input.mapIdxM (fun _ p => do 
-  --   let p ← readGraph (fun g => pure g.ports[p]!)
-  --   match p.type with
-  --   | .builtin typeName => return (p.name, typeName)
-  --   | _ => throwErrorWithStack m!"Invalid state {args[5]!} : {← inferType args[5]!} in for loop")
-  
-  -- let bp ← addForBegin stateShape
-  -- let ep ← addForEnd stateShape
-
-  -- let _ ← makeConnection input bp.stateIn
-  -- let _ ← makeConnection iterations bp.iterations
-  -- let _ ← makeConnection bp.scope ep.scope
-  -- let _ ← makeConnection bp.index loopIndexIn
-  -- let _ ← makeConnection bp.stateOut loopIn
-  -- let _ ← makeConnection loopOut ep.stateIn
-
-  -- return (#[], ep.stateOut)
 
 /-- Compile normal function application -/
 partial def compileNormalApp (fn : Expr) (args : Array Expr) (e : Expr) : 
@@ -771,6 +626,14 @@ partial def compileApplication (e : Expr) :
     GraphCompileM (Array PortBundle × PortBundle) := do
   let (fn, args) := e.withApp fun fn args => (fn, args)
 
+  -- Handle for-loop
+  if fn.isAppOf ``ForIn.forIn then
+    return ← compileForLoop e args
+
+  -- Handle if .. then .. else ..
+  if fn.isAppOf ``ite || fn.isAppOf ``dite then
+    return ← compileIte e args
+
   -- Try implemented_by override
   if let some result ← tryCompileImplementedBy fn args then
     return result
@@ -799,10 +662,6 @@ partial def compileApplication (e : Expr) :
   -- Handle projection function
   if let some _ ← getProjectionFnInfo? fname then
     return ← compileProjectionFn fname args
-
-  -- -- Handle for-loop
-  -- if fname = ``Std.Range.forIn'.loop then
-  --   return ← compileForLoop e args
 
   -- Normal application
   compileNormalApp fn args e
@@ -1002,22 +861,6 @@ elab t:"#apex_graph" x:term : command => do
   logInfoAt t s!"{g}"
 
 
--- instance : ApexType Nat Int where
---   toApex x := Int.ofNat x
---   fromApex x := x.toNat
-
--- -- this is saying that `Int.ofNat` should be compiled down to identity
--- run_meta compilerExt.add (.implementedByName ``Int.ofNat ``id'  #[none, some 0]) default
-
-
--- #apex_graph (fun x y : Float => x)
--- #apex_graph (fun x y : Float => y)
--- #apex_graph (fun x y : Float => (x,y))
--- #apex_graph (fun x : Float => (0:Int))
--- #apex_graph (fun x : Float => (0:Float))
--- #apex_graph (fun x : Float => "foo")
--- #apex_graph (fun x : Float => (x,(0.0:Float)))
--- #apex_graph (fun x : Float×Float => (x,(42.1234:Float),x.2,x.1))
 
 -- todo: move this somewhere
 run_meta compilerExt.add (.implementedByName ``apexFlatten ``id' #[none, some 3])

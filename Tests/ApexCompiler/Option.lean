@@ -5,19 +5,26 @@ open HouLean Apex Compiler Qq
 
 /--
 info: Nodes:
+  0: fst : Value<Int>
+  1: snd : Value<Bool>
 
 Ports:
+  0: /fst/parm[in]
+  1: /fst/[anonymous][out]
+  2: /snd/parm[in]
+  3: /snd/[anonymous][out]
 
 Inputs:
-  x[in] -> #[]
+  x[in] -> #[/fst/parm[in]]
 
 Outputs:
-  x[in] -> fst[out]
-  lit[True] -> snd[out]
+  /fst/[anonymous][out] -> fst[out]
+  /snd/[anonymous][out] -> snd[out]
 
 Wires:
 
 Literals:
+  0: bool "true" -> /snd/parm[in]
 -/
 #guard_msgs in
 #apex_graph fun x : Int => some x
@@ -25,16 +32,22 @@ Literals:
 
 /--
 info: Nodes:
+  0: fst : Value<Int>
+  1: snd : Value<Bool>
 
 Ports:
+  0: /fst/parm[in]
+  1: /fst/[anonymous][out]
+  2: /snd/parm[in]
+  3: /snd/[anonymous][out]
 
 Inputs:
-  x.fst[in] -> #[]
-  x.snd[in] -> #[]
+  x.fst[in] -> #[/fst/parm[in]]
+  x.snd[in] -> #[/snd/parm[in]]
 
 Outputs:
-  x.fst[in] -> fst[out]
-  x.snd[in] -> snd[out]
+  /fst/[anonymous][out] -> fst[out]
+  /snd/[anonymous][out] -> snd[out]
 
 Wires:
 

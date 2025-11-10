@@ -38,6 +38,7 @@ def LiteralVal.isEmptyGeometry : LiteralVal → Bool
 
 inductive OutputConnection
   | port  (globalId : Nat)
+  | subport  (globalId : Nat) (localId : Nat)
   | input (id : Nat)
   | literal (val : LiteralVal)
 
@@ -94,6 +95,8 @@ instance : ToString ApexGraph := ⟨fun g =>
         match i with
         | .port portId =>
           s := s ++ s!"  {g.printPort (.port portId)} -> {t.name}[out]\n"
+        | .subport id i =>
+          s := s ++ s!"  {g.printPort (.subport id i)} -> {t.name}[out]\n"
         | .input inputId =>
           let t' := g.inputs[inputId]!.1
           s := s ++ s!"  {t'.name}[in] -> {t.name}[out]\n"
@@ -339,6 +342,17 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
       name := name
     }     
     return {g with outputs := g.outputs.push (port, .port src)}
+
+  | .subport id i, .output name =>
+    unless g.ports[id]!.dir == .output do
+      throw s!"Graph output can be connected only to output port!\n{repr src} -> {repr trg}"
+
+    let port := { g.ports[id]!.toLocalPort with 
+      dir := .input
+      localId := g.outputs.size
+      name := name.appendAfter (toString i)
+    }     
+    return {g with outputs := g.outputs.push (port, .subport id i)}
 
   | .literal val, .output name =>
     if val.isEmptyGeometry then
@@ -601,6 +615,9 @@ Id.run do
       match output with
       | .port portId =>
         s := s ++ s!"graph.addWire({portId}, outputPortId)" ++ "\n"    
+      | .subport id i =>
+        s := s ++ s!"srcId = graph.subPorts({id})[{i}]" ++ "\n"      
+        s := s ++ s!"graph.addWire(srcId, outputPortId)" ++ "\n"    
       | .input inputId =>
         s := s ++ s!"graph.addWire(inputs[{inputId}], outputPortId)" ++ "\n"    
       | .literal _val =>

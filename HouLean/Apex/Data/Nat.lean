@@ -36,5 +36,5 @@ def Nat.div.apex_impl (x y : Nat) : Nat := fromApex ((toApex x) / (toApex y))
 def Float.ofNat.apex_impl (x : Nat) : Float := 
   ConvertIntFloat (toApex x)
 
-@[apex_implements Nat.decLt]
-def Nat.decLt.apex_impl (a b : Nat) : Bool := decide (toApex a < toApex b)
+-- @[apex_implements Nat.decLt]
+-- def Nat.decLt.apex_impl (a b : Nat) : Bool := decide (toApex a < toApex b)

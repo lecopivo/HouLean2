@@ -70,6 +70,19 @@ instance : ApexTypeFlatten Int [.int] where
   apexFlatten x := .cons x .nil
   apexUnflatten := fun (.cons x .nil) => x
 
+instance : ApexTypeFlatten Geometry [.geometry] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten := fun (.cons x .nil) => x
+
+instance : ApexTypeFlatten String [.string] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten := fun (.cons x .nil) => x
+
+instance : ApexTypeFlatten Unit [.int] where
+  apexFlatten _ := .cons (0:Int) .nil
+  apexUnflatten := fun (.cons _ .nil) => ()
+
+
 set_option warn.sorry false in
 unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (α×β) (ts ++ ss) where
   apexFlatten x := sorry

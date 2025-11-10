@@ -3,7 +3,7 @@ import HouLean.Apex.Data.Nat
 
 namespace HouLean.Apex.Compiler
 
-open Generated
+open Apex Generated
 
 class ApexToString (α : Type u) where
   toString : α → String

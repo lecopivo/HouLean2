@@ -174,17 +174,14 @@ Literals:
 
 /--
 info: Nodes:
-  0: ConvertIntFloat : Convert<Int,Float>
-  1: array_GetFloat : array::Get<Float>
+  0: array_GetFloat : array::Get<Float>
 
 Ports:
-  0: /ConvertIntFloat/a[in]
-  1: /ConvertIntFloat/[anonymous][out]
-  2: /array_GetFloat/array[in]
-  3: /array_GetFloat/index[in]
-  4: /array_GetFloat/default[in]
-  5: /array_GetFloat/fst[out]
-  6: /array_GetFloat/snd[out]
+  0: /array_GetFloat/array[in]
+  1: /array_GetFloat/index[in]
+  2: /array_GetFloat/default[in]
+  3: /array_GetFloat/fst[out]
+  4: /array_GetFloat/snd[out]
 
 Inputs:
   x[in] -> #[/array_GetFloat/array[in]]
@@ -194,10 +191,9 @@ Outputs:
   /array_GetFloat/fst[out] -> [anonymous][out]
 
 Wires:
-  0: /ConvertIntFloat/[anonymous][out] -> /array_GetFloat/default[in]
 
 Literals:
-  0: int 0 -> 0
+  0: float 0.000000 -> /array_GetFloat/default[in]
 -/
 #guard_msgs in
 #apex_graph fun (x : Array Float) (i : Nat) => x[i]!

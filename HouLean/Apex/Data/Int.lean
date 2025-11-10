@@ -23,14 +23,14 @@ def Int.neg.apex_impl (x : Int) : Int := NegateInt x
 @[apex_implements Int.emod]
 def Int.mod.apex_impl (x y : Int) : Int := Modulo x y
 
-@[apex_implements Int.decEq]
-def Int.decEq.apex_impl (x y : Int) : Bool := EqualsInt x y 
+-- @[apex_implements Int.decEq]
+-- def Int.decEq.apex_impl (x y : Int) : Bool := EqualsInt x y 
 
-@[apex_implements Int.decLt]
-def Int.decLt.apex_impl (x y : Int) : Bool := LessThanInt x y
+-- @[apex_implements Int.decLt]
+-- def Int.decLt.apex_impl (x y : Int) : Bool := LessThanInt x y
 
-@[apex_implements Int.decLe]
-def Int.decLe.apex_impl (x y : Int) : Bool := LessThanOrEqualInt x y
+-- @[apex_implements Int.decLe]
+-- def Int.decLe.apex_impl (x y : Int) : Bool := LessThanOrEqualInt x y
 
 -- todo: somehow make sure that `min x y` uses this
 def Int.min.apex_impl (x y : Int) : Int := MinInt x #a[y]
