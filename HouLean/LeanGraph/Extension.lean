@@ -64,6 +64,8 @@ partial def mkPortType (t : Expr) (forceBuiltin := false) (userName? : Option St
   if t.isMVar then
     return .builtin (userName?.getD "output") "?_" -- only output ports do not have userName? provided
 
+  if t.isForall then
+    return .builtin (userName?.getD "function") s!"{← ppExpr t}" -- only output ports do not have userName? provided
 
   let (fn, args) := (← whnfR t).getAppFnArgs
 

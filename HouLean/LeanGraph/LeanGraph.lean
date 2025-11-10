@@ -28,7 +28,7 @@ partial def PortType.toString (t : PortType) (indent : String := "")  : String :
   | .builtin n tn => s!"{indent}{n} : {tn}"
   | .struct  n tn xs => 
     let xs := xs.map (fun x => x.toString (indent ++ "  ")) |>.joinl (map:=id) (·++"\n"++·)
-    s!"{indent}{n} : \{\n{xs}\n{indent}} : {tn}"
+    s!"{indent}{n} : \{\n{xs}\n{indent} : {tn}}"
 
 instance : ToString PortType := ⟨PortType.toString⟩
 
