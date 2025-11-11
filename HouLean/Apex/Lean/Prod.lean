@@ -22,7 +22,6 @@ unsafe def MProd.rec.apex_impl {α β} {motive : MProd α β → Sort u_1}
 run_meta compilerExt.add (.implementedByName ``MProd.rec ``MProd.rec.apex_impl #[some 0, some 1, some 2, some 3, some 4]) default
 
 
-
 namespace HouLean
 
 class ProdMap (A B : Type) (As : Type) (Bs : outParam Type) where
@@ -52,3 +51,4 @@ instance {A B : Type} [ProdFold A B As] [ProdFold A B As'] : ProdFold A B (As×A
     prodFold op (prodFold op init a) a'
 
 def prodFold {A B As} [ProdFold A B As] (as : As) (init : B) (op : B → A → B) := ProdFold.prodFold op init as
+

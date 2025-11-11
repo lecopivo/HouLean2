@@ -29,6 +29,13 @@ def get_default_types():
         "nodeTypes": []
     }
 
+def is_lean_graph_node(node):
+    """Checks if `node` is Lean Graph node"""
+    if node is None:
+        return False
+    else:
+        return node.type() == hou.nodeType("tskrivan::Sop/lean_graph::1.0")
+
 
 class NodeEditorWidget(QWidget):
     type_check_response_signal = Signal(object)
@@ -125,14 +132,15 @@ class NodeEditorWidget(QWidget):
         """Automatically save current network to a Houdini node."""
         try:
             # Only save if the node has a 'network' parameter
-            if not node.parm('network'):
+            if not is_lean_graph_node(node):
                 print("Node {} has no 'network' parameter - skipping auto-save".format(node.path()))
                 return
 
+            print(f"Saving network to {node.path()}")
             # Serialize and save
             data = save_to_json(self.editor)
             json_str = json.dumps(data, indent=2)
-            node.parm('network').set(json_str)
+            node.parm("lean_graph/lean_graph").set(json_str)
 
             print("Auto-saved network to: {}".format(node.path()))
 
@@ -143,13 +151,14 @@ class NodeEditorWidget(QWidget):
         """Automatically load network from a Houdini node."""
         try:
             # Check if node has network parameter
-            if not node.parm('network'):
+            if not is_lean_graph_node(node):
                 print("Node {} has no 'network' parameter - clearing editor".format(node.path()))
                 self._clear_editor()
                 self.status_label.setText("{} has no network".format(node.name()))
                 return
 
-            json_str = node.parm('network').eval()
+            print(f"Loading network to {node.path()}")            
+            json_str = node.parm("lean_graph/lean_graph").eval()
 
             if not json_str or json_str.strip() == "":
                 print("Node {} has empty network parameter - clearing editor".format(node.path()))
@@ -301,21 +310,11 @@ class NodeEditorWidget(QWidget):
         
         toolbar_layout.addSpacing(8)
         
-        save_to_node_btn = QPushButton("Save to Node")
-        save_to_node_btn.clicked.connect(self.save_to_node)
-        toolbar_layout.addWidget(save_to_node_btn)
+        # load_types_btn = QPushButton("Load Types")
+        # load_types_btn.clicked.connect(self.load_node_types)
+        # toolbar_layout.addWidget(load_types_btn)
         
-        load_from_node_btn = QPushButton("Load from Node")
-        load_from_node_btn.clicked.connect(self.load_from_node)
-        toolbar_layout.addWidget(load_from_node_btn)
-        
-        toolbar_layout.addSpacing(8)
-        
-        load_types_btn = QPushButton("Load Types")
-        load_types_btn.clicked.connect(self.load_node_types)
-        toolbar_layout.addWidget(load_types_btn)
-        
-        toolbar_layout.addSpacing(8)
+        # toolbar_layout.addSpacing(8)
         
         self.structural_matching_cb = QCheckBox("Structural Type Matching")
         self.structural_matching_cb.setChecked(True)
@@ -823,9 +822,6 @@ class NodeEditorWidget(QWidget):
             self.status_label.setText("Type check failed - server error")
             return
 
-        # just reload graph from it self, does that cause problems?
-        # data = save_to_json(self.editor)
-        # load_from_json(self.editor, data)
         msgs = response["typecheck"]["data"]["messages"]
         graph = response["typecheck"]["data"]["graph"]
 
@@ -838,12 +834,36 @@ class NodeEditorWidget(QWidget):
            print(f"updating node {old_name}, (the name should match: {new_name})")
            node_type = self.registry._parse_node_type(new_node["type"])
            old_node.update_ports(node_type)
-        
-        # if response.get("status") != "success":
-        #     error_msg = response.get("result", "Unknown error")
-        #     print("Type check error: {}".format(error_msg))
-        #     self.status_label.setText("Type check error: {}".format(error_msg))
-        #     return
+
+
+        # ensure we selected Lean Graph
+        if not is_lean_graph_node(self.current_hou_node):
+            print(f"The current node {self.current_hou_node} is not Lean Graph, can't apply changes!")
+            return
+
+        msgNode = self.current_hou_node.node("messages")
+        msgNode.parm("numerror").set(len(msgs))
+        for index, msg in enumerate(msgs):
+            severity = msg["severity"]
+            msgText = msg["data"].replace("`","'")
+
+            if severity == "information":
+                msgNode.parm(f"severity{index+1}").set(0)
+                msgNode.parm(f"errormsg{index+1}").set(msgText)
+                msgNode.parm(f"enable{index+1}").set(1)
+
+            if severity == "warning":
+                msgNode.parm(f"severity{index+1}").set(1)
+                msgNode.parm(f"errormsg{index+1}").set(msgText)
+                msgNode.parm(f"enable{index+1}").set(1)                
+
+            if severity == "error":
+                msgNode.parm(f"severity{index+1}").set(2)
+                msgNode.parm(f"errormsg{index+1}").set(msgText)
+                msgNode.parm(f"enable{index+1}").set(1)                
+
+        # ensure that messages are updated on the node
+        self.current_hou_node.cook()
 
         self.status_label.setText("Type check completed!")
         
@@ -1084,51 +1104,6 @@ class NodeEditorWidget(QWidget):
                 data = json.load(f)
             self.registry.load_from_json(data)
     
-    def save_to_node(self):
-        selected = hou.selectedNodes()
-        if not selected:
-            hou.ui.displayMessage("Please select a node first", severity=hou.severityType.Warning)
-            return
-        
-        node = selected[0]
-        
-        if not node.parm('network'):
-            parm_template = hou.StringParmTemplate('network', 'Network', 1, 
-                                                   string_type=hou.stringParmType.Regular)
-            parm_group = node.parmTemplateGroup()
-            parm_group.append(parm_template)
-            node.setParmTemplateGroup(parm_group)
-        
-        data = save_to_json(self.editor)
-        json_str = json.dumps(data, indent=2)
-        node.parm('network').set(json_str)
-        
-        hou.ui.displayMessage(f"Network saved to node: {node.path()}", severity=hou.severityType.Message)
-    
-    def load_from_node(self):
-        selected = hou.selectedNodes()
-        if not selected:
-            hou.ui.displayMessage("Please select a node first", severity=hou.severityType.Warning)
-            return
-        
-        node = selected[0]
-        
-        if not node.parm('network'):
-            hou.ui.displayMessage("Selected node has no 'network' parameter", severity=hou.severityType.Warning)
-            return
-        
-        json_str = node.parm('network').eval()
-        if not json_str:
-            hou.ui.displayMessage("Network parameter is empty", severity=hou.severityType.Warning)
-            return
-        
-        try:
-            data = json.loads(json_str)
-            load_from_json(self.editor, data)
-            hou.ui.displayMessage(f"Network loaded from node: {node.path()}", severity=hou.severityType.Message)
-        except json.JSONDecodeError as e:
-            hou.ui.displayMessage(f"Failed to parse network data: {e}", severity=hou.severityType.Error)
-
 
 def createInterface():
     """Entry point for Houdini Python Panel"""
