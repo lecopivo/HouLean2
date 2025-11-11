@@ -464,11 +464,14 @@ namespace Geometry
   geo_GlobPrims g pattern ordered
 
 -- Geometry operations
-@[apex_unfold] def merge (g : Geometry) {n : Nat} (sources : VariadicArg Geometry n) : Geometry :=
-  geo_Merge g sources
+@[apex_unfold] def merge (g : Geometry) (sources : Geometry) : Geometry :=
+  geo_Merge g #a[sources]
 
-@[apex_unfold] def mergePacked {n : Nat} (sources : VariadicArg Geometry n) : Geometry :=
-  geo_MergePacked sources
+@[apex_unfold] def pack (geo : Geometry) : Geometry :=
+  geo_MergePacked #a[geo]
+
+@[apex_unfold] def mergePacked (geo : Geometry) (sources : Geometry) : Geometry :=
+  geo_MergePacked #a[geo, sources]
 
 @[apex_unfold] def replace (g : Geometry) (src : Geometry) : Geometry := geo_Replace g src
 

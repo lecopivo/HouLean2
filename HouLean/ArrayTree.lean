@@ -94,6 +94,28 @@ def ArrayTree.mapIdx {α β} (p : ArrayTree α) (f : Nat → α → β) : ArrayT
 def ArrayTree.map {α β} (p : ArrayTree α) (f : α → β) : ArrayTree β := 
   p.mapIdxM (m:=Id) (fun _ => f)
 
+def ArrayTree.mapIdxM' {m} [Monad m] {α β} (p : ArrayTree α) (f : Nat → α → m (ArrayTree β)) : m (ArrayTree β) := do
+  return (← go p 0).1
+where
+  go (p : ArrayTree α) (off : Nat) : m (ArrayTree β × Nat) := do
+    match p with
+    | .leaf i => return (← f off i, off + 1)
+    | .node ps => do
+      let mut off := off
+      let mut r : Array (ArrayTree β) := #[]
+      for p in ps do
+        let (p', off') ← go p off
+        r := r.push p'
+        off := off'
+      return (.node r, off)
+
+def ArrayTree.mapIdx' {α β} (p : ArrayTree α) (f : Nat → α → ArrayTree β) : ArrayTree β := 
+  p.mapIdxM' (m:=Id) f
+
+def ArrayTree.map' {α β} (p : ArrayTree α) (f : α → ArrayTree β) : ArrayTree β := 
+  p.mapIdxM' (m:=Id) (fun _ => f)
+
+
 -- partial def ArrayTree.map2M? {m} [Monad m] [MonadMeta Exception m] {α β γ} (a : ArrayTree α) (b : ArrayTree β) (op : α → β → m γ) :
 --     m (ArrayTree γ) := do 
 --   match a, b with

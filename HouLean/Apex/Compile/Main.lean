@@ -81,24 +81,23 @@ def throwErrorWithStack (msg : MessageData) : GraphCompileM α := do
   throwErrorAt (← getRef) m!"{msg}\n{← getUnfoldStackMsg}"
 
 /-- Add a node to the graph with optional subports -/
-def addNode (nodeType : NodeType)  (nodeName : Name) : 
+def addNode (nodeType : NodeType)  (nodeName : Name) (argPorts : Array PortBundle) : 
     GraphCompileM (struct {nodeId : Nat, inputs : Array PortBundle, output : PortBundle}) := do
   let userName := toString nodeName.eraseMacroScopes
   let userName ← getFreshNodeName userName
-  modifyGraph (fun g =>
-     let r := (g.addNode nodeType userName)
+  modifyGraph (fun g => do
+     let r ← g.addNode nodeType userName argPorts
      pure <| (r.graph, struct r pop% graph))
 
 def addDefaultGeometry : GraphCompileM PortBundle := do
   let some t ← getNodeType (.const ``Generated.ValueGeometry [])
     | throwError "APEX compiler bug in {decl_name%}!"
-  return (← addNode t `empty_geometry).output
+  return (← addNode t `empty_geometry #[]).output
 
 def makeSingleConnection (src trg : PortPtr) : GraphCompileM Unit := do
-  modifyGraph (fun g => 
-    match g.addConnection src trg with
-    | .ok g => pure (g,())
-    | .error msg => throwError msg)
+  modifyGraph (fun g => do
+    let g ← g.addConnection src trg
+    return (g,()))
 
 def isVariadic (p : PortPtr) : GraphCompileM Bool := do
   match p with
@@ -116,6 +115,7 @@ def isVariadic (p : PortPtr) : GraphCompileM Bool := do
   | .literal .. => return false
     
 def makeConnection (src trg : PortBundle) : GraphCompileM Unit := do
+  trace[HouLean.Apex.compiler] m!"Making connection {src.toString} → {trg.toString}"
   match src, trg with
   | .leaf s, .leaf t => makeSingleConnection s t
   | .node as, .node bs => 
@@ -274,7 +274,7 @@ The main issue this is causing is compiling expressions with `bind` and
 I just added a temporary fix
 -/
 partial def whnfC (e : Expr) : MetaM Expr :=
-  withConfig (fun cfg => {cfg with iota := false, zeta := false}) do
+  withConfig (fun cfg => {cfg with iota := false, zeta := false, zetaDelta := false}) do
     let e' := e
     let e' ← letBind e'
     let e' ← whnfHeadPred e' doUnfold
@@ -342,6 +342,8 @@ unsafe def reduceToLiteralImpl (e : Expr) : MetaM (Option LiteralVal) := do
 
 open Qq in
 unsafe def reduceToBoolImpl (e : Expr) : MetaM (Option Bool) := do
+  -- todo: do something more efficient, check if the term has no local free variables, let free variables are ok
+  let e ← whnf e 
   if e.hasMVar ∨ e.hasFVar then
     return none
   
@@ -377,14 +379,13 @@ partial def compile (e : Expr) : GraphCompileM (Array PortBundle × PortBundle) 
 /-- Check if expression is a variadic argument and return its elements -/
 partial def compileVariadicArg? (e : Expr) : GraphCompileM (Option (PortBundle)) := do
   unless e.isAppOfArity ``VariadicArg.cons 4 ||
-         e.isAppOfArity ``VariadicArg.nil 2 ||
-         e.isAppOfArity ``apexFlatten 4 do 
+         e.isAppOfArity ``VariadicArg.nil 2 do
     return none
 
-  if e.isAppOfArity ``apexFlatten 4 then
-    let e := e.getArg! 3
-    let (_,r) ← compile e
-    return some (.node (r.flatten.map ArrayTree.leaf))
+  -- if e.isAppOfArity ``apexFlatten 4 then
+  --   let e := e.getArg! 3
+  --   let (_,r) ← compile e
+  --   return some (.node (r.flatten.map ArrayTree.leaf))
 
   let t ← inferType e
   let n := (t.getArg! 1)
@@ -484,20 +485,23 @@ partial def tryInternalOverride (fn : Expr) (args : Array Expr) :
     return ← compile args[3]!
 
   if fname == ``apexFlatten ∧ args.size == 4 then
-    let (inputs, output) ← compile args[3]!
-    unless inputs.size == 0 do throwError "APEX compiler bug in {decl_name%}!"
-    return some (inputs, .node (output.flatten.map (ArrayTree.leaf)))
+    return ← compile args[3]!
+    -- let (inputs, output) ← compile args[3]!
+    -- unless inputs.size == 0 do throwError "APEX compiler bug in {decl_name%}!"
+    -- return some (inputs, .node (output.flatten.map (ArrayTree.leaf)))
 
   if fname == ``apexUnflatten ∧ args.size == 4 then
-    let (inputs, output) ← compile args[3]!
-    let some t ← getApexType? args[0]! | throwError "Invalid APEX type {args[0]!}!"
+    return ← compile args[3]!
 
-    let .leaf (.port outputId) := output
-      | throwError "Trying to unflatten back into {args[0]!}, only a single port expected but got {output.toString}!"
+    -- let (inputs, output) ← compile args[3]!
+    -- let some t ← getApexType? args[0]! | throwError "Invalid APEX type {args[0]!}!"
 
-    -- recover the shape of the type
-    let output := t.mapIdx (fun i _ => PortPtr.subport outputId i)
-    return (inputs, output)
+    -- let .leaf (.port outputId) := output
+    --   | throwError "Trying to unflatten back into {args[0]!}, only a single port expected but got {output.toString}!"
+
+    -- -- recover the shape of the type
+    -- let output := t.mapIdx (fun i _ => PortPtr.subport outputId i)
+    -- return (inputs, output)
     
   return none
 
@@ -565,67 +569,79 @@ partial def compileForLoop (e : Expr) (args : Array Expr) :
     GraphCompileM (Array PortBundle × PortBundle) := do
   trace[HouLean.Apex.compiler] "Compiling for-loop"
 
-  let monad := args[0]!
-  let Range := args[1]!
-  let Index := args[2]!
-  let instForIn := args[3]!
-  let State := args[4]!
-  let instMonad := args[5]!
-  let range := args[6]!
-  let init := args[7]!
-  let f := args[8]!
+  let State := args[0]!
+  let iterations := args[1]!
+  let init := args[2]!
+  let loop := args[3]!
 
-  let (f',ctx) ← abstractAllFVars f
+  let (ctx, loop) ← abstractAllFVars loop
 
   let Context ← inferType ctx
 
-  let e' ← mkAppOptM ``ForIn.forIn.apex_impl_with_pass_through 
-    #[some monad, some Range, some Index, some Context, some instForIn, 
-      some State, some instMonad, none /- instance of ForLoop -/,
-      some range, some init, some ctx, some f']
+  let e' ← mkAppOptM ``forLoop.apex_impl
+    #[some State, some Context, none, none,
+      some iterations, some init, some ctx, some loop]
 
   trace[HouLean.Apex.compiler] "Replaced for loop:\n{e}\n==>\n{e'}"
 
   return ← compile e'
 
-partial def compileIte (expr : Expr) (args : Array Expr) : 
+partial def compileIte (e : Expr) (args : Array Expr) : 
     GraphCompileM (Array PortBundle × PortBundle) := do
   trace[HouLean.Apex.compiler] "Compiling if .. then .. else .."
 
   let type := args[0]!
-  let cProp := args[1]!
-  let _instDec := args[2]!
-  let mut t := args[3]!
-  let mut e := args[4]!
-
-  if expr.isAppOf ``dite then
-    t := t.app (← mkSorry cProp false)
-    e := e.app (← mkSorry ((Expr.const ``Not []).app cProp) false)
-
-  let condition ← mkAppOptM ``decide.apex_impl #[some cProp, none]
+  let condition := args[1]!
+  let onTrue := args[2]!
+  let onFalse := args[3]!
   
+  trace[HouLean.Apex.compiler] "Trying to reduce `{condition}` to a concrete value"
   if let some c ← tryReduceBool condition then
+    trace[HouLean.Apex.compiler] "  success, the value is {c}"
     if c then
-      return ← compile t
+      return ← compile onTrue
     else
-      return ← compile e
+      return ← compile onFalse
+  trace[HouLean.Apex.compiler] "  failed, building normal if .. then .. else .."
 
-  let (te,ctx) ← abstractAllFVarsMany #[t,e]
-  let t' := te[0]!
-  let e' := te[1]!
-  
-  let Context ← inferType ctx
+  -- when we can express branches as context mutation
+  if let some (ctx,proj,te) ← asContextChange #[onTrue, onFalse] then
 
-  let expr' ← mkAppOptM ``ite.apex_impl_with_pass_through
-    #[some type, some condition, 
-      some TContext, none, none, 
-      some EContext, none, none, 
-      none, none, none,
-      some t', some e', tctx, ectx]
+    let onTrue  := te[0]!
+    let onFalse := te[1]!
 
-  trace[HouLean.Apex.compiler] "Replaced for if:\n{expr}\n==>\n{expr'}"
+    let Context ← inferType ctx
 
-  return ← compile expr'
+    let e' ← mkAppOptM ``ifThenElse.apex_impl_ctx_modify
+      #[some type, some Context, none, none,
+        some condition, some onTrue, some onFalse, some ctx, some proj]
+
+    trace[HouLean.Apex.compiler] "Replaced for if:\n{e}\n==>\n{e'}"
+
+    return ← compile e'
+  -- fall back option, we coudn't figure out what to mutate
+  else
+    
+    let (ctx, te) ← abstractAllFVarsMany #[onTrue, onFalse]
+              
+    let onTrue  := te[0]!
+    let onFalse := te[1]!
+
+    let Context ← inferType ctx
+
+    trace[HouLean.Apex.compiler] m!"Can't express branches as context modification.\n\
+                                    return type: {type}\n\
+                                    context type: {Context}\n\
+                                    Falling back to naive if .. then .. else .. implementation."
+
+
+    let e' ← mkAppOptM ``ifThenElse.apex_impl_simple
+      #[some type, some Context, none, none, none,
+        some condition, some onTrue, some onFalse, some ctx]
+
+    trace[HouLean.Apex.compiler] "Replaced for if:\n{e}\n==>\n{e'}"
+
+    return ← compile e'
 
 
 /-- Compile normal function application -/
@@ -647,9 +663,11 @@ partial def compileNormalApp (fn : Expr) (args : Array Expr) (e : Expr) :
 
   let argPorts ← args.mapM (fun x => do pure (← compile x).2)
   
-  let ⟨_, inputs, output⟩ ← addNode nodeType (Name.mkSimple nodeType.leanDecl.getString!)
+  let name := (Name.mkSimple nodeType.leanDecl.getString!)
+  let ⟨_, inputs, output⟩ ← addNode nodeType (Name.mkSimple nodeType.leanDecl.getString!) argPorts
   for argport in argPorts, input in inputs do
     makeConnection argport input
+  trace[HouLean.Apex.compiler] "succesfully maked connections to {name}"
   return (#[], output)
 
 /-- Compile function application -/
@@ -658,11 +676,11 @@ partial def compileApplication (e : Expr) :
   let (fn, args) := e.withApp fun fn args => (fn, args)
 
   -- Handle for-loop
-  if fn.isAppOf ``ForIn.forIn then
+  if fn.isAppOf ``forLoop then
     return ← compileForLoop e args
 
   -- Handle if .. then .. else ..
-  if fn.isAppOf ``ite || fn.isAppOf ``dite then
+  if fn.isAppOf ``ifThenElse then
     return ← compileIte e args
 
   -- Try implemented_by override
@@ -703,7 +721,7 @@ partial def compileLet (n : Name) (t : Expr) (v : Expr) (b : Expr) :
   if t.isForall then
     return ← compile (b.instantiate1 v)
   
-  withLocalDeclD n t fun x => do
+  withLetDecl n t v fun x => do
     let (_, letOutput) ← compile v
     modify (fun s => {s with fvarToPort := s.fvarToPort.insert x.fvarId! letOutput})
     let b := b.instantiate1 x
@@ -820,7 +838,7 @@ def addValueNode (t : PortType) (nodeName : Name) : GraphCompileM (Nat × Nat) :
     | throwError s!"APEX compiler bug in {decl_name%}, invalid type!"
   let some nodeType ← getValueNode? tag
     | throwError s!"APEX compiler bug in {decl_name%}, can't find value node for {tag.toString}"
-  let ⟨_, #[.leaf (.port inputId)], .leaf (.port outputId)⟩ ← addNode nodeType nodeName
+  let ⟨_, #[.leaf (.port inputId)], .leaf (.port outputId)⟩ ← addNode nodeType nodeName #[]
     | throwError s!"APEX compiler bug in {decl_name%}, invalid shape of value node!"
 
   return (inputId, outputId)
@@ -838,19 +856,22 @@ def fixInputOutputTypes : GraphCompileM Unit := do
   let oldOutputs := (← get).graph.outputs
   let mut newOutputs : Array (LocalPort × OutputConnection) := #[]
   for (p,oldOutput) in oldOutputs  do
-
+    trace[HouLean.Apex.compiler] m!"fixing output port {p.name}"
     match oldOutput with
     | .input inputId => 
+      trace[HouLean.Apex.compiler] m!"direct connection to input[{inputId}]"
       let (valueIn, valueOut) ← addValueNode p.type p.name
       makeSingleConnection (.input inputId) (.port valueIn)
       newOutputs := newOutputs.push (p, .port valueOut)
 
     | .literal val => 
+      trace[HouLean.Apex.compiler] m!"connection set to literal"
       let (valueIn, valueOut) ← addValueNode p.type p.name
       newOutputs := newOutputs.push (p, .port valueOut)
       makeSingleConnection (.literal val) (.port valueIn)
 
     | _ => 
+      trace[HouLean.Apex.compiler] m!"nothing to fix"
       newOutputs := newOutputs.push (p,oldOutput)
       continue
 
@@ -858,8 +879,8 @@ def fixInputOutputTypes : GraphCompileM Unit := do
 
   -- fix unconnected inputs i.e. ensure at least one connection
   for (inputPort,trgs) in (← get).graph.inputs do
-
     if trgs.size = 0 then
+      trace[HouLean.Apex.compiler] m!"fixing unused input {inputPort.name}"
       let (valueIn, _) ← addValueNode inputPort.type inputPort.name
       makeSingleConnection (.input inputPort.localId) (.port valueIn)
 
@@ -872,18 +893,13 @@ def programToApexGraph (e : Expr) : MetaM ApexGraph := do
 
     -- if not a function then we have to make outputs
     if inputs.size = 0 then
-      let some t ← getApexType? e
+      let some t ← getApexType? (← inferType e)
         | throwError "Invalid APEX type of {e}"
       let outputPorts : PortBundle :=  t.mapIdx (fun _ (n,_) => PortPtr.output n)
       makeConnection output outputPorts
 
     fixInputOutputTypes
-    -- let inputs := inputs.map (·.flatten) |>.flatten
-    -- let output := output.flatten
 
-    -- modifyGraph (fun g => pure ({g with 
-    --   inputPorts := inputs
-    --   outputPorts := output},()))
 
 
 open Elab Term Command in
@@ -899,6 +915,7 @@ elab t:"#apex_graph" x:term : command => do
 -- todo: move this somewhere
 run_meta compilerExt.add (.implementedByName ``apexFlatten ``id' #[none, some 3])
 run_meta compilerExt.add (.implementedByName ``apexUnflatten ``id' #[none, some 3])
+
 
 end HouLean.Apex.Compiler
 

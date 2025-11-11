@@ -90,7 +90,11 @@ def mkNodeTypeFromLeanFn (decl : Name) (apexNodeName : String) (hasRunData := fa
 
     -- right now all nodes with non-trivial variadic port groups are hand crafted
     let ports := (inputs.map (fun input => input.flatten)).flatten ++ output.flatten
+
+    -- todo: for now lets assume that there is only one variadic group
+    --       I don't have and an example of multiple variadic groups anyway
     let variadicPortGroups := ports.filterMap (fun p => if p.type.isVariadic then some #[p.localId] else none)
+    let variadicPortGroups := if variadicPortGroups.size = 0 then #[] else #[variadicPortGroups.flatten]
     
     let type : NodeType := {
       name := apexNodeName

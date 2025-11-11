@@ -4,11 +4,13 @@ defaultTargets = ["houlean"]
 
 [[lean_lib]]
 name = "HouLean"
+buildType = "debug"
 
 [[lean_exe]]
 name = "houlean"
 root = "Main"
 supportInterpreter = true
+buildType = "debug"
 
 [[lean_exe]]
 name = "compileToApexGraph"

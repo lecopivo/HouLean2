@@ -243,17 +243,17 @@ Literals:
 #guard_msgs in
 #apex_graph fun x : Int => x + (10 + 20)
 
-/--
-info: Nodes:
+-- /--
+-- info: Nodes:
 
-Ports:
+-- Ports:
 
-Wires:
+-- Wires:
 
-Literals:
--/
-#guard_msgs in
-#apex_graph false -- this is wrong :(
+-- Literals:
+-- -/
+-- #guard_msgs in
+-- #apex_graph false -- this is wrong :(
 
 
 /--
@@ -532,12 +532,34 @@ Literals:
 
 /--
 info: Nodes:
+  0: fst : Value<Int>
+  1: snd.fst : Value<String>
+  2: snd.snd.fst : Value<Float>
+  3: snd.snd.snd : Value<Bool>
 
 Ports:
+  0: /fst/parm[in]
+  1: /fst/[anonymous][out]
+  2: /snd.fst/parm[in]
+  3: /snd.fst/[anonymous][out]
+  4: /snd.snd.fst/parm[in]
+  5: /snd.snd.fst/[anonymous][out]
+  6: /snd.snd.snd/parm[in]
+  7: /snd.snd.snd/[anonymous][out]
+
+Outputs:
+  /fst/[anonymous][out] -> fst[out]
+  /snd.fst/[anonymous][out] -> snd.fst[out]
+  /snd.snd.fst/[anonymous][out] -> snd.snd.fst[out]
+  /snd.snd.snd/[anonymous][out] -> snd.snd.snd[out]
 
 Wires:
 
 Literals:
+  0: int 0 -> /fst/parm[in] ⏎
+  1: str "hello" -> /snd.fst/parm[in] ⏎
+  2: float 3.141590 -> /snd.snd.fst/parm[in] ⏎
+  3: bool "true" -> /snd.snd.snd/parm[in]
 -/
 #guard_msgs in 
 #apex_graph ((0:Nat), "hello", 3.14159, true)

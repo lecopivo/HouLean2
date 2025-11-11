@@ -175,8 +175,8 @@ deriving Inhabited, Repr
 
 protected def PortPtr.toString : PortPtr → String
   | literal val => s!"lit[{val.toString}]"
-  | port id => toString id
-  | subport id localId => s!"{id}[{localId}]"
+  | port id => s!"port[{id}]"
+  | subport id localId => s!"subport[{id}][{localId}]"
   | input id => s!"in[{id}]"
   | output id => s!"out[{id}]"
 
@@ -204,9 +204,31 @@ partial def arrayToProdBundle (ps : Array PortBundle) : PortBundle :=
   else
     .node #[ps[0]!, arrayToProdBundle ps[1:].toArray]
 
-/-- Add a node to the graph with optional subports -/
-def ApexGraph.addNode (g : ApexGraph) (nodeType : NodeType) (nodeName : String) : 
-    struct { graph : ApexGraph, nodeId : Nat, inputs : Array PortBundle, output : PortBundle} := Id.run do
+def isVariadic'? (port : ArrayTree Port) : Option Port := 
+  match port with
+  | .leaf p => 
+    if p.isVariadic' then
+      p
+    else
+      none
+  | .node .. =>
+    none
+
+def isVariadic? (port : ArrayTree Port) : Option Port := 
+  match port with
+  | .leaf p => 
+    if p.isVariadic then
+      p
+    else
+      none
+  | .node .. =>
+    none
+
+/-- Add a node to the graph with optional subports 
+
+argPorts are used to derive the shape for `VariadicArg'` shapes -/
+def ApexGraph.addNode (g : ApexGraph) (nodeType : NodeType) (nodeName : String) (argPorts : Array PortBundle) : 
+    MetaM struct { graph : ApexGraph, nodeId : Nat, inputs : Array PortBundle, output : PortBundle} := do
   let nodeOff := g.nodes.size
   let portOff := g.ports.size
 
@@ -245,14 +267,35 @@ def ApexGraph.addNode (g : ApexGraph) (nodeType : NodeType) (nodeName : String) 
     ports := g.ports ++ ports
   }
 
+  let groups :=  nodeType.variadicPortGroups
+  let groupShapes : Array PortBundle ← groups.mapM (fun group => do
+    if group.size = 0 then
+      throwError m!"invalid variadic group {toString group}, can't be empty!"
+    let inputId := group[0]! - nodeType.hasRunData.toNat
+    if inputId > argPorts.size then
+      throwError m!"invalid group {group}, the first group member is expected to be an input port"
+    return argPorts[inputId]!)
+
+  let portToBundle : Nat → Port → MetaM PortBundle := (fun _ p => do
+    if p.isVariadic then
+      let some groupId := groups.findIdx? (fun group => group.contains p.localId)
+        | throwError m!"port {p.name}[{p.localId}] is variadic but is does not belog to any of the variadic argument groups {groups}"
+      let shape := groupShapes[groupId]!
+      return shape.mapIdx (fun i _ => .subport p.globalId i)
+    else
+      pure (.leaf (.port p.globalId)))
+
+  let inputPorts : Array PortBundle ← inputs.mapM (fun input => input.mapIdxM' portToBundle)
+  let outputPort : PortBundle ← output.mapIdxM' portToBundle
+
   return {
     graph := g
     nodeId := nodeOff
-    inputs := inputs.map (fun input => input.map (fun p => .port p.globalId))
-    output := output.map (fun p => .port p.globalId)
+    inputs := inputPorts
+    output := outputPort
   }
 
-def ApexGraph.addValueNode (g : ApexGraph) (t : ApexTypeTag) : ApexGraph × Nat × Nat :=
+def ApexGraph.addValueNode (g : ApexGraph) (t : ApexTypeTag) : MetaM (ApexGraph × Nat × Nat) := do
   let inputPort : LocalPort := {
     localId := 0
     name := `parm
@@ -273,10 +316,10 @@ def ApexGraph.addValueNode (g : ApexGraph) (t : ApexTypeTag) : ApexGraph × Nat 
     output := .leaf outputPort
     variadicPortGroups := #[]
   }
-  if let ⟨g,_,#[.leaf (.port inputId)], .leaf (.port outputId)⟩ := g.addNode type "value" then
-    (g, inputId, outputId)
+  if let ⟨g,_,#[.leaf (.port inputId)], .leaf (.port outputId)⟩ ← g.addNode type "value" #[] then
+    return (g, inputId, outputId)
   else
-    panic! s!"APEX compiler bug in {decl_name%}, something went wrong adding value node!"
+    throwError s!"APEX compiler bug in {decl_name%}, something went wrong adding value node!"
 
 
 def LiteralVal.typeTag (val : LiteralVal) : ApexTypeTag := 
@@ -297,9 +340,12 @@ def ApexGraph.ensurePortSize (g : ApexGraph) (globalPortId : Nat) (size : Nat) :
   let nodeId := g.ports[globalPortId]!.nodeId
   {g with nodes := g.nodes.modify nodeId (fun node => node.ensureSubportSize globalPortId size) }
 
-partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except String ApexGraph := do
+partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM ApexGraph := do
   match src, trg with
   | .port src, .port trg =>
+    if g.ports[src]!.type.isVariadic && g.ports[trg]!.type.isVariadic then
+      throwError s!"Trying to connect two variadict ports directly. This is not allowed!"
+
     return { g with wires := g.wires.push (.port src, .port trg) }
 
   | .port src, .subport trg j =>
@@ -318,7 +364,7 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
   | .literal val, .subport id ..
   | .literal val, .port id =>
     unless g.ports[id]!.dir == .input do
-      throw s!"Assigning literal value to output port!\n{repr src} -> {repr trg}"
+      throwError s!"Assigning literal value to output port!\n{repr src} -> {repr trg}"
 
     if val.isEmptyGeometry then
       return g
@@ -327,14 +373,14 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
     if ¬trgPort.isVariadic then
       return { g with literals := g.literals.push (val, .port id) }
     else
-      let (g,valueIn, valueOut) := g.addValueNode val.typeTag
+      let (g,valueIn, valueOut) ← g.addValueNode val.typeTag
       let g ← g.addConnection (.literal val) (.port valueIn)
       let g ← g.addConnection (.port valueOut) trg
       return g
 
   | .port src, .output name =>
     unless g.ports[src]!.dir == .output do
-      throw s!"Graph output can be connected only to output port!\n{repr src} -> {repr trg}"
+      throwError s!"Graph output can be connected only to output port!\n{repr src} -> {repr trg}"
 
     let port := { g.ports[src]!.toLocalPort with 
       dir := .input
@@ -345,7 +391,7 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
 
   | .subport id i, .output name =>
     unless g.ports[id]!.dir == .output do
-      throw s!"Graph output can be connected only to output port!\n{repr src} -> {repr trg}"
+      throwError s!"Graph output can be connected only to output port!\n{repr src} -> {repr trg}"
 
     let port := { g.ports[id]!.toLocalPort with 
       dir := .input
@@ -369,11 +415,11 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
 
   | .input id, trg =>    
     unless id < g.inputs.size do
-      throw s!"Connecting to non-existent input port!\n{repr src} -> {repr trg}"
+      throwError s!"Connecting to non-existent input port!\n{repr src} -> {repr trg}"
     match trg with
     | .port trg => 
       unless g.ports[trg]!.dir == .input do
-        throw s!"Graph input can be connected only to input port!\n{repr src} -> {repr trg}"
+        throwError s!"Graph input can be connected only to input port!\n{repr src} -> {repr trg}"
 
       return {g with inputs := g.inputs.modify id (fun (t,ports) => (t, ports.push (.port trg)))}
     | .subport trg j => 
@@ -388,9 +434,9 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : Except
       }     
       return {g with outputs := g.outputs.push (port, .input id)}
     | _ => 
-      throw s!"Trying to make an invalid connection {repr src} -> {repr trg}" 
+      throwError s!"Trying to make an invalid connection {repr src} -> {repr trg}" 
   | _, _ =>
-    throw s!"Trying to make an invalid connection {repr src} -> {repr trg}"
+    throwError s!"Trying to make an invalid connection {repr src} -> {repr trg}"
 
 -- def ApexGraph.addConnections (g : ApexGraph) (src trg : ArrayTree PortId) : ApexGraph :=
 --   let wires := src.flatten.zip trg.flatten

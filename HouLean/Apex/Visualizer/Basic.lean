@@ -28,12 +28,12 @@ def visualize {α Options} {defaultOpts : Options} [Visualizer α defaultOpts]
     VisualizeM Unit := 
   fun toVisualize vis =>
     if toVisualize == visualizerName then
-      ((), (vis.merge #a[Visualizer.visualize x opts]))
+      ((), (vis.merge (Visualizer.visualize x opts)))
     else
       ((), vis)
 
 def withVisualizer (vis : String) (go : VisualizeM Geometry) : Geometry :=
   let (vis, geo) := go vis Geometry.default
-  let vis := Geometry.mergePacked #a[vis] |>.setPointAttrib 0 "__visualizer" (1:Int)
-  geo.merge #a[vis]
+  let vis := vis.pack |>.setPointAttrib 0 "__visualizer" (1:Int)
+  geo.merge vis
 

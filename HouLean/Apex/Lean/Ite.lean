@@ -23,27 +23,74 @@ end Generated
 
 open Generated TwoWaySwitch
 
-noncomputable -- this is confusing the compiler :) so we have to mark it with concomputable
-def ite.apex_impl_with_pass_through {α : Type} (condition : Bool)
-  {Context : Type} {Ctx} [ApexTypeFlatten Context Ctx]
-  {A} [ApexTypeFlatten α A] [TwoWaySwitch α]
-  (t e : Context → α) (ctx : Context)  :=
+
+noncomputable -- this confuses the compiler ... so we disable it
+def _root_.HouLean.ifThenElse.apex_impl_simple {α Context ts} [Inhabited α] [ApexTypeFlatten (α×Context) ts] 
+    (condition : Bool) (onTrue onFalse : Context → α) (ctx : Context) : α := 
 
   let condition := condition
+  let result : α := default
+  let ctxAndResult := apexFlatten (result, ctx)
   
   -- true branch
-  let ctx := apexFlatten ctx
-  let t1 := IfBegin condition ctx
-  let t2 := t (apexUnflatten t1.2)
-  let t3 := IfEnd t1.1 (apexFlatten t2)
-  let t4 : α := (apexUnflatten t3)
-
+  let r := IfBegin condition ctxAndResult
+  let scope := r.1
+  let ctxAndResult : α × Context := apexUnflatten r.2
+  let ctx := ctxAndResult.2
+  let result := onTrue ctx
+  let ctxAndResult := IfEnd scope (apexFlatten (result, ctx))
+  
   -- false branch
-  let ectx := apexFlatten ectx
-  let e1 := IfBegin (!condition) ectx
-  let e2 := e (apexUnflatten e1.2)
-  let e3 := IfEnd e1.1 (apexFlatten e2)
-  let e4 : α := (apexUnflatten e3)
+  let r := IfBegin (!condition) ctxAndResult
+  let scope := r.1
+  let ctxAndResult : α × Context := apexUnflatten r.2
+  let ctx := ctxAndResult.2
+  let result := onFalse ctx
+  let ctxAndResult := IfEnd scope (apexFlatten (result,ctx))
 
-  twoWaySwitch e4 t4 condition
+  let ctxAndResult : α × Context := apexUnflatten ctxAndResult
 
+  ctxAndResult.1
+
+
+noncomputable -- this confuses the compiler ... so we disable it
+def _root_.HouLean.ifThenElse.apex_impl_ctx_modify {α Context ts} [ApexTypeFlatten Context ts] 
+    (condition : Bool) (onTrue onFalse : Context → Context) (ctx : Context) (proj : Context → α) : α := 
+
+  let condition := condition
+  let ctx := apexFlatten ctx
+  
+  -- true branch
+  let r := IfBegin condition ctx
+  let scope := r.1
+  let ctx := r.2
+  let ctx := onTrue (apexUnflatten ctx)
+  let ctx := IfEnd scope (apexFlatten ctx)
+  
+  -- false branch
+  let r := IfBegin (!condition) ctx
+  let scope := r.1
+  let ctx := r.2
+  let ctx := onFalse (apexUnflatten ctx)
+  let ctx := IfEnd scope (apexFlatten ctx)
+
+  proj (apexUnflatten ctx)
+
+
+/-- Basic if then else function -/
+opaque _root_.HouLean.ifThenElse {α} (condition : Bool) (onTrue onFalse : α) : α := onTrue
+
+
+def _root_.ite.apex_impl {α} (c : Prop) [Decidable c] (t e : α) : α :=
+  let condition := decide c
+  ifThenElse condition t e
+
+def _root_.dite.apex_impl {α} (c : Prop) [Decidable c] (t : c → α) (e : ¬c → α) : α :=
+  let condition := decide c
+  ifThenElse condition (t sorry_proof) (e sorry_proof)
+  
+run_meta compilerExt.add (.implementedByName ``ite ``ite.apex_impl 
+  #[some 0, some 1, some 2, some 3, some 4])
+
+run_meta compilerExt.add (.implementedByName ``dite ``dite.apex_impl 
+  #[some 0, some 1, some 2, some 3, some 4])

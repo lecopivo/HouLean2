@@ -1049,6 +1049,16 @@
    "inputs":
    [{"builtin": {"type": "HouLean.Matrix3", "name": "a"}},
     {"builtin": {"type": "HouLean.Matrix3", "name": "b"}}]},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Prod_fst",
+   "leanConstant": "Prod.fst",
+   "inputs":
+   [{"struct":
+     {"type": "Prod ?α ?β",
+      "subports":
+      [{"builtin": {"type": "?_", "name": "fst"}},
+       {"builtin": {"type": "?_", "name": "snd"}}],
+      "name": "self"}}]},
   {"outputs":
    [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "geometry"}}],
    "name": "Geometry_lattice",
@@ -1317,8 +1327,7 @@
    "leanConstant": "HouLean.Apex.Geometry.merge",
    "inputs":
    [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "g"}},
-    {"builtin":
-     {"type": "HouLean.Apex.VariadicArg Geometry ?n", "name": "sources"}}]},
+    {"builtin": {"type": "HouLean.Apex.Geometry", "name": "sources"}}]},
   {"outputs":
    [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "geometry"}}],
    "name": "SOP_copyToPoints",
@@ -1370,6 +1379,13 @@
    "inputs":
    [{"builtin": {"type": "HouLean.Matrix3", "name": "a"}},
     {"builtin": {"type": "HouLean.Matrix3", "name": "b"}}]},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Prod_fold",
+   "leanConstant": "HouLean.prodFold",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "as"}},
+    {"builtin": {"type": "?_", "name": "init"}},
+    {"builtin": {"type": "?B → ?A → ?B", "name": "op"}}]},
   {"outputs": [{"builtin": {"type": "Bool", "name": "bool"}}],
    "name": "Math_beq",
    "leanConstant": "HouLean.Math.Beq.beq",
@@ -1517,8 +1533,8 @@
    "name": "Geometry_mergePacked",
    "leanConstant": "HouLean.Apex.Geometry.mergePacked",
    "inputs":
-   [{"builtin":
-     {"type": "HouLean.Apex.VariadicArg Geometry ?n", "name": "sources"}}]},
+   [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "geo"}},
+    {"builtin": {"type": "HouLean.Apex.Geometry", "name": "sources"}}]},
   {"outputs": [{"builtin": {"type": "HouLean.Vector3", "name": "vector3"}}],
    "name": "Vector3_lerp",
    "leanConstant": "HouLean.Vector3.lerp",
@@ -1701,6 +1717,12 @@
    [{"builtin": {"type": "HouLean.Matrix3", "name": "a"}},
     {"builtin": {"type": "HouLean.Matrix3", "name": "b"}},
     {"builtin": {"type": "Float", "name": "t"}}]},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Prod_map",
+   "leanConstant": "HouLean.prodMap",
+   "inputs":
+   [{"builtin": {"type": "?_", "name": "as"}},
+    {"builtin": {"type": "?A → ?B", "name": "f"}}]},
   {"outputs":
    [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "geometry"}}],
    "name": "SOP_extractContours",
@@ -1937,6 +1959,16 @@
    "inputs":
    [{"builtin": {"type": "HouLean.Vector3", "name": "x"}},
     {"builtin": {"type": "HouLean.Vector3", "name": "y"}}]},
+  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
+   "name": "Prod_snd",
+   "leanConstant": "Prod.snd",
+   "inputs":
+   [{"struct":
+     {"type": "Prod ?α ?β",
+      "subports":
+      [{"builtin": {"type": "?_", "name": "fst"}},
+       {"builtin": {"type": "?_", "name": "snd"}}],
+      "name": "self"}}]},
   {"outputs":
    [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "geometry"}}],
    "name": "SOP_surfaceSplat",

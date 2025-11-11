@@ -25,11 +25,10 @@ def runGeo (geo : Geometry) : Geometry := Id.run do
   return geo
 
 
-  
 
 @[apex]
 def run (geo : Geometry) : Geometry := Id.run do
-  let mut geo := geo  
+  let mut geo := geo
   let r := geo.boundingBox
   let size := r.2.1
   let min := r.2.2.1
@@ -38,6 +37,7 @@ def run (geo : Geometry) : Geometry := Id.run do
     let relP := (P - min).compDiv size
     geo := geo.setPointAttrib (Int.ofNat i) "Cd" relP
   return geo
+
 
 
 abbrev loop1 := fun (geo : Geometry) => Id.run do
@@ -49,17 +49,18 @@ abbrev loop1 := fun (geo : Geometry) => Id.run do
       geo := geo.setPointAttrib (Int.ofNat i) "Cd" relP
     return geo
 
-set_option trace.HouLean.Apex.compiler true in
+-- set_option trace.HouLean.Apex.compiler true in
 @[apex]
 def loop_set_attrib (geo : Geometry) : Geometry := Id.run do
   let mut geo := geo  
-  for i in [0:4] do
-    if (Int.ofNat i) = 0 then
-      geo := geo.setPointAttrib (Int.ofNat i) "Cd" (Vector3.mk 1 0 0)
-    else
-      geo := geo.setPointAttrib (Int.ofNat i) "Cd" (Vector3.mk 0 0 0)
-    geo := geo.subdivide
+  if geo.numPoints % 2 = 0 then
+    geo := geo.setPointAttrib (Int.ofNat 0) "Cd" (Vector3.mk 1 0 0)
+  else
+    geo := geo.setPointAttrib (Int.ofNat 0) "Cd" (Vector3.mk 0 0 0)
+  geo := geo.subdivide
   return geo
+  -- for i in [0:4] do
+  -- return geo
 
 -- #check (by infer_instance : ApexTypeFlatten (Geometry) _)
 -- #check (by infer_instance : ApexTypeFlatten (Geometry × Nat) _)
@@ -222,7 +223,7 @@ Ports:
   114: /ForEnd/[anonymous][⋯][out]
 
 Inputs:
-  geo[in] -> #[/geo_BoundingBox/geo[in], /geo_NumPoints/geo[in], /ForBegin/spare[0][in]]
+  geo[in] -> #[/geo_BoundingBox/geo[in], /geo_NumPoints/geo[in], /ForBegin/spare[0][in], /ForBegin/spare[1][in]]
 
 Outputs:
   /ForEnd/[anonymous][0][out] -> «0»[out]
@@ -243,13 +244,13 @@ Wires:
   12: /MaxInt2/[anonymous][out] -> /DivideInt/a[in]
   13: /value/value[out] -> /DivideInt/b[0][in]
   14: /DivideInt/[anonymous][out] -> /ForBegin/iterations[in]
-  15: /geo_BoundingBox/snd.snd.fst[out] -> /ForBegin/spare[1][in]
-  16: /geo_BoundingBox/snd.snd.snd.fst[out] -> /ForBegin/spare[2][in]
-  17: /geo_BoundingBox/snd.snd.snd.snd[out] -> /ForBegin/spare[3][in]
-  18: /geo_BoundingBox/snd.fst[out] -> /ForBegin/spare[4][in]
-  19: /geo_BoundingBox/snd.snd.fst[out] -> /ForBegin/spare[5][in]
-  20: /geo_BoundingBox/snd.snd.snd.fst[out] -> /ForBegin/spare[6][in]
-  21: /geo_BoundingBox/snd.snd.snd.snd[out] -> /ForBegin/spare[7][in]
+  15: /geo_BoundingBox/snd.snd.fst[out] -> /ForBegin/spare[2][in]
+  16: /geo_BoundingBox/snd.snd.snd.fst[out] -> /ForBegin/spare[3][in]
+  17: /geo_BoundingBox/snd.snd.snd.snd[out] -> /ForBegin/spare[4][in]
+  18: /geo_BoundingBox/snd.fst[out] -> /ForBegin/spare[5][in]
+  19: /geo_BoundingBox/snd.snd.fst[out] -> /ForBegin/spare[6][in]
+  20: /geo_BoundingBox/snd.snd.snd.fst[out] -> /ForBegin/spare[7][in]
+  21: /geo_BoundingBox/snd.snd.snd.snd[out] -> /ForBegin/spare[8][in]
   22: /ForBegin/snd.fst[out] -> /MultiplyInt/a[in]
   23: /value/value[out] -> /MultiplyInt/b[0][in]
   24: /MultiplyInt/[anonymous][out] -> /AddInt1/b[0][in]
@@ -258,10 +259,10 @@ Wires:
   27: /ForBegin/snd.snd[0][out] -> /geo_PointAttribValueVector3/geo[in]
   28: /MaxInt3/[anonymous][out] -> /geo_PointAttribValueVector3/elemnum[in]
   29: /geo_PointAttribValueVector3/fst[out] -> /Vector3ToFloat/vector[in]
-  30: /ForBegin/snd.snd[1][out] -> /Vector3ToFloat1/vector[in]
+  30: /ForBegin/snd.snd[2][out] -> /Vector3ToFloat1/vector[in]
   31: /Vector3ToFloat/fst[out] -> /SubtractFloat/a[in]
   32: /Vector3ToFloat1/fst[out] -> /SubtractFloat/b[0][in]
-  33: /ForBegin/snd.snd[4][out] -> /Vector3ToFloat2/vector[in]
+  33: /ForBegin/snd.snd[5][out] -> /Vector3ToFloat2/vector[in]
   34: /SubtractFloat/[anonymous][out] -> /DivideFloat/a[in]
   35: /Vector3ToFloat2/fst[out] -> /DivideFloat/b[0][in]
   36: /Vector3ToFloat/snd.fst[out] -> /SubtractFloat1/a[in]
@@ -287,6 +288,7 @@ Wires:
   56: /ForBegin/snd.snd[5][out] -> /ForEnd/spare[5][in]
   57: /ForBegin/snd.snd[6][out] -> /ForEnd/spare[6][in]
   58: /ForBegin/snd.snd[7][out] -> /ForEnd/spare[7][in]
+  59: /ForBegin/snd.snd[8][out] -> /ForEnd/spare[8][in]
 
 Literals:
   0: bool "false" -> /geo_BoundingBox/orient[in] ⏎
@@ -489,7 +491,7 @@ Ports:
   121: /ForEnd/[anonymous][⋯][out]
 
 Inputs:
-  geo[in] -> #[/geo_BoundingBox/geo[in], /geo_NumPoints/geo[in], /ForBegin/spare[0][in]]
+  geo[in] -> #[/geo_BoundingBox/geo[in], /geo_NumPoints/geo[in], /ForBegin/spare[0][in], /ForBegin/spare[2][in]]
 
 Outputs:
   /ForEnd/[anonymous][0][out] -> «0»[out]
@@ -511,13 +513,13 @@ Wires:
   13: /value/value[out] -> /DivideInt/b[0][in]
   14: /DivideInt/[anonymous][out] -> /ForBegin/iterations[in]
   15: /value/value[out] -> /ForBegin/spare[1][in]
-  16: /geo_BoundingBox/snd.snd.fst[out] -> /ForBegin/spare[2][in]
-  17: /geo_BoundingBox/snd.snd.snd.fst[out] -> /ForBegin/spare[3][in]
-  18: /geo_BoundingBox/snd.snd.snd.snd[out] -> /ForBegin/spare[4][in]
-  19: /geo_BoundingBox/snd.fst[out] -> /ForBegin/spare[5][in]
-  20: /geo_BoundingBox/snd.snd.fst[out] -> /ForBegin/spare[6][in]
-  21: /geo_BoundingBox/snd.snd.snd.fst[out] -> /ForBegin/spare[7][in]
-  22: /geo_BoundingBox/snd.snd.snd.snd[out] -> /ForBegin/spare[8][in]
+  16: /geo_BoundingBox/snd.snd.fst[out] -> /ForBegin/spare[3][in]
+  17: /geo_BoundingBox/snd.snd.snd.fst[out] -> /ForBegin/spare[4][in]
+  18: /geo_BoundingBox/snd.snd.snd.snd[out] -> /ForBegin/spare[5][in]
+  19: /geo_BoundingBox/snd.fst[out] -> /ForBegin/spare[6][in]
+  20: /geo_BoundingBox/snd.snd.fst[out] -> /ForBegin/spare[7][in]
+  21: /geo_BoundingBox/snd.snd.snd.fst[out] -> /ForBegin/spare[8][in]
+  22: /geo_BoundingBox/snd.snd.snd.snd[out] -> /ForBegin/spare[9][in]
   23: /ForBegin/snd.fst[out] -> /MultiplyInt/a[in]
   24: /value/value[out] -> /MultiplyInt/b[0][in]
   25: /MultiplyInt/[anonymous][out] -> /AddInt1/b[0][in]
@@ -526,10 +528,10 @@ Wires:
   28: /ForBegin/snd.snd[0][out] -> /geo_PointAttribValueVector3/geo[in]
   29: /MaxInt3/[anonymous][out] -> /geo_PointAttribValueVector3/elemnum[in]
   30: /geo_PointAttribValueVector3/fst[out] -> /Vector3ToFloat/vector[in]
-  31: /ForBegin/snd.snd[2][out] -> /Vector3ToFloat1/vector[in]
+  31: /ForBegin/snd.snd[3][out] -> /Vector3ToFloat1/vector[in]
   32: /Vector3ToFloat/fst[out] -> /SubtractFloat/a[in]
   33: /Vector3ToFloat1/fst[out] -> /SubtractFloat/b[0][in]
-  34: /ForBegin/snd.snd[5][out] -> /Vector3ToFloat2/vector[in]
+  34: /ForBegin/snd.snd[6][out] -> /Vector3ToFloat2/vector[in]
   35: /SubtractFloat/[anonymous][out] -> /DivideFloat/a[in]
   36: /Vector3ToFloat2/fst[out] -> /DivideFloat/b[0][in]
   37: /Vector3ToFloat/snd.fst[out] -> /SubtractFloat1/a[in]
@@ -558,6 +560,7 @@ Wires:
   60: /ForBegin/snd.snd[6][out] -> /ForEnd/spare[6][in]
   61: /ForBegin/snd.snd[7][out] -> /ForEnd/spare[7][in]
   62: /ForBegin/snd.snd[8][out] -> /ForEnd/spare[8][in]
+  63: /ForBegin/snd.snd[9][out] -> /ForEnd/spare[9][in]
 
 Literals:
   0: bool "false" -> /geo_BoundingBox/orient[in] ⏎
@@ -583,3 +586,278 @@ run_meta
   let g ← programToApexGraph e
   IO.println g
 
+
+
+/--
+info: Nodes:
+  0: geo_NumPoints : geo::NumPoints
+  1: MaxInt : Max<Int>
+  2: value : Value<Int>
+  3: SubtractInt : Subtract<Int>
+  4: value : Value<Int>
+  5: MaxInt1 : Max<Int>
+  6: value : Value<Int>
+  7: AddInt : Add<Int>
+  8: value : Value<Int>
+  9: SubtractInt1 : Subtract<Int>
+  10: value : Value<Int>
+  11: MaxInt2 : Max<Int>
+  12: value : Value<Int>
+  13: DivideInt : Divide<Int>
+  14: value : Value<Int>
+  15: ForBegin : ForBegin
+  16: MultiplyInt : Multiply<Int>
+  17: value : Value<Int>
+  18: AddInt1 : Add<Int>
+  19: MaxInt3 : Max<Int>
+  20: value : Value<Int>
+  21: geo_PointAttribValueVector3 : geo::PointAttribValue<Vector3>
+  22: Vector3ToFloat : Vector3ToFloat
+  23: GreaterThanFloat : GreaterThan<Float>
+  24: TwoWaySwitchInt : TwoWaySwitch<Int>
+  25: EqualsInt : Equals<Int>
+  26: IfBegin : IfBegin
+  27: geo_SetPointAttribValueVector3 : geo::SetPointAttribValue<Vector3>
+  28: geo_SetPointAttribValueInt : geo::SetPointAttribValue<Int>
+  29: IfEnd : IfEnd
+  30: TwoWaySwitchBool : TwoWaySwitch<Bool>
+  31: IfBegin1 : IfBegin
+  32: geo_SetPointAttribValueVector31 : geo::SetPointAttribValue<Vector3>
+  33: geo_SetPointAttribValueInt1 : geo::SetPointAttribValue<Int>
+  34: IfEnd1 : IfEnd
+  35: ForEnd : ForEnd
+
+Ports:
+  0: /geo_NumPoints/geo[in]
+  1: /geo_NumPoints/[anonymous][out]
+  2: /MaxInt/a[in]
+  3: /MaxInt/b[⋯][in]
+  4: /MaxInt/[anonymous][out]
+  5: /value/parm[in]
+  6: /value/value[out]
+  7: /SubtractInt/a[in]
+  8: /SubtractInt/b[⋯][in]
+  9: /SubtractInt/[anonymous][out]
+  10: /value/parm[in]
+  11: /value/value[out]
+  12: /MaxInt1/a[in]
+  13: /MaxInt1/b[⋯][in]
+  14: /MaxInt1/[anonymous][out]
+  15: /value/parm[in]
+  16: /value/value[out]
+  17: /AddInt/a[in]
+  18: /AddInt/b[⋯][in]
+  19: /AddInt/[anonymous][out]
+  20: /value/parm[in]
+  21: /value/value[out]
+  22: /SubtractInt1/a[in]
+  23: /SubtractInt1/b[⋯][in]
+  24: /SubtractInt1/[anonymous][out]
+  25: /value/parm[in]
+  26: /value/value[out]
+  27: /MaxInt2/a[in]
+  28: /MaxInt2/b[⋯][in]
+  29: /MaxInt2/[anonymous][out]
+  30: /value/parm[in]
+  31: /value/value[out]
+  32: /DivideInt/a[in]
+  33: /DivideInt/b[⋯][in]
+  34: /DivideInt/[anonymous][out]
+  35: /value/parm[in]
+  36: /value/value[out]
+  37: /ForBegin/[anonymous][out]
+  38: /ForBegin/iterations[in]
+  39: /ForBegin/spare[⋯][in]
+  40: /ForBegin/fst[out]
+  41: /ForBegin/snd.fst[out]
+  42: /ForBegin/snd.snd[⋯][out]
+  43: /MultiplyInt/a[in]
+  44: /MultiplyInt/b[⋯][in]
+  45: /MultiplyInt/[anonymous][out]
+  46: /value/parm[in]
+  47: /value/value[out]
+  48: /AddInt1/a[in]
+  49: /AddInt1/b[⋯][in]
+  50: /AddInt1/[anonymous][out]
+  51: /MaxInt3/a[in]
+  52: /MaxInt3/b[⋯][in]
+  53: /MaxInt3/[anonymous][out]
+  54: /value/parm[in]
+  55: /value/value[out]
+  56: /geo_PointAttribValueVector3/[anonymous][out]
+  57: /geo_PointAttribValueVector3/geo[in]
+  58: /geo_PointAttribValueVector3/elemnum[in]
+  59: /geo_PointAttribValueVector3/attribname[in]
+  60: /geo_PointAttribValueVector3/fst[out]
+  61: /geo_PointAttribValueVector3/snd[out]
+  62: /Vector3ToFloat/vector[in]
+  63: /Vector3ToFloat/fst[out]
+  64: /Vector3ToFloat/snd.fst[out]
+  65: /Vector3ToFloat/snd.snd[out]
+  66: /GreaterThanFloat/a[in]
+  67: /GreaterThanFloat/b[in]
+  68: /GreaterThanFloat/[anonymous][out]
+  69: /TwoWaySwitchInt/a[in]
+  70: /TwoWaySwitchInt/b[in]
+  71: /TwoWaySwitchInt/index[in]
+  72: /TwoWaySwitchInt/[anonymous][out]
+  73: /EqualsInt/a[in]
+  74: /EqualsInt/b[in]
+  75: /EqualsInt/[anonymous][out]
+  76: /IfBegin/[anonymous][out]
+  77: /IfBegin/condition[in]
+  78: /IfBegin/spare[⋯][in]
+  79: /IfBegin/fst[out]
+  80: /IfBegin/snd[⋯][out]
+  81: /geo_SetPointAttribValueVector3/[anonymous][out]
+  82: /geo_SetPointAttribValueVector3/geo[in]
+  83: /geo_SetPointAttribValueVector3/elemnum[in]
+  84: /geo_SetPointAttribValueVector3/attribname[in]
+  85: /geo_SetPointAttribValueVector3/value[in]
+  86: /geo_SetPointAttribValueVector3/fst[out]
+  87: /geo_SetPointAttribValueVector3/snd[out]
+  88: /geo_SetPointAttribValueInt/[anonymous][out]
+  89: /geo_SetPointAttribValueInt/geo[in]
+  90: /geo_SetPointAttribValueInt/elemnum[in]
+  91: /geo_SetPointAttribValueInt/attribname[in]
+  92: /geo_SetPointAttribValueInt/value[in]
+  93: /geo_SetPointAttribValueInt/fst[out]
+  94: /geo_SetPointAttribValueInt/snd[out]
+  95: /IfEnd/[anonymous][out]
+  96: /IfEnd/scope[in]
+  97: /IfEnd/spare[⋯][in]
+  98: /IfEnd/[anonymous][⋯][out]
+  99: /TwoWaySwitchBool/a[in]
+  100: /TwoWaySwitchBool/b[in]
+  101: /TwoWaySwitchBool/index[in]
+  102: /TwoWaySwitchBool/[anonymous][out]
+  103: /IfBegin1/[anonymous][out]
+  104: /IfBegin1/condition[in]
+  105: /IfBegin1/spare[⋯][in]
+  106: /IfBegin1/fst[out]
+  107: /IfBegin1/snd[⋯][out]
+  108: /geo_SetPointAttribValueVector31/[anonymous][out]
+  109: /geo_SetPointAttribValueVector31/geo[in]
+  110: /geo_SetPointAttribValueVector31/elemnum[in]
+  111: /geo_SetPointAttribValueVector31/attribname[in]
+  112: /geo_SetPointAttribValueVector31/value[in]
+  113: /geo_SetPointAttribValueVector31/fst[out]
+  114: /geo_SetPointAttribValueVector31/snd[out]
+  115: /geo_SetPointAttribValueInt1/[anonymous][out]
+  116: /geo_SetPointAttribValueInt1/geo[in]
+  117: /geo_SetPointAttribValueInt1/elemnum[in]
+  118: /geo_SetPointAttribValueInt1/attribname[in]
+  119: /geo_SetPointAttribValueInt1/value[in]
+  120: /geo_SetPointAttribValueInt1/fst[out]
+  121: /geo_SetPointAttribValueInt1/snd[out]
+  122: /IfEnd1/[anonymous][out]
+  123: /IfEnd1/scope[in]
+  124: /IfEnd1/spare[⋯][in]
+  125: /IfEnd1/[anonymous][⋯][out]
+  126: /ForEnd/[anonymous][out]
+  127: /ForEnd/scope[in]
+  128: /ForEnd/spare[⋯][in]
+  129: /ForEnd/[anonymous][⋯][out]
+
+Inputs:
+  geo[in] -> #[/geo_NumPoints/geo[in], /ForBegin/spare[0][in], /ForBegin/spare[1][in]]
+
+Outputs:
+  /ForEnd/[anonymous][0][out] -> «0»[out]
+
+Wires:
+  0: /geo_NumPoints/[anonymous][out] -> /MaxInt/a[in]
+  1: /value/value[out] -> /MaxInt/b[0][in]
+  2: /MaxInt/[anonymous][out] -> /SubtractInt/a[in]
+  3: /value/value[out] -> /SubtractInt/b[0][in]
+  4: /SubtractInt/[anonymous][out] -> /MaxInt1/a[in]
+  5: /value/value[out] -> /MaxInt1/b[0][in]
+  6: /MaxInt1/[anonymous][out] -> /AddInt/a[in]
+  7: /value/value[out] -> /AddInt/b[0][in]
+  8: /AddInt/[anonymous][out] -> /SubtractInt1/a[in]
+  9: /value/value[out] -> /SubtractInt1/b[0][in]
+  10: /SubtractInt1/[anonymous][out] -> /MaxInt2/a[in]
+  11: /value/value[out] -> /MaxInt2/b[0][in]
+  12: /MaxInt2/[anonymous][out] -> /DivideInt/a[in]
+  13: /value/value[out] -> /DivideInt/b[0][in]
+  14: /DivideInt/[anonymous][out] -> /ForBegin/iterations[in]
+  15: /ForBegin/snd.fst[out] -> /MultiplyInt/a[in]
+  16: /value/value[out] -> /MultiplyInt/b[0][in]
+  17: /MultiplyInt/[anonymous][out] -> /AddInt1/b[0][in]
+  18: /AddInt1/[anonymous][out] -> /MaxInt3/a[in]
+  19: /value/value[out] -> /MaxInt3/b[0][in]
+  20: /ForBegin/snd.snd[0][out] -> /geo_PointAttribValueVector3/geo[in]
+  21: /MaxInt3/[anonymous][out] -> /geo_PointAttribValueVector3/elemnum[in]
+  22: /geo_PointAttribValueVector3/fst[out] -> /Vector3ToFloat/vector[in]
+  23: /Vector3ToFloat/fst[out] -> /GreaterThanFloat/a[in]
+  24: /GreaterThanFloat/[anonymous][out] -> /TwoWaySwitchInt/index[in]
+  25: /TwoWaySwitchInt/[anonymous][out] -> /EqualsInt/a[in]
+  26: /EqualsInt/[anonymous][out] -> /IfBegin/condition[in]
+  27: /ForBegin/snd.snd[0][out] -> /IfBegin/spare[1][in]
+  28: /MaxInt3/[anonymous][out] -> /IfBegin/spare[2][in]
+  29: /IfBegin/snd[1][out] -> /geo_SetPointAttribValueVector3/geo[in]
+  30: /IfBegin/snd[2][out] -> /geo_SetPointAttribValueVector3/elemnum[in]
+  31: /geo_SetPointAttribValueVector3/fst[out] -> /geo_SetPointAttribValueInt/geo[in]
+  32: /IfBegin/snd[2][out] -> /geo_SetPointAttribValueInt/elemnum[in]
+  33: /IfBegin/fst[out] -> /IfEnd/scope[in]
+  34: /geo_SetPointAttribValueInt/fst[out] -> /IfEnd/spare[0][in]
+  35: /IfBegin/snd[1][out] -> /IfEnd/spare[1][in]
+  36: /IfBegin/snd[2][out] -> /IfEnd/spare[2][in]
+  37: /EqualsInt/[anonymous][out] -> /TwoWaySwitchBool/index[in]
+  38: /TwoWaySwitchBool/[anonymous][out] -> /IfBegin1/condition[in]
+  39: /IfEnd/[anonymous][0][out] -> /IfBegin1/spare[0][in]
+  40: /IfEnd/[anonymous][1][out] -> /IfBegin1/spare[1][in]
+  41: /IfEnd/[anonymous][2][out] -> /IfBegin1/spare[2][in]
+  42: /IfBegin1/snd[1][out] -> /geo_SetPointAttribValueVector31/geo[in]
+  43: /IfBegin1/snd[2][out] -> /geo_SetPointAttribValueVector31/elemnum[in]
+  44: /geo_SetPointAttribValueVector31/fst[out] -> /geo_SetPointAttribValueInt1/geo[in]
+  45: /IfBegin1/snd[2][out] -> /geo_SetPointAttribValueInt1/elemnum[in]
+  46: /IfBegin1/fst[out] -> /IfEnd1/scope[in]
+  47: /geo_SetPointAttribValueInt1/fst[out] -> /IfEnd1/spare[0][in]
+  48: /IfBegin1/snd[1][out] -> /IfEnd1/spare[1][in]
+  49: /IfBegin1/snd[2][out] -> /IfEnd1/spare[2][in]
+  50: /ForBegin/fst[out] -> /ForEnd/scope[in]
+  51: /IfEnd1/[anonymous][0][out] -> /ForEnd/spare[0][in]
+  52: /ForBegin/snd.snd[1][out] -> /ForEnd/spare[1][in]
+
+Literals:
+  0: int 0 -> /value/parm[in] ⏎
+  1: int 0 -> /value/parm[in] ⏎
+  2: int 0 -> /value/parm[in] ⏎
+  3: int 1 -> /value/parm[in] ⏎
+  4: int 1 -> /value/parm[in] ⏎
+  5: int 0 -> /value/parm[in] ⏎
+  6: int 1 -> /value/parm[in] ⏎
+  7: int 1 -> /value/parm[in] ⏎
+  8: int 0 -> /AddInt1/a[in] ⏎
+  9: int 0 -> /value/parm[in] ⏎
+  10: str "P" -> /geo_PointAttribValueVector3/attribname[in] ⏎
+  11: float 0.000000 -> /GreaterThanFloat/b[in] ⏎
+  12: int 0 -> /TwoWaySwitchInt/a[in] ⏎
+  13: int 1 -> /TwoWaySwitchInt/b[in] ⏎
+  14: int 1 -> /EqualsInt/b[in] ⏎
+  15: str "Cd" -> /geo_SetPointAttribValueVector3/attribname[in] ⏎
+  16: vector3 "{ x := 1.000000, y := 0.000000, z := 0.000000 }" -> /geo_SetPointAttribValueVector3/value[in] ⏎
+  17: str "mygroup" -> /geo_SetPointAttribValueInt/attribname[in] ⏎
+  18: int 1 -> /geo_SetPointAttribValueInt/value[in] ⏎
+  19: bool "true" -> /TwoWaySwitchBool/a[in] ⏎
+  20: bool "false" -> /TwoWaySwitchBool/b[in] ⏎
+  21: str "Cd" -> /geo_SetPointAttribValueVector31/attribname[in] ⏎
+  22: vector3 "{ x := 0.000000, y := 0.000000, z := 0.000000 }" -> /geo_SetPointAttribValueVector31/value[in] ⏎
+  23: str "mygroup" -> /geo_SetPointAttribValueInt1/attribname[in] ⏎
+  24: int 0 -> /geo_SetPointAttribValueInt1/value[in]
+-/
+#guard_msgs in
+#apex_graph fun (geo : Geometry) => Id.run do
+  let mut geo := geo  
+  for i in [0:geo.numPoints.toNat] do
+    let P : Vector3 := geo.pointAttrib (Int.ofNat i) "P"
+    let condition := (decide (P.x > 0)).toInt
+   
+    if condition = 1 then
+      geo := geo.setPointAttrib (Int.ofNat i) "Cd" (Vector3.mk 1 0 0)
+      geo := geo.setPointAttrib (Int.ofNat i) "mygroup" (1:Int)
+    else
+      geo := geo.setPointAttrib (Int.ofNat i) "Cd" (Vector3.mk 0 0 0)
+      geo := geo.setPointAttrib (Int.ofNat i) "mygroup" (0:Int)
+  return geo

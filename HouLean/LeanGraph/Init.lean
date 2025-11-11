@@ -4,6 +4,7 @@ import HouLean.Apex.Sop
 import HouLean.Math
 import HouLean.Meta.AnonymousStruct
 import HouLean.Apex.Visualizer.Basic
+import HouLean.Apex.Lean.Prod
 
 -- todo: once lean graph is more mature this should be redistributed to other files
 
@@ -20,6 +21,10 @@ attribute [lean_graph_type]
 
 attribute [lean_graph_node] id
 attribute [lean_graph_node] Prod.mk
+attribute [lean_graph_node] Prod.fst
+attribute [lean_graph_node] Prod.snd
+attribute [lean_graph_node "Prod_map"] prodMap
+attribute [lean_graph_node "Prod_fold"] prodFold
 
 attribute [lean_graph_node] visualize withVisualizer
 

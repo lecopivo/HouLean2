@@ -157,6 +157,11 @@ def PortType.isVariadic (t : PortType) : Bool :=
   | .variadic .. => true
   | _ => false
 
+def PortType.isVariadic' (t : PortType) : Bool :=
+  match t with
+  | .variadic none => true
+  | _ => false
+
 inductive PortDir where
   | input | output
 deriving Inhabited, BEq, Repr
@@ -176,10 +181,8 @@ structure Port extends LocalPort where
   nodeId : Nat
 deriving Inhabited
 
-def Port.isVariadic (p : Port) : Bool := 
-  match p.type with
-  | .variadic .. => true
-  | _ => false
+def Port.isVariadic (p : Port) : Bool := p.type.isVariadic
+def Port.isVariadic' (p : Port) : Bool := p.type.isVariadic'
 
 /-- APEX type that corresponds to a Lean type. Exact size of variadic types might not be known. -/
 abbrev ApexStruct := ArrayTree (Name × ApexTypeTag)
