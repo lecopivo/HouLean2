@@ -231,10 +231,34 @@ def doUnfold (e : Expr) : MetaM Bool := do
   if ← isReducible name then return true
   unless ← isInstanceProjection name do return false
   let s := compilerExt.getState (← getEnv)
+  if name == ``Id then
+    return true
   if s.implementedByName.contains name then
     return false
   else
     return true
+
+def betaThroughLet (e : Expr) : MetaM Expr := do
+  let (fn, args) := e.withApp (fun fn args => (fn,args))
+  let e' ← letTelescope fn (preserveNondepLet := false) fun xs b =>
+    mkLambdaFVars xs (b.beta args)
+  return e'
+
+def letBind (e : Expr) : MetaM Expr := do
+  if e.isAppOfArity' ``Bind.bind 6 then
+    let (fn,args) := e.withApp (fun fn args => (fn,args))
+    let x := args[4]!
+    if x.isFVar then
+      return e
+    else
+      let args := args.set! 4 (.bvar 0)
+      let name := 
+        if let .lam n .. := args[5]! then
+          n
+        else
+          `tmp
+      return .letE name (← inferType x) x (mkAppN fn args) true
+  return e
 
 /-- Specially configured `whnf` for APEX compilation. 
 
@@ -243,13 +267,20 @@ At its core it is whnf at reducible and instances with `iota := true` and `zeta 
 But certain instance projections are overriden by `apex_implemented_by` so those do not 
 get reduced. Also match statements hoist their discriminants into let binders before
 reducing them.
+
+TODO: this needs complete rework as I want (fun x => x * x) (a + b) to reduce to
+`let tmp := a + b; tmp * tmp` but now it reduces to `(a + b) * (a + b)`
+The main issue this is causing is compiling expressions with `bind` and 
+I just added a temporary fix
 -/
 partial def whnfC (e : Expr) : MetaM Expr :=
   withConfig (fun cfg => {cfg with iota := false, zeta := false}) do
-    let e' ← whnfHeadPred e doUnfold
+    let e' := e
+    let e' ← letBind e'
+    let e' ← whnfHeadPred e' doUnfold
     let e' ← letBindMatchDiscrs e' true
     if e.equal e' then
-      return e'
+      return ← betaThroughLet e'
     else
       whnfC e'
 
@@ -579,11 +610,11 @@ partial def compileIte (expr : Expr) (args : Array Expr) :
     else
       return ← compile e
 
-  let (t',tctx) ← abstractAllFVars t
-  let (e',ectx) ← abstractAllFVars e
-
-  let TContext ← inferType tctx
-  let EContext ← inferType ectx
+  let (te,ctx) ← abstractAllFVarsMany #[t,e]
+  let t' := te[0]!
+  let e' := te[1]!
+  
+  let Context ← inferType ctx
 
   let expr' ← mkAppOptM ``ite.apex_impl_with_pass_through
     #[some type, some condition, 
@@ -683,8 +714,9 @@ partial def compileProjection (s : Name) (i : Nat) (x : Expr) :
     GraphCompileM (Array PortBundle × PortBundle) := do
   trace[HouLean.Apex.compiler] "Compiling projection {s}.{i}"
   
-  let some t ← getApexType? (← whnfI (← inferType x))
-    | throwError "invalid type of {x}"
+  let t ← whnf (← inferType x)
+  let some t ← getApexType? t
+    | throwError "invalid type of {x} : {t}"
   if t.isNode then
     let x' := x
     let (_, x) ← compile x
@@ -709,11 +741,9 @@ partial def compileLambda (e : Expr) :
   forallTelescopeReducing (← inferType e) fun xs _ => do
     if xs.size = 0 then
       throwErrorWithStack m!"Function expected: {e}"
-
-    let b ← whnfC (e.beta xs)
+    let b := (mkAppN e xs)
     let some t ← getApexType? (← inferType b)
       | throwError "invalid return type {← inferType b}"
-
     let mut inputs : Array PortBundle := #[]
     for x in xs do
       let input ← addFVar x.fvarId!
@@ -736,6 +766,8 @@ partial def toApexGraph (e : Expr) :
 
     let e' ← withConfig (fun cfg => {cfg with iota := false, zeta := false}) <| whnfC e
     if e != e' then trace[HouLean.Apex.compiler] m!"reduced to: {e'}"
+    -- unless ← isDefEq e e' do -- todo: this is just for debuging, probably remove this
+    --   throwError m!"Non defeq reduction\n{e}\n==>{e'}\n"
     let e := e'
 
     if let some val ← tryReduceToLiteral e then
@@ -834,6 +866,8 @@ def fixInputOutputTypes : GraphCompileM Unit := do
 
 def programToApexGraph (e : Expr) : MetaM ApexGraph := do
   GraphCompileM.run' do
+    let e ← forallTelescopeReducing (← inferType e) fun xs _ =>
+      mkLambdaFVars xs (e.beta xs)
     let (inputs, output) ← compile e
 
     -- if not a function then we have to make outputs

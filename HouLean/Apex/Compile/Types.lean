@@ -70,6 +70,10 @@ instance : ApexTypeFlatten Int [.int] where
   apexFlatten x := .cons x .nil
   apexUnflatten := fun (.cons x .nil) => x
 
+instance : ApexTypeFlatten Nat [.int] where
+  apexFlatten x := .cons (Int.ofNat x) .nil
+  apexUnflatten := fun (.cons x .nil) => Int.toNat x
+
 instance : ApexTypeFlatten Geometry [.geometry] where
   apexFlatten x := .cons x .nil
   apexUnflatten := fun (.cons x .nil) => x
@@ -82,6 +86,33 @@ instance : ApexTypeFlatten Unit [.int] where
   apexFlatten _ := .cons (0:Int) .nil
   apexUnflatten := fun (.cons _ .nil) => ()
 
+instance : ApexTypeFlatten Vector2 [.vector2] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten := fun (.cons x .nil) => x
+
+instance : ApexTypeFlatten Vector3 [.vector3] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten := fun (.cons x .nil) => x
+
+instance : ApexTypeFlatten Vector4 [.vector4] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten := fun (.cons x .nil) => x
+
+-- instance : ApexTypeFlatten Matrix2 [.matrix2] where
+--   apexFlatten x := .cons x .nil
+--   apexUnflatten := fun (.cons x .nil) => x
+
+instance : ApexTypeFlatten Matrix3 [.matrix3] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten := fun (.cons x .nil) => x
+
+instance : ApexTypeFlatten Matrix4 [.matrix4] where
+  apexFlatten x := .cons x .nil
+  apexUnflatten := fun (.cons x .nil) => x
+
+instance [ApexTypeFlatten α ts] : ApexTypeFlatten (Id α) ts where
+  apexFlatten x := apexFlatten (α:=α) x
+  apexUnflatten := fun x => apexUnflatten (α:=α) x
 
 set_option warn.sorry false in
 unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (α×β) (ts ++ ss) where

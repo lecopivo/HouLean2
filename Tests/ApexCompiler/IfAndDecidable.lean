@@ -459,3 +459,54 @@ Literals:
 -/
 #guard_msgs in
 #apex_graph fun x y : Float×Float => if x.1 < y.2 then (x,y) else (y,x)
+
+
+
+set_option trace.HouLean.Apex.compiler true in
+#apex_graph fun (geo : Geometry) (x : Int) =>
+Id.run do
+
+  if x = 0 then
+    geo.fractal
+  else
+    geo.subdivide
+
+
+open Qq Lean Meta Apex Compiler 
+
+
+def betaThroughLet (e : Expr) : MetaM Expr := do
+  let (fn, args) := e.withApp (fun fn args => (fn,args))
+  let e' ← letTelescope fn fun xs b =>
+    mkLetFVars xs b
+  unless ← isDefEq e e' do
+    throwError m!"Non defeq beta through let\n{e}\n==>\n{e'}"
+  return e'
+
+
+-- fun a b => a + b + 10
+run_meta
+  let e := q(have a := 1
+             have b := 2
+             a + b + 10)
+  let e'' := q(let a := 1
+             let b := 2
+             a + b + 10)
+  logInfo s!"are equal: {← isDefEq e e''}"
+  let e' ← letTelescope e (preserveNondepLet := false) fun xs b =>
+    mkLetFVars xs b
+  logInfo e'
+  -- let (fn, args) := e.withApp (fun fn args => (fn,args))
+  -- logInfo m!"fn: {fn}"
+  -- logInfo m!"args: {args}"
+  -- let e' ← letTelescope fn fun xs b => do
+  --   logInfo m!"xs: {xs}"
+  --   logInfo m!"b: {b}"
+  --   mkLetFVars xs (b.beta args)
+
+  -- IO.println e
+
+  -- let e' ← _root_.betaThroughLet e
+
+  -- logInfo e'
+

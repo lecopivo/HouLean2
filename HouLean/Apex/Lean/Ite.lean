@@ -12,7 +12,7 @@ namespace Generated
 
 @[apex_node "IfBegin" has_rundata]
 opaque IfBegin (condition : Bool) {ts} (spare : VariadicArg' ts) : 
-  struct {scope : Int, spare : VariadicArg' ts} := cast sorry_proof ()
+  Int × VariadicArg' ts := cast sorry_proof ()
 
 @[apex_node "IfEnd" has_rundata]
 opaque IfEnd (scope : Int) {ts} (spare : VariadicArg' ts) : 
@@ -25,25 +25,24 @@ open Generated TwoWaySwitch
 
 noncomputable -- this is confusing the compiler :) so we have to mark it with concomputable
 def ite.apex_impl_with_pass_through {α : Type} (condition : Bool)
-  {TContext : Type} {TCtx} [ApexTypeFlatten TContext TCtx] 
-  {EContext : Type} {ECtx} [ApexTypeFlatten EContext ECtx] 
+  {Context : Type} {Ctx} [ApexTypeFlatten Context Ctx]
   {A} [ApexTypeFlatten α A] [TwoWaySwitch α]
-  (t : TContext → α) (e : EContext → α) (tctx : TContext) (ectx : EContext) := 
+  (t e : Context → α) (ctx : Context)  :=
 
   let condition := condition
   
   -- true branch
-  let tctx := apexFlatten tctx
-  let t1 := IfBegin condition tctx
-  let t2 := t (apexUnflatten t1.spare)
-  let t3 := IfEnd t1.scope (apexFlatten t2)
+  let ctx := apexFlatten ctx
+  let t1 := IfBegin condition ctx
+  let t2 := t (apexUnflatten t1.2)
+  let t3 := IfEnd t1.1 (apexFlatten t2)
   let t4 : α := (apexUnflatten t3)
 
   -- false branch
   let ectx := apexFlatten ectx
   let e1 := IfBegin (!condition) ectx
-  let e2 := e (apexUnflatten e1.spare)
-  let e3 := IfEnd e1.scope (apexFlatten e2)
+  let e2 := e (apexUnflatten e1.2)
+  let e3 := IfEnd e1.1 (apexFlatten e2)
   let e4 : α := (apexUnflatten e3)
 
   twoWaySwitch e4 t4 condition

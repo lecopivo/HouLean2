@@ -99,13 +99,13 @@ import HouLean.Apex.Generated.Defs
 
 namespace HouLean.Apex.Compiler
 
-open Qq
+open Lean Qq
 
 run_meta
 """
 
 # code += "\n".join([f"attribute [apex_builtin_type \"{t}\"] {t}" for t in simpleTypesList])
-code += "\n".join([f"  compilerExt.add (.apexBuiltinType (Expr.const ``{t} []) .{decapitalize(t)})" for t in simpleTypesList])
+code += "\n".join([f"  compilerExt.add (.apexBuiltinType ``{t} .{decapitalize(t)})" for t in simpleTypesList])
 code += "\n\n"
 
 for type in simpleTypesList:
@@ -227,6 +227,7 @@ opaque {declName} {inputSignature} : {outputSignature}
     else:
         s = f"""
 -- special function not supported yet
+-- @[apex_node "{name}"{hasRunData}]        
 -- opaque {name} {inputSignature} : {outputSignature}"""
         
         code += s[:150] + "...\n"

@@ -13,6 +13,10 @@ instance {α: Type } [ApexType α A] : ApexType (ForInStep α) A where
   toApex x := toApex x.value
   fromApex x := .yield (fromApex x)
 
+instance [ApexTypeFlatten α ts] : ApexTypeFlatten (ForInStep α) ts where
+  apexFlatten x := apexFlatten (α:=α) x.value
+  apexUnflatten := fun x => .yield (apexUnflatten (α:=α) x)
+
 run_meta compilerExt.add (.implementedByName ``ForInStep.yield ``id' #[some 0, some 1]) default
 run_meta compilerExt.add (.implementedByName ``ForInStep.value ``toApex #[none,none,none,some 1]) default
 -- Loop termination is not supported so do not implement this!

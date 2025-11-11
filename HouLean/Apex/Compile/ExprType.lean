@@ -15,10 +15,9 @@ unsafe def getApexTypeTagListImpl (ts : Expr) : MetaM (List ApexTypeTag) := do
 @[implemented_by getApexTypeTagListImpl]
 def getApexTypeTagList (ts : Expr) : MetaM (List ApexTypeTag) := return []
 
-
 partial def getApexTypeCore (type : Expr) (name : Name) : MetaM ApexStruct := do 
 
-  let type ← whnfR type
+  let type ← whnf type
   let (fn, _) := type.getAppFnArgs
 
   -- is builtin type?

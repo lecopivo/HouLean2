@@ -89,6 +89,7 @@ def withLocalDecls' [Inhabited α] [MonadControlT MetaM n] [Monad n]
   withLocalDecls (mkLocalDecls names bi types) k
 
 
+
 /-- Take an expression `e` and abstract all free variables, turning `e` into a closed term.
 
 Returns a function that accepts all the removed free variables and a product of all the free variables.
@@ -98,9 +99,12 @@ For example calling it on
 will product
 `((fun ctx a b c => a + b + c + ctx.1 + ctx.2.1 + ctx.2.2),
   (x, y, z))` -/
-def abstractAllFVars (e : Expr) : MetaM (Expr × Expr) := do
+def abstractAllFVarsMany (es : Array Expr) : MetaM (Array Expr × Expr) := do
 
-  let (_,s) ← e.collectFVars.run {}
+  let go := do
+    for e in es do
+      e.collectFVars
+  let (_,s) ← go.run {}
 
   let ids := s.fvarIds
   let ctxVals := ids.map Expr.fvar
@@ -108,11 +112,53 @@ def abstractAllFVars (e : Expr) : MetaM (Expr × Expr) := do
   let ctx := if ctxVals.size != 0 then ctx else (.const ``Unit.unit [])
   let ctxType ← inferType ctx
 
-  let e' ← withLocalDeclD `ctx ctxType fun ctxVar => do
+  let es' ← withLocalDeclD `ctx ctxType fun ctxVar => do
     let ctxVars ← mkProdSplitElem ctxVar (max 1 ctxVals.size)
-    let e := e.replaceFVars ctxVals ctxVars
-    let e ← mkLambdaFVars #[ctxVar] e
-    return e
+    let es := es.map (fun e => e.replaceFVars ctxVals ctxVars)
+    let es ← es.mapM (mkLambdaFVars #[ctxVar])
+    return es
 
-  return (e', ctx)
+  return (es', ctx)
+
+
+@[inherit_doc abstractAllFVarsMany]
+def abstractAllFVars (e : Expr) : MetaM (Expr × Expr) := do
+  let (e,ctx) ← abstractAllFVarsMany #[e]
+  return (e[0]!, ctx)
+
+
+
+def asContextChange (es : Array Expr) : MetaM (Option (Expr × Expr × Array Expr)) := do
+
+  if es.size = 0 then
+    return none
+
+  let go := do
+    for e in es do
+      e.collectFVars
+  let (_,s) ← go.run {}
+
+  let ids := s.fvarIds
+  let ctxVals := ids.map Expr.fvar
+  let ctx ← mkProdElem ctxVals
+  let ctx := if ctxVals.size != 0 then ctx else (.const ``Unit.unit [])
+  let ctxType ← inferType ctx
+
+  let type ← inferType es[0]!
+  -- check all types are the same
+  unless ← es.allM (fun e => do isDefEq type (← inferType e)) do
+    return none
+
+  -- find context value we can use to pass on
+  let some i ← ctxVals.findIdxM? (fun val => do isDefEq type (← inferType val))
+    | return none
+
+  let es' ← withLocalDeclD `ctx ctxType fun ctxVar => do
+    let ctxVars ← mkProdSplitElem ctxVar (max 1 ctxVals.size)
+    let es := es.map (fun e => e.replaceFVars ctxVals ctxVars)
+    let ctxVars := ctxVars.set! i 
+    let es ← es.mapM (mkLambdaFVars #[ctxVar])
+    return es
+
+  return (es', ctx)
 
