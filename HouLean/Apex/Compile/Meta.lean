@@ -128,37 +128,37 @@ def abstractAllFVars (e : Expr) : MetaM (Expr × Expr) := do
 
 
 
-def asContextChange (es : Array Expr) : MetaM (Option (Expr × Expr × Array Expr)) := do
+-- def asContextChange (es : Array Expr) : MetaM (Option (Expr × Expr × Array Expr)) := do
 
-  if es.size = 0 then
-    return none
+--   if es.size = 0 then
+--     return none
 
-  let go := do
-    for e in es do
-      e.collectFVars
-  let (_,s) ← go.run {}
+--   let go := do
+--     for e in es do
+--       e.collectFVars
+--   let (_,s) ← go.run {}
 
-  let ids := s.fvarIds
-  let ctxVals := ids.map Expr.fvar
-  let ctx ← mkProdElem ctxVals
-  let ctx := if ctxVals.size != 0 then ctx else (.const ``Unit.unit [])
-  let ctxType ← inferType ctx
+--   let ids := s.fvarIds
+--   let ctxVals := ids.map Expr.fvar
+--   let ctx ← mkProdElem ctxVals
+--   let ctx := if ctxVals.size != 0 then ctx else (.const ``Unit.unit [])
+--   let ctxType ← inferType ctx
 
-  let type ← inferType es[0]!
-  -- check all types are the same
-  unless ← es.allM (fun e => do isDefEq type (← inferType e)) do
-    return none
+--   let type ← inferType es[0]!
+--   -- check all types are the same
+--   unless ← es.allM (fun e => do isDefEq type (← inferType e)) do
+--     return none
 
-  -- find context value we can use to pass on
-  let some i ← ctxVals.findIdxM? (fun val => do isDefEq type (← inferType val))
-    | return none
+--   -- find context value we can use to pass on
+--   let some i ← ctxVals.findIdxM? (fun val => do isDefEq type (← inferType val))
+--     | return none
 
-  let es' ← withLocalDeclD `ctx ctxType fun ctxVar => do
-    let ctxVars ← mkProdSplitElem ctxVar (max 1 ctxVals.size)
-    let es := es.map (fun e => e.replaceFVars ctxVals ctxVars)
-    let ctxVars := ctxVars.set! i 
-    let es ← es.mapM (mkLambdaFVars #[ctxVar])
-    return es
+--   let es' ← withLocalDeclD `ctx ctxType fun ctxVar => do
+--     let ctxVars ← mkProdSplitElem ctxVar (max 1 ctxVals.size)
+--     let es := es.map (fun e => e.replaceFVars ctxVals ctxVars)
+--     let ctxVars := ctxVars.set! i 
+--     let es ← es.mapM (mkLambdaFVars #[ctxVar])
+--     return es
 
-  return (es', ctx)
+--   return (es', ctx)
 
