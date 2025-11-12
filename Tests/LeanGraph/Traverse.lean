@@ -1,16 +1,17 @@
 import HouLean.LeanGraph.Traverse
+import HouLean.Apex.Compile.Main
 import HouLean.LeanGraph.Init
 
 open Lean HouLean LeanGraph Meta Traverse
 
 
 instance : Zero Vector3 := ⟨⟨0,0,0⟩⟩
--- set_option trace.HouLean.LeanGraph.typecheck true
+set_option trace.HouLean.LeanGraph.typecheck true
 
 
 
 run_elab
-  let s ← IO.FS.withFile "Tests/LeanGraph/graph6.json" .read fun file => do
+  let s ← IO.FS.withFile "Tests/LeanGraph/graph7.json" .read fun file => do
     file.readToEnd
 
   let .ok json := Json.parse s
@@ -20,13 +21,15 @@ run_elab
 
 
   let r ← graph.typeCheck
+  let apexGraph ← Apex.Compiler.programToApexGraph r.mainProgram
 
   let graph := r.graph
 
   let msg := graph.nodes.map (fun n => s!"{n.name} : {n.type.inputs.map (·.toString)} -> {n.type.outputs.map (·.toString)}")
   let a := msg.joinl (map:=id) (·++"\n"++·) 
 
-  logInfo r.code
+  logInfo s!"number of outputs: {apexGraph.outputs.size}"
+  logInfo s!"number of outputs: {apexGraph.outputs.map (fun output => output.1.type.typeTag?)}"
 
 
 -- open Qq

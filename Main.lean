@@ -111,7 +111,8 @@ unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.Ty
       let r ← graph.typeCheck
       let apexGraph ← programToApexGraph r.mainProgram
       let outGeos := apexGraph.outputs.filterMap (fun o => 
-        if o.1.type.typeTag? == some .geometry then
+        if o.1.type.typeTag? == some .geometry || 
+           o.1.type.typeTag? == none then -- there is bug somewhere and sometime the type is not set properly!
           some s!"output:{o.1.name}"
         else
           none)

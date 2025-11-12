@@ -506,6 +506,12 @@ namespace Geometry
   let (center,size,min,max,xform) := geo_BoundingBox g orient local'
   ⟨center,size,min,max,xform⟩
 
+-- temoporary hack to allow me to use `boundingBox`
+instance : Apex.ApexTypeFlatten (struct {center : Vector3, size : Vector3, min : Vector3, max : Vector3, xform : Matrix4}) [.vector3,.vector3,.vector3,.vector3,.matrix4] where
+  apexFlatten x := _root_.cast sorry_proof x
+  apexUnflatten x := _root_.cast sorry_proof x
+
+
 -- Load from disk
 @[apex_unfold] def fromDisk (filepath : String) (primname : String := "") : Geometry :=
   geo_FromDisk filepath primname

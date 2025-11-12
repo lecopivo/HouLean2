@@ -886,6 +886,9 @@ class NodeEditorWidget(QWidget):
         invokeNode = self.current_hou_node.node("invokegraph1")
         invokeNode.parm("inputbindings").set(0) # reset first
         invokeNode.parm("inputbindings").set(max(1,len(inputGeos)))
+
+        print(f"input geometries: {inputGeos}")
+        print(f"output geometries: {outputGeos}")
         
         # set input output geometries
         for index, inputGeo in enumerate(inputGeos):
@@ -893,7 +896,6 @@ class NodeEditorWidget(QWidget):
                 invokeNode.parm(f"binddictattrib{index+1}").set(0)
             invokeNode.parm(f"bindasgeoinput{index+1}").set(1)
             invokeNode.parm(f"apexgeoparm{index+1}").set(inputGeo)            
-
         if len(outputGeos) > 0:
             invokeNode.parm(f"bindoutputgeo").set(1)
             invokeNode.parm(f"apexgeooutput").set(outputGeos[0])

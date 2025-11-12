@@ -221,7 +221,11 @@ partial def buildArg (drop : Nat) (port : PortType) (wires : Array Connection) :
   let typeId := mkIdent port.typeName.toName
   return ← `((⟨$args,*⟩ : $typeId))
 
-
+def hasNoOutputConnection (nodeName : String) : TraverseM Bool := do
+  match (← read).outputConnections[nodeName]? with
+  | none => return true
+  | some wires => return (wires.size = 0)
+  
 /-- Process a node in the graph, generating a let-binding.
     
     Assigns the elaborated node to a let-binding and returns a new metavariable
@@ -316,7 +320,14 @@ partial def processNode (node : Node) (rest : MVarId) : TraverseM MVarId :=
         let scopeVarNames := (← read).scopes[node.name]?.getD ∅ |>.toArray
         let visitedNodes := (← get).visitedNodes
         let scopeVars := scopeVarNames.filterMap (fun n => visitedNodes[n]?) |>.map Expr.fvar
-        nodeVal ← mkLambdaFVars (scopeVars ++ (←get).vars) (nodeVal.getArg! 1)
+        if ← hasNoOutputConnection node.name then
+          nodeVal ← mkLambdaFVars (scopeVars ++ (←get).vars) (nodeVal.getArg! 1)
+        else
+          trace[HouLean.LeanGraph.typecheck] m!"local functions with scope vars: {scopeVars}"
+          let deps ← collectForwardDeps scopeVars true
+          let deps ← deps.filterM (fun x => x.fvarId!.isLetVar)
+          trace[HouLean.LeanGraph.typecheck] m!"their forward let dependencies: {deps}"
+          nodeVal ← mkLambdaFVars (scopeVars ++ deps) (nodeVal.getArg! 1)
 
 
       let nodeId := Name.mkSimple node.name
