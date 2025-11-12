@@ -47,6 +47,7 @@ structure RigidScaleTransform where
   translate : Vector3
   orient : Vector4
   scale : Float
+deriving Inhabited
 
 /-- Rigid transformation with scaling. 
 -/
@@ -54,7 +55,7 @@ structure ScrewTransform where
   translate : Vector3
   axisAngle : Vector3
   scale : Float
-
+deriving Inhabited
 
 /-- Transform parameters for geometric operations -/
 structure Transform where
@@ -74,7 +75,7 @@ structure Transform where
   xOrd : Int := 0
   /-- Rotation order: 0=XYZ, 1=XZY, 2=YXZ, 3=YZX, 4=ZXY, 5=ZYX -/
   rOrd : Int := 0
-
+deriving Inhabited
 
 /-- Bounding box specification -/
 structure BoundingBox where
@@ -82,6 +83,7 @@ structure BoundingBox where
   size : Vector3 := ⟨1, 1, 1⟩
   /-- Center position of the bounding box -/
   center : Vector3 := ⟨0, 0, 0⟩
+deriving Inhabited
 
 /-- Plane specification -/
 structure Plane where
@@ -91,3 +93,4 @@ structure Plane where
   normal : Vector3 := ⟨0, 1, 0⟩
   /-- Distance along normal from origin -/
   dist : Float := 0
+deriving Inhabited

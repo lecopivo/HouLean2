@@ -73,13 +73,14 @@ partial def mkPortType (t : Expr) (forceBuiltin := false) (userName? : Option St
     return (.builtin "type" "Type")
 
   if fn.isAnonymous then
-    throwError m!"Invalid expression {t} to get port type of!"
+    return .builtin (userName?.getD "unknown") "?_"
 
   let name := userName?.getD fn.getString!.toLower
-  let typeName ← withOptions (fun opt => opt.setBool `pp.mvars false) do ppExpr t
-  let _typeName := toString typeName
-  let argStr ← args.foldlM (init:="") (fun s arg => do return s ++ s!" {← ppExpr arg}")
-  let typeName := toString fn ++ argStr
+  let typeName ← withOptions (fun opt => opt |>.setBool `pp.mvars false
+                                              |>.setBool `pp.notation false) do ppExpr t
+  let typeName := toString typeName
+  -- let argStr ← args.foldlM (init:="") (fun s arg => do return s ++ s!" {← ppExpr arg}")
+  -- let typeName := toString fn ++ argStr
   
   if ¬(isStructure (← getEnv) fn) || (← isKnownPortType fn) || forceBuiltin then
     return .builtin name typeName

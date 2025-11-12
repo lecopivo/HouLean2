@@ -173,6 +173,8 @@ class NodeEditorWidget(QWidget):
             print("Auto-loaded network from: {}".format(node.path()))
             self.status_label.setText("Loaded from {}".format(node.name()))
 
+            self.request_type_check()
+
         except json.JSONDecodeError as e:
             print("Failed to parse network data from {}: {}".format(node.path(), e))
             self.status_label.setText("Error loading from {}".format(node.name()))
@@ -824,6 +826,8 @@ class NodeEditorWidget(QWidget):
 
         msgs = response["typecheck"]["data"]["messages"]
         graph = response["typecheck"]["data"]["graph"]
+        leanCode = response["typecheck"]["data"]["leanCode"]
+        pythonCode = response["typecheck"]["data"]["pythonCode"]
 
         nodes = graph["nodes"]
 
@@ -835,11 +839,13 @@ class NodeEditorWidget(QWidget):
            node_type = self.registry._parse_node_type(new_node["type"])
            old_node.update_ports(node_type)
 
-
         # ensure we selected Lean Graph
         if not is_lean_graph_node(self.current_hou_node):
             print(f"The current node {self.current_hou_node} is not Lean Graph, can't apply changes!")
             return
+
+        self.current_hou_node.parm("Lean_to_APEX/code").set(leanCode)
+        self.current_hou_node.parm("create_apex_graph/python").set(pythonCode)
 
         msgNode = self.current_hou_node.node("messages")
         msgNode.parm("numerror").set(len(msgs))

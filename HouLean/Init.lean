@@ -19,16 +19,6 @@ class SetElem (coll : Type u) (idx : Type v) (elem : outParam (Type w)) where
 export SetElem (setElem)
 
 
--- This is a product type into which structures are encoded
-structure StructProd (α β : Type) where
-  fst : α
-  snd : β
-
--- Structure is encoded into StructProd that always ending with `StructEnd`
-inductive StructEnd 
-  | nil
-
-
 axiom sorryProofAxiom {P : Prop} : P
 axiom sorryTermAxiom {P : Sort u} : P
 
@@ -64,3 +54,16 @@ def _root_.Array.joinrM [Monad m] [Inhabited β] (xs : Array α) (map : α → m
 
 def _root_.Array.joinr [Inhabited β] (xs : Array α) (map : α → β) (op : β → β → β) : β := Id.run do
   xs.joinrM map op
+
+
+/-- This class will be used to transport instances onto structures
+
+For every new class should provide ProdLike and Prod rules. -/
+class ProdLike (A : Type u) (B : outParam (Type v)) where
+  toProdType : A → B
+  fromProdType : B → A
+
+-- open ProdLike
+-- instance (A A') [ProdLike A B] [ProdLike A' B'] : ProdLike (A×A') (B×B') where
+--   toProdType := fun (a,a') => (toProdType a, toProdType a')
+--   fromProdType := fun (b,b') => (fromProdType b, fromProdType b')

@@ -48,12 +48,14 @@ deriving ToJson, FromJson, Inhabited
 
 structure TypeCheckResult where
   graph : LeanGraph
+  leanCode : String
+  pythonCode : String
   messages : Array Json
 deriving ToJson, FromJson, Inhabited
 
 inductive Response where
   | compile (data : ToApexGraphCompilationResult)
-  | typecheck (data : TypeCheckResult)
+  | typecheck (data : _root_.TypeCheckResult)
   | error (msg : String)
   | pong
   | quitting
@@ -94,26 +96,37 @@ unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompi
 
   return r
 
+#check LocalPort
+
 open Lean Elab Term in
-unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO TypeCheckResult := do
+unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.TypeCheckResult := do
 
   let ctx : Core.Context := {fileName := "<input>", fileMap := .ofString ""}
   let s : Core.State := { env := env } 
 
-  let (graph, sCore, _sMeta, _sElab) ← TermElabM.toIO 
+  let ((r,pythonCode), sCore, _sMeta, _sElab) ← TermElabM.toIO 
     (ctxCore := ctx) (sCore := s) (ctxMeta := {}) (sMeta := {}) (ctx := {}) (s := {}) do
     try
-      let graph ← graph.typeCheck
-      return graph
+      let r ← graph.typeCheck
+      let apexGraph ← programToApexGraph r.mainProgram
+      let outGeos := apexGraph.outputs.filterMap (fun o => 
+        if o.1.type.typeTag? == some .geometry then
+          some o.1.name
+        else
+          none)
+      let pythonCode := apexGraph.pythonBuildScript
+      return (r, pythonCode)
     catch e =>
-      logError m!"Compilation to APEX graph failed!\n{e.toMessageData}"
-      return graph
+      logError m!"Type checking failed!\n{e.toMessageData}"
+      return ({ graph := graph, code := "", mainProgram := default }, "")
 
   let coreMsgs ← sCore.messages.toArray.mapM (·.toJson)
-  
+
   return {
-    graph := graph
-    messages := coreMsgs
+    graph := r.graph
+    leanCode := r.code
+    pythonCode := pythonCode
+    messages := coreMsgs    
   }
 
 unsafe def handleRequest (req : Request) (env : Environment) : IO Response :=

@@ -501,8 +501,10 @@ namespace Geometry
   geo_UpdatePackedGeo g embedded primNum
 
 -- Bounding box
-@[apex_unfold] def boundingBox (g : Geometry) (orient : Bool := false) (local' : Bool := false) : Vector3 × Vector3 × Vector3 × Vector3 × Matrix4 :=
-  geo_BoundingBox g orient local'
+@[apex_unfold] def boundingBox (g : Geometry) (orient : Bool := false) (local' : Bool := false) :
+  struct { center : Vector3, size : Vector3, min : Vector3, max : Vector3, xform : Matrix4} :=
+  let (center,size,min,max,xform) := geo_BoundingBox g orient local'
+  ⟨center,size,min,max,xform⟩
 
 -- Load from disk
 @[apex_unfold] def fromDisk (filepath : String) (primname : String := "") : Geometry :=

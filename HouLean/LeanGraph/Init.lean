@@ -19,6 +19,10 @@ attribute [lean_graph_type_builtin]
 attribute [lean_graph_type] 
   Vector3 Matrix3
 
+attribute [lean_graph_node] forLoop
+attribute [lean_graph_node] forLoopM
+attribute [lean_graph_node] ifThenElse
+
 attribute [lean_graph_node] id
 attribute [lean_graph_node] Prod.mk
 attribute [lean_graph_node] Prod.fst

@@ -201,7 +201,7 @@ where
 partial def buildArg (drop : Nat) (port : PortType) (wires : Array Connection) : TraverseM Term := do
   if wires.size = 0 then
     trace[HouLean.LeanGraph.typecheck] "No wires connected, using hole"
-    return ← `(?_)
+    return ← `(default)
   
   -- Single wire at the correct level - direct connection
   if wires.size = 1 then
@@ -280,7 +280,7 @@ partial def processNode (node : Node) (rest : MVarId) : TraverseM MVarId :=
               trace[HouLean.LeanGraph.typecheck] "Using default value for port {i}: {val}"
               match Parser.runParserCategory (← getEnv) `term val "<default_value>" with
               | .error .. => 
-                argsStx := argsStx.push (← `(term|?_))
+                argsStx := argsStx.push (← `(term|default))
                 continue
               | .ok stx => 
                 argsStx := argsStx.push ⟨stx⟩
@@ -365,8 +365,13 @@ def buildContext (graph : LeanGraph) : CoreM Context := do
 end LeanGraph.Traverse
 
 
-open LeanGraph Traverse in
-def LeanGraph.typeCheck (graph : LeanGraph) : TermElabM LeanGraph := do
+structure TypeCheckResult where
+  graph : LeanGraph
+  code : String
+  mainProgram : Expr
+
+open LeanGraph Traverse PrettyPrinter in
+def LeanGraph.typeCheck (graph : LeanGraph) : TermElabM TypeCheckResult := do
 
   let go : TraverseM MVarId := do
 
@@ -387,8 +392,12 @@ def LeanGraph.typeCheck (graph : LeanGraph) : TermElabM LeanGraph := do
   withTraceNode `HouLean.LeanGraph.typecheck
      (fun _ => return m!"Gethering Node Types!") do
   
+
   -- update Node Types
   rest.withContext do
+
+    let mut outputs : Array (Node × Expr) := #[]
+
     let mut nodes := graph.nodes
     for i in [0:nodes.size] do
       let mut node := nodes[i]!
@@ -399,7 +408,7 @@ def LeanGraph.typeCheck (graph : LeanGraph) : TermElabM LeanGraph := do
         let type ← var.getType
         let inputPort ← mkPortType (← instantiateMVars (← inferType type)) false "type"
         let outputPort ← mkPortType (← instantiateMVars type) false node.name
-        let typeStr := toString (← ppExpr type)
+        let typeStr := toString (← Meta.ppExpr type)
         trace[HouLean.LeanGraph.typecheck] m!"{node.name} : ({inputPort.toString}) → ({outputPort.toString})"
         nodes := nodes.set! i 
           {node with
@@ -413,19 +422,26 @@ def LeanGraph.typeCheck (graph : LeanGraph) : TermElabM LeanGraph := do
       let some val ← var.getValue?
         | throwError m!"Can't recover the type of {node.name}, the associated fvar does not have a value!"
 
+      -- special case for output nodes
       if node.type.leanConstant == ``HouLean.output then
         let type ← inferType val
         let inputPort ← forallTelescope type fun _ returnType => do
             mkPortType (← instantiateMVars returnType) false "output"
         let outputPort ← mkPortType (← instantiateMVars type) false "function"
         trace[HouLean.LeanGraph.typecheck] m!"{node.name} : ({inputPort.toString}) → ({outputPort.toString})"
-        nodes := nodes.set! i 
-          {node with
+        let node' : Node := {node with
             type := {node.type with
               inputs := #[inputPort],
               outputs := #[outputPort]}}
+
+        nodes := nodes.set! i node'
+
+        -- consider this node as main output node if there are no outgoing connections 
+        if ctx.outputConnections[node.name]?.isNone then
+          outputs := outputs.push (node, val)
         continue
 
+      -- special case for eval nodes
       if node.type.leanConstant == ``HouLean.eval then
         let fn := val.getArg! 1
         let type ← instantiateMVars (← inferType fn)
@@ -468,6 +484,35 @@ def LeanGraph.typeCheck (graph : LeanGraph) : TermElabM LeanGraph := do
 
       nodes := nodes.set! i {node with type := {node.type with inputs := ins, outputs := #[out]}}
 
-    return {graph with nodes := nodes}
-        
+    let graph := {graph with nodes := nodes}
+    let mut mainProgram : Expr := default
+    -- let mut mainProgram? : Option Expr ← outputs[0]?.mapM (fun e => instantiateMVars e.2)
+    let codes : Array String ← outputs.mapM (fun (node, function) => do
+      let body ← withOptions (fun opts => opts 
+          |>.set `pp.structureInstanceTypes true
+          |>.set `pp.funBinderTypes true) <| 
+        Meta.ppExpr function
+      let body := s!"{body}".replace "\n" "\n  "
+      let code := s!"def {node.name} :=\n  {body}"
+      return code)
+
+    let mut code := "import HouLean\n\n" ++ codes.joinl (map:=id) (·++"\n\n"++·)
+    
+    if outputs.size == 0 then
+      mainProgram ← elabTerm (← `(term| HouLean.Apex.SOP.font { text := "Please add an output node!" })) none
+      code := code ++ "\n\n" ++ "def run := HouLean.Apex.SOP.font { text := \"Please add an output node!\" }"
+    else if outputs.size == 1 then
+      mainProgram ← instantiateMVars outputs[0]!.2
+      code := code ++ "\n\n" ++ s!"def run := {outputs[0]!.1.name}"
+    else
+      mainProgram ← elabTerm (← `(term| HouLean.Apex.SOP.font { text := "There should be only one unconnected output node!" })) none
+      code := code ++ "\n\n" ++ "def run := HouLean.Apex.SOP.font { text := \"There should be only one unconnected output node!\" }"
+      
+    return {
+      graph := graph
+      mainProgram := mainProgram
+      code := code
+    }
+
 end HouLean
+

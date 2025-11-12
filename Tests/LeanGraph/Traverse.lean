@@ -5,7 +5,7 @@ open Lean HouLean LeanGraph Meta Traverse
 
 
 instance : Zero Vector3 := ⟨⟨0,0,0⟩⟩
-set_option trace.HouLean.LeanGraph.typecheck true
+-- set_option trace.HouLean.LeanGraph.typecheck true
 
 
 
@@ -19,15 +19,16 @@ run_elab
     | throwError "failed loading graph!"
 
 
-  let graph ← graph.typeCheck
+  let r ← graph.typeCheck
+
+  let graph := r.graph
 
   let msg := graph.nodes.map (fun n => s!"{n.name} : {n.type.inputs.map (·.toString)} -> {n.type.outputs.map (·.toString)}")
   let a := msg.joinl (map:=id) (·++"\n"++·) 
-  logInfo a
+
+  logInfo r.code
 
 
-
-#check withRef
 -- open Qq
 -- run_meta
 --   let p ← mkPortType q(Float)

@@ -17,6 +17,7 @@ structure GroupSelection where
   /-- Type of group: 0=guess, 1=breakpoints, 2=edges, 3=points, 4=primitives -/
   groupType : Int := 0
 
+instance : Inhabited GroupSelection := ⟨{}⟩
 
 -- ============================================================================
 -- Transform Node
@@ -46,6 +47,8 @@ structure XformParams where
   outputAttrib : String := "xform"
   /-- Merge transformation with existing attribute -/
   outputMerge : Bool := false
+
+instance : Inhabited XformParams := ⟨{}⟩
 
 /-- Transform geometry using translation, rotation, and scaling
   
@@ -191,6 +194,7 @@ structure BooleanParams where
   aDepth : Vector2 := ⟨0, 0⟩
   /-- Depth range for B (for visualization/filtering) -/
   bDepth : Vector2 := ⟨0, 0⟩
+instance : Inhabited BooleanParams := ⟨{}⟩
 
 /-- Perform boolean operations (union, intersect, subtract) between two geometries
 
@@ -274,7 +278,7 @@ structure BoxParams where
   /-- Primitive type: 0=Polygon, 1=Polygon Mesh, 2=Mesh, 3=NURBS Curve, 4=Bezier Curve -/
   type : Int := 0
   /-- Surface type: 0=Rows, 1=Rows and Columns, 2=Triangles, 3=Quadrilaterals, 4=Alternating Triangles, 5=Revolved -/
-  surfaceType : Int := 0
+  surfaceType : Int := 4
   /-- Consolidate points at corners (removes duplicate points) -/
   consolidatePoints : Bool := true
   /-- Size of the box along X, Y, and Z axes -/
@@ -286,19 +290,21 @@ structure BoxParams where
   /-- Uniform scale factor applied after size -/
   scale : Float := 1.0
   /-- Division rate for rows and columns (legacy parameter) -/
-  divRate : Vector3 := ⟨1, 1, 1⟩
+  divRate : Vector3 := ⟨4, 4, 4⟩
   /-- Order for NURBS/Bezier curves (degree + 1) -/
   orderRate : Vector3 := ⟨4, 4, 4⟩
   /-- Enable manual control of divisions -/
-  doDivs : Bool := true
+  doDivs : Bool := false
   /-- Number of divisions along X, Y, and Z (rows, columns, height divisions) -/
-  divs : Vector3 := ⟨1, 1, 1⟩
+  divs : Vector3 := ⟨3, 3, 3⟩
   /-- Display rebar visualization (wireframe overlay) -/
   rebar : Bool := false
   /-- Create an oriented bounding box from reference geometry -/
   orientedBBox : Bool := false
   /-- Add per-vertex normals (instead of per-point) -/
   vertexNormals : Bool := false
+instance : Inhabited BoxParams := ⟨{}⟩
+
 
 /-- Create a box or cube primitive
 Creates a six-sided box with customizable divisions and orientation.
@@ -349,7 +355,7 @@ See: https://www.sidefx.com/docs/houdini/nodes/sop/sphere.html
 -/
 structure SphereParams where
   /-- Primitive type: 0=Polygon, 1=Polygon Mesh, 2=Mesh, 3=NURBS, 4=Bezier -/
-  type : Int := 0
+  type : Int := 1
   /-- Surface type: varies by primitive type -/
   surfaceType : Int := 4
   /-- Radius along X, Y, and Z axes (use different values for ellipsoids) -/
@@ -380,6 +386,8 @@ structure SphereParams where
   rows : Int := 13
   /-- Number of columns (longitude divisions) -/
   cols : Int := 24
+
+instance : Inhabited SphereParams := ⟨{}⟩
 
 /-- Create a sphere or ellipsoid primitive
 Creates a spherical surface with customizable tessellation and shape.
@@ -440,11 +448,11 @@ structure GridParams where
   /-- Primitive type: 0=Polygon, 1=Polygon Mesh, 2=Mesh, 3=NURBS, 4=Bezier -/
   type : Int := 0
   /-- Surface type: varies by primitive type -/
-  surfaceType : Int := 0
+  surfaceType : Int := 4
   /-- Orientation plane: 0=XY plane, 1=YZ plane, 2=ZX plane -/
   orientation : Int := 2
   /-- Size of the grid along its two axes -/
-  size : Vector2 := ⟨1, 1⟩
+  size : Vector2 := ⟨10, 10⟩
   /-- Center position of the grid in world space -/
   center : Vector3 := ⟨0, 0, 0⟩
   /-- Rotation angles in degrees around X, Y, and Z axes -/
@@ -458,9 +466,10 @@ structure GridParams where
   /-- V order for NURBS/Bezier (degree + 1) -/
   orderV : Int := 4
   /-- U interpolation end conditions: 0=off, 1=on -/
-  interpU : Int := 0
+  interpU : Int := 1
   /-- V interpolation end conditions: 0=off, 1=on -/
-  interpV : Int := 0
+  interpV : Int := 1
+instance : Inhabited GridParams := ⟨{}⟩
 
 /-- Create a planar grid of polygons
 Creates a flat rectangular grid useful for ground planes, particle emission surfaces, or as a base for terrain.
@@ -598,6 +607,8 @@ structure ScatterParams where
   /-- Maximum allowed radius value -/
   maxRadius : Float := 0.0
 
+instance : Inhabited ScatterParams := ⟨{}⟩
+
 /-- Scatter points randomly across surface geometry
 Creates randomly distributed points on surfaces, useful for instancing, particle emission, or procedural placement.
 
@@ -703,6 +714,8 @@ structure CopyToPointsParams where
   /-- Array of dictionaries specifying target attribute behavior -/
   targetAttribs : DictArray := default
 
+instance : Inhabited CopyToPointsParams := ⟨{}⟩
+
 /-- Copy source geometry onto target points
 Creates copies of source geometry at each target point location, with optional transformation and attribute transfer.
 
@@ -762,15 +775,15 @@ structure SubdivideParams where
   /-- Output creased edges to a group -/
   outputCrease : Bool := false
   /-- Name of output crease edges group -/
-  outCreaseGroup : String := "creasegroup"
+  outCreaseGroup : String := "creases"
   /-- Close holes in open polygons before subdividing -/
   closeHoles : Bool := true
   /-- Add surrounding polygons to group automatically -/
-  surroundPoly : Bool := false
+  surroundPoly : Bool := true
   /-- Bias factor for adaptive subdivision -/
-  bias : Float := 0.0
+  bias : Float := 1.0
   /-- Smooth vertex positions (in addition to subdividing) -/
-  smoothVertex : Bool := false
+  smoothVertex : Bool := true
   /-- Maintain consistent topology (required for animation) -/
   consistTopology : Bool := false
   /-- Treat creases linearly (simpler crease behavior) -/
@@ -784,7 +797,7 @@ structure SubdivideParams where
   /-- Recompute point normals after subdivision -/
   updateNormals : Bool := true
   /-- Remove holes in mesh -/
-  removeHoles : Bool := false
+  removeHoles : Bool := true
   /-- Vertex boundary interpolation: "edge only", "edge and corner" -/
   vtxBoundary : String := "edge only"
   /-- Face-varying interpolation: "none", "corners only", "corners plus1", "boundaries", "all" -/
@@ -793,6 +806,8 @@ structure SubdivideParams where
   creaseMethod : String := "uniform"
   /-- Triangle subdivision scheme: "catmull-clark", "loop" -/
   triangleSubd : String := "catmull-clark"
+
+instance : Inhabited SubdivideParams := ⟨{}⟩
 
 /-- Subdivide polygons for smooth surfaces
 Applies Catmull-Clark or other subdivision schemes to create smooth surfaces from coarse polygon meshes.
@@ -1023,6 +1038,8 @@ structure PolyExtrudeParams where
   /-- Local center attribute name -/
   localCtrAttrib : String := "ctrlocal"
 
+instance : Inhabited PolyExtrudeParams := ⟨{}⟩
+
 /-- Extrude polygon faces
 Extrudes polygon faces along normals or a custom direction, with inset, twist, and subdivision options.
 
@@ -1204,6 +1221,8 @@ structure RemeshParams where
   /-- Name of output mesh quality attribute -/
   outMeshQualityAttrib : String := "quality"
 
+instance : Inhabited RemeshParams := ⟨{}⟩
+
 /-- Rebuild input surface with a cleaner, more uniform triangular mesh
 
 Example:
@@ -1267,6 +1286,8 @@ structure BlastParams where
   fillHole : Bool := false
   /-- Remove group definition after deletion -/
   removeGroup : Bool := false
+
+instance : Inhabited BlastParams := ⟨{}⟩
 
 /-- Delete geometry by group selection
 
@@ -1336,6 +1357,8 @@ structure FuseParams where
   /-- Use accurate but slower fusing algorithm -/
   accurate : Bool := true
 
+instance : Inhabited FuseParams := ⟨{}⟩
+
 /-- Merge points within a specified distance and consolidate overlapping points
 
 Example:
@@ -1380,7 +1403,7 @@ def fuse (params : FuseParams := {}) (geo : Geometry) : Geometry :=
 /-- Entry for a single attribute to create -/
 structure AttribCreateEntry where
   /-- Attribute name -/
-  name : String
+  name : String := "attribname"
   /-- Attribute class: 0=detail, 1=prim, 2=point, 3=vertex -/
   class' : Int := 0
   /-- Attribute type: 0=float, 1=int, 2=vector, 3=string -/
@@ -1391,6 +1414,8 @@ structure AttribCreateEntry where
   value : Vector4 := ⟨0, 0, 0, 0⟩
   /-- Default string value -/
   string : String := ""
+
+instance : Inhabited AttribCreateEntry := ⟨{}⟩
 
 /-- Parameters for the Attribute Create SOP -/
 structure AttribCreateParams where
@@ -1475,6 +1500,7 @@ structure ExtractCentroidParams where
   transferAttributes : String := ""
   /-- Space-separated list of groups to transfer to centroids -/
   transferGroups : String := ""
+instance : Inhabited ExtractCentroidParams := ⟨{}⟩
 
 /-- Extract centroids (center points) from geometry pieces
 
@@ -1523,6 +1549,7 @@ structure ExtractContoursParams where
   mode : Int := 0
   /-- Name of output edge group -/
   outputEdgeGroup : String := "contours"
+instance : Inhabited ExtractContoursParams := ⟨{}⟩
 
 /-- Extract contour edges (silhouettes, creases, borders) from geometry
 
@@ -1570,6 +1597,7 @@ structure ExtractTransformParams where
   computeDistortion : Bool := false
   /-- Name of distortion attribute -/
   distortionAttrib : String := "distortion"
+instance : Inhabited ExtractTransformParams := ⟨{}⟩
 
 /-- Extract transformation between two geometries
 Computes the transform that takes the first input to match the second input.
@@ -1641,6 +1669,7 @@ structure FacetParams where
   postNormal : Bool := true
   /-- Reverse all normals -/
   reverseNormals : Bool := false
+instance : Inhabited FacetParams := ⟨{}⟩
 
 /-- Control point/primitive normals and geometry cleanup
 A versatile node for normal computation, point consolidation, and polygon cleanup.
@@ -1729,6 +1758,7 @@ structure FileParams where
   wrap : Int := 0
   /-- Retry on load failure -/
   retry : Bool := false
+instance : Inhabited FileParams := ⟨{}⟩
 
 /-- Load or save geometry files
 Supports various formats including .bgeo, .obj, .fbx, .abc, etc.
@@ -1812,6 +1842,7 @@ structure FitParams where
   closeV : Bool := false
   /-- Include corner points -/
   corners : Bool := true
+instance : Inhabited FitParams := ⟨{}⟩
 
 /-- Fit a spline surface (NURBS/Bezier) to points
 
@@ -1889,6 +1920,7 @@ structure FontParams where
   addHoles : Bool := true
   /-- Add primitive attribute for character identification -/
   addCharAttrib : Bool := false
+instance : Inhabited FontParams := ⟨{}⟩
 
 /-- Generate 3D text from fonts
 
@@ -1960,6 +1992,7 @@ structure FractalParams where
   normalAttrib : String := "N"
   /-- Displacement direction vector (if no normal attribute) -/
   direction : Vector3 := ⟨0, 1, 0⟩
+instance : Inhabited FractalParams := ⟨{}⟩
 
 /-- Add fractal noise displacement to geometry
 Creates natural-looking terrain and organic surface detail.
@@ -2019,6 +2052,7 @@ structure SolidifyParams where
   outputSolidity : Bool := false
   /-- Name of solidity attribute -/
   solidityAttrib : String := "solidity"
+instance : Inhabited SolidifyParams := ⟨{}⟩
 
 /-- Determine which tetrahedra are inside solid regions
 
@@ -2108,6 +2142,7 @@ structure SortParams where
   combinePrimIndices : Bool := false
   /-- Vertex primitive order: 0=unchanged, 1=reverse -/
   vertexPrimOrder : Int := 0
+instance : Inhabited SortParams := ⟨{}⟩
 
 /-- Sort points and primitives by various criteria
 
@@ -2189,6 +2224,7 @@ structure SplitPointsParams where
   tolerance : Float := 0.0001
   /-- Promote vertex attributes to points after splitting -/
   promoteAttributes : Bool := false
+instance : Inhabited SplitPointsParams := ⟨{}⟩
 
 /-- Split shared points into unique points per primitive
 Useful for creating hard edges or preventing attribute blending.
@@ -2265,6 +2301,7 @@ structure SurfaceSplatParams where
   bindHitPrim : String := "hitprim"
   /-- Hit UV attribute binding -/
   bindHitUV : String := "hituv"
+instance : Inhabited SurfaceSplatParams := ⟨{}⟩
 
 /-- Project and splat attributes from points onto a surface
 Used for painting, texture projection, and attribute transfer.
@@ -2460,6 +2497,7 @@ structure SweepParams where
   upVector : Vector3 := ⟨0, 1, 0⟩
   /-- End up vector direction -/
   endUpVector : Vector3 := ⟨0, 1, 0⟩
+instance : Inhabited SweepParams := ⟨{}⟩
 
 /-- Sweep a cross-section along a backbone curve
 Creates surfaces like tubes, pipes, extrusions, and complex swept forms.
@@ -2581,6 +2619,7 @@ structure SwitchParams where
   auxGeo : GeometryArray := default
   /-- Index of input to select (0-based) -/
   input : Int := 0
+instance : Inhabited SwitchParams := ⟨{}⟩
 
 /-- Select one geometry from multiple inputs
 
@@ -2713,6 +2752,7 @@ structure TetrahedralizeParams where
   useInvalidGroup : Bool := false
   /-- Invalid primitive group -/
   invalidPrimGroup : String := "invalid"
+instance : Inhabited TetrahedralizeParams := ⟨{}⟩
 
 /-- Convert geometry into tetrahedral mesh
 Used for FEM simulation, volume meshing, and solid object representation.
@@ -2797,6 +2837,7 @@ structure TetrasurfaceParams where
   keepPoints : Bool := false
   /-- Build output as polygon soup -/
   buildPolySoup : Bool := false
+instance : Inhabited TetrasurfaceParams := ⟨{}⟩
 
 /-- Extract surface from tetrahedral mesh
 
@@ -2843,6 +2884,7 @@ structure TextureParams where
   angle : Float := 0.0
   /-- Fix UV seams -/
   fixSeams : Bool := false
+instance : Inhabited TextureParams := ⟨{}⟩
 
 /-- Generate or modify UV texture coordinates
 

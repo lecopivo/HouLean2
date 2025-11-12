@@ -28,6 +28,10 @@ instance : HMul Vector3 Float Vector3 := ⟨smul⟩
 defun hDiv (a : Vector3) (s : Float) : Vector3 :=
   ⟨a.x / s, a.y / s, a.z / s⟩
 
+defun div (a : Vector3) (b : Vector3) : Vector3 :=
+  ⟨a.x / b.x, a.y / b.y, a.z / b.z⟩
+
+
 -- ============================================================================
 -- Vector operations
 -- ============================================================================
