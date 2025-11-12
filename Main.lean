@@ -191,6 +191,7 @@ unsafe def serverLoop (env : Environment) : IO Unit := do
   repeat
     let line ← stdin.getLine
     let c ← processRequest line.trim env
+    IO.sleep 50
     if !c then break
 
 unsafe def compileOnce (env : Environment) (codeOrFile : String) : IO Unit := do

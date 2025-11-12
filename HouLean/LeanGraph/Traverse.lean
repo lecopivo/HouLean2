@@ -198,10 +198,10 @@ where
 /-- Build argument expression for a node input port.
     Handles both direct connections and nested struct constructions.
     `drop` indicates the current depth in the port hierarchy. -/
-partial def buildArg (drop : Nat) (port : PortType) (wires : Array Connection) : TraverseM Term := do
+partial def buildArgAux (drop : Nat) (port : PortType) (wires : Array Connection) : TraverseM (Option Term) := do
   if wires.size = 0 then
     trace[HouLean.LeanGraph.typecheck] "No wires connected, using hole"
-    return ← `(default)
+    return none
   
   -- Single wire at the correct level - direct connection
   if wires.size = 1 then
@@ -213,13 +213,23 @@ partial def buildArg (drop : Nat) (port : PortType) (wires : Array Connection) :
   
   -- Multiple wires or nested connection - build struct
   trace[HouLean.LeanGraph.typecheck] "Building struct with {wires.size} connections at depth {drop}"
-  let mut args : Array Term := #[]
+  let mut args : Array (Option (Ident × Term)) := #[]
   let subports ← getSubports port
   for subport in subports, i in [0:subports.size] do
     let wires' := wires.filter (fun w => (w.inputIndex.drop drop).head? == some i)
-    args := args.push (← buildArg (drop+1) subport wires')
+    let arg? ← buildArgAux (drop+1) subport wires'
+    let nameAndArg? := arg?.map (fun arg => (mkIdent subport.name.toName, arg))
+    args := args.push nameAndArg?
+  let (names, vals) := args.filterMap id |>.unzip
   let typeId := mkIdent port.typeName.toName
-  return ← `((⟨$args,*⟩ : $typeId))
+  return ← `({ $[ $names:ident := $vals],* : $typeId})
+
+def buildArg (port : PortType) (wires : Array Connection) : TraverseM Term := do
+  let t? ← buildArgAux 1 port wires 
+  let typeId := mkIdent port.typeName.toName  
+  let default : Term ← `((default : $typeId))
+  return t?.getD default
+
 
 def hasNoOutputConnection (nodeName : String) : TraverseM Bool := do
   match (← read).outputConnections[nodeName]? with
@@ -287,11 +297,12 @@ partial def processNode (node : Node) (rest : MVarId) : TraverseM MVarId :=
                 argsStx := argsStx.push (← `(term|default))
                 continue
               | .ok stx => 
-                argsStx := argsStx.push ⟨stx⟩
+                let stx : Term := ⟨stx⟩
+                argsStx := argsStx.push (← `(term| ($stx)))
                 continue
 
         -- Build argument from connections
-        let argStx ← buildArg 1 port wires
+        let argStx ← buildArg port wires
         argsStx := argsStx.push argStx
 
       -- Elaborate the complete node expression
@@ -526,4 +537,3 @@ def LeanGraph.typeCheck (graph : LeanGraph) : TermElabM TypeCheckResult := do
     }
 
 end HouLean
-

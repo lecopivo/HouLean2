@@ -5,57 +5,63 @@ open Lean Meta
 namespace HouLean
 
 structure Vector2 where
-  x : Float
-  y : Float
-deriving Inhabited, Repr
+  x : Float := 0.0
+  y : Float := 0.0
+deriving Repr
+instance : Inhabited Vector2 := ⟨{}⟩
 
 structure Vector3 where
-  x : Float
-  y : Float
-  z : Float
-deriving Inhabited, Repr
+  x : Float := 0.0
+  y : Float := 0.0
+  z : Float := 0.0
+deriving Repr
+instance : Inhabited Vector3 := ⟨{}⟩
 
 structure Vector4 where
-  x : Float
-  y : Float
-  z : Float
-  w : Float
-deriving Inhabited, Repr
+  x : Float := 0.0
+  y : Float := 0.0
+  z : Float := 0.0
+  w : Float := 0.0
+deriving Repr
+instance : Inhabited Vector4 := ⟨{}⟩
 
 structure Matrix2 where
-  row0 : Vector2
-  row1 : Vector2
-deriving Inhabited, Repr
+  row0 : Vector2 := ⟨1,0⟩
+  row1 : Vector2 := ⟨0,1⟩
+deriving Repr
+instance : Inhabited Matrix2 := ⟨{}⟩
 
 structure Matrix3 where
-  row0 : Vector3
-  row1 : Vector3
-  row2 : Vector3
-deriving Inhabited, Repr
+  row0 : Vector3 := ⟨1,0,0⟩
+  row1 : Vector3 := ⟨0,1,0⟩
+  row2 : Vector3 := ⟨0,0,1⟩
+deriving Repr
+instance : Inhabited Matrix3 := ⟨{}⟩
 
 structure Matrix4 where
-  row0 : Vector4
-  row1 : Vector4
-  row2 : Vector4
-  row3 : Vector4
-deriving Inhabited, Repr
+  row0 : Vector4 := ⟨1,0,0,0⟩
+  row1 : Vector4 := ⟨0,1,0,0⟩
+  row2 : Vector4 := ⟨0,0,1,0⟩
+  row3 : Vector4 := ⟨0,0,0,1⟩
+deriving Repr
+instance : Inhabited Matrix4 := ⟨{}⟩
 
 
 /-- Rigid transformation with scaling. 
 -/
 structure RigidScaleTransform where
-  translate : Vector3
-  orient : Vector4
-  scale : Float
-deriving Inhabited
+  translate : Vector3 := ⟨0,0,0⟩
+  orient : Vector4 := ⟨0,0,0,1⟩
+  scale : Float := 1
+instance : Inhabited RigidScaleTransform := ⟨{}⟩
 
 /-- Rigid transformation with scaling. 
 -/
 structure ScrewTransform where
-  translate : Vector3
-  axisAngle : Vector3
-  scale : Float
-deriving Inhabited
+  translate : Vector3 := ⟨0,0,0⟩
+  axisAngle : Vector3 := ⟨0,0,0⟩
+  scale : Float := 1
+instance : Inhabited ScrewTransform := ⟨{}⟩
 
 /-- Transform parameters for geometric operations -/
 structure Transform where
@@ -75,7 +81,7 @@ structure Transform where
   xOrd : Int := 0
   /-- Rotation order: 0=XYZ, 1=XZY, 2=YXZ, 3=YZX, 4=ZXY, 5=ZYX -/
   rOrd : Int := 0
-deriving Inhabited
+instance : Inhabited Transform := ⟨{}⟩
 
 /-- Bounding box specification -/
 structure BoundingBox where
@@ -83,7 +89,8 @@ structure BoundingBox where
   size : Vector3 := ⟨1, 1, 1⟩
   /-- Center position of the bounding box -/
   center : Vector3 := ⟨0, 0, 0⟩
-deriving Inhabited
+instance : Inhabited BoundingBox := ⟨{}⟩
+
 
 /-- Plane specification -/
 structure Plane where
@@ -93,4 +100,5 @@ structure Plane where
   normal : Vector3 := ⟨0, 1, 0⟩
   /-- Distance along normal from origin -/
   dist : Float := 0
-deriving Inhabited
+instance : Inhabited Plane := ⟨{}⟩
+
