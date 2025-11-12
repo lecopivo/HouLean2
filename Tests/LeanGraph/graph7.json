@@ -3,7 +3,7 @@
     {
       "builtin": {
         "name": "geometry",
-        "type": "Geometry"
+        "type": "HouLean.Apex.Geometry"
       }
     },
     {
@@ -34,6 +34,70 @@
       "builtin": {
         "name": "nat",
         "type": "Nat"
+      }
+    },
+    {
+      "struct": {
+        "name": "vector3",
+        "type": "HouLean.Vector3",
+        "subports": [
+          {
+            "builtin": {
+              "name": "x",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "y",
+              "type": "Float"
+            }
+          },
+          {
+            "builtin": {
+              "name": "z",
+              "type": "Float"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "struct": {
+        "name": "matrix3",
+        "type": "HouLean.Matrix3",
+        "subports": [
+          {
+            "builtin": {
+              "name": "row0",
+              "type": "HouLean.Vector3"
+            }
+          },
+          {
+            "builtin": {
+              "name": "row1",
+              "type": "HouLean.Vector3"
+            }
+          },
+          {
+            "builtin": {
+              "name": "row2",
+              "type": "HouLean.Vector3"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "builtin": {
+        "name": "option",
+        "type": "Option ?_"
+      }
+    },
+    {
+      "builtin": {
+        "name": "geometry",
+        "type": "Geometry"
       }
     },
     {
@@ -90,72 +154,8 @@
     },
     {
       "builtin": {
-        "name": "option",
-        "type": "Option ?_"
-      }
-    },
-    {
-      "builtin": {
-        "name": "geometry",
-        "type": "HouLean.Apex.Geometry"
-      }
-    },
-    {
-      "builtin": {
         "name": "array",
         "type": "Array ?\u03b1"
-      }
-    },
-    {
-      "struct": {
-        "name": "vector3",
-        "type": "HouLean.Vector3",
-        "subports": [
-          {
-            "builtin": {
-              "name": "x",
-              "type": "Float"
-            }
-          },
-          {
-            "builtin": {
-              "name": "y",
-              "type": "Float"
-            }
-          },
-          {
-            "builtin": {
-              "name": "z",
-              "type": "Float"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "struct": {
-        "name": "matrix3",
-        "type": "HouLean.Matrix3",
-        "subports": [
-          {
-            "builtin": {
-              "name": "row0",
-              "type": "HouLean.Vector3"
-            }
-          },
-          {
-            "builtin": {
-              "name": "row1",
-              "type": "HouLean.Vector3"
-            }
-          },
-          {
-            "builtin": {
-              "name": "row2",
-              "type": "HouLean.Vector3"
-            }
-          }
-        ]
       }
     },
     {
@@ -10402,23 +10402,9 @@
         "exposeImplicitArgs": false,
         "inputs": [
           {
-            "struct": {
+            "builtin": {
               "name": "output",
-              "type": "Prod HouLean.Apex.Geometry Int",
-              "subports": [
-                {
-                  "builtin": {
-                    "name": "fst",
-                    "type": "HouLean.Apex.Geometry"
-                  }
-                },
-                {
-                  "builtin": {
-                    "name": "snd",
-                    "type": "Int"
-                  }
-                }
-              ]
+              "type": "HouLean.Apex.Geometry"
             }
           }
         ],
@@ -10426,14 +10412,14 @@
           {
             "builtin": {
               "name": "function",
-              "type": "HouLean.Apex.Geometry \u2192 HouLean.Apex.Geometry \u00d7 Int"
+              "type": "HouLean.Apex.Geometry \u2192 HouLean.Apex.Geometry"
             }
           }
         ]
       },
       "portValues": [],
-      "x": 1560.0927171254862,
-      "y": -329.92883435885716
+      "x": 1514.4606556854858,
+      "y": -326.78179563885715
     },
     {
       "name": "Geometry_setPointAttrib",
@@ -10521,8 +10507,8 @@
         ]
       },
       "portValues": [],
-      "x": 624.9944731428575,
-      "y": -389.5181522125894
+      "x": 771.3317736228576,
+      "y": -361.1948037325895
     },
     {
       "name": "index",
@@ -10637,53 +10623,6 @@
       ],
       "x": -487.8830258695197,
       "y": -712.2433996897981
-    },
-    {
-      "name": "Prod_mk",
-      "type": {
-        "name": "Prod_mk",
-        "leanConstant": "Prod.mk",
-        "exposeImplicitArgs": false,
-        "inputs": [
-          {
-            "builtin": {
-              "name": "fst",
-              "type": "HouLean.Apex.Geometry"
-            }
-          },
-          {
-            "builtin": {
-              "name": "snd",
-              "type": "Int"
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "struct": {
-              "name": "output",
-              "type": "Prod HouLean.Apex.Geometry Int",
-              "subports": [
-                {
-                  "builtin": {
-                    "name": "fst",
-                    "type": "HouLean.Apex.Geometry"
-                  }
-                },
-                {
-                  "builtin": {
-                    "name": "snd",
-                    "type": "Int"
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "portValues": [],
-      "x": 1277.7519931428571,
-      "y": -362.5650491428571
     },
     {
       "name": "Geometry_numPoints",
@@ -11090,32 +11029,6 @@
       "isImplicit": false
     },
     {
-      "outputNodeName": "forLoop",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "Prod_mk",
-      "inputIndex": [
-        0
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 60.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "Geometry_numPoints",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "Prod_mk",
-      "inputIndex": [
-        1
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 88.0,
-      "isImplicit": false
-    },
-    {
       "outputNodeName": "input",
       "outputIndex": [
         0
@@ -11248,7 +11161,7 @@
       "isImplicit": false
     },
     {
-      "outputNodeName": "Prod_mk",
+      "outputNodeName": "forLoop",
       "outputIndex": [
         0
       ],

@@ -77,7 +77,8 @@ partial def mkPortType (t : Expr) (forceBuiltin := false) (userName? : Option St
 
   let name := userName?.getD fn.getString!.toLower
   let typeName ← withOptions (fun opt => opt |>.setBool `pp.mvars false
-                                              |>.setBool `pp.notation false) do ppExpr t
+                                              |>.setBool `pp.notation false
+                                              |>.setBool `pp.fullNames true) do ppExpr t
   let typeName := toString typeName
   -- let argStr ← args.foldlM (init:="") (fun s arg => do return s ++ s!" {← ppExpr arg}")
   -- let typeName := toString fn ++ argStr
