@@ -21,16 +21,20 @@ run_elab
 
 
   let r ← graph.typeCheck
-  let apexGraph ← Apex.Compiler.programToApexGraph r.mainProgram
+  -- let apexGraph ← Apex.Compiler.programToApexGraph r.mainProgram
 
-  let graph := r.graph
+  -- let graph := r.graph
 
   let msg := graph.nodes.map (fun n => s!"{n.name} : {n.type.inputs.map (·.toString)} -> {n.type.outputs.map (·.toString)}")
   let a := msg.joinl (map:=id) (·++"\n"++·) 
 
-  logInfo s!"number of outputs: {apexGraph.outputs.size}"
-  logInfo s!"number of outputs: {apexGraph.outputs.map (fun output => output.1.type.typeTag?)}"
+  logInfo r.mainProgram
 
+  -- logInfo s!"number of outputs: {apexGraph.outputs.size}"
+  -- logInfo s!"number of outputs: {apexGraph.outputs.map (fun output => output.1.type.typeTag?)}"
+
+open HouLean Apex
+#check visualize SOP.box
 
 -- open Qq
 -- run_meta
