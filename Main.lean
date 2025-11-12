@@ -50,6 +50,8 @@ structure TypeCheckResult where
   graph : LeanGraph
   leanCode : String
   pythonCode : String
+  inputGeos : Array String
+  outputGeos : Array String
   messages : Array Json
 deriving ToJson, FromJson, Inhabited
 
@@ -96,7 +98,6 @@ unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompi
 
   return r
 
-#check LocalPort
 
 open Lean Elab Term in
 unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.TypeCheckResult := do
@@ -104,21 +105,26 @@ unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.Ty
   let ctx : Core.Context := {fileName := "<input>", fileMap := .ofString ""}
   let s : Core.State := { env := env } 
 
-  let ((r,pythonCode), sCore, _sMeta, _sElab) ← TermElabM.toIO 
+  let ((r,pythonCode,inputGeos, outputGeos), sCore, _sMeta, _sElab) ← TermElabM.toIO 
     (ctxCore := ctx) (sCore := s) (ctxMeta := {}) (sMeta := {}) (ctx := {}) (s := {}) do
     try
       let r ← graph.typeCheck
       let apexGraph ← programToApexGraph r.mainProgram
       let outGeos := apexGraph.outputs.filterMap (fun o => 
         if o.1.type.typeTag? == some .geometry then
-          some o.1.name
+          some s!"output:{o.1.name}"
+        else
+          none)
+      let inGeos := apexGraph.inputs.filterMap (fun input => 
+        if input.1.type.typeTag? == some .geometry then
+          some input.1.name.toString
         else
           none)
       let pythonCode := apexGraph.pythonBuildScript
-      return (r, pythonCode)
+      return (r, pythonCode, inGeos, outGeos)
     catch e =>
       logError m!"Type checking failed!\n{e.toMessageData}"
-      return ({ graph := graph, code := "", mainProgram := default }, "")
+      return ({ graph := graph, code := "", mainProgram := default }, "", #[], #[])
 
   let coreMsgs ← sCore.messages.toArray.mapM (·.toJson)
 
@@ -126,7 +132,9 @@ unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.Ty
     graph := r.graph
     leanCode := r.code
     pythonCode := pythonCode
-    messages := coreMsgs    
+    inputGeos := inputGeos
+    outputGeos := outputGeos
+    messages := coreMsgs   
   }
 
 unsafe def handleRequest (req : Request) (env : Environment) : IO Response :=

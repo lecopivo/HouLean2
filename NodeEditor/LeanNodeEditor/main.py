@@ -828,6 +828,8 @@ class NodeEditorWidget(QWidget):
         graph = response["typecheck"]["data"]["graph"]
         leanCode = response["typecheck"]["data"]["leanCode"]
         pythonCode = response["typecheck"]["data"]["pythonCode"]
+        inputGeos = response["typecheck"]["data"]["inputGeos"]
+        outputGeos = response["typecheck"]["data"]["outputGeos"]
 
         nodes = graph["nodes"]
 
@@ -847,8 +849,20 @@ class NodeEditorWidget(QWidget):
         self.current_hou_node.parm("Lean_to_APEX/code").set(leanCode)
         self.current_hou_node.parm("create_apex_graph/python").set(pythonCode)
 
+        manyOutputGeos = len(outputGeos)>1
+
         msgNode = self.current_hou_node.node("messages")
-        msgNode.parm("numerror").set(len(msgs))
+        msgNode.parm("numerror").set(0) # reset first
+        msgNode.parm("numerror").set(len(msgs) + manyOutputGeos)
+
+        # warn about multiple output geometries
+        if manyOutputGeos:
+            index = len(msgs)+1
+            msgNode.parm(f"severity{index+1}").set(1)
+            msgNode.parm(f"errormsg{index+1}").set(f"Multiple output geometries {outputGeos}, returning only the first one {geouputGeos[0]}!")
+            msgNode.parm(f"enable{index+1}").set(1)
+
+        # pass on type checker and compiler errors and warnings            
         for index, msg in enumerate(msgs):
             severity = msg["severity"]
             msgText = msg["data"].replace("`","'")
@@ -866,7 +880,25 @@ class NodeEditorWidget(QWidget):
             if severity == "error":
                 msgNode.parm(f"severity{index+1}").set(2)
                 msgNode.parm(f"errormsg{index+1}").set(msgText)
-                msgNode.parm(f"enable{index+1}").set(1)                
+                msgNode.parm(f"enable{index+1}").set(1)
+
+        # set up input and output geomety names
+        invokeNode = self.current_hou_node.node("invokegraph1")
+        invokeNode.parm("inputbindings").set(0) # reset first
+        invokeNode.parm("inputbindings").set(max(1,len(inputGeos)))
+        
+        # set input output geometries
+        for index, inputGeo in enumerate(inputGeos):
+            if index > 0:
+                invokeNode.parm(f"binddictattrib{index+1}").set(0)
+            invokeNode.parm(f"bindasgeoinput{index+1}").set(1)
+            invokeNode.parm(f"apexgeoparm{index+1}").set(inputGeo)            
+
+        if len(outputGeos) > 0:
+            invokeNode.parm(f"bindoutputgeo").set(1)
+            invokeNode.parm(f"apexgeooutput").set(outputGeos[0])
+        else:
+            invokeNode.parm(f"bindoutputgeo").set(0)            
 
         # ensure that messages are updated on the node
         self.current_hou_node.cook()
