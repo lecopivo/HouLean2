@@ -1,6 +1,7 @@
 -- import HouLean.Init
 import HouLean.Apex.Compile.Extension
 import HouLean.Apex.Generated.Defs
+import HouLean.Meta.ProdLike
 
 namespace HouLean.Apex
 
@@ -14,6 +15,10 @@ export ApexType (toApex fromApex)
 instance {α β A B} [ApexType α A] [ApexType β B] : ApexType (α×β) (A×B) where
   toApex := fun (x,y) => (toApex x, toApex y)
   fromApex := fun (x,y) => (fromApex x, fromApex y)
+
+instance {α P AP} [ProdLike α P] [ApexType P AP] : ApexType α AP where
+  toApex := fun x => toApex (toProdType x)
+  fromApex := fun x => fromProdType (fromApex x)
 
 -- todo: update generate.py
 instance : ApexType Float Float where

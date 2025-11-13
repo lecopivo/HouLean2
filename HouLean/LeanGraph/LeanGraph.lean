@@ -52,6 +52,10 @@ structure Node where
   type : NodeType
   /-- Expression values for top level input ports -/
   portValues : Array (Option String)
+  /-- Scope of this node. It is the name of the corresponding output node. -/
+  scope : Option String
+  /-- The number of attached visualizers to this node with the name of this node. -/
+  visualizers : Option Nat
   x : Float
   y : Float
 deriving ToJson, FromJson, Inhabited, Repr

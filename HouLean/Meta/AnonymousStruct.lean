@@ -1,5 +1,6 @@
 import Lean
 import Std.Data.HashMap
+import HouLean.Meta.ProdLike
 
 open Lean Elab Command Term Meta Parser
 
@@ -115,6 +116,7 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
   let cmdElabMsgs := (← get).messages
   elabCommand (← `(command| deriving instance BEq for $id))
   elabCommand (← `(command| deriving instance Inhabited for $id))
+  elabCommand (← `(command| deriving instance ProdLike for $id))
   -- elabCommand (← `(command| deriving instance ToJson for $id))
   -- elabCommand (← `(command| deriving instance FromJson for $id))
   liftTermElabM <| Core.setMessageLog coreMsgs

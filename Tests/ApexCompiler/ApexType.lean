@@ -84,3 +84,30 @@ instance [ApexType α A] : ApexType (Vec3 α) (Vec3 A) where
 /-- info: ((((IntArray, FloatArray), BoolArray), BoolArray), Matrix3Array) -/
 #guard_msgs in
 #apex_type Array (Option (Option (Nat × Float)) × Matrix3)
+
+/-- info: ((Float, Float), (Vector2, Vector3)) -/
+#guard_msgs in
+#apex_type struct { x : Float, y : Float, u : Vector2, v : Vector3 }
+
+/-- info: ((Float, Float), (Float, Float)) -/
+#guard_msgs in
+#apex_type struct { pos : struct {x : Float, y : Float}, vel : struct { x : Float, y : Float}}
+
+/-- info: (((Float, Float), Bool), (Float, Float)) -/
+#guard_msgs in
+#apex_type struct { pos : Option struct {x : Float, y : Float}, vel : struct { x : Float, y : Float}}
+
+/--
+info: ((((Float, Float), Bool), ((Float, Float), Bool), ((Float, Float), Bool)), (Float, Float))
+-/
+#guard_msgs in
+#apex_type struct { pos : Vec3 (Option struct {x : Float, y : Float}), vel : struct { x : Float, y : Float} }
+
+-- why does this fail???
+/--
+error: Invalid APEX type Option Float!
+---
+error: {x} is not an APEX type
+-/
+#guard_msgs in
+#apex_type struct { pos : Option Float }
