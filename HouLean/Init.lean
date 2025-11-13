@@ -56,14 +56,3 @@ def _root_.Array.joinr [Inhabited β] (xs : Array α) (map : α → β) (op : β
   xs.joinrM map op
 
 
-/-- This class will be used to transport instances onto structures
-
-For every new class should provide ProdLike and Prod rules. -/
-class ProdLike (A : Type u) (B : outParam (Type v)) where
-  toProdType : A → B
-  fromProdType : B → A
-
--- open ProdLike
--- instance (A A') [ProdLike A B] [ProdLike A' B'] : ProdLike (A×A') (B×B') where
---   toProdType := fun (a,a') => (toProdType a, toProdType a')
---   fromProdType := fun (b,b') => (fromProdType b, fromProdType b')
