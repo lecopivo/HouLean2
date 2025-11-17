@@ -8,7 +8,7 @@ To use: In Houdini, create a new Python Panel and paste:
 
 import json
 import hou
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                                QFileDialog, QLabel, QFrame, QSplitter, QCheckBox,
                                QScrollArea, QGridLayout, QLineEdit)
 from PySide6.QtCore import Qt, Signal, QObject
@@ -37,16 +37,56 @@ def is_lean_graph_node(node):
         return node.type() == hou.nodeType("tskrivan::Sop/lean_graph::1.0")
 
 
+def find_lake_root(start_path=None):
+    """
+    Find the nearest parent directory containing lakefile.toml or lakefile.lean
+
+    Args:
+        start_path: Starting directory (defaults to current directory)
+
+    Returns:
+        Path object of the directory containing the lakefile, or None if not found
+    """
+    if start_path is None:
+        start_path = Path.cwd()
+    else:
+        start_path = Path(start_path).resolve()
+
+    current = start_path
+
+    # Traverse up the directory tree
+    while True:
+        # Check for lakefile.toml
+        if (current / "lakefile.toml").exists():
+            return current
+
+        # Check for lakefile.lean
+        if (current / "lakefile.lean").exists():
+            return current
+
+        # Move to parent directory
+        parent = current.parent
+
+        # Stop if we've reached the root
+        if parent == current:
+            return None
+
+        current = parent
+
+
 class NodeEditorWidget(QWidget):
     type_check_response_signal = Signal(object)
-    
+
     def __init__(self):
         super().__init__()
         self.registry = NodeTypeRegistry()
-        with open("/home/tskrivan/Documents/HouLean/NodeEditor/types.json", 'r') as f:
+
+        self.workspace_dir = find_lake_root(hou.text.expand("$HIP"))
+
+        with open(self.workspace_dir.pathjoin("NodeEditor/types.json", 'r') as f:
             data = json.load(f)
             self.registry.load_from_json(data)
-        
+
         self.registry.load_from_json(get_default_types())
 
         # Type checker setup
@@ -57,11 +97,11 @@ class NodeEditorWidget(QWidget):
         self.last_graph_state = None
 
         # Track currently loaded node
-        self.current_hou_node = None        
-        
+        self.current_hou_node = None
+
         # Connect signal to slot
-        self.type_check_response_signal.connect(self._apply_type_check_results)        
-        
+        self.type_check_response_signal.connect(self._apply_type_check_results)
+
         self._create_ui()
         self.current_selected_node = None
 
@@ -70,15 +110,15 @@ class NodeEditorWidget(QWidget):
 
         # Set up Houdini node selection watcher
         self._setup_selection_watcher()
-    
+
     def _setup_selection_watcher(self):
         """Set up a timer to watch for Houdini node selection changes."""
         from PySide6.QtCore import QTimer
-        
+
         self.selection_timer = QTimer()
         self.selection_timer.timeout.connect(self._check_houdini_selection)
         self.selection_timer.start(200)  # Check every 200ms
-    
+
     def _check_houdini_selection(self):
         """Check if Houdini node selection has changed."""
         try:
@@ -157,7 +197,7 @@ class NodeEditorWidget(QWidget):
                 self.status_label.setText("{} has no network".format(node.name()))
                 return
 
-            print(f"Loading network to {node.path()}")            
+            print(f"Loading network to {node.path()}")
             json_str = node.parm("lean_graph/lean_graph").eval()
 
             if not json_str or json_str.strip() == "":
@@ -205,36 +245,36 @@ class NodeEditorWidget(QWidget):
         # Update the scene
         self.editor.editor_scene.update()
         self.editor.viewport().update()
-    
+
     def closeEvent(self, event):
         """Clean up when editor is closed."""
         # Stop selection watcher
         if hasattr(self, 'selection_timer'):
             self.selection_timer.stop()
-        
+
         # Save to current node before closing
         if self.current_hou_node is not None:
             self._auto_save_to_node(self.current_hou_node)
-        
+
         # Stop type checker
         if self.type_checker:
             self.type_checker.stop()
-            
+
         # Stop server
         if self.server_manager:
             self.server_manager.stop()
-            
+
         # Call parent closeEvent
-        super(NodeEditorWidget, self).closeEvent(event)        
-    
+        super(NodeEditorWidget, self).closeEvent(event)
+
     def _create_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
+
         toolbar_frame = self._create_toolbar()
         layout.addWidget(toolbar_frame)
-        
+
         splitter = QSplitter(Qt.Horizontal)
         splitter.setStyleSheet(f"""
             QSplitter::handle {{
@@ -242,20 +282,20 @@ class NodeEditorWidget(QWidget):
                 width: 2px;
             }}
         """)
-        
+
         editor_panel = self._create_editor_panel()
         splitter.addWidget(editor_panel)
-        
+
         self.editor = NodeEditorView(self.registry, parent_widget=self)
         self.editor.selection_changed_callback = self.on_node_selection_changed
         splitter.addWidget(self.editor)
-        
+
         splitter.setSizes([250, 800])
-        
+
         layout.addWidget(splitter)
-        
+
         self.editor.centerOn(0, 0)
-    
+
     def _create_toolbar(self):
         toolbar_frame = QFrame()
         toolbar_frame.setStyleSheet(f"""
@@ -298,45 +338,45 @@ class NodeEditorWidget(QWidget):
                 background-color: {get_type_color('Float').name()};
             }}
         """)
-        
+
         toolbar_layout = QHBoxLayout(toolbar_frame)
         toolbar_layout.setContentsMargins(4, 4, 4, 4)
-        
+
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(self.save_graph)
         toolbar_layout.addWidget(save_btn)
-        
+
         load_btn = QPushButton("Load")
         load_btn.clicked.connect(self.load_graph)
         toolbar_layout.addWidget(load_btn)
-        
+
         toolbar_layout.addSpacing(8)
-        
+
         # load_types_btn = QPushButton("Load Types")
         # load_types_btn.clicked.connect(self.load_node_types)
         # toolbar_layout.addWidget(load_types_btn)
-        
+
         # toolbar_layout.addSpacing(8)
-        
+
         self.structural_matching_cb = QCheckBox("Structural Type Matching")
         self.structural_matching_cb.setChecked(True)
         self.structural_matching_cb.toggled.connect(self.on_structural_matching_changed)
         toolbar_layout.addWidget(self.structural_matching_cb)
-        
+
         toolbar_layout.addSpacing(8)
-        
+
         self.show_implicit_cb = QCheckBox("Show Implicit Connections")
         self.show_implicit_cb.setChecked(False)
         self.show_implicit_cb.toggled.connect(self.on_show_implicit_changed)
         toolbar_layout.addWidget(self.show_implicit_cb)
-        
+
         toolbar_layout.addStretch()
-        
+
         instructions = QLabel("Drag: select | RMB/Tab: add | M: change type | E: expand | C: collapse | Del: remove | F2: rename | G: frame")
         toolbar_layout.addWidget(instructions)
-        
+
         return toolbar_frame
-    
+
     def _create_editor_panel(self):
         panel = QFrame()
         panel.setStyleSheet(f"""
@@ -392,11 +432,11 @@ class NodeEditorWidget(QWidget):
                 border: 1px solid {HOUDINI_NODE_BORDER.darker(110).name()};
             }}
         """)
-        
+
         panel_layout = QVBoxLayout(panel)
         panel_layout.setContentsMargins(0, 0, 0, 0)
         panel_layout.setSpacing(0)
-        
+
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet(f"""
@@ -421,27 +461,27 @@ class NodeEditorWidget(QWidget):
                 height: 0px;
             }}
         """)
-        
+
         content = QWidget()
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(12, 12, 12, 12)
         content_layout.setSpacing(6)
-        
+
         # Header - compact
         title = QLabel("Node Properties")
         title.setStyleSheet(f"""
-            font-weight: 600; 
-            font-size: 14px; 
+            font-weight: 600;
+            font-size: 14px;
             color: {HOUDINI_NODE_SELECTED.name()};
             padding: 6px 0px;
             border-bottom: 2px solid {HOUDINI_NODE_SELECTED.darker(150).name()};
         """)
         content_layout.addWidget(title)
-        
+
         # Node properties as single-line form fields
         props_layout = QVBoxLayout()
         props_layout.setSpacing(4)
-        
+
         # Node Name
         name_row = QHBoxLayout()
         name_row.setSpacing(8)
@@ -452,7 +492,7 @@ class NodeEditorWidget(QWidget):
         name_row.addWidget(name_label)
         name_row.addWidget(self.name_edit)
         props_layout.addLayout(name_row)
-        
+
         # Lean Constant
         lean_row = QHBoxLayout()
         lean_row.setSpacing(8)
@@ -463,7 +503,7 @@ class NodeEditorWidget(QWidget):
         lean_row.addWidget(lean_label)
         lean_row.addWidget(self.lean_edit)
         props_layout.addLayout(lean_row)
-        
+
         # Type Name
         type_row = QHBoxLayout()
         type_row.setSpacing(8)
@@ -474,43 +514,43 @@ class NodeEditorWidget(QWidget):
         type_row.addWidget(type_label)
         type_row.addWidget(self.type_name_edit)
         props_layout.addLayout(type_row)
-        
+
         content_layout.addLayout(props_layout)
-        
+
         # Separator
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         separator.setStyleSheet(f"background-color: {HOUDINI_NODE_BORDER.name()}; max-height: 1px; margin: 8px 0px;")
         content_layout.addWidget(separator)
-        
+
         # Input Ports Section
         inputs_header = QLabel("Input Ports")
         inputs_header.setStyleSheet(f"""
-            font-weight: 600; 
-            font-size: 13px; 
+            font-weight: 600;
+            font-size: 13px;
             padding: 4px 0px;
             color: {get_type_color('Vector3').name()};
         """)
         content_layout.addWidget(inputs_header)
-        
+
         # Input ports header row with column labels and buttons
         inputs_controls = QHBoxLayout()
         inputs_controls.setSpacing(8)
-        
+
         port_name_label = QLabel("Name")
         port_name_label.setStyleSheet(f"font-size: 11px; color: {HOUDINI_TEXT_DIM.name()}; min-width: 80px;")
         inputs_controls.addWidget(port_name_label)
-        
+
         port_type_label = QLabel("Type")
         port_type_label.setStyleSheet(f"font-size: 11px; color: {HOUDINI_TEXT_DIM.name()}; min-width: 80px;")
         inputs_controls.addWidget(port_type_label)
-        
+
         port_value_label = QLabel("Value")
         port_value_label.setStyleSheet(f"font-size: 11px; color: {HOUDINI_TEXT_DIM.name()}; min-width: 80px;")
         inputs_controls.addWidget(port_value_label)
-        
+
         inputs_controls.addStretch()
-        
+
         self.add_input_btn = QPushButton("+")
         self.add_input_btn.setMaximumWidth(28)
         self.add_input_btn.setMaximumHeight(28)
@@ -529,7 +569,7 @@ class NodeEditorWidget(QWidget):
             }}
         """)
         inputs_controls.addWidget(self.add_input_btn)
-        
+
         self.remove_input_btn = QPushButton("−")
         self.remove_input_btn.setMaximumWidth(28)
         self.remove_input_btn.setMaximumHeight(28)
@@ -549,37 +589,37 @@ class NodeEditorWidget(QWidget):
             }}
         """)
         inputs_controls.addWidget(self.remove_input_btn)
-        
+
         content_layout.addLayout(inputs_controls)
-        
+
         self.inputs_layout = QVBoxLayout()
         self.inputs_layout.setSpacing(2)
         content_layout.addLayout(self.inputs_layout)
-        
+
         # Output Ports Section
         outputs_header = QLabel("Output Ports")
         outputs_header.setStyleSheet(f"""
-            font-weight: 600; 
-            font-size: 13px; 
+            font-weight: 600;
+            font-size: 13px;
             padding: 4px 0px;
             color: {get_type_color('Particle').name()};
         """)
         content_layout.addWidget(outputs_header)
-        
+
         # Output ports header row with column labels and buttons
         outputs_controls = QHBoxLayout()
         outputs_controls.setSpacing(8)
-        
+
         port_name_label2 = QLabel("Name")
         port_name_label2.setStyleSheet(f"font-size: 11px; color: {HOUDINI_TEXT_DIM.name()}; min-width: 120px;")
         outputs_controls.addWidget(port_name_label2)
-        
+
         port_type_label2 = QLabel("Type")
         port_type_label2.setStyleSheet(f"font-size: 11px; color: {HOUDINI_TEXT_DIM.name()}; min-width: 120px;")
         outputs_controls.addWidget(port_type_label2)
-        
+
         outputs_controls.addStretch()
-        
+
         self.add_output_btn = QPushButton("+")
         self.add_output_btn.setMaximumWidth(28)
         self.add_output_btn.setMaximumHeight(28)
@@ -598,7 +638,7 @@ class NodeEditorWidget(QWidget):
             }}
         """)
         outputs_controls.addWidget(self.add_output_btn)
-        
+
         self.remove_output_btn = QPushButton("−")
         self.remove_output_btn.setMaximumWidth(28)
         self.remove_output_btn.setMaximumHeight(28)
@@ -618,15 +658,15 @@ class NodeEditorWidget(QWidget):
             }}
         """)
         outputs_controls.addWidget(self.remove_output_btn)
-        
+
         content_layout.addLayout(outputs_controls)
-        
+
         self.outputs_layout = QVBoxLayout()
         self.outputs_layout.setSpacing(2)
         content_layout.addLayout(self.outputs_layout)
-        
+
         content_layout.addStretch()
-        
+
         # Apply Button - smaller and more compact
         self.update_btn = QPushButton("Apply Changes")
         self.update_btn.setEnabled(False)
@@ -654,26 +694,26 @@ class NodeEditorWidget(QWidget):
             }}
         """)
         content_layout.addWidget(self.update_btn)
-        
+
         # Status Label
         self.status_label = QLabel("")
         self.status_label.setStyleSheet(f"""
-            color: {HOUDINI_TEXT_DIM.name()}; 
-            font-size: 11px; 
+            color: {HOUDINI_TEXT_DIM.name()};
+            font-size: 11px;
             padding: 6px;
             font-style: italic;
         """)
         self.status_label.setWordWrap(True)
         content_layout.addWidget(self.status_label)
-        
+
         scroll.setWidget(content)
         panel_layout.addWidget(scroll)
-        
+
         self.input_port_widgets = []
         self.output_port_widgets = []
-        
+
         return panel
-    
+
     def _create_property_section(self, title, description):
         """Create a styled property section container"""
         section = QFrame()
@@ -685,11 +725,11 @@ class NodeEditorWidget(QWidget):
                 padding: 12px;
             }}
         """)
-        
+
         layout = QVBoxLayout(section)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(8)
-        
+
         title_label = QLabel(title)
         title_label.setStyleSheet(f"""
             font-weight: 600;
@@ -698,7 +738,7 @@ class NodeEditorWidget(QWidget):
             padding: 0px;
         """)
         layout.addWidget(title_label)
-        
+
         desc_label = QLabel(description)
         desc_label.setStyleSheet(f"""
             font-size: 11px;
@@ -707,10 +747,10 @@ class NodeEditorWidget(QWidget):
             font-style: italic;
         """)
         layout.addWidget(desc_label)
-        
+
         return section
 
-    
+
     # Network Type Checking
 
     def _initialize_type_checker(self):
@@ -718,7 +758,7 @@ class NodeEditorWidget(QWidget):
         try:
             # TODO: Update this path to your actual Lean server executable
             # For example: "/home/tskrivan/Documents/HouLean/.lake/build/bin/houlean-server"
-            server_path = "/home/tskrivan/Documents/HouLean/.lake/build/bin/houlean"
+            server_path = self.workspace_dir.pathjoin(".lake/build/bin/houlean")
 
             self.server_manager = ServerManager(server_path)
 
@@ -756,9 +796,9 @@ class NodeEditorWidget(QWidget):
         # Schedule type check after 500ms of inactivity
         import threading
         self.type_check_timer = threading.Timer(0.1, self._perform_type_check)
-        self.type_check_timer.start()            
+        self.type_check_timer.start()
 
-        
+
     def _perform_type_check(self):
         """Perform the actual type check."""
         if self.pending_type_check:
@@ -798,7 +838,7 @@ class NodeEditorWidget(QWidget):
             print("Error performing type check: {}".format(e))
             self.pending_type_check = False
 
-            
+
     def _handle_type_check_response(self, response):
         """Handle type check response from server (called from worker thread)."""
         self.pending_type_check = False
@@ -862,7 +902,7 @@ class NodeEditorWidget(QWidget):
             msgNode.parm(f"errormsg{index+1}").set(f"Multiple output geometries {outputGeos}, returning only the first one {geouputGeos[0]}!")
             msgNode.parm(f"enable{index+1}").set(1)
 
-        # pass on type checker and compiler errors and warnings            
+        # pass on type checker and compiler errors and warnings
         for index, msg in enumerate(msgs):
             severity = msg["severity"]
             msgText = msg["data"].replace("`","'")
@@ -875,7 +915,7 @@ class NodeEditorWidget(QWidget):
             if severity == "warning":
                 msgNode.parm(f"severity{index+1}").set(1)
                 msgNode.parm(f"errormsg{index+1}").set(msgText)
-                msgNode.parm(f"enable{index+1}").set(1)                
+                msgNode.parm(f"enable{index+1}").set(1)
 
             if severity == "error":
                 msgNode.parm(f"severity{index+1}").set(2)
@@ -889,26 +929,26 @@ class NodeEditorWidget(QWidget):
 
         print(f"input geometries: {inputGeos}")
         print(f"output geometries: {outputGeos}")
-        
+
         # set input output geometries
         for index, inputGeo in enumerate(inputGeos):
             if index > 0:
                 invokeNode.parm(f"binddictattrib{index+1}").set(0)
             invokeNode.parm(f"bindasgeoinput{index+1}").set(1)
-            invokeNode.parm(f"apexgeoparm{index+1}").set(inputGeo)            
+            invokeNode.parm(f"apexgeoparm{index+1}").set(inputGeo)
         if len(outputGeos) > 0:
             invokeNode.parm(f"bindoutputgeo").set(1)
             invokeNode.parm(f"apexgeooutput").set(outputGeos[0])
         else:
-            invokeNode.parm(f"bindoutputgeo").set(0)            
+            invokeNode.parm(f"bindoutputgeo").set(0)
 
         # ensure that messages are updated on the node
         self.current_hou_node.cook()
 
         self.status_label.setText("Type check completed!")
-        
-    # Node Network Manipulation        
-    
+
+    # Node Network Manipulation
+
     def on_node_selection_changed(self, selected_nodes):
         if selected_nodes:
             self.current_selected_node = selected_nodes[0]
@@ -920,172 +960,172 @@ class NodeEditorWidget(QWidget):
             self.clear_editor()
             self.update_btn.setEnabled(False)
             self.status_label.setText("")
-    
+
     def clear_editor(self):
         self.name_edit.clear()
         self.lean_edit.clear()
         self.type_name_edit.clear()
-        
+
         for widget_group in self.input_port_widgets:
             for widget in widget_group.values():
                 widget.deleteLater()
         self.input_port_widgets.clear()
-        
+
         for widget_group in self.output_port_widgets:
             for widget in widget_group.values():
                 widget.deleteLater()
         self.output_port_widgets.clear()
-    
+
     def load_node_definition(self):
         if not self.current_selected_node:
             return
-        
+
         node = self.current_selected_node
-        
+
         self.clear_editor()
-        
+
         self.name_edit.setText(node.node_name)
         self.lean_edit.setText(node.node_type.lean_constant)
         self.type_name_edit.setText(node.node_type.name)
-        
+
         for i, (port_name, port_type) in enumerate(node.node_type.inputs):
             port_value = ""
             if i < len(node.port_values):
                 port_value = node.port_values[i]
-            
+
             is_occupied = False
             if i < len(node.input_ports):
                 is_occupied = node.input_ports[i].is_occupied()
-            
+
             self.add_input_port_widget(port_name, port_type, port_value, is_occupied)
-        
+
         for port_name, port_type in node.node_type.outputs:
             self.add_output_port_widget(port_name, port_type)
-    
+
     def add_input_port_widget(self, name="", type_name="", value="", is_occupied=False):
         # Single row with three input fields
         row = QHBoxLayout()
         row.setSpacing(8)
-        
+
         name_edit = QLineEdit(name)
         name_edit.setPlaceholderText("name")
         name_edit.setMinimumWidth(80)
         row.addWidget(name_edit)
-        
+
         type_edit = QLineEdit(type_name)
         type_edit.setPlaceholderText("type")
         type_edit.setMinimumWidth(80)
         row.addWidget(type_edit)
-        
+
         value_edit = QLineEdit(value)
         value_edit.setPlaceholderText("value" if not is_occupied else "connected")
         value_edit.setEnabled(not is_occupied)
         value_edit.setMinimumWidth(80)
         row.addWidget(value_edit)
-        
+
         # Container to hold the row
         container = QWidget()
         container.setLayout(row)
-        
+
         self.inputs_layout.addWidget(container)
-        
+
         self.input_port_widgets.append({
             'container': container,
             'name': name_edit,
             'type': type_edit,
             'value': value_edit
         })
-    
+
     def add_output_port_widget(self, name="", type_name=""):
         # Single row with two input fields
         row = QHBoxLayout()
         row.setSpacing(8)
-        
+
         name_edit = QLineEdit(name)
         name_edit.setPlaceholderText("name")
         name_edit.setMinimumWidth(120)
         row.addWidget(name_edit)
-        
+
         type_edit = QLineEdit(type_name)
         type_edit.setPlaceholderText("type")
         type_edit.setMinimumWidth(120)
         row.addWidget(type_edit)
-        
+
         row.addStretch()
-        
+
         # Container to hold the row
         container = QWidget()
         container.setLayout(row)
-        
+
         self.outputs_layout.addWidget(container)
-        
+
         self.output_port_widgets.append({
             'container': container,
             'name': name_edit,
             'type': type_edit
         })
-    
+
     def add_input_port(self):
         self.add_input_port_widget()
-    
+
     def remove_input_port(self):
         if self.input_port_widgets:
             widget_group = self.input_port_widgets.pop()
             for widget in widget_group.values():
                 widget.deleteLater()
-    
+
     def add_output_port(self):
         self.add_output_port_widget()
-    
+
     def remove_output_port(self):
         if self.output_port_widgets:
             widget_group = self.output_port_widgets.pop()
             for widget in widget_group.values():
                 widget.deleteLater()
-    
+
     def apply_node_changes(self):
         if not self.current_selected_node:
             return
-        
+
         try:
             node = self.current_selected_node
-            
+
             node_name = self.name_edit.text().strip()
             lean_constant = self.lean_edit.text().strip()
             type_name = self.type_name_edit.text().strip()
-            
+
             if not node_name or not type_name:
                 self.status_label.setText("Error: Node name and type name required")
                 self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 12px; padding: 8px;")
                 return
-            
+
             inputs = []
             port_values = []
             for widget_group in self.input_port_widgets:
                 port_name = widget_group['name'].text().strip()
                 port_type = widget_group['type'].text().strip()
                 port_value = widget_group['value'].text().strip()
-                
+
                 if not port_name or not port_type:
                     self.status_label.setText("Error: All ports must have name and type")
                     self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 12px; padding: 8px;")
                     return
-                
+
                 inputs.append({'builtin': {'name': port_name, 'type': port_type}})
                 port_values.append(port_value)
-            
+
             outputs = []
             for widget_group in self.output_port_widgets:
                 port_name = widget_group['name'].text().strip()
                 port_type = widget_group['type'].text().strip()
-                
+
                 if not port_name or not port_type:
                     self.status_label.setText("Error: All ports must have name and type")
                     self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 12px; padding: 8px;")
                     return
-                
+
                 outputs.append({'builtin': {'name': port_name, 'type': port_type}})
-            
+
             definition = {
                 'name': type_name,
                 'leanConstant': lean_constant,
@@ -1093,57 +1133,57 @@ class NodeEditorWidget(QWidget):
                 'inputs': inputs,
                 'outputs': outputs
             }
-            
+
             self.editor.update_selected_node_type(definition)
-            
+
             node.node_name = node_name
             node.header.setPlainText(node_name)
             node.port_values = port_values
-            
+
             success_color = get_type_color('Float')
             self.status_label.setText("✓ Changes applied successfully")
             self.status_label.setStyleSheet(f"color: {success_color.name()}; font-size: 12px; padding: 8px;")
-            
+
             self.load_node_definition()
             self.request_type_check()
-            
+
         except Exception as e:
             self.status_label.setText(f"Error: {str(e)}")
             self.status_label.setStyleSheet(f"color: {HOUDINI_ERROR.name()}; font-size: 12px; padding: 8px;")
-    
+
     def on_structural_matching_changed(self, checked):
         self.editor.set_structural_matching(checked)
         status_text = "Structural type matching enabled" if checked else "Strict type name matching enabled"
         self.status_label.setText(status_text)
         self.status_label.setStyleSheet(f"color: {HOUDINI_TEXT_DIM.name()}; font-size: 12px; padding: 8px;")
-    
+
     def on_show_implicit_changed(self, checked):
         self.editor.set_show_implicit(checked)
         status_text = "Showing implicit connections" if checked else "Hiding implicit connections"
         self.status_label.setText(status_text)
         self.status_label.setStyleSheet(f"color: {HOUDINI_TEXT_DIM.name()}; font-size: 12px; padding: 8px;")
-    
+
     def save_graph(self):
         filename, _ = QFileDialog.getSaveFileName(self, "Save Graph", "", "JSON Files (*.json)")
         if filename:
             data = save_to_json(self.editor)
             with open(filename, 'w') as f:
                 json.dump(data, f, indent=2)
-    
+
     def load_graph(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Load Graph", "", "JSON Files (*.json)")
         if filename:
             with open(filename, 'r') as f:
                 data = json.load(f)
             load_from_json(self.editor, data)
-    
+
     def load_node_types(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Load Node Types", "", "JSON Files (*.json)")
         if filename:
             with open(filename, 'r') as f:
                 data = json.load(f)
             self.registry.load_from_json(data)
-    
+
 
 def createInterface():
     """Entry point for Houdini Python Panel"""
