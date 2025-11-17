@@ -3,56 +3,74 @@ import HouLean
 open HouLean Apex Compiler
 
 
-set_option trace.HouLean.Apex.compiler true in
-#apex_graph fun (x : Int) => Id.run do
-  let mut x : Int := x
-  for _ in [0:10] do
-    x := x + x
-  return x
+-- #apex_graph fun (x : Int) => Id.run do
+--   let mut x : Int := x
+--   for _ in [0:10] do
+--     x := x + x
+--   return x
 
 set_option synthInstance.maxSize 5000
 
 
+-- set_option trace.HouLean.Apex.compiler true in
+-- @[apex]
+-- def runGeo (geo : Geometry) : Geometry := Id.run do
+--   let mut geo := geo
+--   let bbox := geo.boundingBox
+--   for i in [0:geo.numPoints.toNat] do
+--     let P : Vector3 := geo.pointAttrib (Int.ofNat i) "P"
+--     let relP := (P - bbox.min).compDiv bbox.size
+--     geo := geo.setPointAttrib (Int.ofNat i) "Cd" relP
+--   return geo
+#check MProd Nat Nat
+
+#check forLoopM
+
 set_option trace.HouLean.Apex.compiler true in
 @[apex]
-def runGeo (geo : Geometry) : Geometry := Id.run do
-  let mut geo := geo  
-  let (_,size,min,_,_) := geo.boundingBox
-  for i in [0:geo.numPoints.toNat] do
-    let P : Vector3 := geo.pointAttrib (Int.ofNat i) "P"
-    let relP := (P - min).compDiv size
-    geo := geo.setPointAttrib (Int.ofNat i) "Cd" relP
-  return geo
+def run (geo : Geometry) : Geometry :=
+  withVisualizer 5000 do
+
+    let mut geo := geo
+    let bbox := geo.boundingBox
+
+    forLoopM (m:=VisualizeM) geo.numPoints geo fun i geo => do
+      let P : Vector3 := geo.pointAttrib i "P"
+      let relP := (P - bbox.min).compDiv bbox.size
+      visualize geo
+      return geo.setPointAttrib i "Cd" relP
 
 
 
-@[apex]
-def run (geo : Geometry) : Geometry := Id.run do
-  let mut geo := geo
-  let r := geo.boundingBox
-  let size := r.2.1
-  let min := r.2.2.1
-  for i in [0:geo.numPoints.toNat] do
-    let P : Vector3 := geo.pointAttrib (Int.ofNat i) "P"
-    let relP := (P - min).compDiv size
-    geo := geo.setPointAttrib (Int.ofNat i) "Cd" relP
-  return geo
+-- set_option trace.HouLean.Apex.compiler true in
+-- @[apex]
+-- def run (geo : Geometry) : Geometry :=
+--   withVisualizer 5000 do
 
+--     let mut geo := geo
+--     let bbox := geo.boundingBox
+--     for i in [0:geo.numPoints.toNat] do
+--       let P : Vector3 := geo.pointAttrib (Int.ofNat i) "P"
+--       let relP := (P - bbox.min).compDiv bbox.size
+--       visualize geo
+--       geo := geo.setPointAttrib (Int.ofNat i) "Cd" relP
 
+--     return geo
+#exit
 
 abbrev loop1 := fun (geo : Geometry) => Id.run do
-    let mut geo := geo  
-    let (_,size,min,_,_) := geo.boundingBox
+    let mut geo := geo
+    let bbox := geo.boundingBox
     for i in [0:geo.numPoints.toNat] do
       let P : Vector3 := geo.pointAttrib (Int.ofNat i) "P"
-      let relP := (P - min).compDiv size
+      let relP := (P - bbox.min).compDiv bbox.size
       geo := geo.setPointAttrib (Int.ofNat i) "Cd" relP
     return geo
 
 -- set_option trace.HouLean.Apex.compiler true in
 @[apex]
 def loop_set_attrib (geo : Geometry) : Geometry := Id.run do
-  let mut geo := geo  
+  let mut geo := geo
   if geo.numPoints % 2 = 0 then
     geo := geo.setPointAttrib (Int.ofNat 0) "Cd" (Vector3.mk 1 0 0)
   else
@@ -314,7 +332,7 @@ run_meta
 
 
 abbrev loop2 := fun (geo : Geometry) => Id.run do
-    let mut geo := geo  
+    let mut geo := geo
     let mut x : Int := 0
     let (_,size,min,_,_) := geo.boundingBox
     for i in [0:geo.numPoints.toNat] do
@@ -849,11 +867,11 @@ Literals:
 -/
 #guard_msgs in
 #apex_graph fun (geo : Geometry) => Id.run do
-  let mut geo := geo  
+  let mut geo := geo
   for i in [0:geo.numPoints.toNat] do
     let P : Vector3 := geo.pointAttrib (Int.ofNat i) "P"
     let condition := (decide (P.x > 0)).toInt
-   
+
     if condition = 1 then
       geo := geo.setPointAttrib (Int.ofNat i) "Cd" (Vector3.mk 1 0 0)
       geo := geo.setPointAttrib (Int.ofNat i) "mygroup" (1:Int)

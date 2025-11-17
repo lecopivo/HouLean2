@@ -11,7 +11,7 @@ For every new class should provide ProdLike and Prod rules. -/
 class ProdLike (A : Type u) (B : outParam (Type v)) where
   toProdType : A → B
   fromProdType : B → A
-  
+
 export ProdLike (toProdType fromProdType)
 
 namespace Meta
@@ -24,7 +24,7 @@ partial def mkProdLikeProjs (ts : Array Expr) (off : Nat) (s : Expr) (n : Name) 
   if ts.size == 0 then
     return ((.const ``Unit []), (.const ``Unit.unit []), #[])
   else if ts.size == 1 then
-    return (ts[0]!, s, #[[]])    
+    return (ts[0]!, .proj n 0 s, #[[]])
   else if ts.size == 2 then
     let p ← mkAppM ``Prod.mk #[s.proj n off, s.proj n (off+1)]
     return (← mkAppM ``Prod ts, p,#[[0],[1]])
@@ -34,7 +34,7 @@ partial def mkProdLikeProjs (ts : Array Expr) (off : Nat) (s : Expr) (n : Name) 
     let projs := projs.map (fun proj => 1 :: proj)
     let p ← mkAppM ``Prod.mk #[s.proj n off, p]
     return (← mkAppM ``Prod #[X, Y], p, #[[0]] ++ projs)
-  else 
+  else
     let m := ts.size / 2
     let (X,p,projs) ← mkProdLikeProjs ts[0:m] off s n
     let (Y,p',projs') ← mkProdLikeProjs ts[m:] (off+m) s n
@@ -80,17 +80,17 @@ def mkProdLikeInstanceAux (structName : Name) : MetaM Unit := do
       hints := ReducibilityHints.regular (getMaxHeight (← getEnv) inst + 1)
       safety := .safe
     }
-    
+
     addDecl (Declaration.defnDecl decl)
     -- addDocString declId (mkNullNode bs) doc
     compileDecl (Declaration.defnDecl decl)
     addInstance declName .global 1000
-    
+
 
 def mkProdLikeInstance (declNames : Array Name) : CommandElabM Bool := do
 
   for declName in declNames do
-    try 
+    try
       liftTermElabM <| mkProdLikeInstanceAux declName
     catch _ =>
       return false
@@ -98,4 +98,3 @@ def mkProdLikeInstance (declNames : Array Name) : CommandElabM Bool := do
 
 
 initialize registerDerivingHandler ``ProdLike mkProdLikeInstance
-

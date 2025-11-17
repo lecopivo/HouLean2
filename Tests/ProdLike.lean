@@ -41,3 +41,20 @@ variable (x y : Float3)
 /-- info: Add.add x y : Float3 -/
 #guard_msgs in
 #check Add.add x y
+
+
+set_option pp.funBinderTypes true
+
+
+/-- info: fun (x : Float3) => toProdType x : Float3 → Float × Float × Float -/
+#guard_msgs in
+#check (fun x : Float3 => toProdType x)
+
+/-- info: fun (x : Float × Float × Float) => fromProdType x : Float × Float × Float → Float3 -/
+#guard_msgs in
+#check (fun x : _ => (fromProdType x : Float3))
+
+
+structure Single where
+  x : Float
+deriving ProdLike

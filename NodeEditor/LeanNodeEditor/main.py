@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                                QScrollArea, QGridLayout, QLineEdit)
 from PySide6.QtCore import Qt, Signal, QObject
 from PySide6.QtGui import QFont
+from pathlib import Path
 
 from .colors import *
 from .node_types import NodeTypeRegistry
@@ -73,6 +74,68 @@ def find_lake_root(start_path=None):
 
         current = parent
 
+def prompt_for_lake_root_gui(parent=None):
+    """
+    Show a file dialog to let the user select the Lake project directory
+
+    Args:
+        parent: Parent widget for the dialog
+
+    Returns:
+        Path object of the selected directory, or None if cancelled
+    """
+    # Show directory selection dialog
+    directory = QFileDialog.getExistingDirectory(
+        parent,
+        "Select Lake Project Directory",
+        str(Path.cwd()),
+        QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+    )
+
+    if not directory:
+        return None
+
+    path = Path(directory)
+
+    # Check if it contains a lakefile
+    if (path / "lakefile.toml").exists() or (path / "lakefile.lean").exists():
+        return path
+    else:
+        # Could add a warning dialog here if desired
+        hou.ui.displayMessage(
+            f"Warning: Selected directory does not contain lakefile.toml or lakefile.lean:\n{path}",
+            severity=hou.severityType.Warning
+        )
+        return path
+
+def get_lake_root(parent=None):
+    """
+    Get the Lake project root, either by automatic search or user selection
+
+    Args:
+        parent: Parent widget for any dialogs
+
+    Returns:
+        Path object of the Lake project directory, or None if not found/cancelled
+    """
+    # Try to find automatically
+    lake_root = find_lake_root(hou.text.expandString("$HIP"))
+
+    if lake_root:
+        print(f"Found Lake project at: {lake_root}")
+        return lake_root
+    else:
+        # Show GUI dialog for manual selection
+        print("Lake project not found automatically, prompting user...")
+        lake_root = prompt_for_lake_root_gui(parent)
+
+        if lake_root:
+            print(f"Using Lake project at: {lake_root}")
+            return lake_root
+        else:
+            print("Lake project selection cancelled.")
+            return None
+
 
 class NodeEditorWidget(QWidget):
     type_check_response_signal = Signal(object)
@@ -81,9 +144,9 @@ class NodeEditorWidget(QWidget):
         super().__init__()
         self.registry = NodeTypeRegistry()
 
-        self.workspace_dir = find_lake_root(hou.text.expand("$HIP"))
+        self.workspace_dir = get_lake_root(self)
 
-        with open(self.workspace_dir.pathjoin("NodeEditor/types.json", 'r') as f:
+        with open(self.workspace_dir.joinpath("NodeEditor/types.json"), 'r') as f:
             data = json.load(f)
             self.registry.load_from_json(data)
 
@@ -758,9 +821,9 @@ class NodeEditorWidget(QWidget):
         try:
             # TODO: Update this path to your actual Lean server executable
             # For example: "/home/tskrivan/Documents/HouLean/.lake/build/bin/houlean-server"
-            server_path = self.workspace_dir.pathjoin(".lake/build/bin/houlean")
+            server_path = self.workspace_dir.joinpath(".lake/build/bin/houlean")
 
-            self.server_manager = ServerManager(server_path)
+            self.server_manager = ServerManager(server_path, self.workspace_dir)
 
             if self.server_manager.start():
                 # Pass the server process to the type checker
