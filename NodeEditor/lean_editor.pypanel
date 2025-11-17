@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pythonPanelDocument>
+  <!-- This file contains definitions of Python interfaces and the
+ interfaces menu.  It should not be hand-edited when it is being
+ used by the application.  Note, that two definitions of the
+ same interface or of the interfaces menu are not allowed
+ in a single file. -->
+  <interface name="lean_node_editor" label="Lean Node Editor" icon="MISC_python" showNetworkNavigationBar="false" help_url="">
+    <script><![CDATA[import sys
+import os
+
+
+# Add the node_editor directory to Python path
+# If you placed it in $HOUDINI_USER_PREF_DIR/scripts/python/node_editor,
+# it should already be in the path and you can skip this section
+node_editor_path = os.path.expanduser("~/Documents/HouLean/NodeEditor/")
+if node_editor_path not in sys.path:
+    sys.path.insert(0, node_editor_path)
+    
+   
+# Remove cached modules
+modules_to_reload = [
+    'LeanNodeEditor.main',
+    'LeanNodeEditor.view',
+    'LeanNodeEditor.nodes',
+    'LeanNodeEditor.ports',
+    'LeanNodeEditor.async_type_checker',
+    'LeanNodeEditor.server_manager',
+    'LeanNodeEditor.connections',
+    'LeanNodeEditor.expansions',
+    'LeanNodeEditor.serialization',
+    'LeanNodeEditor.node_types',
+    'LeanNodeEditor.colors',
+]
+
+for module_name in modules_to_reload:
+    if module_name in sys.modules:
+        del sys.modules[module_name]      
+        
+   
+from LeanNodeEditor.main import createInterface
+
+# Houdini requires this function to return the widget
+def onCreateInterface():
+    return createInterface()
+    
+    
+    
+]]></script>
+    <includeInPaneTabMenu menu_position="0" create_separator="false"/>
+    <includeInToolbarMenu menu_position="209" create_separator="false"/>
+    <showInParametersPane optype=""/>
+    <help><![CDATA[]]></help>
+  </interface>
+</pythonPanelDocument>
