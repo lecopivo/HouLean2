@@ -25,7 +25,7 @@ def Request.continue : Request → Bool
   | _ => true
 
 
-def program : String := 
+def program : String :=
 "import HouLean
 
 #check \"hello from compiler\"
@@ -68,8 +68,8 @@ unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompi
   -- Strip imports
   let mut code := code
   code := code.stripPrefix "import HouLean\n"
-  
-  let (env, msgs) ← process code env default 
+
+  let (env, msgs) ← process code env default
 
   let mut r : ToApexGraphCompilationResult := {
     messages := (← msgs.toArray.mapM (fun m => m.toJson))
@@ -77,7 +77,7 @@ unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompi
   }
 
   let ctx : Core.Context := {fileName := "<input>", fileMap := .ofString code}
-  let s : Core.State := { env := env } 
+  let s : Core.State := { env := env }
 
   let (script, state, _) ← MetaM.toIO (ctxCore := ctx) (sCore := s) do
     try
@@ -91,7 +91,7 @@ unsafe def compileCode (code : String) (env : Environment) : IO ToApexGraphCompi
       logError m!"Compilation to APEX graph failed!\n{e.toMessageData}"
       return none
 
-  r := {r with 
+  r := {r with
     messages := r.messages ++ (← state.messages.toArray.mapM (fun m => m.toJson))
     result := script
   }
@@ -103,20 +103,20 @@ open Lean Elab Term in
 unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.TypeCheckResult := do
 
   let ctx : Core.Context := {fileName := "<input>", fileMap := .ofString ""}
-  let s : Core.State := { env := env } 
+  let s : Core.State := { env := env }
 
-  let ((r,pythonCode,inputGeos, outputGeos), sCore, _sMeta, _sElab) ← TermElabM.toIO 
+  let ((r,pythonCode,inputGeos, outputGeos), sCore, _sMeta, _sElab) ← TermElabM.toIO
     (ctxCore := ctx) (sCore := s) (ctxMeta := {}) (sMeta := {}) (ctx := {}) (s := {}) do
     try
       let r ← graph.typeCheck
       let apexGraph ← programToApexGraph r.mainProgram
-      let outGeos := apexGraph.outputs.filterMap (fun o => 
-        if o.1.type.typeTag? == some .geometry || 
+      let outGeos := apexGraph.outputs.filterMap (fun o =>
+        if o.1.type.typeTag? == some .geometry ||
            o.1.type.typeTag? == none then -- there is bug somewhere and sometime the type is not set properly!
           some s!"output:{o.1.name}"
         else
           none)
-      let inGeos := apexGraph.inputs.filterMap (fun input => 
+      let inGeos := apexGraph.inputs.filterMap (fun input =>
         if input.1.type.typeTag? == some .geometry then
           some input.1.name.toString
         else
@@ -135,26 +135,26 @@ unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.Ty
     pythonCode := pythonCode
     inputGeos := inputGeos
     outputGeos := outputGeos
-    messages := coreMsgs   
+    messages := coreMsgs
   }
 
 unsafe def handleRequest (req : Request) (env : Environment) : IO Response :=
   match req with
-  | .compile (.file path) => 
-      try 
+  | .compile (.file path) =>
+      try
         let code ← IO.FS.readFile path
         let result ← compileCode code env
         return (.compile result)
       catch e =>
         return .error s!"Compilation error:\n{e}"
-        
-  | .compile (.inline code) => 
+
+  | .compile (.inline code) =>
       try
         let result ← compileCode code env
         return .compile result
       catch e =>
         return .error s!"Compilation error: {e}"
-      
+
   | .typecheck graph =>
       return .typecheck (← typeCheckGraph graph env)
 
@@ -165,9 +165,9 @@ unsafe def handleRequest (req : Request) (env : Environment) : IO Response :=
 unsafe def processRequest (line : String) (env : Environment) : IO Bool := do
   if line.trim.isEmpty then
     return true  -- Continue on empty lines
-  
+
   match Json.parse line with
-  | .error err => 
+  | .error err =>
       let errResp : Response := .error s!"Parse error: {err}"
       IO.println (ToJson.toJson errResp).compress
       (← IO.getStdout).flush
@@ -202,14 +202,20 @@ unsafe def compileOnce (env : Environment) (codeOrFile : String) : IO Unit := do
 
 unsafe def main (args : List String) : IO UInt32 := do
 
+  let mut workspaceDir ← IO.currentDir
+
+  if let some workspaceDirIdx := args.findIdx? (·=="-w") then
+    if let some workspaceDir' := args[workspaceDirIdx+1]? then
+      workspaceDir := workspaceDir'
+
+  let leanDir := workspaceDir / ".lake/build/lib/lean"
+  let qqDir := workspaceDir / ".lake/packages/Qq/.lake/build/lib/lean"
   -- Initialize Lean environment
-  initSearchPath (← findSysroot)
-    [ "/home/tskrivan/Documents/HouLean/.lake/build/lib/lean",
-      "/home/tskrivan/Documents/HouLean/.lake/packages/Qq/.lake/build/lib/lean/" ]
+  initSearchPath (← findSysroot) [ leanDir, qqDir ]
 
   enableInitializersExecution
   let env ← Lean.importModules #[{ module := `Lean }, { module := `HouLean }] {} (loadExts := true)
-  
+
   if args.contains "-server" then
     serverLoop env
     return 0
@@ -221,5 +227,3 @@ unsafe def main (args : List String) : IO UInt32 := do
     return 0
 
   return 0
-
-
