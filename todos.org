@@ -1,0 +1,33 @@
+
+
+* VEX
+  - [ ] rewrite VEX parser, prompt Claude to do almost 1-to-1 copy of lean4-alloy parser but
+    - support @
+    - use ; to separate argument
+    - support foreach
+    
+  - [ ] support comments in VEX code
+  - [ ] write a function that takes a snippet syntax and replaces @ with new identifies and records their type and if they are written into
+  - [ ] run VCC on VEX snippet
+
+* APEX
+  - [ ] Define AttribType - which is a interface for types that can be stored on geometry
+    - make sure that the interface uses `Array _` instead of built-in arrays
+  - [ ] make Std.Range for Int and make for loop instance and make APEX compiler support it
+  - [ ] support `for x in xs do` where `xs` is an array!
+  - [ ] new elab `point/prim/vertex_wrangle% over geo { ... }` that drops down geoutils::Wrangle
+        and makes sure that all the variables from local context are correctly accessed
+    - all non geometry variables should recorded to a tmp geometry as detail attributes
+      and accessed as such
+  - [ ] new elab for `vex% { .. }` that drops RunVex node
+
+** Missing APEX alternatives to VEX functions
+  - rand, nearpoint, addprim, addpoint, addvertex, neighbours, @vtxnum, setpointgroup
+
+  - geo::SetPointAttribValue<Vector_Array>, geo::SetPointAttribValue<Matrix_Array>
+
+
+* Deriving handles for
+  - [ ] ArrayType
+  - [ ] TwoWaySwitch
+  - [ ] Arithmetic operations

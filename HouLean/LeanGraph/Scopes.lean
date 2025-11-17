@@ -26,7 +26,7 @@ inductive Scope where
   | ground 
   /-- Scope of an output node `nodeName` -/
   | node (nodeName : String)
-  deriving BEq, Hashable, Repr
+  deriving BEq, Hashable, Repr, Inhabited
 
 instance : ToString Scope where
   toString := fun
@@ -58,6 +58,9 @@ instance : ToString ScopeHierarchy where
 
 namespace ScopeHierarchy
 
+def isScope (h : ScopeHierarchy) (s : String) : Bool := 
+  h.parents.contains (.node s)
+
 /-- Check if scope1 contains scope2 (scope1 is outer, scope2 is inner) -/
 def scopeContains (h : ScopeHierarchy) (outer inner : Scope) : Bool :=
   if outer == inner then true
@@ -83,6 +86,16 @@ def lca (h : ScopeHierarchy) (s1 s2 : Scope) : Scope :=
   else if h.scopeContains s1 s2 then s1
   else if h.scopeContains s2 s1 then s2
   else h.root
+
+partial def directChild (h : ScopeHierarchy) (parent : Scope) (child : Scope) : Option Scope := 
+  match h.parents[child]? with
+  | some childParent =>
+    if childParent == parent then
+      return child
+    else
+      directChild h parent childParent
+  | _ =>
+    none
 
 end ScopeHierarchy
 
@@ -160,19 +173,19 @@ partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : Sc
   withTraceNode `HouLean.LeanGraph.typecheck
     (fun _ => return "Assigning scopes to nodes") do
 
-  let mut scopes : HashMap String Scope := {}
+  let mut scopes : HashMap String (HashSet Scope) := {}
 
   for (scope, inputs) in hierarchy.inputs do
     for input in inputs do
-      scopes := scopes.insert input scope
+      scopes := scopes.insert input {scope}
 
-  for (scope, parentScope) in hierarchy.parents do
-    if let .node nodeName := scope then
-      scopes := scopes.insert nodeName parentScope
+  -- for (scope, parentScope) in hierarchy.parents do
+  --   if let .node nodeName := scope then
+  --     scopes := scopes.insert nodeName parentScope
   
   -- Recursive function to compute scope for a node using StateT
-  let rec getNodeScope (nodeName : String)
-      : StateT ((HashMap String Scope) × HashSet String) CoreM Scope := do
+  let rec getNodeScopes (nodeName : String)
+      : StateT ((HashMap String (HashSet Scope)) × HashSet String) CoreM (HashSet Scope) := do
 
     -- Return cached result if available
     let nodeScopes := (← get).1
@@ -188,29 +201,39 @@ partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : Sc
     
     -- Regular nodes: scope is the maximum of all input dependencies
     let inputConnections := ctx.inputConnections.getD nodeName #[]
-    let mut scope := Scope.ground
-    
+    let mut scopes : HashSet Scope := {Scope.ground}
     for conn in inputConnections do
-      let depScope ← getNodeScope conn.outputNodeName
-      
-      match hierarchy.max scope depScope with
-      | some maxScope => scope := maxScope
-      | none => 
-        throwError m!"Node {nodeName} has incomparable scopes: {scope} and {depScope}. \
-                      The graph contains conflicting control flow that cannot be resolved."
+      let depScope ← getNodeScopes conn.outputNodeName
+      scopes := scopes.insertMany depScope
+
+    -- for scopes/output nodes we remove itsself from its scopes
+    if hierarchy.isScope nodeName then
+      scopes := scopes.erase (.node nodeName)
     
-    modify (fun (cache, vis) => (cache.insert nodeName scope, vis))
-    trace[HouLean.LeanGraph.typecheck] "Node {nodeName} -> {scope}"
-    return scope
-  
-  -- Process all nodes
-  let (_, (nodeScopes,_)) ← (graph.nodes.foldlM (init := ()) fun _ node => do
+    modify (fun (cache, vis) => (cache.insert nodeName scopes, vis))
+    trace[HouLean.LeanGraph.typecheck] "Node {nodeName} -> {scopes.toList}"
+    return scopes
+
+
+  -- Ensure scopes have been computed for all nodes
+  (_, (scopes,_)) ← (graph.nodes.foldlM (init := ()) fun _ node => do
     let name := Node.name node
-    let _ ← getNodeScope name
+    let _ ← getNodeScopes name
     pure ()
   ).run (scopes,{})
-  
+
+  -- for each node compute the deepest/maximal scope
+  let mut nodeScopes : HashMap String Scope := {}
+  for (node, sc) in scopes do
+    let mut scope := Scope.ground
+    for s in sc do
+      let some scope' := hierarchy.max scope s
+        | throwError m!"Invalid scope structure, node {node} depends on two uncomperable scopes {scope} and {s}"
+      scope := scope'
+    nodeScopes := nodeScopes.insert node scope
+
   return nodeScopes
+
 
 /-- Complete scope analysis for a graph -/
 def analyzeScopesComplete (graph : LeanGraph) (ctx : Context) 
@@ -234,8 +257,52 @@ def analyzeScopesComplete (graph : LeanGraph) (ctx : Context)
   
   -- Assign scopes to all nodes
   let nodeScopes ← assignNodeScopes graph ctx hierarchy
-  
+
   return (nodeScopes, hierarchy)
+
+
+/-- To compute linear ordering of `LeanGraph` we compute linear ordering of each of its
+scope subgraphs and then glue them together. This function extracts those subgraphs.
+
+Scope subgraph contains all nodes of a given scope plus the output node of the scope.
+All subscopes are collapsed into their output nodes. Therefore any node that is connected
+deep inside another scope will be connected to the output node of that subscope. -/
+def extractScopeSubgraph (graph : LeanGraph) 
+    (nodeScopes : HashMap String Scope) (hierarchy : ScopeHierarchy)
+    : CoreM (HashMap Scope (HashMap String (HashSet String))) := do
+
+  let mut graphs : HashMap Scope (HashMap String (HashSet String)) := {}
+
+  for wire in graph.connections do
+    let mut srcNode := wire.outputNodeName
+    let mut trgNode := wire.inputNodeName
+
+    let some srcScope := nodeScopes[srcNode]? 
+      | throwError "bug in {decl_name%}, invalid node {srcNode}"
+    let some trgScope := nodeScopes[trgNode]?
+      | throwError "bug in {decl_name%}, invalid node {trgNode}"
+
+    if srcScope == trgScope then
+      -- all good, nothing to be done
+      pure ()
+    else if srcScope == .node trgNode then
+      -- all good too, we are just exiting the scope
+      pure ()
+    else if hierarchy.scopeContains srcScope trgScope then
+      let .some (.node trgNode') := hierarchy.directChild srcScope trgScope
+        | throwError "Invalid scope structure, can't find immediate child for {srcScope} \
+                      while starting from {trgScope}."
+      trgNode := trgNode'
+    else 
+      throwError "Invalid scope structure, connection from inner scope {srcScope} \
+                  to outer scope {trgScope}! {srcNode} → {trgNode}"
+    
+    graphs := graphs.alter srcScope (fun graph? =>
+      (graph?.getD {}).alter srcNode (fun trgs? =>
+        (trgs?.getD {}).insert trgNode))
+       
+  return graphs
+
 
 /-- Validate that a graph has well-formed scopes -/
 def validateScopes (graph : LeanGraph) : TermElabM Bool := do
