@@ -8,15 +8,15 @@ import HouLean.Apex.Lean.Prod
 
 -- todo: once lean graph is more mature this should be redistributed to other files
 
-namespace HouLean 
+namespace HouLean
 
 open Apex
 
 
-attribute [lean_graph_type_builtin] 
+attribute [lean_graph_type_builtin]
   Float Int Nat String Array Geometry Option
 
-attribute [lean_graph_type] 
+attribute [lean_graph_type]
   Vector3 Matrix3
 
 attribute [lean_graph_node] forLoop
@@ -43,11 +43,11 @@ attribute [lean_graph_node] Float.exp
 attribute [lean_graph_node] Float.tan
 attribute [lean_graph_node] Float.atan2
 
-attribute [lean_graph_node] Vector3.add Vector3.sub Vector3.neg Vector3.smul Vector3.dot Vector3.length Vector3.length2 Vector3.normalize Vector3.distance Vector3.distance2 Vector3.lerp  Vector3.compMul Vector3.compDiv Vector3.abs Vector3.min Vector3.max Vector3.sign Vector3.clamp Vector3.floor Vector3.ceil Vector3.round 
+attribute [lean_graph_node] Vector3.add Vector3.sub Vector3.neg Vector3.smul Vector3.dot Vector3.length Vector3.length2 Vector3.normalize Vector3.distance Vector3.distance2 Vector3.lerp  Vector3.compMul Vector3.compDiv Vector3.abs Vector3.min Vector3.max Vector3.sign Vector3.clamp Vector3.floor Vector3.ceil Vector3.round
 Vector3.toGeodetic Vector3.fromGeodetic Vector3.toSpherical Vector3.fromSpherical
 
 
-attribute [lean_graph_node] Matrix3.add Matrix3.sub Matrix3.neg Matrix3.smul Matrix3.matmul Matrix3.mulVec Matrix3.vecMul Matrix3.dot Matrix3.length Matrix3.length2 Matrix3.normalize Matrix3.distance Matrix3.distance2 Matrix3.lerp  Matrix3.compMul Matrix3.compDiv Matrix3.abs Matrix3.min Matrix3.max Matrix3.sign Matrix3.clamp Matrix3.floor Matrix3.ceil Matrix3.round 
+attribute [lean_graph_node] Matrix3.add Matrix3.sub Matrix3.neg Matrix3.smul Matrix3.matmul Matrix3.mulVec Matrix3.vecMul Matrix3.dot Matrix3.length Matrix3.length2 Matrix3.normalize Matrix3.distance Matrix3.distance2 Matrix3.lerp  Matrix3.compMul Matrix3.compDiv Matrix3.abs Matrix3.min Matrix3.max Matrix3.sign Matrix3.clamp Matrix3.floor Matrix3.ceil Matrix3.round
 
 
 attribute [lean_graph_node "Arith_add"] HAdd.hAdd
@@ -119,10 +119,7 @@ attribute [lean_graph_node "Math_projectToSegment"] projectToSegment
 attribute [lean_graph_node] GetElem?.getElem?
 attribute [lean_graph_node] GetElem?.getElem!
 
-attribute [lean_graph_node] Array.get
 attribute [lean_graph_node] Array.set!
-attribute [lean_graph_node] Array.get?
-attribute [lean_graph_node] Array.get!
 attribute [lean_graph_node] Array.push
 attribute [lean_graph_node] Array.append
 attribute [lean_graph_node] Array.size

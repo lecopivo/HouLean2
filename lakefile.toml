@@ -4,13 +4,11 @@ defaultTargets = ["houlean"]
 
 [[lean_lib]]
 name = "HouLean"
-buildType = "debug"
 
 [[lean_exe]]
 name = "houlean"
 root = "Main"
 supportInterpreter = true
-buildType = "debug"
 
 [[lean_exe]]
 name = "compileToApexGraph"
@@ -25,4 +23,4 @@ supportInterpreter = true
 [[require]]
 name = "Qq"
 git = "https://github.com/leanprover-community/quote4"
-rev = "v4.24.0"
+rev = "v4.25.0"
