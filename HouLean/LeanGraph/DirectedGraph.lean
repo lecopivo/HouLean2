@@ -44,11 +44,11 @@ def computePostDominators (g : DiGraph α) : Std.HashMap α α := Id.run do
   for node in g.nodes.toList do
     if (g.getSuccessors node).isEmpty then
       exits := exits.insert node
-  
+
   -- If no exits, every node can reach itself indefinitely - no post-dominators
   if exits.isEmpty then
     return {}
-  
+
   -- Initialize: each node is post-dominated by all nodes (except exits)
   let mut postDom : Std.HashMap α (Std.HashSet α) := {}
   for node in g.nodes.toList do
@@ -56,22 +56,22 @@ def computePostDominators (g : DiGraph α) : Std.HashMap α α := Id.run do
       postDom := postDom.insert node {node}
     else
       postDom := postDom.insert node g.nodes
-  
+
   -- Iterative dataflow: post-dom(n) = {n} ∪ (∩ post-dom(s) for s in successors(n))
   let mut changed := true
   let mut iterations := 0
   while changed && iterations < 100 do
     changed := false
     iterations := iterations + 1
-    
+
     for node in g.nodes.toList do
       if exits.contains node then
         continue
-      
+
       let succs := g.getSuccessors node
       if succs.isEmpty then
         continue
-      
+
       -- Intersect post-dominators of all successors
       let mut newPostDom : Option (Std.HashSet α) := none
       for succ in succs.toList do
@@ -84,7 +84,7 @@ def computePostDominators (g : DiGraph α) : Std.HashMap α α := Id.run do
             if succPostDom.contains n then
               intersection := intersection.insert n
           newPostDom := some intersection
-      
+
       -- Add node itself
       match newPostDom with
       | some pdom =>
@@ -94,15 +94,15 @@ def computePostDominators (g : DiGraph α) : Std.HashMap α α := Id.run do
           postDom := postDom.insert node finalPostDom
           changed := true
       | none => pure ()
-  
+
   -- Extract immediate post-dominators (closest post-dominator)
   let mut idom : Std.HashMap α α := {}
   for node in g.nodes.toList do
     let pdoms := (postDom.getD node {}).toList.filter (· != node)
-    
+
     if pdoms.isEmpty then
       continue
-    
+
     -- Find the closest post-dominator (one not post-dominated by others)
     for candidate in pdoms do
       let mut isImmediate := true
@@ -112,11 +112,11 @@ def computePostDominators (g : DiGraph α) : Std.HashMap α α := Id.run do
           if otherPdoms.contains candidate then
             isImmediate := false
             break
-      
+
       if isImmediate then
         idom := idom.insert node candidate
         break
-  
+
   return idom
 
 /--
@@ -125,7 +125,7 @@ This is the nearest node R such that all paths from the given node pass through 
 
 Uses precomputed post-dominator tree - O(V·E) preprocessing, O(1) query.
 -/
-def nearestReconvergencePoint (g : DiGraph α) (node : α) : Option α := 
+def nearestReconvergencePoint (g : DiGraph α) (node : α) : Option α :=
   let idom := g.computePostDominators
   idom.get? node
 
@@ -339,7 +339,7 @@ def asymmetricPaths : DiGraph String :=
 /-- info: some "F" -/
 #guard_msgs in
 #eval asymmetricPaths.nearestReconvergencePoint "C"
-  
+
 /-- info: some "H" -/
 #guard_msgs in
 #eval asymmetricPaths.nearestReconvergencePoint "G"

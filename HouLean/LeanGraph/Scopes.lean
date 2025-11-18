@@ -2,15 +2,15 @@ import HouLean.LeanGraph.Traverse
 
 /-! In this file we analyze scopes of the Lean Graph.
 
-Each output node defines a new scope. Each scope/output node has input nodes attached to it. 
+Each output node defines a new scope. Each scope/output node has input nodes attached to it.
 
 Which input corresponds to which output is done by computing immediate post-dominators.
 
-Resulting scopes have tree-like structure. The outermost scope at the top corresponds to the unconnected 
-output node. (There is also the ground scope i.e. no scope attached and that corresponds to constant terms 
+Resulting scopes have tree-like structure. The outermost scope at the top corresponds to the unconnected
+output node. (There is also the ground scope i.e. no scope attached and that corresponds to constant terms
 that do not depend on any inputs)
 
-The scope of a node is the deepest (maximum) of all the scopes of input nodes. The maximum might not exist 
+The scope of a node is the deepest (maximum) of all the scopes of input nodes. The maximum might not exist
 as not all scopes are comparable. In that case the network is considered to be ill-formed.
 
 -/
@@ -23,7 +23,7 @@ namespace LeanGraph.Traverse
 /-- Scope hierarchy for nodes in the graph -/
 inductive Scope where
   /-- Scope for constant terms not living in any scope and not depending on any input variables -/
-  | ground 
+  | ground
   /-- Scope of an output node `nodeName` -/
   | node (nodeName : String)
   deriving BEq, Hashable, Repr, Inhabited
@@ -58,7 +58,7 @@ instance : ToString ScopeHierarchy where
 
 namespace ScopeHierarchy
 
-def isScope (h : ScopeHierarchy) (s : String) : Bool := 
+def isScope (h : ScopeHierarchy) (s : String) : Bool :=
   h.parents.contains (.node s)
 
 /-- Check if scope1 contains scope2 (scope1 is outer, scope2 is inner) -/
@@ -87,7 +87,7 @@ def lca (h : ScopeHierarchy) (s1 s2 : Scope) : Scope :=
   else if h.scopeContains s2 s1 then s2
   else h.root
 
-partial def directChild (h : ScopeHierarchy) (parent : Scope) (child : Scope) : Option Scope := 
+partial def directChild (h : ScopeHierarchy) (parent : Scope) (child : Scope) : Option Scope :=
   match h.parents[child]? with
   | some childParent =>
     if childParent == parent then
@@ -100,9 +100,9 @@ partial def directChild (h : ScopeHierarchy) (parent : Scope) (child : Scope) : 
 end ScopeHierarchy
 
 /-- Build the scope hierarchy from immediate post-dominators -/
-def buildScopeHierarchy (graph : LeanGraph) (idom : HashMap String String) 
+def buildScopeHierarchy (graph : LeanGraph) (idom : HashMap String String)
     (ctx : Context) : TermElabM ScopeHierarchy := do
-  
+
   withTraceNode `HouLean.LeanGraph.typecheck
     (fun _ => return "Building scope hierarchy") do
 
@@ -119,7 +119,7 @@ def buildScopeHierarchy (graph : LeanGraph) (idom : HashMap String String)
       parents := parents.insert childScope parentScope
       trace[HouLean.LeanGraph.typecheck] "Scope parent: {childScope} -> {parentScope}"
 
-  
+
   -- Find the root scope (unconnected output node)
   let mut rootScope : Scope := .ground
   for node in graph.nodes do
@@ -129,47 +129,47 @@ def buildScopeHierarchy (graph : LeanGraph) (idom : HashMap String String)
         parents := parents.insert rootScope .ground
         trace[HouLean.LeanGraph.typecheck] "Root scope: {node.name}"
         break
-  
+
   -- Build transitive closure: for each scope, compute all scopes it contains
   let mut containsMap : HashMap Scope (HashSet Scope) := {}
-  
+
   -- Initialize: each scope contains itself
   containsMap := containsMap.insert .ground {.ground}
   for node in graph.nodes do
     if node.type.leanConstant == ``HouLean.output then
       let scope := Scope.node node.name
       containsMap := containsMap.insert scope {scope}
-    
+
   -- Compute transitive closure using fixed-point iteration
   let mut changed := true
   let mut iterations := 0
   while changed do
     changed := false
     iterations := iterations + 1
-    
+
     for (child, parent) in parents.toList do
       let childContained := containsMap.getD child {child}
       let parentContained := containsMap.getD parent {parent}
-      
+
       -- Parent should contain everything child contains
       let newParentContained := parentContained.union childContained
-      
+
       if newParentContained.toList.length != parentContained.toList.length then
         containsMap := containsMap.insert parent newParentContained
         changed := true
-  
+
   trace[HouLean.LeanGraph.typecheck] "Scope hierarchy built in {iterations} iterations"
   for (scope, contained) in containsMap.toList do
     trace[HouLean.LeanGraph.typecheck] "{scope} contains: {contained.toList}"
-  
+
   return { containsMap, parents, inputs, root := rootScope }
 
 
 
 /-- Assign scopes to all nodes in the graph -/
-partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : ScopeHierarchy) 
+partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : ScopeHierarchy)
     : TermElabM (HashMap String Scope) := do
-  
+
   withTraceNode `HouLean.LeanGraph.typecheck
     (fun _ => return "Assigning scopes to nodes") do
 
@@ -179,10 +179,6 @@ partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : Sc
     for input in inputs do
       scopes := scopes.insert input {scope}
 
-  -- for (scope, parentScope) in hierarchy.parents do
-  --   if let .node nodeName := scope then
-  --     scopes := scopes.insert nodeName parentScope
-  
   -- Recursive function to compute scope for a node using StateT
   let rec getNodeScopes (nodeName : String)
       : StateT ((HashMap String (HashSet Scope)) × HashSet String) CoreM (HashSet Scope) := do
@@ -191,14 +187,14 @@ partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : Sc
     let nodeScopes := (← get).1
     if let some scope := nodeScopes.get? nodeName then
       return scope
-    
+
     -- Check for cycles
     if (← get).2.contains nodeName then
       throwError m!"Cycle detected while computing scope for node {nodeName}"
-    
+
     -- mark current node as visited
     modify (fun (cache, vis) => (cache, vis.insert nodeName))
-    
+
     -- Regular nodes: scope is the maximum of all input dependencies
     let inputConnections := ctx.inputConnections.getD nodeName #[]
     let mut scopes : HashSet Scope := {Scope.ground}
@@ -209,7 +205,7 @@ partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : Sc
     -- for scopes/output nodes we remove itsself from its scopes
     if hierarchy.isScope nodeName then
       scopes := scopes.erase (.node nodeName)
-    
+
     modify (fun (cache, vis) => (cache.insert nodeName scopes, vis))
     trace[HouLean.LeanGraph.typecheck] "Node {nodeName} -> {scopes.toList}"
     return scopes
@@ -236,25 +232,25 @@ partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : Sc
 
 
 /-- Complete scope analysis for a graph -/
-def analyzeScopesComplete (graph : LeanGraph) (ctx : Context) 
+def analyzeScopesComplete (graph : LeanGraph) (ctx : Context)
     : TermElabM (HashMap String Scope × ScopeHierarchy) := do
-  
+
   withTraceNode `HouLean.LeanGraph.typecheck
     (fun _ => return "Complete scope analysis") do
-  
+
   -- Extract input-output subgraph
   let subgraph ← extractInputOutputSubgraph graph ctx
-  
+
   -- Compute immediate post-dominators
   let idom := subgraph.computePostDominators
-  
+
   trace[HouLean.LeanGraph.typecheck] "Immediate post-dominators:"
   for (node, dom) in idom.toList do
     trace[HouLean.LeanGraph.typecheck] "  {node} -> {dom}"
-  
+
   -- Build scope hierarchy
   let hierarchy ← buildScopeHierarchy graph idom ctx
-  
+
   -- Assign scopes to all nodes
   let nodeScopes ← assignNodeScopes graph ctx hierarchy
 
@@ -267,7 +263,7 @@ scope subgraphs and then glue them together. This function extracts those subgra
 Scope subgraph contains all nodes of a given scope plus the output node of the scope.
 All subscopes are collapsed into their output nodes. Therefore any node that is connected
 deep inside another scope will be connected to the output node of that subscope. -/
-def extractScopeSubgraph (graph : LeanGraph) 
+def extractScopeSubgraph (graph : LeanGraph)
     (nodeScopes : HashMap String Scope) (hierarchy : ScopeHierarchy)
     : CoreM (HashMap Scope (HashMap String (HashSet String))) := do
 
@@ -277,7 +273,7 @@ def extractScopeSubgraph (graph : LeanGraph)
     let mut srcNode := wire.outputNodeName
     let mut trgNode := wire.inputNodeName
 
-    let some srcScope := nodeScopes[srcNode]? 
+    let some srcScope := nodeScopes[srcNode]?
       | throwError "bug in {decl_name%}, invalid node {srcNode}"
     let some trgScope := nodeScopes[trgNode]?
       | throwError "bug in {decl_name%}, invalid node {trgNode}"
@@ -293,28 +289,28 @@ def extractScopeSubgraph (graph : LeanGraph)
         | throwError "Invalid scope structure, can't find immediate child for {srcScope} \
                       while starting from {trgScope}."
       trgNode := trgNode'
-    else 
+    else
       throwError "Invalid scope structure, connection from inner scope {srcScope} \
                   to outer scope {trgScope}! {srcNode} → {trgNode}"
-    
+
     graphs := graphs.alter srcScope (fun graph? =>
       (graph?.getD {}).alter srcNode (fun trgs? =>
         (trgs?.getD {}).insert trgNode))
-       
+
   return graphs
 
 
-/-- Validate that a graph has well-formed scopes -/
-def validateScopes (graph : LeanGraph) : TermElabM Bool := do
-  let ctx ← buildContext graph
-  let ctx ← analyzeInputOutputFlow graph ctx
-  
-  try
-    let _ ← analyzeScopesComplete graph ctx
-    return true
-  catch e =>
-    trace[HouLean.LeanGraph.typecheck] "Scope validation failed: {e.toMessageData}"
-    return false
+-- /-- Validate that a graph has well-formed scopes -/
+-- def validateScopes (graph : LeanGraph) : TermElabM Bool := do
+--   let ctx ← buildContext graph
+--   let ctx ← analyzeInputOutputFlow graph ctx
+
+--   try
+--     let _ ← analyzeScopesComplete graph ctx
+--     return true
+--   catch e =>
+--     trace[HouLean.LeanGraph.typecheck] "Scope validation failed: {e.toMessageData}"
+--     return false
 
 end LeanGraph.Traverse
 end HouLean
