@@ -5,7 +5,7 @@ open Lean Meta
 
 namespace HouLean.Meta
 
-def withStructureFieldTypes (structName : Name) (k : Array Expr → Array StructureFieldInfo → Array Expr → MetaM α) : 
+def withStructureFieldTypes (structName : Name) (k : Array Expr → Array StructureFieldInfo → Array Expr → MetaM α) :
     MetaM α := do
   let env ← getEnv
   if isStructure (← getEnv) structName then
@@ -41,7 +41,7 @@ def getExplicitArgs (fn : Expr) (xs : Array Expr) : MetaM (Array Expr) := do
 
 def mkAppFoldrM (const : Name) (xs : Array Expr) : MetaM Expr := do
   if xs.size = 0 then
-    return default
+    return (.const ``Unit.unit [])
   if xs.size = 1 then
     return xs[0]!
   else
@@ -96,6 +96,73 @@ def mkProdSplitElem (xs : Expr) (n : Nat) (fst := ``Prod.fst) (snd := ``Prod.snd
     |>.mapIdx (λ i _ => i)
     |>.mapM (λ i => mkProdProj xs i n fst snd)
 
+
+/-- Creates constructor and projection functions for a product type.
+
+Given a type that is a (possibly nested) product of types, this function generates:
+- A constructor function that takes all component values and builds the product
+- An array of projection functions that extract each component from the product
+
+## Behavior
+- **Unit types** (`PUnit`): Returns unit constructor and empty projections array
+- **Non-product types**: Returns identity functions for both constructor and projection
+- **Product types**: Recursively flattens nested products and generates:
+  - Constructor: `fun x₁ x₂ ... xₙ => ((...((x₁, x₂), x₃)...), xₙ)`
+  - Projections: Array of functions extracting each leaf component
+
+## Example
+For type `Unit × (Int × Unit × Float) × String`:
+- Constructor: `fun x₁ x₂ x₃ => (PUnit.unit, (x₁, PUnit.unit, x₂), x₃)`
+  - Takes 3 arguments (skipping Unit types in the parameter list)
+  - Builds the nested product structure
+- Projections: `[fun x => x.2.1.1, fun x => x.2.1.2.2, fun x => x.2.2]`
+  - Three functions extracting `Int`, `Float`, and `String` components
+
+-/
+partial def mkProdMkProjs (type : Expr) : MetaM (Expr × Array Expr) := do
+  let type ← whnf type
+
+  -- Handle Unit type: return unit constructor with no projections
+  if type.isAppOfArity ``PUnit 0 then
+    return ((.const ``PUnit.unit type.constLevels!), #[])
+
+  -- Handle non-product types: return identity functions
+  unless type.isAppOfArity ``Prod 2 do
+    return (.lam `x type (.bvar 0) default, #[.lam `x type (.bvar 0) default])
+
+  -- Extract product components
+  let mkApp2 _ X Y := type
+    | throwError "Bug in {decl_name%}, invalid arity check!"
+
+  -- Recursively process left and right components
+  let (mkX, projsX) ← mkProdMkProjs X
+  let (mkY, projsY) ← mkProdMkProjs Y
+
+  -- Combine constructors: merge parameter lists and build Prod.mk
+  let mk ←
+    lambdaTelescope mkX fun xs rx =>
+    lambdaTelescope mkY fun ys ry => do
+      mkLambdaFVars (xs ++ ys) (← mkAppM ``Prod.mk #[rx, ry])
+
+  -- Adjust left projections to account for product nesting
+  -- Replace body's bvar 0 with .proj ``Prod 0 (.bvar 0)
+  let projsX := projsX.map fun proj =>
+    match proj with
+    | .lam n _ b bi =>
+      Expr.lam n type (b.instantiate1 (.proj ``Prod 0 (.bvar 0))) bi
+    | _ => default
+
+  -- Adjust right projections to account for product nesting
+  -- Replace body's bvar 0 with .proj ``Prod 1 (.bvar 0)
+  let projsY := projsY.map fun proj =>
+    match proj with
+    | .lam n _ b bi =>
+      Expr.lam n type (b.instantiate1 (.proj ``Prod 1 (.bvar 0))) bi
+    | _ => default
+
+  return (mk, projsX ++ projsY)
+
+
 /-- Make local declarations is we have an array of names and types. -/
 def mkLocalDecls [MonadControlT MetaM n] [Monad n]
   (names : Array Name) (bi : BinderInfo) (types : Array Expr) : Array (Name × BinderInfo × (Array Expr → n Expr)) :=
@@ -106,4 +173,3 @@ def mkLocalDecls [MonadControlT MetaM n] [Monad n]
 def withLocalDecls' [Inhabited α] [MonadControlT MetaM n] [Monad n]
   (names : Array Name) (bi : BinderInfo) (types : Array Expr) (k : Array Expr → n α) : n α :=
   withLocalDecls (mkLocalDecls names bi types) k
-

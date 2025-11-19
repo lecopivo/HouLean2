@@ -16,8 +16,8 @@ import os
 node_editor_path = os.path.expanduser("~/Documents/HouLean/NodeEditor/")
 if node_editor_path not in sys.path:
     sys.path.insert(0, node_editor_path)
-    
-   
+
+
 # Remove cached modules
 modules_to_reload = [
     'LeanNodeEditor.main',
@@ -35,17 +35,17 @@ modules_to_reload = [
 
 for module_name in modules_to_reload:
     if module_name in sys.modules:
-        del sys.modules[module_name]      
-        
-   
+        del sys.modules[module_name]
+
+
 from LeanNodeEditor.main import createInterface
 
 # Houdini requires this function to return the widget
 def onCreateInterface():
     return createInterface()
-    
-    
-    
+
+
+
 ]]></script>
     <includeInPaneTabMenu menu_position="0" create_separator="false"/>
     <includeInToolbarMenu menu_position="209" create_separator="false"/>

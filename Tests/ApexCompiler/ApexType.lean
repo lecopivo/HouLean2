@@ -51,7 +51,7 @@ instance [ApexType α A] : ApexType (Vec3 α) (Vec3 A) where
 
 /-- info: (Float, Float) -/
 #guard_msgs in
-#apex_type Float2 
+#apex_type Float2
 
 /-- info: (Float, Float, Float) -/
 #guard_msgs in
@@ -103,11 +103,6 @@ info: ((((Float, Float), Bool), ((Float, Float), Bool), ((Float, Float), Bool)),
 #guard_msgs in
 #apex_type struct { pos : Vec3 (Option struct {x : Float, y : Float}), vel : struct { x : Float, y : Float} }
 
--- why does this fail???
-/--
-error: Invalid APEX type Option Float!
----
-error: {x} is not an APEX type
--/
+/-- info: (Float, Bool) -/
 #guard_msgs in
 #apex_type struct { pos : Option Float }
