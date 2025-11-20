@@ -1,0 +1,5 @@
+To generate parameter jsons
+
+#+begin_src
+./dump_cop_node_params.py autostereogram blend blocktogeo blur bright cameraimport cameraproperties channelextract channeljoin channelsplit channelswap checkerboard clamp constant crop denoiseai derivative distort dot eikonal error flip function geotolayer hextile idtorgb illpixel invert julia layer layerattribcreate layerattribdelete layerproperties layertogeo layertopoints matchcamera matchudim median mono monotorgb premult projectonlayer ramp rasterizelayer remap resample rgbatorgb rgbtorgba solvepoissonmultigrid sopimport stash streakblur vdbleafpoints vdbreshape vectorxform2d vectorxform xform2d xform
+#+end_src

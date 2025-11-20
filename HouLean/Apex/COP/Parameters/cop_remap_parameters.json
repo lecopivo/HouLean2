@@ -1,0 +1,191 @@
+{
+  "node_name": "remap1",
+  "node_type": "remap",
+  "node_path": "/obj/copnet_dump/remap1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "scopergba",
+      "label": "Channel Scope",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        15
+      ],
+      "min_value": 0,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "op",
+      "label": "Operation",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "remap",
+        "threshold"
+      ],
+      "menu_labels": [
+        "Remap",
+        "Threshold"
+      ]
+    },
+    {
+      "name": "side",
+      "label": "Threshold When",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "greater",
+        "greaterequal",
+        "less",
+        "lessequal"
+      ],
+      "menu_labels": [
+        "Greater",
+        "Greater or Equal",
+        "Less",
+        "Less or Equal"
+      ]
+    },
+    {
+      "name": "threshold",
+      "label": "Threshold",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.5
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "width",
+      "label": "Width",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "inputmin",
+      "label": "Input Min",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "inputmax",
+      "label": "Input Max",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "outputmin",
+      "label": "Output Min",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "outputmax",
+      "label": "Output Max",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "method",
+      "label": "Outside Range",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "clamp",
+        "repeat",
+        "extend"
+      ],
+      "menu_labels": [
+        "Clamp at End",
+        "Repeat",
+        "Extend"
+      ]
+    },
+    {
+      "name": "ramp",
+      "label": "Ramp",
+      "type": "Ramp",
+      "help": ""
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "mask": 1.0,
+    "scopergba": 15,
+    "op": 0,
+    "side": 0,
+    "threshold": 0.5,
+    "width": 0.0,
+    "inputmin": 0.0,
+    "inputmax": 1.0,
+    "outputmin": 0.0,
+    "outputmax": 1.0,
+    "method": 0,
+    "ramp": "<hou.Ramp is_color=False num_keys=2 data=((t=0, 0), (t=1, 1))>",
+    "ramp1pos": 0.0,
+    "ramp1value": 0.0,
+    "ramp1interp": 1,
+    "ramp2pos": 1.0,
+    "ramp2value": 1.0,
+    "ramp2interp": 1
+  }
+}

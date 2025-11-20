@@ -1,0 +1,17 @@
+{
+  "node_name": "rgbtorgba1",
+  "node_type": "rgbtorgba",
+  "node_path": "/obj/copnet_dump/rgbtorgba1",
+  "parameter_templates": [
+    {
+      "name": "premult",
+      "label": "Premultiply Alpha",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    }
+  ],
+  "parameter_values": {
+    "premult": 1
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "node_name": "error1",
+  "node_type": "error",
+  "node_path": "/obj/copnet_dump/error1",
+  "parameter_templates": [
+    {
+      "name": "numerror",
+      "label": "Number of Errors",
+      "type": "Folder",
+      "help": "",
+      "folder_type": "MultiparmBlock",
+      "children": [
+        {
+          "name": "errormsg#",
+          "label": "Error Message",
+          "type": "String",
+          "help": "",
+          "default_value": [
+            ""
+          ],
+          "string_type": "Regular"
+        },
+        {
+          "name": "severity#",
+          "label": "Severity",
+          "type": "Menu",
+          "help": "",
+          "default_value": 0,
+          "menu_items": [
+            "message",
+            "warning",
+            "error"
+          ],
+          "menu_labels": [
+            "Message",
+            "Warning",
+            "Error"
+          ]
+        },
+        {
+          "name": "enable#",
+          "label": "Report This Error",
+          "type": "Int",
+          "help": "",
+          "default_value": [
+            0
+          ],
+          "min_value": 0,
+          "max_value": 1,
+          "num_components": 1
+        }
+      ]
+    }
+  ],
+  "parameter_values": {
+    "numerror": 1,
+    "errormsg1": "",
+    "severity1": 0,
+    "enable1": 0
+  }
+}

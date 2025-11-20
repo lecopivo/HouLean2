@@ -1,0 +1,268 @@
+{
+  "node_name": "resample1",
+  "node_type": "resample",
+  "node_path": "/obj/copnet_dump/resample1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "folder0",
+      "label": "Canvas",
+      "type": "Folder",
+      "help": "",
+      "folder_type": "Simple",
+      "children": [
+        {
+          "name": "sizecontrol",
+          "label": "Size Control",
+          "type": "Menu",
+          "help": "",
+          "default_value": 0,
+          "menu_items": [
+            "res",
+            "aspect",
+            "pixel"
+          ],
+          "menu_labels": [
+            "Resolution",
+            "Aspect Ratio",
+            "Pixel Size"
+          ]
+        },
+        {
+          "name": "basesize",
+          "label": "Base Size",
+          "type": "Menu",
+          "help": "",
+          "default_value": 1,
+          "menu_items": [
+            "parm",
+            "input"
+          ],
+          "menu_labels": [
+            "Parameter",
+            "Size Input"
+          ]
+        },
+        {
+          "name": "resolution",
+          "label": "Base Resolution",
+          "type": "Int",
+          "help": "",
+          "default_value": [
+            1920,
+            1080
+          ],
+          "min_value": 0,
+          "max_value": 10,
+          "num_components": 2
+        },
+        {
+          "name": "resmenu",
+          "label": "Resolution Menu",
+          "type": "Menu",
+          "help": "",
+          "default_value": 0,
+          "menu_items": [],
+          "menu_labels": []
+        },
+        {
+          "name": "aspect",
+          "label": "Base Aspect Ratio",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            1.0,
+            1.0
+          ],
+          "min_value": 0.0,
+          "max_value": 2.0,
+          "num_components": 2
+        },
+        {
+          "name": "aspectmenu",
+          "label": "Aspect Menu",
+          "type": "Menu",
+          "help": "",
+          "default_value": 0,
+          "menu_items": [
+            "none",
+            "1:1",
+            "3:2",
+            "4:3",
+            "16:9"
+          ],
+          "menu_labels": [
+            "Aspect Ratios",
+            "1:1",
+            "3:2",
+            "4:3",
+            "16:9"
+          ]
+        },
+        {
+          "name": "pixelsize",
+          "label": "Pixel Size",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            0.001
+          ],
+          "min_value": 0.0,
+          "max_value": 0.1,
+          "num_components": 1
+        },
+        {
+          "name": "scale",
+          "label": "Uniform Scale",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            1.0
+          ],
+          "min_value": 0.0,
+          "max_value": 5.0,
+          "num_components": 1
+        },
+        {
+          "name": "resscale",
+          "label": "Resolution Scale",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            1.0,
+            1.0
+          ],
+          "min_value": 0.0,
+          "max_value": 2.0,
+          "num_components": 2
+        },
+        {
+          "name": "fixedside",
+          "label": "Fixed Dimension",
+          "type": "Menu",
+          "help": "",
+          "default_value": 0,
+          "menu_items": [
+            "width",
+            "height",
+            "smaller",
+            "larger"
+          ],
+          "menu_labels": [
+            "Width",
+            "Height",
+            "Smaller Dimension",
+            "Larger Dimension"
+          ]
+        },
+        {
+          "name": "pixelsizescale",
+          "label": "Size Scale",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            1.0,
+            1.0
+          ],
+          "min_value": 0.0,
+          "max_value": 2.0,
+          "num_components": 2
+        },
+        {
+          "name": "reframe",
+          "label": "Reframe to Destination",
+          "type": "Toggle",
+          "help": "",
+          "default_value": false
+        }
+      ]
+    },
+    {
+      "name": "folder1",
+      "label": "Sampling",
+      "type": "Folder",
+      "help": "",
+      "folder_type": "Simple",
+      "children": [
+        {
+          "name": "filter",
+          "label": "Filter",
+          "type": "Menu",
+          "help": "",
+          "default_value": 2,
+          "menu_items": [
+            "point",
+            "bilinear",
+            "box",
+            "triangle",
+            "cubic",
+            "mitchell",
+            "bspline"
+          ],
+          "menu_labels": [
+            "Point",
+            "Bilinear",
+            "Box",
+            "Bartlett",
+            "Catmull-Rom",
+            "Mitchell",
+            "B-spline"
+          ]
+        },
+        {
+          "name": "stretch",
+          "label": "Stretch Behavior",
+          "type": "Menu",
+          "help": "",
+          "default_value": 0,
+          "menu_items": [
+            "stretch",
+            "horz",
+            "vert",
+            "max",
+            "min"
+          ],
+          "menu_labels": [
+            "Stretch to Fit",
+            "Fit Horizontally",
+            "Fit Vertically",
+            "Fit Maximally",
+            "Fit Minimally"
+          ]
+        }
+      ]
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "folder0": 0,
+    "sizecontrol": 0,
+    "basesize": 1,
+    "resolution1": 1920,
+    "resolution2": 1080,
+    "resmenu": 0,
+    "aspectx": 1.0,
+    "aspecty": 1.0,
+    "aspectmenu": 0,
+    "pixelsize": 0.001,
+    "scale": 1.0,
+    "resscalex": 1.0,
+    "resscaley": 1.0,
+    "fixedside": 0,
+    "pixelsizescalex": 1.0,
+    "pixelsizescaley": 1.0,
+    "reframe": 0,
+    "folder1": 0,
+    "filter": 2,
+    "stretch": 0
+  }
+}

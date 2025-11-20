@@ -1,0 +1,129 @@
+{
+  "node_name": "checkerboard1",
+  "node_type": "checkerboard",
+  "node_path": "/obj/copnet_dump/checkerboard1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "f3"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "rows",
+      "label": "Rows",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        8
+      ],
+      "min_value": 0,
+      "max_value": 50,
+      "num_components": 1
+    },
+    {
+      "name": "cols",
+      "label": "Columns",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        8
+      ],
+      "min_value": 0,
+      "max_value": 50,
+      "num_components": 1
+    },
+    {
+      "name": "even",
+      "label": "Even Color",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 4
+    },
+    {
+      "name": "odd",
+      "label": "Odd Color",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 4
+    },
+    {
+      "name": "t",
+      "label": "Offset",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "bias",
+      "label": "Bias",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "tilesize",
+      "label": "Tile Size",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        2.0,
+        2.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    }
+  ],
+  "parameter_values": {
+    "signature": "f3",
+    "rows": 8,
+    "cols": 8,
+    "evenr": 1.0,
+    "eveng": 1.0,
+    "evenb": 1.0,
+    "evena": 1.0,
+    "oddr": 0.0,
+    "oddg": 0.0,
+    "oddb": 0.0,
+    "odda": 0.0,
+    "tx": 0.0,
+    "ty": 0.0,
+    "biasx": 0.0,
+    "biasy": 0.0,
+    "tilesizex": 2.0,
+    "tilesizey": 2.0
+  }
+}

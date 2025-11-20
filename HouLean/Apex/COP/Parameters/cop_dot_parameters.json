@@ -1,0 +1,20 @@
+{
+  "node_name": "dot1",
+  "node_type": "dot",
+  "node_path": "/obj/copnet_dump/dot1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto"
+  }
+}

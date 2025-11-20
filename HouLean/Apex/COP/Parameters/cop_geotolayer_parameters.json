@@ -1,0 +1,224 @@
+{
+  "node_name": "geotolayer1",
+  "node_type": "geotolayer::2.0",
+  "node_path": "/obj/copnet_dump/geotolayer1",
+  "parameter_templates": [
+    {
+      "name": "setprecision",
+      "label": "Set Precision",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "precision",
+      "label": "Precision",
+      "type": "Menu",
+      "help": "",
+      "default_value": 1,
+      "menu_items": [
+        "b8",
+        "b16",
+        "b32"
+      ],
+      "menu_labels": [
+        "8",
+        "16",
+        "32"
+      ]
+    },
+    {
+      "name": "border",
+      "label": "Border",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "auto",
+        "constant",
+        "clamp",
+        "mirror",
+        "wrap"
+      ],
+      "menu_labels": [
+        "Auto",
+        "Constant",
+        "Clamp",
+        "Mirror",
+        "Wrap"
+      ]
+    },
+    {
+      "name": "slice",
+      "label": "Slice",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "xy",
+        "yz",
+        "zx"
+      ],
+      "menu_labels": [
+        "XY Plane",
+        "YZ Plane",
+        "ZX Plane"
+      ]
+    },
+    {
+      "name": "densifyvdb",
+      "label": "Densify VDBs",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "addprims",
+      "label": "Set Imports from Geometry",
+      "type": "Button",
+      "help": ""
+    },
+    {
+      "name": "numprims",
+      "label": "Outputs",
+      "type": "Folder",
+      "help": "",
+      "folder_type": "MultiparmBlock",
+      "children": [
+        {
+          "name": "primitive#",
+          "label": "Primitive Name",
+          "type": "String",
+          "help": "",
+          "default_value": [
+            ""
+          ],
+          "string_type": "Regular"
+        },
+        {
+          "name": "outtype#",
+          "label": "outputtype",
+          "type": "Menu",
+          "help": "",
+          "default_value": 1,
+          "menu_items": [
+            "int",
+            "float",
+            "vector2",
+            "vector3",
+            "vector4",
+            "intvdb",
+            "floatvdb",
+            "vectorvdb"
+          ],
+          "menu_labels": [
+            "ID",
+            "Mono",
+            "UV",
+            "RGB",
+            "RGBA",
+            "Integer VDB",
+            "Float VDB",
+            "Vector VDB"
+          ]
+        },
+        {
+          "name": "optional#",
+          "label": "Optional",
+          "type": "Toggle",
+          "help": "",
+          "default_value": false
+        },
+        {
+          "name": "f1_def#",
+          "label": "Default Value",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            1.0
+          ],
+          "min_value": 0.0,
+          "max_value": 10.0,
+          "num_components": 1
+        },
+        {
+          "name": "f2_def#",
+          "label": "Default Value",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            1.0,
+            1.0
+          ],
+          "min_value": 0.0,
+          "max_value": 10.0,
+          "num_components": 2
+        },
+        {
+          "name": "f3_def#",
+          "label": "Default Value",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "min_value": 0.0,
+          "max_value": 10.0,
+          "num_components": 3
+        },
+        {
+          "name": "f4_def#",
+          "label": "Default Value",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "min_value": 0.0,
+          "max_value": 10.0,
+          "num_components": 4
+        },
+        {
+          "name": "i_def#",
+          "label": "Default Value",
+          "type": "Int",
+          "help": "",
+          "default_value": [
+            0
+          ],
+          "min_value": 0,
+          "max_value": 10,
+          "num_components": 1
+        }
+      ]
+    }
+  ],
+  "parameter_values": {
+    "setprecision": 0,
+    "precision": 1,
+    "border": 0,
+    "slice": 0,
+    "densifyvdb": 0,
+    "addprims": "0",
+    "numprims": 1,
+    "primitive1": "",
+    "outtype1": 1,
+    "optional1": 0,
+    "f1_def1": 1.0,
+    "f2_def11": 1.0,
+    "f2_def12": 1.0,
+    "f3_def1r": 1.0,
+    "f3_def1g": 1.0,
+    "f3_def1b": 1.0,
+    "f4_def1r": 1.0,
+    "f4_def1g": 1.0,
+    "f4_def1b": 1.0,
+    "f4_def1a": 1.0,
+    "i_def1": 0
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "node_name": "autostereogram1",
+  "node_type": "autostereogram",
+  "node_path": "/obj/copnet_dump/autostereogram1",
+  "parameter_templates": [
+    {
+      "name": "scale",
+      "label": "Scale",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        8.0,
+        8.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "depthrange",
+      "label": "Depth Range",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.4,
+        0.8
+      ],
+      "min_value": 0.1,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "border",
+      "label": "Border",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "mirror",
+        "wrap"
+      ],
+      "menu_labels": [
+        "Mirror",
+        "Wrap"
+      ]
+    },
+    {
+      "name": "recenter",
+      "label": "Re-Center",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    }
+  ],
+  "parameter_values": {
+    "scalex": 8.0,
+    "scaley": 8.0,
+    "depthrangex": 0.4,
+    "depthrangey": 0.8,
+    "border": 0,
+    "recenter": 1
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "node_name": "blend1",
+  "node_type": "blend",
+  "node_path": "/obj/copnet_dump/blend1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "border",
+      "label": "Border",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "auto",
+        "constant",
+        "clamp",
+        "mirror",
+        "wrap",
+        "clip"
+      ],
+      "menu_labels": [
+        "Auto",
+        "Constant",
+        "Clamp",
+        "Mirror",
+        "Wrap",
+        "Clip"
+      ]
+    },
+    {
+      "name": "filter",
+      "label": "Filter",
+      "type": "Menu",
+      "help": "",
+      "default_value": 2,
+      "menu_items": [
+        "point",
+        "bilinear",
+        "box",
+        "triangle",
+        "cubic",
+        "mitchell",
+        "bspline"
+      ],
+      "menu_labels": [
+        "Point",
+        "Bilinear",
+        "Box",
+        "Bartlett",
+        "Catmull-Rom",
+        "Mitchell",
+        "B-spline"
+      ]
+    },
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "scopergba",
+      "label": "Channel Scope",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        15
+      ],
+      "min_value": 0,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "mode",
+      "label": "Mode",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "blend",
+        "over",
+        "under",
+        "add",
+        "subtract",
+        "multiply",
+        "divide",
+        "screen",
+        "hypot",
+        "diff",
+        "exclusion",
+        "sharpen",
+        "max",
+        "min",
+        "overlay",
+        "softlight",
+        "hardlight",
+        "dodge",
+        "burn",
+        "hue",
+        "sat",
+        "lum",
+        "color"
+      ],
+      "menu_labels": [
+        "![BUTTONS_blendmode_blend]Blend",
+        "![BUTTONS_blendmode_over]Over",
+        "![BUTTONS_blendmode_under]Under",
+        "![BUTTONS_blendmode_add]Add",
+        "![BUTTONS_blendmode_subtract]Subtract",
+        "![BUTTONS_blendmode_multiply]Multiply",
+        "![BUTTONS_blendmode_divide]Divide",
+        "![BUTTONS_blendmode_screen]Screen",
+        "![BUTTONS_blendmode_hypot]Hypot",
+        "![BUTTONS_blendmode_difference]Difference",
+        "![BUTTONS_blendmode_exclusion]Exclusion",
+        "![BUTTONS_blendmode_sharpen]Sharpen",
+        "![BUTTONS_blendmode_maximum]Maximum",
+        "![BUTTONS_blendmode_minimum]Minimum",
+        "![BUTTONS_blendmode_overlay]Overlay",
+        "![BUTTONS_blendmode_softlight]SoftLight",
+        "![BUTTONS_blendmode_hardlight]HardLight",
+        "![BUTTONS_blendmode_dodge]Dodge",
+        "![BUTTONS_blendmode_burn]Burn",
+        "![BUTTONS_blendmode_hue]Hue",
+        "![BUTTONS_blendmode_saturation]Saturation",
+        "![BUTTONS_blendmode_luminosity]Luminosity",
+        "![BUTTONS_blendmode_color]Color"
+      ]
+    },
+    {
+      "name": "alpha",
+      "label": "Alpha Compositing",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "swap",
+      "label": "Swap FG and BG",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "uselength",
+      "label": "Compare Lengths",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "border": 0,
+    "filter": 2,
+    "mask": 1.0,
+    "scopergba": 15,
+    "mode": 0,
+    "alpha": 0,
+    "swap": 0,
+    "uselength": 0
+  }
+}

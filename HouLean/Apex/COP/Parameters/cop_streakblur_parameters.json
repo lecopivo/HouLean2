@@ -1,0 +1,168 @@
+{
+  "node_name": "streakblur1",
+  "node_type": "streakblur",
+  "node_path": "/obj/copnet_dump/streakblur1",
+  "parameter_templates": [
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "dirtype",
+      "label": "Direction Type",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "angle",
+        "coord"
+      ],
+      "menu_labels": [
+        "Angle",
+        "Coordinates"
+      ]
+    },
+    {
+      "name": "dir",
+      "label": "Direction",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "normalizedir",
+      "label": "Normalize Direction",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "angle",
+      "label": "Angle",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": -180.0,
+      "max_value": 180.0,
+      "num_components": 1
+    },
+    {
+      "name": "units",
+      "label": "Units",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "image",
+        "pixels"
+      ],
+      "menu_labels": [
+        "Image",
+        "Pixels"
+      ]
+    },
+    {
+      "name": "length",
+      "label": "Length",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.05
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "length_pixels",
+      "label": "Length",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        3.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1024.0,
+      "num_components": 1
+    },
+    {
+      "name": "bias",
+      "label": "Bias",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "mode",
+      "label": "Mode",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "on",
+        "min",
+        "max"
+      ],
+      "menu_labels": [
+        "Blur",
+        "Min",
+        "Max"
+      ]
+    },
+    {
+      "name": "usestreakweight",
+      "label": "Use Streak Weight",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "streakweight",
+      "label": "Streak Weight",
+      "type": "Ramp",
+      "help": ""
+    }
+  ],
+  "parameter_values": {
+    "mask": 1.0,
+    "dirtype": 0,
+    "dirx": 1.0,
+    "diry": 0.0,
+    "normalizedir": 0,
+    "angle": 0.0,
+    "units": 0,
+    "length": 0.05,
+    "length_pixels": 3.0,
+    "bias": 0.0,
+    "mode": 0,
+    "usestreakweight": 0,
+    "streakweight": "<hou.Ramp is_color=False num_keys=2 data=((t=0, 0), (t=1, 1))>",
+    "streakweight1pos": 0.0,
+    "streakweight1value": 0.0,
+    "streakweight1interp": 1,
+    "streakweight2pos": 1.0,
+    "streakweight2value": 1.0,
+    "streakweight2interp": 1
+  }
+}

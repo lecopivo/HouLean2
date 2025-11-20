@@ -1,0 +1,93 @@
+{
+  "node_name": "clamp1",
+  "node_type": "clamp",
+  "node_path": "/obj/copnet_dump/clamp1",
+  "parameter_templates": [
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "scopergba",
+      "label": "Channel Scope",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        15
+      ],
+      "min_value": 0,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "dolowerlimit",
+      "label": "Lower Limit",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "lowerlimit",
+      "label": "Lower Limit",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "doupperlimit",
+      "label": "Upper Limit",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "upperlimit",
+      "label": "Upper Limit",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "method",
+      "label": "Clamped Values",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "clamp",
+        "black"
+      ],
+      "menu_labels": [
+        "Replace with Limit Value",
+        "Replace with Black"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "mask": 1.0,
+    "scopergba": 15,
+    "dolowerlimit": 1,
+    "lowerlimit": 0.0,
+    "doupperlimit": 1,
+    "upperlimit": 1.0,
+    "method": 0
+  }
+}

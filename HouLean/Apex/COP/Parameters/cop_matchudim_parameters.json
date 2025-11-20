@@ -1,0 +1,54 @@
+{
+  "node_name": "matchudim1",
+  "node_type": "matchudim",
+  "node_path": "/obj/copnet_dump/matchudim1",
+  "parameter_templates": [
+    {
+      "name": "setudim",
+      "label": "UDIM",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "udim",
+      "label": "UDIM",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        1001
+      ],
+      "min_value": 1001,
+      "max_value": 1051,
+      "num_components": 1
+    },
+    {
+      "name": "invertxform",
+      "label": "Invert Transformation",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "method",
+      "label": "Method",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "eye",
+        "data"
+      ],
+      "menu_labels": [
+        "Move Camera",
+        "Adjust Data Window"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "setudim": 0,
+    "udim": 1001,
+    "invertxform": 0,
+    "method": 0
+  }
+}

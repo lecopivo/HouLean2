@@ -1,0 +1,336 @@
+{
+  "node_name": "crop1",
+  "node_type": "crop",
+  "node_path": "/obj/copnet_dump/crop1",
+  "parameter_templates": [
+    {
+      "name": "mode",
+      "label": "Mode",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "data",
+        "both",
+        "display"
+      ],
+      "menu_labels": [
+        "Discard Cropped",
+        "Discard and Reframe to Crop",
+        "Reframe to Crop"
+      ]
+    },
+    {
+      "name": "border",
+      "label": "Border",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "unchanged",
+        "constant",
+        "clamp",
+        "mirror",
+        "wrap"
+      ],
+      "menu_labels": [
+        "Unchanged",
+        "Constant",
+        "Clamp",
+        "Mirror",
+        "Wrap"
+      ]
+    },
+    {
+      "name": "units",
+      "label": "Units",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "image",
+        "texture",
+        "pixels"
+      ],
+      "menu_labels": [
+        "Image",
+        "Texture",
+        "Pixels"
+      ]
+    },
+    {
+      "name": "geounits",
+      "label": "Geometry Units",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "image",
+        "texture",
+        "pixels",
+        "world"
+      ],
+      "menu_labels": [
+        "Image",
+        "Texture",
+        "Pixels",
+        "World"
+      ]
+    },
+    {
+      "name": "xy",
+      "label": "Lower Left",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        -1.0,
+        -1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "rt",
+      "label": "Upper Right",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "xy_texture",
+      "label": "Lower Left",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "rt_texture",
+      "label": "Upper Right",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "xy_pixel",
+      "label": "Lower Left",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "rt_pixel",
+      "label": "Upper Right",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        256.0,
+        256.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "setaspect",
+      "label": "Force Aspect",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "aspect",
+      "label": "Aspect Ratio",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "aspectmenu",
+      "label": "Aspect Menu",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "none",
+        "1:1",
+        "3:2",
+        "4:3",
+        "16:9"
+      ],
+      "menu_labels": [
+        "Aspect Ratios",
+        "1:1",
+        "3:2",
+        "4:3",
+        "16:9"
+      ]
+    },
+    {
+      "name": "extracttile",
+      "label": "Extract Tile",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "tilecount",
+      "label": "Tile Counts",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        2,
+        2
+      ],
+      "min_value": 1,
+      "max_value": 10,
+      "num_components": 2
+    },
+    {
+      "name": "tilenum",
+      "label": "Tile Number",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        0
+      ],
+      "min_value": 0,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "minres",
+      "label": "Minimum Resolution",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        1,
+        1
+      ],
+      "min_value": 0,
+      "max_value": 10,
+      "num_components": 2
+    },
+    {
+      "name": "usemaxres",
+      "label": "Limit Resolution",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "maxres",
+      "label": "Maximum Resolution",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        8092,
+        8092
+      ],
+      "min_value": 0,
+      "max_value": 10,
+      "num_components": 2
+    },
+    {
+      "name": "folder0",
+      "label": "Pixel Padding",
+      "type": "Folder",
+      "help": "",
+      "folder_type": "Simple",
+      "children": [
+        {
+          "name": "pixelpad_h",
+          "label": "Left/Right",
+          "type": "Int",
+          "help": "",
+          "default_value": [
+            0,
+            0
+          ],
+          "min_value": 0,
+          "max_value": 10,
+          "num_components": 2
+        },
+        {
+          "name": "pixelpad_v",
+          "label": "Top/Bottom",
+          "type": "Int",
+          "help": "",
+          "default_value": [
+            0,
+            0
+          ],
+          "min_value": 0,
+          "max_value": 10,
+          "num_components": 2
+        }
+      ]
+    }
+  ],
+  "parameter_values": {
+    "mode": 0,
+    "border": 0,
+    "units": 0,
+    "geounits": 0,
+    "xyx": -1.0,
+    "xyy": -1.0,
+    "rtx": 1.0,
+    "rty": 1.0,
+    "xy_texturex": 0.0,
+    "xy_texturey": 0.0,
+    "rt_texturex": 1.0,
+    "rt_texturey": 1.0,
+    "xy_pixelx": 0.0,
+    "xy_pixely": 0.0,
+    "rt_pixelx": 256.0,
+    "rt_pixely": 256.0,
+    "setaspect": 0,
+    "aspect1": 1.0,
+    "aspect2": 1.0,
+    "aspectmenu": 0,
+    "extracttile": 0,
+    "tilecountx": 2,
+    "tilecounty": 2,
+    "tilenum": 0,
+    "minresx": 1,
+    "minresy": 1,
+    "usemaxres": 1,
+    "maxresx": 8092,
+    "maxresy": 8092,
+    "folder0": 0,
+    "pixelpad_h1": 0,
+    "pixelpad_h2": 0,
+    "pixelpad_v1": 0,
+    "pixelpad_v2": 0
+  }
+}

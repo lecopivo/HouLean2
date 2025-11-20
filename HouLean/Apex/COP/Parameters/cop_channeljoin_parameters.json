@@ -1,0 +1,39 @@
+{
+  "node_name": "channeljoin1",
+  "node_type": "channeljoin",
+  "node_path": "/obj/copnet_dump/channeljoin1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "f4"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "color",
+      "label": "Default Color",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 4
+    }
+  ],
+  "parameter_values": {
+    "signature": "f4",
+    "colorr": 0.0,
+    "colorg": 0.0,
+    "colorb": 0.0,
+    "colora": 1.0
+  }
+}

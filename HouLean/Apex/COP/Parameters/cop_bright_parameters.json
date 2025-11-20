@@ -1,0 +1,114 @@
+{
+  "node_name": "bright1",
+  "node_type": "bright",
+  "node_path": "/obj/copnet_dump/bright1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "scopergba",
+      "label": "Channel Scope",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        7
+      ],
+      "min_value": 0,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "bright",
+      "label": "Brightness",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "brighttint",
+      "label": "Tint Brightness",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 3
+    },
+    {
+      "name": "shift",
+      "label": "Shift",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "shifttint",
+      "label": "Tint Shift",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 3
+    },
+    {
+      "name": "scalebytimeinc",
+      "label": "Scale by Timestep",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "mask": 1.0,
+    "scopergba": 7,
+    "bright": 1.0,
+    "brighttintr": 1.0,
+    "brighttintg": 1.0,
+    "brighttintb": 1.0,
+    "shift": 0.0,
+    "shifttintr": 1.0,
+    "shifttintg": 1.0,
+    "shifttintb": 1.0,
+    "scalebytimeinc": 0
+  }
+}

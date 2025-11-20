@@ -1,0 +1,110 @@
+{
+  "node_name": "constant1",
+  "node_type": "constant",
+  "node_path": "/obj/copnet_dump/constant1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "scopergba",
+      "label": "Channel Scope",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        15
+      ],
+      "min_value": 0,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "f1",
+      "label": "Value",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "f2",
+      "label": "Value",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 2
+    },
+    {
+      "name": "f3",
+      "label": "Color",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 3
+    },
+    {
+      "name": "f4",
+      "label": "Color",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 4
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "mask": 1.0,
+    "scopergba": 15,
+    "f1": 1.0,
+    "f21": 1.0,
+    "f22": 1.0,
+    "f3r": 1.0,
+    "f3g": 1.0,
+    "f3b": 1.0,
+    "f4r": 1.0,
+    "f4g": 1.0,
+    "f4b": 1.0,
+    "f4a": 1.0
+  }
+}

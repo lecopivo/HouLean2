@@ -1,0 +1,42 @@
+{
+  "node_name": "layerattribdelete1",
+  "node_type": "layerattribdelete",
+  "node_path": "/obj/copnet_dump/layerattribdelete1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "delete",
+      "label": "Delete Attributes",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        ""
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "keep",
+      "label": "Keep Attributes",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "*"
+      ],
+      "string_type": "Regular"
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "delete": "",
+    "keep": "*"
+  }
+}

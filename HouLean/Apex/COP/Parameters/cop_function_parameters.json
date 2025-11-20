@@ -1,0 +1,218 @@
+{
+  "node_name": "function1",
+  "node_type": "function",
+  "node_path": "/obj/copnet_dump/function1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "scale",
+      "label": "Scale",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "shift",
+      "label": "Shift",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "func",
+      "label": "Function Class",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "math",
+        "pow",
+        "trig"
+      ],
+      "menu_labels": [
+        "Arithmetic",
+        "Powers",
+        "Trigonometry"
+      ]
+    },
+    {
+      "name": "func_math",
+      "label": "Arithmetic",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "abs",
+        "sign",
+        "normalize",
+        "negate",
+        "invert",
+        "floor",
+        "round",
+        "ceil",
+        "modulus"
+      ],
+      "menu_labels": [
+        "Absolute",
+        "Sign",
+        "Normalize",
+        "Negate",
+        "Reciprocal",
+        "Floor",
+        "Round",
+        "Ceil",
+        "Modulus"
+      ]
+    },
+    {
+      "name": "func_pow",
+      "label": "Power",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "sqrt",
+        "powx",
+        "powb",
+        "ex",
+        "log",
+        "ln"
+      ],
+      "menu_labels": [
+        "Square Root",
+        "pow(x, E)",
+        "pow(b, x)",
+        "exp(x)",
+        "Base-Log",
+        "Natural Log"
+      ]
+    },
+    {
+      "name": "func_trig",
+      "label": "Trigonometry",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "sin",
+        "cos",
+        "tan",
+        "asin",
+        "acos",
+        "atan",
+        "sinh",
+        "cosh",
+        "tanh"
+      ],
+      "menu_labels": [
+        "Sin",
+        "Cos",
+        "Tan",
+        "Arc Sin",
+        "Arc Cos",
+        "Arc Tan",
+        "Hyperbolic Sin",
+        "Hyperbolic Cos",
+        "Hyperbolic Tan"
+      ]
+    },
+    {
+      "name": "angleunit",
+      "label": "Angle Units",
+      "type": "Menu",
+      "help": "",
+      "default_value": 2,
+      "menu_items": [
+        "rad",
+        "deg",
+        "tau"
+      ],
+      "menu_labels": [
+        "Radians",
+        "Degrees",
+        "Circles (2pi)"
+      ]
+    },
+    {
+      "name": "base",
+      "label": "Base",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        2.0
+      ],
+      "min_value": 1.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "exponent",
+      "label": "Exponent",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        2.0
+      ],
+      "min_value": 1.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "modbase",
+      "label": "Base",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "mask": 1.0,
+    "scale": 1.0,
+    "shift": 0.0,
+    "func": 0,
+    "func_math": 0,
+    "func_pow": 0,
+    "func_trig": 0,
+    "angleunit": 2,
+    "base": 2.0,
+    "exponent": 2.0,
+    "modbase": 1.0
+  }
+}

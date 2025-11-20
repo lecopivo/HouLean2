@@ -1,0 +1,83 @@
+{
+  "node_name": "vdbleafpoints1",
+  "node_type": "vdbleafpoints",
+  "node_path": "/obj/copnet_dump/vdbleafpoints1",
+  "parameter_templates": [
+    {
+      "name": "setpos",
+      "label": "Set Positions",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "attribs",
+      "label": "Point Attributes",
+      "type": "Folder",
+      "help": "",
+      "folder_type": "MultiparmBlock",
+      "children": [
+        {
+          "name": "attrib#_name",
+          "label": "Name",
+          "type": "String",
+          "help": "",
+          "default_value": [
+            ""
+          ],
+          "string_type": "Regular"
+        },
+        {
+          "name": "attrib#_class",
+          "label": "Class",
+          "type": "Menu",
+          "help": "",
+          "default_value": 2,
+          "menu_items": [
+            "detail",
+            "primitive",
+            "point",
+            "vertex"
+          ],
+          "menu_labels": [
+            "Detail",
+            "Primitive",
+            "Point",
+            "Vertex"
+          ]
+        },
+        {
+          "name": "attrib#_type",
+          "label": "Type",
+          "type": "Menu",
+          "help": "",
+          "default_value": 1,
+          "menu_items": [
+            "int",
+            "float"
+          ],
+          "menu_labels": [
+            "Integer",
+            "Float"
+          ]
+        },
+        {
+          "name": "attrib#_size",
+          "label": "Tuple Size",
+          "type": "Int",
+          "help": "",
+          "default_value": [
+            1
+          ],
+          "min_value": 0,
+          "max_value": 10,
+          "num_components": 1
+        }
+      ]
+    }
+  ],
+  "parameter_values": {
+    "setpos": 1,
+    "attribs": 0
+  }
+}

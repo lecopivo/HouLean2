@@ -1,0 +1,129 @@
+{
+  "node_name": "channelswap1",
+  "node_type": "channelswap",
+  "node_path": "/obj/copnet_dump/channelswap1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "srcred",
+      "label": "Source for Red",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "red",
+        "green",
+        "blue",
+        "alpha",
+        "zero",
+        "one"
+      ],
+      "menu_labels": [
+        "Red\t(x)",
+        "Green\t(y)",
+        "Blue\t(z)",
+        "Alpha\t(w)",
+        "Zero",
+        "One"
+      ]
+    },
+    {
+      "name": "srcgreen",
+      "label": "Source for Green",
+      "type": "Menu",
+      "help": "",
+      "default_value": 1,
+      "menu_items": [
+        "red",
+        "green",
+        "blue",
+        "alpha",
+        "zero",
+        "one"
+      ],
+      "menu_labels": [
+        "Red\t(x)",
+        "Green\t(y)",
+        "Blue\t(z)",
+        "Alpha\t(w)",
+        "Zero",
+        "One"
+      ]
+    },
+    {
+      "name": "srcblue",
+      "label": "Source for Blue",
+      "type": "Menu",
+      "help": "",
+      "default_value": 2,
+      "menu_items": [
+        "red",
+        "green",
+        "blue",
+        "alpha",
+        "zero",
+        "one"
+      ],
+      "menu_labels": [
+        "Red\t(x)",
+        "Green\t(y)",
+        "Blue\t(z)",
+        "Alpha\t(w)",
+        "Zero",
+        "One"
+      ]
+    },
+    {
+      "name": "srcalpha",
+      "label": "Source for Alpha",
+      "type": "Menu",
+      "help": "",
+      "default_value": 3,
+      "menu_items": [
+        "red",
+        "green",
+        "blue",
+        "alpha",
+        "zero",
+        "one"
+      ],
+      "menu_labels": [
+        "Red\t(x)",
+        "Green\t(y)",
+        "Blue\t(z)",
+        "Alpha\t(w)",
+        "Zero",
+        "One"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "mask": 1.0,
+    "srcred": 0,
+    "srcgreen": 1,
+    "srcblue": 2,
+    "srcalpha": 3
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "node_name": "stash1",
+  "node_type": "stash",
+  "node_path": "/obj/copnet_dump/stash1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "stash",
+      "label": "Layer Stash",
+      "type": "Data",
+      "help": ""
+    },
+    {
+      "name": "stashinput",
+      "label": "Stash Input",
+      "type": "Button",
+      "help": ""
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "stash": null,
+    "stashinput": "0"
+  }
+}

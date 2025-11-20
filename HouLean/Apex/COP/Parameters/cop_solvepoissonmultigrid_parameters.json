@@ -1,0 +1,158 @@
+{
+  "node_name": "solvepoissonmultigrid1",
+  "node_type": "solvepoissonmultigrid",
+  "node_path": "/obj/copnet_dump/solvepoissonmultigrid1",
+  "parameter_templates": [
+    {
+      "name": "iterations",
+      "label": "Iterations",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        2
+      ],
+      "min_value": 1,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "smoothingmethod",
+      "label": "Smoothing Method",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "gs",
+        "jacobi"
+      ],
+      "menu_labels": [
+        "Gauss-Seidel",
+        "Jacobi"
+      ]
+    },
+    {
+      "name": "upsmooth",
+      "label": "Up Smoothing Iterations",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        2
+      ],
+      "min_value": 1,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "downsmooth",
+      "label": "Down Smoothing Iterations",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        2
+      ],
+      "min_value": 1,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "coarseiter",
+      "label": "Coarsest Smoothing Iterations",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        50
+      ],
+      "min_value": 1,
+      "max_value": 100,
+      "num_components": 1
+    },
+    {
+      "name": "targetdim",
+      "label": "Target Coarse Dimensions",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        5
+      ],
+      "min_value": 3,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "borderxneg",
+      "label": "X Borders",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "open",
+        "closed",
+        "periodic"
+      ],
+      "menu_labels": [
+        "Open",
+        "Closed",
+        "Periodic"
+      ]
+    },
+    {
+      "name": "borderxpos",
+      "label": "X Borders",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "open",
+        "closed"
+      ],
+      "menu_labels": [
+        "Open",
+        "Closed"
+      ]
+    },
+    {
+      "name": "borderyneg",
+      "label": "Y Borders",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "open",
+        "closed",
+        "periodic"
+      ],
+      "menu_labels": [
+        "Open",
+        "Closed",
+        "Periodic"
+      ]
+    },
+    {
+      "name": "borderypos",
+      "label": "Y Borders",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "open",
+        "closed"
+      ],
+      "menu_labels": [
+        "Open",
+        "Closed"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "iterations": 2,
+    "smoothingmethod": 0,
+    "upsmooth": 2,
+    "downsmooth": 2,
+    "coarseiter": 50,
+    "targetdim": 5,
+    "borderxneg": 0,
+    "borderxpos": 0,
+    "borderyneg": 0,
+    "borderypos": 0
+  }
+}

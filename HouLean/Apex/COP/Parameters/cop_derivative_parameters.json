@@ -1,0 +1,98 @@
+{
+  "node_name": "derivative1",
+  "node_type": "derivative",
+  "node_path": "/obj/copnet_dump/derivative1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "angle",
+      "label": "Angle",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": -180.0,
+      "max_value": 180.0,
+      "num_components": 1
+    },
+    {
+      "name": "scale",
+      "label": "Scale",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "offset",
+      "label": "Offset",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "readoutside",
+      "label": "Read Pixels outside Image",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "kernel",
+      "label": "Kernel Size",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        1
+      ],
+      "min_value": 1,
+      "max_value": 64,
+      "num_components": 1
+    },
+    {
+      "name": "differencemode",
+      "label": "Difference Mode",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "central",
+        "forward",
+        "diagonal"
+      ],
+      "menu_labels": [
+        "Central",
+        "Forward",
+        "Diagonal"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "angle": 0.0,
+    "scale": 1.0,
+    "offset": 0.0,
+    "readoutside": 1,
+    "kernel": 1,
+    "differencemode": 0
+  }
+}

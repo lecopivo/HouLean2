@@ -1,0 +1,128 @@
+{
+  "node_name": "hextile1",
+  "node_type": "hextile",
+  "node_path": "/obj/copnet_dump/hextile1",
+  "parameter_templates": [
+    {
+      "name": "size",
+      "label": "Size",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 2.0,
+      "num_components": 2
+    },
+    {
+      "name": "scale",
+      "label": "Scale",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "scalerand",
+      "label": "Scale Random",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "rot",
+      "label": "Rotate",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": -90.0,
+      "max_value": 90.0,
+      "num_components": 1
+    },
+    {
+      "name": "rotrand",
+      "label": "Rotate Random",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "seed",
+      "label": "Random Seed",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "contrast",
+      "label": "Contrast",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.5
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "contrast_falloff",
+      "label": "Falloff",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.6
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "weightexp",
+      "label": "Weight Exp",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        7.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    }
+  ],
+  "parameter_values": {
+    "sizex": 1.0,
+    "sizey": 1.0,
+    "scale": 1.0,
+    "scalerand": 0.0,
+    "rot": 0.0,
+    "rotrand": 0.0,
+    "seed": 0.0,
+    "contrast": 0.5,
+    "contrast_falloff": 0.6,
+    "weightexp": 7.0
+  }
+}

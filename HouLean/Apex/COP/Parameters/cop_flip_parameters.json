@@ -1,0 +1,46 @@
+{
+  "node_name": "flip1",
+  "node_type": "flip",
+  "node_path": "/obj/copnet_dump/flip1",
+  "parameter_templates": [
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "xflip",
+      "label": "Flip Horizontally",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "yflip",
+      "label": "Flip Vertically",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "flop",
+      "label": "Flip Diagonally",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    }
+  ],
+  "parameter_values": {
+    "mask": 1.0,
+    "xflip": 0,
+    "yflip": 1,
+    "flop": 0
+  }
+}

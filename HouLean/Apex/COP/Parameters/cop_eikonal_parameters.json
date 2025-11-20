@@ -1,0 +1,48 @@
+{
+  "node_name": "eikonal1",
+  "node_type": "eikonal",
+  "node_path": "/obj/copnet_dump/eikonal1",
+  "parameter_templates": [
+    {
+      "name": "speed",
+      "label": "Speed",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 2.0,
+      "num_components": 1
+    },
+    {
+      "name": "niter",
+      "label": "Iterations",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        1
+      ],
+      "min_value": 1,
+      "max_value": 10,
+      "num_components": 1
+    },
+    {
+      "name": "tilesize",
+      "label": "Tile Size",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        4
+      ],
+      "min_value": 1,
+      "max_value": 1000,
+      "num_components": 1
+    }
+  ],
+  "parameter_values": {
+    "speed": 1.0,
+    "niter": 1,
+    "tilesize": 4
+  }
+}

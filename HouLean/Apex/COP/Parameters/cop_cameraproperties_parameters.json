@@ -1,0 +1,236 @@
+{
+  "node_name": "cameraproperties1",
+  "node_type": "cameraproperties",
+  "node_path": "/obj/copnet_dump/cameraproperties1",
+  "parameter_templates": [
+    {
+      "name": "setprojection",
+      "label": "Set Projection",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "projection",
+      "label": "Projection",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "perspective",
+        "orthographic"
+      ],
+      "menu_labels": [
+        "Perspective",
+        "Orthographic"
+      ]
+    },
+    {
+      "name": "imaging",
+      "label": "Imaging Distance",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "setimaging",
+      "label": "Set Imaging Distance",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "off",
+        "on",
+        "add",
+        "point"
+      ],
+      "menu_labels": [
+        "Unchanged",
+        "Set",
+        "Add",
+        "Point"
+      ]
+    },
+    {
+      "name": "imagingpoint",
+      "label": "Imaging Point",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 3
+    },
+    {
+      "name": "setclipping",
+      "label": "Set Clipping",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "clipping",
+      "label": "Near/Far",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.01,
+        10000.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10000000000.0,
+      "num_components": 2
+    },
+    {
+      "name": "setfocal",
+      "label": "Set Focal Length",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "focal",
+      "label": "Focal Length",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        50.0
+      ],
+      "min_value": 1.0,
+      "max_value": 1000.0,
+      "num_components": 1
+    },
+    {
+      "name": "setaperture",
+      "label": "Set Aperture",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "aperture",
+      "label": "Aperture (mm)",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        20.955
+      ],
+      "min_value": 1.0,
+      "max_value": 100.0,
+      "num_components": 1
+    },
+    {
+      "name": "setoffset",
+      "label": "Set Aspect Offset",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "offset",
+      "label": "Aperture Offset",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "setshutter",
+      "label": "Set Shutter",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "shutter",
+      "label": "Shutter Open/Close",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        -0.25,
+        0.25
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "setfocus",
+      "label": "Set Focus Distance",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "focus",
+      "label": "Focus Distance",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10000.0,
+      "num_components": 1
+    },
+    {
+      "name": "setfstop",
+      "label": "Set F-Stop",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "fstop",
+      "label": "F-Stop",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    }
+  ],
+  "parameter_values": {
+    "setprojection": 1,
+    "projection": 0,
+    "imaging": 1.0,
+    "setimaging": 0,
+    "imagingpointx": 0.0,
+    "imagingpointy": 0.0,
+    "imagingpointz": 0.0,
+    "setclipping": 0,
+    "clippingx": 0.01,
+    "clippingy": 10000.0,
+    "setfocal": 0,
+    "focal": 50.0,
+    "setaperture": 0,
+    "aperture": 20.955,
+    "setoffset": 0,
+    "offsetx": 0.0,
+    "offsety": 0.0,
+    "setshutter": 0,
+    "shutterx": -0.25,
+    "shuttery": 0.25,
+    "setfocus": 0,
+    "focus": 0.0,
+    "setfstop": 0,
+    "fstop": 0.0
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "node_name": "projectonlayer1",
+  "node_type": "projectonlayer",
+  "node_path": "/obj/copnet_dump/projectonlayer1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "invertxform",
+      "label": "Invert Transformation",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "border",
+      "label": "Border",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "auto",
+        "constant",
+        "clamp",
+        "mirror",
+        "wrap",
+        "clip"
+      ],
+      "menu_labels": [
+        "Auto",
+        "Constant",
+        "Clamp",
+        "Mirror",
+        "Wrap",
+        "Clip"
+      ]
+    },
+    {
+      "name": "filter",
+      "label": "Filter",
+      "type": "Menu",
+      "help": "",
+      "default_value": 2,
+      "menu_items": [
+        "point",
+        "bilinear",
+        "box",
+        "triangle",
+        "cubic",
+        "mitchell",
+        "bspline"
+      ],
+      "menu_labels": [
+        "Point",
+        "Bilinear",
+        "Box",
+        "Bartlett",
+        "Catmull-Rom",
+        "Mitchell",
+        "B-spline"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "invertxform": 0,
+    "border": 0,
+    "filter": 2
+  }
+}

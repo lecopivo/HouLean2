@@ -1,0 +1,44 @@
+{
+  "node_name": "denoiseai1",
+  "node_type": "denoiseai",
+  "node_path": "/obj/copnet_dump/denoiseai1",
+  "parameter_templates": [
+    {
+      "name": "denoiser",
+      "label": "Denoiser",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "oidn"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "auxareclean",
+      "label": "Auxiliary Planes Are Clean",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "prefilteraux",
+      "label": "Prefilter Auxiliary Planes",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "onlycpu",
+      "label": "Use CPU Only",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    }
+  ],
+  "parameter_values": {
+    "denoiser": "oidn",
+    "auxareclean": 0,
+    "prefilteraux": 0,
+    "onlycpu": 0
+  }
+}

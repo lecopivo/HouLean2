@@ -1,0 +1,17 @@
+{
+  "node_name": "rgbatorgb1",
+  "node_type": "rgbatorgb",
+  "node_path": "/obj/copnet_dump/rgbatorgb1",
+  "parameter_templates": [
+    {
+      "name": "unpremult",
+      "label": "Remove Premultiplied Alpha",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    }
+  ],
+  "parameter_values": {
+    "unpremult": 1
+  }
+}

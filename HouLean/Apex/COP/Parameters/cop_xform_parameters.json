@@ -1,0 +1,256 @@
+{
+  "node_name": "transform1",
+  "node_type": "xform",
+  "node_path": "/obj/copnet_dump/transform1",
+  "parameter_templates": [
+    {
+      "name": "xOrd",
+      "label": "Transform Order",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "srt",
+        "str",
+        "rst",
+        "rts",
+        "tsr",
+        "trs"
+      ],
+      "menu_labels": [
+        "Scale Rot Trans",
+        "Scale Trans Rot",
+        "Rot Scale Trans",
+        "Rot Trans Scale",
+        "Trans Scale Rot",
+        "Trans Rot Scale"
+      ]
+    },
+    {
+      "name": "rOrd",
+      "label": "Rotate Order",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "xyz",
+        "xzy",
+        "yxz",
+        "yzx",
+        "zxy",
+        "zyx"
+      ],
+      "menu_labels": [
+        "Rx Ry Rz",
+        "Rx Rz Ry",
+        "Ry Rx Rz",
+        "Ry Rz Rx",
+        "Rz Rx Ry",
+        "Rz Ry Rx"
+      ]
+    },
+    {
+      "name": "t",
+      "label": "Translate",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 3
+    },
+    {
+      "name": "r",
+      "label": "Rotate",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 360.0,
+      "num_components": 3
+    },
+    {
+      "name": "s",
+      "label": "Scale",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 3
+    },
+    {
+      "name": "shear",
+      "label": "Shear",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 3
+    },
+    {
+      "name": "scale",
+      "label": "Uniform Scale",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.1,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "parmgroup_pivotxform",
+      "label": "Pivot Transform",
+      "type": "Folder",
+      "help": "",
+      "folder_type": "Collapsible",
+      "children": [
+        {
+          "name": "p",
+          "label": "Pivot Translate",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "min_value": -1.0,
+          "max_value": 1.0,
+          "num_components": 3
+        },
+        {
+          "name": "pr",
+          "label": "Pivot Rotate",
+          "type": "Float",
+          "help": "",
+          "default_value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "min_value": 0.0,
+          "max_value": 360.0,
+          "num_components": 3
+        }
+      ]
+    },
+    {
+      "name": "invertxform",
+      "label": "Invert Transformation",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "rasterize",
+      "label": "Rasterize",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "perspective",
+      "label": "Perspective Camera",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "border",
+      "label": "Border",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "auto",
+        "constant",
+        "clamp",
+        "mirror",
+        "wrap",
+        "clip"
+      ],
+      "menu_labels": [
+        "Auto",
+        "Constant",
+        "Clamp",
+        "Mirror",
+        "Wrap",
+        "Clip"
+      ]
+    },
+    {
+      "name": "filter",
+      "label": "Filter",
+      "type": "Menu",
+      "help": "",
+      "default_value": 2,
+      "menu_items": [
+        "point",
+        "bilinear",
+        "box",
+        "triangle",
+        "cubic",
+        "mitchell",
+        "bspline"
+      ],
+      "menu_labels": [
+        "Point",
+        "Bilinear",
+        "Box",
+        "Bartlett",
+        "Catmull-Rom",
+        "Mitchell",
+        "B-spline"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "xOrd": 0,
+    "rOrd": 0,
+    "tx": 0.0,
+    "ty": 0.0,
+    "tz": 0.0,
+    "rx": 0.0,
+    "ry": 0.0,
+    "rz": 0.0,
+    "sx": 1.0,
+    "sy": 1.0,
+    "sz": 1.0,
+    "shear1": 0.0,
+    "shear2": 0.0,
+    "shear3": 0.0,
+    "scale": 1.0,
+    "parmgroup_pivotxform": 0,
+    "px": 0.0,
+    "py": 0.0,
+    "pz": 0.0,
+    "prx": 0.0,
+    "pry": 0.0,
+    "prz": 0.0,
+    "invertxform": 0,
+    "rasterize": 0,
+    "perspective": 0,
+    "border": 0,
+    "filter": 2
+  }
+}

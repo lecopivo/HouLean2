@@ -1,0 +1,124 @@
+{
+  "node_name": "layerproperties1",
+  "node_type": "layerproperties",
+  "node_path": "/obj/copnet_dump/layerproperties1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "setprecision",
+      "label": "Set Precision",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "precision",
+      "label": "Precision",
+      "type": "Menu",
+      "help": "",
+      "default_value": 1,
+      "menu_items": [
+        "b8",
+        "b16",
+        "b32"
+      ],
+      "menu_labels": [
+        "8",
+        "16",
+        "32"
+      ]
+    },
+    {
+      "name": "usefixedpoint",
+      "label": "Use Fixed Point Storage",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "setborder",
+      "label": "Set Border",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "border",
+      "label": "Border",
+      "type": "Menu",
+      "help": "",
+      "default_value": 3,
+      "menu_items": [
+        "constant",
+        "clamp",
+        "mirror",
+        "wrap"
+      ],
+      "menu_labels": [
+        "Constant",
+        "Clamp",
+        "Mirror",
+        "Wrap"
+      ]
+    },
+    {
+      "name": "settypeinfo",
+      "label": "Set Type Info",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "typeinfo",
+      "label": "Type Info",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "none",
+        "color",
+        "position",
+        "vector",
+        "normal",
+        "offsetnormal",
+        "texturecoord",
+        "id",
+        "mask",
+        "sdf",
+        "height"
+      ],
+      "menu_labels": [
+        "None",
+        "Color",
+        "Position",
+        "Vector",
+        "Signed Normal",
+        "Offset Normal",
+        "Texture Coordinate",
+        "ID",
+        "Mask",
+        "SDF",
+        "Height"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "setprecision": 0,
+    "precision": 1,
+    "usefixedpoint": 0,
+    "setborder": 0,
+    "border": 3,
+    "settypeinfo": 0,
+    "typeinfo": 0
+  }
+}

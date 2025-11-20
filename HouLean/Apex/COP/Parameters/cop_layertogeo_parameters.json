@@ -1,0 +1,28 @@
+{
+  "node_name": "layertogeo1",
+  "node_type": "layertogeo",
+  "node_path": "/obj/copnet_dump/layertogeo1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "optional",
+      "label": "Empty Geometry If Unwired",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "optional": 0
+  }
+}

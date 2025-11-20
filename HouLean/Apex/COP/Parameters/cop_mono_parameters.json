@@ -1,0 +1,89 @@
+{
+  "node_name": "mono1",
+  "node_type": "mono",
+  "node_path": "/obj/copnet_dump/mono1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "op",
+      "label": "Operation",
+      "type": "Menu",
+      "help": "",
+      "default_value": 1,
+      "menu_items": [
+        "lum",
+        "ntsclum",
+        "hdtvlum",
+        "average",
+        "max",
+        "min",
+        "magnitude",
+        "hue",
+        "saturation",
+        "value",
+        "red",
+        "green",
+        "blue",
+        "comp4",
+        "custom"
+      ],
+      "menu_labels": [
+        "SGI Luminance",
+        "NTSC Luminance",
+        "HDTV Luminance",
+        "Average",
+        "Maximum Channel",
+        "Minimum Channel",
+        "Magnitude / Length",
+        "Hue",
+        "Saturation",
+        "Value",
+        "Red",
+        "Green",
+        "Blue",
+        "Alpha",
+        "Custom"
+      ]
+    },
+    {
+      "name": "weight",
+      "label": "Weights",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 4
+    },
+    {
+      "name": "normalizeweight",
+      "label": "Normalize Weights",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "op": 1,
+    "weightr": 1.0,
+    "weightg": 1.0,
+    "weightb": 1.0,
+    "weighta": 0.0,
+    "normalizeweight": 1
+  }
+}

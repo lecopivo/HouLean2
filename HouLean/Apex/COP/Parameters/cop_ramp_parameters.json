@@ -1,0 +1,142 @@
+{
+  "node_name": "ramp1",
+  "node_type": "ramp",
+  "node_path": "/obj/copnet_dump/ramp1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "f3"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "rampType",
+      "label": "Type",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "horizontal",
+        "vertical",
+        "radial",
+        "concentric"
+      ],
+      "menu_labels": [
+        "Horizontal",
+        "Vertical",
+        "Radial",
+        "Concentric"
+      ]
+    },
+    {
+      "name": "cycles",
+      "label": "Number of Cycles",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "phase",
+      "label": "Phase",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "method",
+      "label": "Outside Range",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "clamp",
+        "repeat",
+        "mirror"
+      ],
+      "menu_labels": [
+        "Clamp at End",
+        "Repeat",
+        "Mirror"
+      ]
+    },
+    {
+      "name": "center",
+      "label": "Center",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0,
+        0.0
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "rotation",
+      "label": "Rotation",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 360.0,
+      "num_components": 1
+    },
+    {
+      "name": "ramp",
+      "label": "Ramp",
+      "type": "Ramp",
+      "help": ""
+    },
+    {
+      "name": "rampmono",
+      "label": "Ramp",
+      "type": "Ramp",
+      "help": ""
+    }
+  ],
+  "parameter_values": {
+    "signature": "f3",
+    "rampType": 0,
+    "cycles": 1.0,
+    "phase": 0.0,
+    "method": 0,
+    "centerx": 0.0,
+    "centery": 0.0,
+    "rotation": 0.0,
+    "ramp": "<hou.Ramp is_color=True num_keys=2 data=((t=0, rgb=(0, 0, 0)), (t=1, rgb=(1, 1, 1)))>",
+    "rampmono": "<hou.Ramp is_color=False num_keys=2 data=((t=0, 0), (t=1, 1))>",
+    "ramp1pos": 0.0,
+    "ramp1cr": 0.0,
+    "ramp1cg": 0.0,
+    "ramp1cb": 0.0,
+    "ramp1interp": 1,
+    "ramp2pos": 1.0,
+    "ramp2cr": 1.0,
+    "ramp2cg": 1.0,
+    "ramp2cb": 1.0,
+    "ramp2interp": 1,
+    "rampmono1pos": 0.0,
+    "rampmono1value": 0.0,
+    "rampmono1interp": 1,
+    "rampmono2pos": 1.0,
+    "rampmono2value": 1.0,
+    "rampmono2interp": 1
+  }
+}

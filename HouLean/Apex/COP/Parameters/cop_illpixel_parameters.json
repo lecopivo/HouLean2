@@ -1,0 +1,103 @@
+{
+  "node_name": "illpixel1",
+  "node_type": "illpixel",
+  "node_path": "/obj/copnet_dump/illpixel1",
+  "parameter_templates": [
+    {
+      "name": "method",
+      "label": "Illegal Pixels",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "fixblend",
+        "fixzero",
+        "highlight",
+        "isolate"
+      ],
+      "menu_labels": [
+        "Fix by Blending Surrounding Pixels",
+        "Fix by Zeroing",
+        "Show with Highlight",
+        "Show by Isolating"
+      ]
+    },
+    {
+      "name": "highlightcolor",
+      "label": "Highlight Color",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 4
+    },
+    {
+      "name": "detect",
+      "label": "Detect",
+      "type": "Menu",
+      "help": "",
+      "default_value": 2,
+      "menu_items": [
+        "d_nan",
+        "d_inf",
+        "both",
+        "custom"
+      ],
+      "menu_labels": [
+        "NaN Values",
+        "Infinite Values",
+        "NaN and Infinite Values",
+        "Custom"
+      ]
+    },
+    {
+      "name": "rule",
+      "label": "Rule",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "less",
+        "lessequal",
+        "greater",
+        "greaterequal",
+        "equal"
+      ],
+      "menu_labels": [
+        "Less Than",
+        "Less Than or Equal",
+        "Greater Than",
+        "Greater Than or Equal",
+        "Equal"
+      ]
+    },
+    {
+      "name": "compval",
+      "label": "Value",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    }
+  ],
+  "parameter_values": {
+    "method": 0,
+    "highlightcolorr": 1.0,
+    "highlightcolorg": 0.0,
+    "highlightcolorb": 0.0,
+    "highlightcolora": 1.0,
+    "detect": 2,
+    "rule": 0,
+    "compval": 0.0
+  }
+}

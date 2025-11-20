@@ -1,0 +1,38 @@
+{
+  "node_name": "premult1",
+  "node_type": "premult",
+  "node_path": "/obj/copnet_dump/premult1",
+  "parameter_templates": [
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "op",
+      "label": "Operation",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "mult",
+        "divide"
+      ],
+      "menu_labels": [
+        "Premultiply by Alpha",
+        "Un-Premultiply by Alpha"
+      ]
+    }
+  ],
+  "parameter_values": {
+    "mask": 1.0,
+    "op": 0
+  }
+}

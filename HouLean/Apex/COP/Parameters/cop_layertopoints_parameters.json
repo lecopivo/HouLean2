@@ -1,0 +1,137 @@
+{
+  "node_name": "layertopoints1",
+  "node_type": "layertopoints",
+  "node_path": "/obj/copnet_dump/layertopoints1",
+  "parameter_templates": [
+    {
+      "name": "method",
+      "label": "Method",
+      "type": "Menu",
+      "help": "",
+      "default_value": 1,
+      "menu_items": [
+        "all",
+        "nonzero",
+        "pixel",
+        "unique",
+        "first",
+        "last"
+      ],
+      "menu_labels": [
+        "All Pixel",
+        "Non-Zero Pixels",
+        "Count per Pixel",
+        "Unique Values",
+        "Count from First Pixel",
+        "Count from Last Pixel"
+      ]
+    },
+    {
+      "name": "layerattrib",
+      "label": "Layer Attrib",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "value"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "indexattrib",
+      "label": "Index Attrib",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "index"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "setpos",
+      "label": "Set Positions",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "ignoreminusone",
+      "label": "Ignore Minus One",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "attribs",
+      "label": "Point Attributes",
+      "type": "Folder",
+      "help": "",
+      "folder_type": "MultiparmBlock",
+      "children": [
+        {
+          "name": "attrib#_name",
+          "label": "Name",
+          "type": "String",
+          "help": "",
+          "default_value": [
+            ""
+          ],
+          "string_type": "Regular"
+        },
+        {
+          "name": "attrib#_class",
+          "label": "Class",
+          "type": "Menu",
+          "help": "",
+          "default_value": 2,
+          "menu_items": [
+            "detail",
+            "primitive",
+            "point",
+            "vertex"
+          ],
+          "menu_labels": [
+            "Detail",
+            "Primitive",
+            "Point",
+            "Vertex"
+          ]
+        },
+        {
+          "name": "attrib#_type",
+          "label": "Type",
+          "type": "Menu",
+          "help": "",
+          "default_value": 1,
+          "menu_items": [
+            "int",
+            "float"
+          ],
+          "menu_labels": [
+            "Integer",
+            "Float"
+          ]
+        },
+        {
+          "name": "attrib#_size",
+          "label": "Tuple Size",
+          "type": "Int",
+          "help": "",
+          "default_value": [
+            1
+          ],
+          "min_value": 0,
+          "max_value": 10,
+          "num_components": 1
+        }
+      ]
+    }
+  ],
+  "parameter_values": {
+    "method": 1,
+    "layerattrib": "value",
+    "indexattrib": "index",
+    "setpos": 1,
+    "ignoreminusone": 0,
+    "attribs": 0
+  }
+}

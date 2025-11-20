@@ -1,0 +1,229 @@
+{
+  "node_name": "distort1",
+  "node_type": "distort",
+  "node_path": "/obj/copnet_dump/distort1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "auto"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "border",
+      "label": "Border",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "auto",
+        "constant",
+        "clamp",
+        "mirror",
+        "wrap"
+      ],
+      "menu_labels": [
+        "Auto",
+        "Constant",
+        "Clamp",
+        "Mirror",
+        "Wrap"
+      ]
+    },
+    {
+      "name": "filter",
+      "label": "Filter",
+      "type": "Menu",
+      "help": "",
+      "default_value": 1,
+      "menu_items": [
+        "point",
+        "bilinear",
+        "box",
+        "triangle",
+        "cubic",
+        "mitchell",
+        "bspline"
+      ],
+      "menu_labels": [
+        "Point",
+        "Bilinear",
+        "Box",
+        "Bartlett",
+        "Catmull-Rom",
+        "Mitchell",
+        "B-spline"
+      ]
+    },
+    {
+      "name": "mask",
+      "label": "Mask",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "dirtype",
+      "label": "Direction Type",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "angle",
+        "coord"
+      ],
+      "menu_labels": [
+        "Angle",
+        "Coordinates"
+      ]
+    },
+    {
+      "name": "dir",
+      "label": "Direction",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        0.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "normalizedir",
+      "label": "Normalize Direction",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "angle",
+      "label": "Angle",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.0
+      ],
+      "min_value": -180.0,
+      "max_value": 180.0,
+      "num_components": 1
+    },
+    {
+      "name": "scale",
+      "label": "Scale",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.005
+      ],
+      "min_value": -0.05,
+      "max_value": 0.05,
+      "num_components": 1
+    },
+    {
+      "name": "scalebytimeinc",
+      "label": "Scale by Timestep",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "streak",
+      "label": "Streak",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "off",
+        "on",
+        "min",
+        "max"
+      ],
+      "menu_labels": [
+        "Off",
+        "Blur",
+        "Min",
+        "Max"
+      ]
+    },
+    {
+      "name": "usestreakweight",
+      "label": "Use Streak Weight Ramp",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    },
+    {
+      "name": "streakweight",
+      "label": "Streak Weight",
+      "type": "Ramp",
+      "help": ""
+    },
+    {
+      "name": "usecfl",
+      "label": "Use Pixels per Step",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "cfl",
+      "label": "Pixels per Step",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0
+      ],
+      "min_value": 0.1,
+      "max_value": 1000.0,
+      "num_components": 1
+    },
+    {
+      "name": "maxsteps",
+      "label": "Maximum Steps",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        100
+      ],
+      "min_value": 1,
+      "max_value": 1000,
+      "num_components": 1
+    }
+  ],
+  "parameter_values": {
+    "signature": "auto",
+    "border": 0,
+    "filter": 1,
+    "mask": 1.0,
+    "dirtype": 0,
+    "dirx": 1.0,
+    "diry": 0.0,
+    "normalizedir": 0,
+    "angle": 0.0,
+    "scale": 0.005,
+    "scalebytimeinc": 0,
+    "streak": 0,
+    "usestreakweight": 0,
+    "streakweight": "<hou.Ramp is_color=False num_keys=2 data=((t=0, 0), (t=1, 1))>",
+    "usecfl": 1,
+    "cfl": 1.0,
+    "maxsteps": 100,
+    "streakweight1pos": 0.0,
+    "streakweight1value": 0.0,
+    "streakweight1interp": 1,
+    "streakweight2pos": 1.0,
+    "streakweight2value": 1.0,
+    "streakweight2interp": 1
+  }
+}

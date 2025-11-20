@@ -1,0 +1,87 @@
+{
+  "node_name": "julia1",
+  "node_type": "julia",
+  "node_path": "/obj/copnet_dump/julia1",
+  "parameter_templates": [
+    {
+      "name": "signature",
+      "label": "Signature",
+      "type": "String",
+      "help": "",
+      "default_value": [
+        "f1"
+      ],
+      "string_type": "Regular"
+    },
+    {
+      "name": "scale",
+      "label": "Scale",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.626,
+        0.626
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "real",
+      "label": "Real Coefficient",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.25
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "imag",
+      "label": "Imaginary Coefficient",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        -0.55
+      ],
+      "min_value": -1.0,
+      "max_value": 1.0,
+      "num_components": 1
+    },
+    {
+      "name": "escaperad",
+      "label": "Escape Radius",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        2.0
+      ],
+      "min_value": 0.0,
+      "max_value": 10.0,
+      "num_components": 1
+    },
+    {
+      "name": "maxiter",
+      "label": "Maximum Iterations",
+      "type": "Int",
+      "help": "",
+      "default_value": [
+        50
+      ],
+      "min_value": 1,
+      "max_value": 100,
+      "num_components": 1
+    }
+  ],
+  "parameter_values": {
+    "signature": "f1",
+    "scalex": 0.626,
+    "scaley": 0.626,
+    "real": 0.25,
+    "imag": -0.55,
+    "escaperad": 2.0,
+    "maxiter": 50
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "node_name": "blur1",
+  "node_type": "blur",
+  "node_path": "/obj/copnet_dump/blur1",
+  "parameter_templates": [
+    {
+      "name": "filter",
+      "label": "Filter",
+      "type": "Menu",
+      "help": "",
+      "default_value": 1,
+      "menu_items": [
+        "box",
+        "gaussian"
+      ],
+      "menu_labels": [
+        "Box",
+        "Gaussian"
+      ]
+    },
+    {
+      "name": "readoutside",
+      "label": "Read Pixels outside Image",
+      "type": "Toggle",
+      "help": "",
+      "default_value": true
+    },
+    {
+      "name": "units",
+      "label": "Units",
+      "type": "Menu",
+      "help": "",
+      "default_value": 0,
+      "menu_items": [
+        "image",
+        "pixels"
+      ],
+      "menu_labels": [
+        "Image",
+        "Pixels"
+      ]
+    },
+    {
+      "name": "size_pixel",
+      "label": "Size",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        3.0
+      ],
+      "min_value": 0.0,
+      "max_value": 25.0,
+      "num_components": 1
+    },
+    {
+      "name": "size",
+      "label": "Size",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        0.005
+      ],
+      "min_value": 0.0,
+      "max_value": 0.05,
+      "num_components": 1
+    },
+    {
+      "name": "scales",
+      "label": "Scale Size",
+      "type": "Float",
+      "help": "",
+      "default_value": [
+        1.0,
+        1.0
+      ],
+      "min_value": 0.0,
+      "max_value": 1.0,
+      "num_components": 2
+    },
+    {
+      "name": "scalebytimeinc",
+      "label": "Scale by Timestep",
+      "type": "Toggle",
+      "help": "",
+      "default_value": false
+    }
+  ],
+  "parameter_values": {
+    "filter": 1,
+    "readoutside": 1,
+    "units": 0,
+    "size_pixel": 3.0,
+    "size": 0.005,
+    "scalesx": 1.0,
+    "scalesy": 1.0,
+    "scalebytimeinc": 0
+  }
+}
