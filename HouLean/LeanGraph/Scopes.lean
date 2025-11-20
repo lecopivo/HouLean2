@@ -269,6 +269,10 @@ def extractScopeSubgraph (graph : LeanGraph)
 
   let mut graphs : HashMap Scope (HashMap String (HashSet String)) := {}
 
+  for node in graph.nodes do
+    let some scope := nodeScopes[node.name]? | throwError "bug in {decl_name%}, invalid node {node.name}"
+    graphs := graphs.insert scope (HashMap.emptyWithCapacity 0 |>.insert node.name {})
+
   for wire in graph.connections do
     let mut srcNode := wire.outputNodeName
     let mut trgNode := wire.inputNodeName

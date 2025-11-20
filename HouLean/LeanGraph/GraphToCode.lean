@@ -152,6 +152,7 @@ def buildArgs (node : Node) : CompileM (Array Term) := do
   return argsStx
 
 
+
 partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
   let ctx ← buildContext graph
 
@@ -159,10 +160,10 @@ partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
   let idom := subgraph.computePostDominators
 
   let scopeHierachy ← buildScopeHierarchy graph idom ctx
-  -- logInfo m!"{scopeHierachy}"
+  logInfo m!"{scopeHierachy}"
 
   let scopes ← assignNodeScopes graph ctx scopeHierachy
-  -- logInfo m!"{scopes.toList}"
+  logInfo m!"{scopes.toList}"
 
   let scopeSubgraphs ← extractScopeSubgraph graph scopes scopeHierachy
 
@@ -173,125 +174,76 @@ partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
     let some order := DiGraph.kahnSort ⟨graph⟩
       | throwError m!"Failed to sort subgraph of {scope}"
     subgraphOrders := subgraphOrders.insert scope order
+    logInfo m!"order of scope {scope}: {order}"
 
   let some groundOrder := subgraphOrders[Scope.ground]?
     | throwError "Bug in {decl_name%}, no order for ground scope"
 
-  let rest ← mkFreshExprMVar none
 
-  go 0 Scope.ground rest groundOrder subgraphOrders
-
-  return ← instantiateMVars rest
+  go 0 Scope.ground groundOrder subgraphOrders
 
 where
   nodeValue (node : Node) : CompileM Expr :=
     return mkStrLit node.name
 
-  go (depth : Nat) (scope : Scope) (rest : Expr) (order : List String) (orders : HashMap Scope (List String)) : CompileM Unit := do
+  go (depth : Nat) (scope : Scope) (order : List String) (orders : HashMap Scope (List String)) : CompileM Expr := do
     if depth > 10 then
       throwError "Too deep scope, likely there is a bug in {decl_name%}"
 
-    let indent := String.mk (List.replicate (2*depth) ' ')
-
-    let orgRest := rest
-
-    let mut rest := rest
-
-    let mut funVars : Array Expr := #[]
-    let mut letVars : Array Expr := #[]
-
-    for nodeName in order do
-
-      logInfo nodeName
+    match order with
+    | [] => throwError "unexpected end of scope {scope}"
+    | nodeName :: ns =>
 
       let node := (← read).nodeMap[nodeName]?.get!
       let args ← buildArgs node
 
       let fn : Ident := mkIdent node.type.leanConstant
-      let mut value ← rest.mvarId!.withContext do
-        if node.type.leanConstant != ``HouLean.output then
-          elabTerm (← `($fn $args*)) none
-        else
-          pure (.const ``Unit.unit [])
-      let mut type ← rest.mvarId!.withContext do inferType value
-
-      -- logInfo m!"{indent}{node.type.leanConstant} {args}"
-      orgRest.mvarId!.withContext do (logInfo (← instantiateMVars orgRest))
+      let mut value : Expr := default
+      if node.type.leanConstant != ``HouLean.output then
+        value ← elabTerm (← `($fn $args*)) none
+      else
+        value := (Expr.const ``Unit.unit [])
+      let mut type ← inferType value
 
       -- input node --
       -----------------
       -- ?rest ← fun nodeName =>
       --         ?rest2
       if node.type.leanConstant == ``HouLean.input then
-
-        let (rest',var) ← rest.mvarId!.withContext do
-          withLocalDeclD nodeName.toName type fun var => do
-            let rest2 ← mkFreshExprMVar none
-            let restVal ← mkLambdaFVars #[var] rest2 (usedLetOnly:=false)
-            rest.mvarId!.assign restVal
-            return (rest2,var)
-
-        rest := rest'
-        funVars := funVars.push var
-
-        continue
-
+         return ← withLocalDeclD nodeName.toName type fun var => do
+           let rest ← go depth scope ns orders
+           mkLambdaFVars #[var] rest
 
       -- output node --
       -----------------
       if node.type.leanConstant == ``HouLean.output then
-
-        if scope == .node nodeName then
+        if scope == Scope.node nodeName then
           -- end of scope, we should return the input to the
           let arg := args[0]!
-          let val ← rest.mvarId!.withContext do
-            let r ← elabTerm arg none
-            mkLambdaFVars funVars (← mkLetFVars letVars r)
-          rest.mvarId!.withContext do
-            logInfo m!"return value of {nodeName}: {val}"
-          rest.mvarId!.assign val
-          continue
+          return ← elabTerm arg none
         else
           -- we found an output node of deeper scope
           -- so create a new meta variable for the subscope
           -- ?rest ← let nodeName := ?restSubscope
           --         ?rest2
-          let (value',type') ← rest.mvarId!.withContext do
-            let restSubscope ← mkFreshExprMVar none
+          -- create value for subsocpe
+          let some subscope := orders[Scope.node nodeName]?
+            | throwError "Can't find order for subscope {Scope.node nodeName}"
+          value ← go (depth+1) (.node nodeName) subscope orders
+          type ← inferType value
 
-            -- create value for subsocpe
-            let some subscope := orders[Scope.node nodeName]?
-              | throwError "Can't find order for subscope {Scope.node nodeName}"
-            go (depth+1) (.node nodeName) restSubscope subscope orders
+      if scope == Scope.ground && ns == [] then
+        return value
 
-            -- `value` and `type` do not hold valid values
-            let value' ← instantiateMVars restSubscope
-            let type' ← inferType value'
-            return (value', type')
-
-          -- update value and type with proper values, they were invalid originally
-          value := value'
-          type := type'
-
-
-      rest.mvarId!.withContext do logInfo m!"binding value: let {nodeName} := {value}"
       -- other nodes --
       -----------------
       -- ?rest ← let nodeName := nodeValue
       --         ?rest2
-      let (rest',var) ← rest.mvarId!.withContext do
-        withLetDecl nodeName.toName type value fun var => do
-          let rest2 ← mkFreshExprMVar none
-          let restVal ← mkLetFVars #[var] rest2 (usedLetOnly:=false)
-          rest.mvarId!.assign restVal
-          return (rest2,var)
-      rest := rest'
-      letVars := letVars.push var
+      return ← withLetDecl nodeName.toName type value fun var => do
+        let rest ← go depth scope ns orders
+        mkLetFVars #[var] rest
 
-    if scope == Scope.ground then
 
-      rest.mvarId!.withContext do
-        let out : Ident := mkIdent `output
-        let var ← elabTermAndSynthesize out none
-        let result ← mkLetFVars #[var] var
-        logInfo m!"final result:\n{← instantiateMVars result}"
+-- #check Functor.map (fun x : Float => x) (pure (f:=CoreM) 0.1)
+
+-- #check bind (pure (f:=Id) 0.1) (fun x : Float => pure x)

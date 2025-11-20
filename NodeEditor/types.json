@@ -404,13 +404,6 @@
    "name": "Vector3_toGeodetic",
    "leanConstant": "HouLean.Vector3.toGeodetic",
    "inputs": [{"builtin": {"type": "HouLean.Vector3", "name": "v"}}]},
-  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
-   "name": "Array_get",
-   "leanConstant": "Array.get",
-   "inputs":
-   [{"builtin": {"type": "Array ?_", "name": "xs"}},
-    {"builtin": {"type": "Nat", "name": "i"}},
-    {"builtin": {"type": "LT.lt ?_ (Array.size ?_)", "name": "h"}}]},
   {"outputs": [{"builtin": {"type": "HouLean.Vector3", "name": "vector3"}}],
    "name": "Vector3_round",
    "leanConstant": "HouLean.Vector3.round",
@@ -1157,7 +1150,7 @@
     {"builtin": {"type": "HouLean.Apex.Geometry", "name": "geo0"}},
     {"builtin": {"type": "HouLean.Apex.Geometry", "name": "geo1"}}]},
   {"outputs":
-   [{"builtin": {"type": "HouLean.Apex.VisualizeM Unit", "name": "readert"}}],
+   [{"builtin": {"type": "HouLean.Apex.VisualizeM ?_", "name": "readert"}}],
    "name": "visualize",
    "leanConstant": "HouLean.Apex.visualize",
    "inputs":
@@ -1357,12 +1350,6 @@
       "name": "params"}},
     {"builtin": {"type": "HouLean.Apex.Geometry", "name": "source"}},
     {"builtin": {"type": "HouLean.Apex.Geometry", "name": "target"}}]},
-  {"outputs": [{"builtin": {"type": "Option ?_", "name": "option"}}],
-   "name": "Array_get?",
-   "leanConstant": "Array.get?",
-   "inputs":
-   [{"builtin": {"type": "Array ?_", "name": "xs"}},
-    {"builtin": {"type": "Nat", "name": "i"}}]},
   {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
    "name": "Arith_add",
    "leanConstant": "HAdd.hAdd",
@@ -2193,12 +2180,6 @@
    "name": "Math_log",
    "leanConstant": "HouLean.Math.Log.log",
    "inputs": [{"builtin": {"type": "?_", "name": "x"}}]},
-  {"outputs": [{"builtin": {"type": "?_", "name": "output"}}],
-   "name": "Array_get!",
-   "leanConstant": "Array.get!",
-   "inputs":
-   [{"builtin": {"type": "Array ?_", "name": "xs"}},
-    {"builtin": {"type": "Nat", "name": "i"}}]},
   {"outputs":
    [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "geometry"}}],
    "name": "Geometry_fromDisk",
