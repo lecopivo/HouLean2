@@ -14,4 +14,6 @@ run_elab
 
   let ctx ← buildContext graph
 
-  let _ ← graphToCode graph {nodeMap := ctx.nodeMap, inputConnections := ctx.inputConnections} {}
+  let (e,_) ← graphToCode graph {nodeMap := ctx.nodeMap, inputConnections := ctx.inputConnections} {}
+
+  logInfo e

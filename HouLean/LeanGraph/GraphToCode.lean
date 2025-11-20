@@ -193,16 +193,30 @@ where
 
     let indent := String.mk (List.replicate (2*depth) ' ')
 
+    let orgRest := rest
+
     let mut rest := rest
+
+    let mut funVars : Array Expr := #[]
+    let mut letVars : Array Expr := #[]
 
     for nodeName in order do
 
+      logInfo nodeName
+
       let node := (← read).nodeMap[nodeName]?.get!
       let args ← buildArgs node
-      logInfo m!"{indent}{node.type.leanConstant} {args}"
-      let mut value ← rest.mvarId!.withContext do nodeValue node
+
+      let fn : Ident := mkIdent node.type.leanConstant
+      let mut value ← rest.mvarId!.withContext do
+        if node.type.leanConstant != ``HouLean.output then
+          elabTerm (← `($fn $args*)) none
+        else
+          pure (.const ``Unit.unit [])
       let mut type ← rest.mvarId!.withContext do inferType value
 
+      -- logInfo m!"{indent}{node.type.leanConstant} {args}"
+      orgRest.mvarId!.withContext do (logInfo (← instantiateMVars orgRest))
 
       -- input node --
       -----------------
@@ -210,12 +224,15 @@ where
       --         ?rest2
       if node.type.leanConstant == ``HouLean.input then
 
-        rest ← rest.mvarId!.withContext do
+        let (rest',var) ← rest.mvarId!.withContext do
           withLocalDeclD nodeName.toName type fun var => do
             let rest2 ← mkFreshExprMVar none
             let restVal ← mkLambdaFVars #[var] rest2 (usedLetOnly:=false)
             rest.mvarId!.assign restVal
-            return rest2
+            return (rest2,var)
+
+        rest := rest'
+        funVars := funVars.push var
 
         continue
 
@@ -226,7 +243,13 @@ where
 
         if scope == .node nodeName then
           -- end of scope, we should return the input to the
-          rest.mvarId!.assign value
+          let arg := args[0]!
+          let val ← rest.mvarId!.withContext do
+            let r ← elabTerm arg none
+            mkLambdaFVars funVars (← mkLetFVars letVars r)
+          rest.mvarId!.withContext do
+            logInfo m!"return value of {nodeName}: {val}"
+          rest.mvarId!.assign val
           continue
         else
           -- we found an output node of deeper scope
@@ -250,13 +273,25 @@ where
           value := value'
           type := type'
 
+
+      rest.mvarId!.withContext do logInfo m!"binding value: let {nodeName} := {value}"
       -- other nodes --
       -----------------
       -- ?rest ← let nodeName := nodeValue
       --         ?rest2
-      rest ← rest.mvarId!.withContext do
+      let (rest',var) ← rest.mvarId!.withContext do
         withLetDecl nodeName.toName type value fun var => do
           let rest2 ← mkFreshExprMVar none
-          let restVal ← mkLambdaFVars #[var] rest2 (usedLetOnly:=false)
+          let restVal ← mkLetFVars #[var] rest2 (usedLetOnly:=false)
           rest.mvarId!.assign restVal
-          return rest2
+          return (rest2,var)
+      rest := rest'
+      letVars := letVars.push var
+
+    if scope == Scope.ground then
+
+      rest.mvarId!.withContext do
+        let out : Ident := mkIdent `output
+        let var ← elabTermAndSynthesize out none
+        let result ← mkLetFVars #[var] var
+        logInfo m!"final result:\n{← instantiateMVars result}"
