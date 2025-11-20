@@ -381,4 +381,8 @@ def update (d : Dict) {n : Nat} (others : VariadicArg Dict n) (addMissing : Bool
 def debugDataIds (d : Dict) : Dict :=
   dict_DebugDataIds d
 
+
+opaque merge (d d' : Dict) : Dict
+
+
 end Dict
