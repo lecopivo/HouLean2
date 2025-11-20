@@ -11,9 +11,19 @@ section Tests
 #guard_msgs in
 #check struct { x : Float, y : Float }
 
+/-- info: { x := 0.1, y := 0.2 } : struct {x : Float, y : Float} -/
+#guard_msgs in
+#check struct { x := 0.1, y := 0.2 }
+
+
 /-- info: struct {x : Float, y : Float, z : Float} : Type -/
 #guard_msgs in
 #check struct { x : Float, y : Float, z : Float }
+
+/-- info: { x := 0.1, y := 0.2, z := 0.3 } : struct {x : Float, y : Float, z : Float} -/
+#guard_msgs in
+#check struct { x := 0.1, y := 0.2, z := 0.3 }
+
 
 variable (v : struct { x : Float, y : Float })
 variable (u : struct { x : Float, y : Float, z : Float })
@@ -41,6 +51,17 @@ variable (u : struct { x : Float, y : Float, z : Float })
 -- set_option pp.notation false
 -- Nested structs
 abbrev Particle := struct { pos : struct { x : Float, y : Float }, vel : struct { x : Float, y : Float } }
+
+-- todo: fix this!
+/--
+info: { pos := { x := 0.1, y := 0.2 },
+  vel :=
+    { x := 1.0,
+      y := 2.0 } } : struct {pos : AnonStruct.Tests.Meta.AnonymousStruct0, vel : AnonStruct.Tests.Meta.AnonymousStruct0}
+-/
+#guard_msgs in
+#check struct { pos := struct { x := 0.1, y := 0.2 }, vel := struct { x := 1.0, y := 2.0 } }
+
 
 variable (s : Particle)
 
@@ -125,7 +146,7 @@ variable (a : A) (val : Float)
 
 /--
 info: let __src := foo 0.1;
-{ x := __src.x, y := __src.y, val := val } : AnonStruct.Tests.Meta.AnonymousStruct5
+{ x := __src.x, y := __src.y, val := val } : AnonStruct.Tests.Meta.AnonymousStruct4
 -/
 #guard_msgs in
 #check struct (foo 0.1) push% val := val
@@ -137,3 +158,44 @@ info: let __src := foo 0.1;
 /-- info: { x := 0.100000 } -/
 #guard_msgs in
 #eval struct (default : struct {}) push% x := 0.1
+
+
+structure Float3 where
+  x : Float
+  y : Float
+  z : Float
+
+/--
+info: let s := { x := 0.1, y := 0.2 };
+{ x := (fun x => 10 * x) s.x, y := s.y } : struct {x : Float, y : Float}
+-/
+#guard_msgs in
+#check struct (struct { x := 0.1, y := 0.2 }) modify% x := 10*x
+
+/--
+info: let s := { x := 0.1, y := 0.2 };
+{ x := (fun x => 10 * x) s.x, y := s.y } : struct {x : Float, y : Float}
+-/
+#guard_msgs in
+#check struct (struct { x := 0.1, y := 0.2 }) modify% x := 10*x
+
+
+/-- info: { x := 100.000000, y := 2.000000, z := 3.000000 } -/
+#guard_msgs in
+#eval struct Float3.mk 1 2 3 modify% x := 100 * x
+
+
+/--
+info: let s := { x := 1, y := 2, z := 3 };
+fun modify => { x := modify s.x, y := s.y, z := s.z } : (Float → Float) → Float3
+-/
+#guard_msgs in
+#check struct Float3.mk 1 2 3 modify_fun% x
+
+/--
+info: (let s := { x := 0.1, y := 0.2 };
+  fun modify => { x := modify s.x, y := s.y })
+  fun val => 10 * val : struct {x : Float, y : Float}
+-/
+#guard_msgs in
+#check struct (struct { x := 0.1, y := 0.2 }) modify_fun% x (fun val => 10*val)

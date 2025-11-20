@@ -1,6 +1,7 @@
 import Lean
 import Std.Data.HashMap
 import HouLean.Meta.ProdLike
+import HouLean.Meta.Structure
 
 open Lean Elab Command Term Meta Parser
 
@@ -40,11 +41,11 @@ deriving Inhabited
 -- Environment extension to track anonymous structs
 initialize anonStructExt : SimplePersistentEnvExtension AnonStructEntry Extension ←
   registerSimplePersistentEnvExtension {
-    addImportedFn := fun as => 
-      as.foldl (fun acc a => a.foldl (fun m e => 
+    addImportedFn := fun as =>
+      as.foldl (fun acc a => a.foldl (fun m e =>
         {m with sigToName := m.sigToName.insert e.signature e.structName
                 nameToSig := m.nameToSig.insert e.structName e.signature}) acc) default
-    addEntryFn := fun m e => 
+    addEntryFn := fun m e =>
         {m with sigToName := m.sigToName.insert e.signature e.structName
                 nameToSig := m.nameToSig.insert e.structName e.signature}
   }
@@ -54,23 +55,23 @@ open PrettyPrinter in
 -- Get or create a structure for the given signature
 def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
   -- let normSig := sig.normalize
-  
+
   -- Check if we already have this structure
   let env ← getEnv
   let structMap := (anonStructExt.getState env).sigToName
-  
+
   if let some existingName := structMap[sig]? then
     return existingName
-  
+
   -- Generate a fresh name for the structure
   let idx := structMap.size
   let modName ← getMainModule
   let freshName := Name.append `AnonStruct modName |>.appendAfter (toString idx)
-  
-  -- this does not work as I would be combining names with different macro scopes 
-  -- during APEX graph comiplations, but that is a bug in the compilation 
+
+  -- this does not work as I would be combining names with different macro scopes
+  -- during APEX graph comiplations, but that is a bug in the compilation
   -- let freshName ← liftTermElabM <| mkFreshUserName `AnonStruct
-  
+
   -- Build field declarations for the structure
   let mut paramDecls : Array (TSyntax ``Term.bracketedBinder) := #[]
   let mut fieldDecls : Array (TSyntax ``Command.structExplicitBinder) := #[]
@@ -84,7 +85,7 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
         let fieldName := mkIdent fi.name
         let fieldType := fi.type.beta params
         trace[HouLean.anon_struct] m!"field {fieldName} : {fieldType}"
-        let fieldTypeStx ← 
+        let fieldTypeStx ←
             withOptions (fun opt => opt.setBool `pp.notation false) do
                   delab (fi.type.beta params)
 
@@ -97,19 +98,19 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
         let name : Name ← param.fvarId!.getUserName
         let id := mkIdent name
         let type ← inferType param
-        let typeStx ← 
+        let typeStx ←
             withOptions (fun opt => opt.setBool `pp.notation false) do
                   delab type
         `(bracketedBinder| ($id:ident : $typeStx)))
 
-  
+
   -- Create and elaborate the structure command
   let id := mkIdent freshName
   let structCmd ← `(command| structure $id:ident $paramDecls* where
     $[$fieldDecls]*)
 
   trace[HouLean.anon_struct] m!"structure command:\n{structCmd}"
-  
+
   elabCommand structCmd
 
   let coreMsgs ← liftTermElabM <| Core.getMessageLog
@@ -121,11 +122,11 @@ def getOrCreateStruct (sig : StructSignature) : CommandElabM Name := do
   -- elabCommand (← `(command| deriving instance FromJson for $id))
   liftTermElabM <| Core.setMessageLog coreMsgs
   modify (fun s => {s with messages := cmdElabMsgs})
-  
+
   -- Register in our extension
-  modifyEnv fun env => 
+  modifyEnv fun env =>
     anonStructExt.addEntry env { signature := sig, structName := freshName }
-  
+
   return freshName
 
 
@@ -136,14 +137,11 @@ def _root_.HouLean.Meta.isAnonStruct? (type : Expr) : MetaM (Option (StructSigna
   let some sig := structMap.find? fn
     | return none
   return (sig, args)
-  
+
 
 
 /-- Anonymous structure. -/
 syntax (name := anonStructType) "struct " "{" (ident " : " term),* "}" : term
-
--- todo: provide elaborator or macro for this!
-syntax (name := anonStructVal) "struct " "{" (ident " := " term),* "}" : term
 
 
 -- Macro to elaborate anonymous struct types
@@ -167,8 +165,8 @@ elab_rules : term
       throwError s!"The type of structure field type can't depend on a parameter!"
 
   let parametrizedTypes ← liftM <|types.mapM (mkLambdaFVars params)
-  
-  let fields := names.zip parametrizedTypes |>.map fun (n, t) => 
+
+  let fields := names.zip parametrizedTypes |>.map fun (n, t) =>
     ({ name := n.getId, type := t } : FieldInfo)
   let sig : StructSignature := {
       paramNum := params.size
@@ -203,6 +201,19 @@ elab_rules : term
   return t
 
 
+
+syntax (name := anonStructVal) "struct " "{" (ident " := " term),* "}" : term
+
+open Lean Elab Meta in
+elab_rules (kind := anonStructVal) : term
+| `(anonStructVal| struct { $[$field := $val:term],* }) => do
+  let vals ← val.mapM (elabTermAndSynthesize ·.raw none)
+  let types ← liftM <| vals.mapM inferType
+  let typesStx ← liftM <| withOptions (fun opt => opt.setBool `pp.notation false) do
+    types.mapM PrettyPrinter.delab
+  elabTerm (← `( { $[$field:ident := $val:term],* : struct { $[$field:ident : $typesStx],* }} )) none
+
+
 -- struct_push%: Add a field to a struct
 -- Usage: struct_push% fieldName structVal newFieldVal
 elab "struct" s:term "push%" field:ident ":=" val:term  : term => do
@@ -214,21 +225,21 @@ elab "struct" s:term "push%" field:ident ":=" val:term  : term => do
 
   if valType.hasFVar then
     throwError "New field's type can't depend on a parameter yet!"
-  
+
   -- Get fields from existing struct type
-  let env ← getEnv   
+  let env ← getEnv
   let structMap := (anonStructExt.getState env).nameToSig
-  
+
   let .const oldStructName _ := sType.getAppFn'
     | throwError "Expected anonymous struct type, got {sType}"
-  
+
   let some oldSig := structMap.find? oldStructName
     | throwError "Struct not found in anonymous struct registry"
   let oldFields := oldSig.fields
 
   if oldSig.paramNum ≠ 0 then
     throwError "Pushing new elements to parametrized structures is not yet supported!"
-  
+
   -- Check if field already exists
   if oldFields.any (·.name == field.getId) then
     throwError "Field {field.getId} already exists in struct"
@@ -254,14 +265,14 @@ elab "struct" s:term "pop%" field:ident : term => do
   -- Elaborate the struct value
   let sExpr ← elabTermAndSynthesize s none >>= instantiateMVars
   let sType ← inferType sExpr >>= instantiateMVars
-  
+
   -- Get fields from existing struct type
   let env ← getEnv
   let structMap := (anonStructExt.getState env).nameToSig
-  
+
   let .const oldStructName _ := sType.getAppFn'
     | throwError "Expected anonymous struct type, got {sType}"
-  
+
   let some oldSig := structMap.find? oldStructName
     | throwError "Struct not found in anonymous struct registry"
   let oldFields := oldSig.fields
@@ -269,17 +280,17 @@ elab "struct" s:term "pop%" field:ident : term => do
   if oldSig.paramNum ≠ 0 then
     throwError "Pop elements from parametrized structures is not yet supported!"
 
-  
+
   -- Remove the specified field
   let newFields := oldFields.filter (·.name != field.getId)
   let newSig := {
     paramNum := 0
     fields := newFields
   }
-  
+
   if newFields.size == oldFields.size then
     throwError "Field {field.getId} not found in struct"
-  
+
   -- Create new struct type without that field
   let newStructName ← liftCommandElabM (getOrCreateStruct newSig)
   let newStructId := mkIdent newStructName
@@ -289,5 +300,3 @@ elab "struct" s:term "pop%" field:ident : term => do
 
 
 end AnonymousStruct
-
-
