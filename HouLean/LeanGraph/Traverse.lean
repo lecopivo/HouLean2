@@ -130,7 +130,6 @@ def buildContext (graph : LeanGraph) : CoreM Context := do
   }
 
 
-#exit
 /-- Update context about output node's scopes i.e. which input nodes belong to which output  -/
 def analyzeInputOutputFlow (graph : LeanGraph) (ctx : Context) : TermElabM Context := do
   let subgraph ← extractInputOutputSubgraph graph ctx

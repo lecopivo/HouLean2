@@ -118,7 +118,7 @@ if __name__ == '__main__':
     print()
     
     # Save to individual JSON files
-    output_dir = hou.text.expandString('$HIP')
+    output_dir = "Parameters" # hou.text.expandString('$HIP')
     
     for node_type, data in results.items():
         if 'error' not in data:
