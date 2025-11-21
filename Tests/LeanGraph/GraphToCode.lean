@@ -1,3 +1,4 @@
+import HouLean
 import HouLean.LeanGraph.GraphToCode
 
 open Lean HouLean LeanGraph Meta Traverse Std
@@ -5,11 +6,11 @@ open Lean HouLean LeanGraph Meta Traverse Std
 
 set_option trace.HouLean.LeanGraph.typecheck true
 
-
+variable (input : HouLean.Apex.Geometry)
 
 -- #guard_msgs in
 run_elab
-  let s ← IO.FS.withFile "Tests/LeanGraph/graph_to_code_test3.json" .read fun file => do
+  let s ← IO.FS.withFile "Tests/LeanGraph/graph_to_code_test4.json" .read fun file => do
     file.readToEnd
 
   let .ok json := Json.parse s

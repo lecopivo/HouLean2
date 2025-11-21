@@ -16,14 +16,12 @@ structure Context where
   /-- Connections indexed by input node name -/
   inputConnections : HashMap String (Array Connection)
 
-
 structure State where
   -- nodeToFVar : HashMap String FVarId
 
 end GraphToCode
 
 abbrev CompileM := ReaderT GraphToCode.Context <| StateT GraphToCode.State <| TermElabM
-
 
 /-- Recursively exract subports from a port type -/
 partial def getSubports (port : PortType) : CoreM (Array PortType) := do
@@ -99,7 +97,7 @@ partial def buildArgAux (drop : Nat) (port : PortType) (wires : Array Connection
 def buildArg (port : PortType) (wires : Array Connection) : CompileM Term := do
   let t? ← buildArgAux 1 port wires
   let typeId := mkIdent port.typeName.toName
-  let default : Term ← `((default : $typeId))
+  let default : Term ← `((default))
   return t?.getD default
 
 
@@ -116,7 +114,6 @@ def buildArgs (node : Node) : CompileM (Array Term) := do
   let fInfo ← getFunInfo fn
   let args := (fInfo.paramInfo.zip allArgs).filterMap
     (fun (info, arg) => if info.isExplicit then some arg else none)
-
 
   let mut argsStx : Array Term := #[]
 
@@ -151,6 +148,38 @@ def buildArgs (node : Node) : CompileM (Array Term) := do
 
   return argsStx
 
+/-- Is `type` a type in a monad? Return the monad and the type.
+
+`isMonadApp? q(StateM Float (Array Int))` returns `(q(StateM Float), q(Array Int))`.
+ -/
+def isMonadApp? (type : Expr) : MetaM (Option (Expr×Expr)) := do
+  let Expr.app f x := type | return none
+  let monad ← mkAppM ``Monad #[f]
+  if (← synthInstance? monad).isSome then
+    return (f,x)
+  return none
+
+
+/-- Return the join of two monads.
+
+If `m` is liftable to `n` then the join is `n`.
+
+If `n` is liftable to `m` then the join is `m`.
+
+Error is thrown if neither apply.-/
+def monadJoin (m : Expr) (n? : Option Expr) : MetaM Expr :=
+  match n? with
+  | none => return m
+  | some n => do
+    let liftMtoN ← mkAppM ``MonadLiftT #[m, n]
+    if (← synthInstance? liftMtoN).isSome then
+      return n
+
+    let liftNtoM ← mkAppM ``MonadLiftT #[n, m]
+    if (← synthInstance? liftNtoM).isSome then
+      return m
+
+    throwError m!"Trying to build code for two incompatible monads {m} and {n}!"
 
 
 partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
@@ -180,19 +209,24 @@ partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
     | throwError "Bug in {decl_name%}, no order for ground scope"
 
 
-  go 0 Scope.ground groundOrder subgraphOrders
+  go 0 Scope.ground groundOrder subgraphOrders none
 
 where
   nodeValue (node : Node) : CompileM Expr :=
     return mkStrLit node.name
 
-  go (depth : Nat) (scope : Scope) (order : List String) (orders : HashMap Scope (List String)) : CompileM Expr := do
+  go (depth : Nat) (scope : Scope) (order : List String) (orders : HashMap Scope (List String)) (monad? : Option Expr) : CompileM Expr := do
     if depth > 10 then
       throwError "Too deep scope, likely there is a bug in {decl_name%}"
 
     match order with
-    | [] => throwError "unexpected end of scope {scope}"
+    | [] => throwError "Unexpected end of scope {scope}"
     | nodeName :: ns =>
+
+      withTraceNode `HouLean.LeanGraph.typecheck (fun r =>
+        match r with
+        | .ok e => return m!"[{exceptEmoji r}] {nodeName}: {e}"
+        | .error e => return m!"[{exceptEmoji r}] {nodeName}: {e.toMessageData}") do
 
       let node := (← read).nodeMap[nodeName]?.get!
       let args ← buildArgs node
@@ -200,7 +234,10 @@ where
       let fn : Ident := mkIdent node.type.leanConstant
       let mut value : Expr := default
       if node.type.leanConstant != ``HouLean.output then
-        value ← elabTerm (← `($fn $args*)) none
+        let stx ← `($fn $args*)
+        trace[HouLean.LeanGraph.typecheck] "Elaborating: {stx}"
+        value ← elabTerm stx none
+        trace[HouLean.LeanGraph.typecheck] "Elaborated: {value}"
       else
         value := (Expr.const ``Unit.unit [])
       let mut type ← inferType value
@@ -211,7 +248,7 @@ where
       --         ?rest2
       if node.type.leanConstant == ``HouLean.input then
          return ← withLocalDeclD nodeName.toName type fun var => do
-           let rest ← go depth scope ns orders
+           let rest ← go depth scope ns orders monad?
            mkLambdaFVars #[var] rest
 
       -- output node --
@@ -220,7 +257,11 @@ where
         if scope == Scope.node nodeName then
           -- end of scope, we should return the input to the
           let arg := args[0]!
-          return ← elabTerm arg none
+          let r ← elabTerm arg none
+          if let some monad := monad? then
+            return ← mkAppOptM ``pure #[monad, none, none, r]
+          else
+            return r
         else
           -- we found an output node of deeper scope
           -- so create a new meta variable for the subscope
@@ -229,9 +270,12 @@ where
           -- create value for subsocpe
           let some subscope := orders[Scope.node nodeName]?
             | throwError "Can't find order for subscope {Scope.node nodeName}"
-          value ← go (depth+1) (.node nodeName) subscope orders
+          value ← go (depth+1) (.node nodeName) subscope orders monad?
           type ← inferType value
 
+      -- finished ground scope, which is the only scope not ending with and output node
+      -- se it needs a special handling
+      -- todo: maybe inject main output node that represents ground scope itself
       if scope == Scope.ground && ns == [] then
         return value
 
@@ -239,11 +283,15 @@ where
       -----------------
       -- ?rest ← let nodeName := nodeValue
       --         ?rest2
-      return ← withLetDecl nodeName.toName type value fun var => do
-        let rest ← go depth scope ns orders
-        mkLetFVars #[var] rest
-
-
--- #check Functor.map (fun x : Float => x) (pure (f:=CoreM) 0.1)
-
--- #check bind (pure (f:=Id) 0.1) (fun x : Float => pure x)
+      if let some (monad, type') ← isMonadApp? type then
+        return ← withLocalDeclD nodeName.toName type' fun var => do
+          let monad' ← monadJoin monad monad?
+          let rest ← go depth scope ns orders monad'
+          let mut value := value
+          if monad' != monad then
+            value ← mkAppOptM ``liftM #[monad, monad', none, none, value]
+          mkAppM ``Bind.bind #[value, ← mkLambdaFVars #[var] rest]
+      else
+        return ← withLetDecl nodeName.toName type value fun var => do
+          let rest ← go depth scope ns orders monad?
+          mkLetFVars #[var] rest
