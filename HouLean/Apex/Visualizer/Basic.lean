@@ -3,6 +3,8 @@ import HouLean.Apex.Sop
 import HouLean.Apex.Geometry
 import HouLean.Meta.AnonymousStruct
 
+open Lean Std
+
 namespace HouLean.Apex
 
 class Visualizer (α : Type) {Options : outParam Type}
@@ -29,7 +31,6 @@ abbrev VisualizeM :=
           ×
           /- visualization geometry -/ Geometry)
 
-
 def visualize {α Options ts ts'} {defaultOpts : Options} [Visualizer α defaultOpts] [ApexTypeFlatten α ts] [ApexTypeFlatten Options ts']
     (x : α) (opts := defaultOpts) :
     VisualizeM α :=
@@ -44,16 +45,26 @@ def withVisualizer (visId : Int) (go : VisualizeM Geometry) : Geometry :=
   let vis := vis.pack |>.setPointAttrib 0 "__visualizer" (1:Int)
   geo.merge vis
 
+abbrev VisualizeM' :=
+  -- this says which node to visualize and which visualizer on that node to use
+  ReaderT (String × Int) <|
+  -- this stores which nodes have visualizer attached to it and how many/index of the highest one
+  StateM (HashMap String Int × Geometry)
 
--- #check RigidScaleTransform
-
--- def Geometry.rotate (geo : Geometry) (orient : Vector4) : Geometry := sorry
--- def Geometry.translate (geo : Geometry) (t : Vector3) : Geometry := sorry
-
--- instance : Visualizer RigidScaleTransform () where
---   visualize trans geo? := Id.run do
---     let box := SOP.box
---     let box' := box.rotate trans.orient
---     let box'' := box'.translate trans.translate
-
---     sorry
+def visualize' {α Options ts ts'} {defaultOpts : Options} [Visualizer α defaultOpts]
+    [ApexTypeFlatten (HashMap String Int) ts']
+    [ApexTypeFlatten α ts] [ApexTypeFlatten Options ts']
+    (nodeName : String) (x : α) (opts := defaultOpts) :
+    VisualizeM' α :=
+  fun (nodeToVisualize, visIdx) (visualizers, visGeo) =>
+    let visualizers := visualizers.alter nodeName
+        (fun count? => some (count?.map (·+1) |>.getD 0))
+    (ctxIte
+      (nodeName == nodeToVisualize && visualizers[nodeName]? == some visIdx)
+      (opts, x, (visualizers, visGeo))
+      (fun (opts, x, (visualizers, visGeo)) =>
+        (opts, x, (visualizers, visGeo.merge (Visualizer.visualize x opts))))
+      (fun (opts, x, (visualizers, visGeo)) =>
+        let visualizers := visualizers.alter nodeName (fun count? => some (count?.map (·+1) |>.getD 0))
+        (opts, x, (visualizers, visGeo))))
+    |>.snd

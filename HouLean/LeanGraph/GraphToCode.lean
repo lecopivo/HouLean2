@@ -1,5 +1,6 @@
 import HouLean.LeanGraph.Scopes
 import HouLean.LeanGraph.Linearization
+import HouLean.LeanGraph.GraphToCodeInit
 
 open Lean Meta Elab Term Std Qq
 
@@ -181,7 +182,6 @@ def monadJoin (m : Expr) (n? : Option Expr) : MetaM Expr :=
 
     throwError m!"Trying to build code for two incompatible monads {m} and {n}!"
 
-
 partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
   let ctx ← buildContext graph
 
@@ -236,7 +236,7 @@ where
       if node.type.leanConstant != ``HouLean.output then
         let stx ← `($fn $args*)
         trace[HouLean.LeanGraph.typecheck] "Elaborating: {stx}"
-        value ← elabTerm stx none
+        value ← withCurrentNode nodeName (elabTerm stx none)
         trace[HouLean.LeanGraph.typecheck] "Elaborated: {value}"
       else
         value := (Expr.const ``Unit.unit [])
