@@ -83,51 +83,51 @@ defun normalized (m : Matrix3) : Matrix3 :=
 defun distance (a b : Matrix3) : Float :=
   (a.sub b).length
 
-defun distance2 (a b : Matrix3) : Float := 
+defun distance2 (a b : Matrix3) : Float :=
   (a.sub b).length2
 
 defun lerp (a b : Matrix3) (t : Float) : Matrix3 :=
   ⟨a.row0.lerp b.row0 t, a.row1.lerp b.row1 t, a.row2.lerp b.row2 t⟩
 
-defun reflect (v n : Matrix3) : Matrix3 := 
+defun reflect (v n : Matrix3) : Matrix3 :=
   let d := v.dot n
   ⟨v.row0.reflect (d * n.row0), v.row1.reflect (d * n.row1), v.row2.reflect (d * n.row2)⟩
 
-defun refract (v n : Matrix3) (eta : Float) : Matrix3 := 
+defun refract (v n : Matrix3) (eta : Float) : Matrix3 :=
   let dt := v.dot n
   let k := 1.0 - eta * eta * (1.0 - dt * dt)
-  if k < 0.0 then ⟨⟨0.0, 0.0, 0.0⟩, ⟨0.0, 0.0, 0.0⟩, ⟨0.0, 0.0, 0.0⟩⟩ 
-  else 
+  if k < 0.0 then ⟨⟨0.0, 0.0, 0.0⟩, ⟨0.0, 0.0, 0.0⟩, ⟨0.0, 0.0, 0.0⟩⟩
+  else
     let s := eta * dt + k.sqrt
     ⟨⟨eta * v.row0.x - s * n.row0.x, eta * v.row0.y - s * n.row0.y, eta * v.row0.z - s * n.row0.z⟩,
      ⟨eta * v.row1.x - s * n.row1.x, eta * v.row1.y - s * n.row1.y, eta * v.row1.z - s * n.row1.z⟩,
      ⟨eta * v.row2.x - s * n.row2.x, eta * v.row2.y - s * n.row2.y, eta * v.row2.z - s * n.row2.z⟩⟩
 
-defun compMul (m n : Matrix3) : Matrix3 := 
+defun compMul (m n : Matrix3) : Matrix3 :=
   ⟨m.row0.compMul n.row0, m.row1.compMul n.row1, m.row2.compMul n.row2⟩
 
-defun compDiv (m n : Matrix3) : Matrix3 := 
+defun compDiv (m n : Matrix3) : Matrix3 :=
   ⟨m.row0.compDiv n.row0, m.row1.compDiv n.row1, m.row2.compDiv n.row2⟩
 
 -- ============================================================================
 -- Comparison operations
 -- ============================================================================
 
-defun beq (a b : Matrix3) : Bool := 
+defun beq (a b : Matrix3) : Bool :=
   a.row0.beq b.row0 && a.row1.beq b.row1 && a.row2.beq b.row2
 
-defun blt (a b : Matrix3) : Bool := 
+defun blt (a b : Matrix3) : Bool :=
   a.row0.blt b.row0 && a.row1.blt b.row1 && a.row2.blt b.row2
 
-defun ble (a b : Matrix3) : Bool := 
+defun ble (a b : Matrix3) : Bool :=
   a.row0.ble b.row0 && a.row1.ble b.row1 && a.row2.ble b.row2
 
 instance : BEq Matrix3 := ⟨beq⟩
 instance : LT Matrix3 := ⟨fun x y => blt x y = true⟩
 instance : LE Matrix3 := ⟨fun x y => ble x y = true⟩
-instance : DecidableLT Matrix3 := by 
+instance : DecidableLT Matrix3 := by
   intros; simp[DecidableLT, DecidableRel, LT.lt]; infer_instance
-instance : DecidableLE Matrix3 := by 
+instance : DecidableLE Matrix3 := by
   intros; simp[DecidableLE, DecidableRel, LE.le]; infer_instance
 
 -- ============================================================================
@@ -143,115 +143,115 @@ defun min (a b : Matrix3) : Matrix3 :=
 defun max (a b : Matrix3) : Matrix3 :=
   ⟨a.row0.max b.row0, a.row1.max b.row1, a.row2.max b.row2⟩
 
-defun sign (m : Matrix3) : Matrix3 := 
+defun sign (m : Matrix3) : Matrix3 :=
   ⟨m.row0.sign, m.row1.sign, m.row2.sign⟩
 
-defun clamp (m lo hi : Matrix3) : Matrix3 := 
+defun clamp (m lo hi : Matrix3) : Matrix3 :=
   ⟨m.row0.clamp lo.row0 hi.row0, m.row1.clamp lo.row1 hi.row1, m.row2.clamp lo.row2 hi.row2⟩
 
-defun floor (m : Matrix3) : Matrix3 := 
+defun floor (m : Matrix3) : Matrix3 :=
   ⟨m.row0.floor, m.row1.floor, m.row2.floor⟩
 
-defun ceil (m : Matrix3) : Matrix3 := 
+defun ceil (m : Matrix3) : Matrix3 :=
   ⟨m.row0.ceil, m.row1.ceil, m.row2.ceil⟩
 
-defun round (m : Matrix3) : Matrix3 := 
+defun round (m : Matrix3) : Matrix3 :=
   ⟨m.row0.round, m.row1.round, m.row2.round⟩
 
-defun trunc (m : Matrix3) : Matrix3 := 
+defun trunc (m : Matrix3) : Matrix3 :=
   ⟨m.row0.trunc, m.row1.trunc, m.row2.trunc⟩
 
-defun fract (m : Matrix3) : Matrix3 := 
+defun fract (m : Matrix3) : Matrix3 :=
   ⟨m.row0.fract, m.row1.fract, m.row2.fract⟩
 
-defun mod (m n : Matrix3) : Matrix3 := 
+defun mod (m n : Matrix3) : Matrix3 :=
   ⟨m.row0.mod n.row0, m.row1.mod n.row1, m.row2.mod n.row2⟩
 
 -- ============================================================================
 -- Trigonometric Functions (elementwise)
 -- ============================================================================
 
-defun sin (m : Matrix3) : Matrix3 := 
+defun sin (m : Matrix3) : Matrix3 :=
   ⟨m.row0.sin, m.row1.sin, m.row2.sin⟩
 
-defun cos (m : Matrix3) : Matrix3 := 
+defun cos (m : Matrix3) : Matrix3 :=
   ⟨m.row0.cos, m.row1.cos, m.row2.cos⟩
 
-defun tan (m : Matrix3) : Matrix3 := 
+defun tan (m : Matrix3) : Matrix3 :=
   ⟨m.row0.tan, m.row1.tan, m.row2.tan⟩
 
-defun asin (m : Matrix3) : Matrix3 := 
+defun asin (m : Matrix3) : Matrix3 :=
   ⟨m.row0.asin, m.row1.asin, m.row2.asin⟩
 
-defun acos (m : Matrix3) : Matrix3 := 
+defun acos (m : Matrix3) : Matrix3 :=
   ⟨m.row0.acos, m.row1.acos, m.row2.acos⟩
 
-defun atan (m : Matrix3) : Matrix3 := 
+defun atan (m : Matrix3) : Matrix3 :=
   ⟨m.row0.atan, m.row1.atan, m.row2.atan⟩
 
-defun atan2 (m n : Matrix3) : Matrix3 := 
+defun atan2 (m n : Matrix3) : Matrix3 :=
   ⟨m.row0.atan2 n.row0, m.row1.atan2 n.row1, m.row2.atan2 n.row2⟩
 
-defun sinh (m : Matrix3) : Matrix3 := 
+defun sinh (m : Matrix3) : Matrix3 :=
   ⟨m.row0.sinh, m.row1.sinh, m.row2.sinh⟩
 
-defun cosh (m : Matrix3) : Matrix3 := 
+defun cosh (m : Matrix3) : Matrix3 :=
   ⟨m.row0.cosh, m.row1.cosh, m.row2.cosh⟩
 
-defun tanh (m : Matrix3) : Matrix3 := 
+defun tanh (m : Matrix3) : Matrix3 :=
   ⟨m.row0.tanh, m.row1.tanh, m.row2.tanh⟩
 
 -- ============================================================================
 -- Exponential and Logarithmic Functions (elementwise)
 -- ============================================================================
 
-defun exp (m : Matrix3) : Matrix3 := 
+defun exp (m : Matrix3) : Matrix3 :=
   ⟨m.row0.exp, m.row1.exp, m.row2.exp⟩
 
-defun exp2 (m : Matrix3) : Matrix3 := 
+defun exp2 (m : Matrix3) : Matrix3 :=
   ⟨m.row0.exp2, m.row1.exp2, m.row2.exp2⟩
 
-defun log (m : Matrix3) : Matrix3 := 
+defun log (m : Matrix3) : Matrix3 :=
   ⟨m.row0.log, m.row1.log, m.row2.log⟩
 
-defun log2 (m : Matrix3) : Matrix3 := 
+defun log2 (m : Matrix3) : Matrix3 :=
   ⟨m.row0.log2, m.row1.log2, m.row2.log2⟩
 
-defun log10 (m : Matrix3) : Matrix3 := 
+defun log10 (m : Matrix3) : Matrix3 :=
   ⟨m.row0.log10, m.row1.log10, m.row2.log10⟩
 
-defun pow (m n : Matrix3) : Matrix3 := 
+defun pow (m n : Matrix3) : Matrix3 :=
   ⟨m.row0.pow n.row0, m.row1.pow n.row1, m.row2.pow n.row2⟩
 
-defun sqrt (m : Matrix3) : Matrix3 := 
+defun sqrt (m : Matrix3) : Matrix3 :=
   ⟨m.row0.sqrt, m.row1.sqrt, m.row2.sqrt⟩
 
-defun invsqrt (m : Matrix3) : Matrix3 := 
+defun invsqrt (m : Matrix3) : Matrix3 :=
   ⟨m.row0.invsqrt, m.row1.invsqrt, m.row2.invsqrt⟩
 
 -- ============================================================================
 -- Interpolation and Smoothing (elementwise)
 -- ============================================================================
 
-defun smoothstep (edge0 edge1 m : Matrix3) : Matrix3 := 
+defun smoothstep (edge0 edge1 m : Matrix3) : Matrix3 :=
   ⟨edge0.row0.smoothstep edge1.row0 m.row0,
    edge0.row1.smoothstep edge1.row1 m.row1,
    edge0.row2.smoothstep edge1.row2 m.row2⟩
 
-defun step (edge m : Matrix3) : Matrix3 := 
+defun step (edge m : Matrix3) : Matrix3 :=
   ⟨edge.row0.step m.row0, edge.row1.step m.row1, edge.row2.step m.row2⟩
 
-defun hermite (p0 p1 t0 t1 : Matrix3) (t : Float) : Matrix3 := 
+defun hermite (p0 p1 t0 t1 : Matrix3) (t : Float) : Matrix3 :=
   ⟨p0.row0.hermite p1.row0 t0.row0 t1.row0 t,
    p0.row1.hermite p1.row1 t0.row1 t1.row1 t,
    p0.row2.hermite p1.row2 t0.row2 t1.row2 t⟩
 
-defun catmullRom (p0 p1 p2 p3 : Matrix3) (t : Float) : Matrix3 := 
+defun catmullRom (p0 p1 p2 p3 : Matrix3) (t : Float) : Matrix3 :=
   ⟨p0.row0.catmullRom p1.row0 p2.row0 p3.row0 t,
    p0.row1.catmullRom p1.row1 p2.row1 p3.row1 t,
    p0.row2.catmullRom p1.row2 p2.row2 p3.row2 t⟩
 
-defun slerp (m n : Matrix3) (t : Float) : Matrix3 := 
+defun slerp (m n : Matrix3) (t : Float) : Matrix3 :=
   let dot := m.normalized.dot n.normalized
   let dot := dot.clamp (-1.0) 1.0
   let theta := dot.acos
@@ -268,25 +268,59 @@ defun slerp (m n : Matrix3) (t : Float) : Matrix3 :=
 -- Conversion and Construction
 -- ============================================================================
 
-defun radians (m : Matrix3) : Matrix3 := 
+defun radians (m : Matrix3) : Matrix3 :=
   ⟨m.row0.radians, m.row1.radians, m.row2.radians⟩
 
-defun degrees (m : Matrix3) : Matrix3 := 
+defun degrees (m : Matrix3) : Matrix3 :=
   ⟨m.row0.degrees, m.row1.degrees, m.row2.degrees⟩
 
 -- ============================================================================
 -- Geometric Queries
 -- ============================================================================
 
-defun insideBox (point boxMin boxMax : Matrix3) : Bool := 
+defun insideBox (point boxMin boxMax : Matrix3) : Bool :=
   point.row0.insideBox boxMin.row0 boxMax.row0 &&
   point.row1.insideBox boxMin.row1 boxMax.row1 &&
   point.row2.insideBox boxMin.row2 boxMax.row2
 
-defun projectToSegment (point a b : Matrix3) : Matrix3 := 
+defun projectToSegment (point a b : Matrix3) : Matrix3 :=
   let ab := b - a
   let ap := point - a
   let t := ((ap.dot ab) / (ab.dot ab)).clamp 0.0 1.0
   ⟨a.row0 + t * ab.row0, a.row1 + t * ab.row1, a.row2 + t * ab.row2⟩
+
+
+-- ============================================================================
+-- Rotations
+-- ============================================================================
+
+/-- Convert 3x3 rotation matrix to quaternion -/
+def toQuat (m : Matrix3) : Vector4 :=
+  let trace := m.row0.x + m.row1.y + m.row2.z
+
+  if trace > 0.0 then
+    let s := (trace + 1.0).sqrt * 2.0
+    ⟨(m.row2.y - m.row1.z) / s,
+     (m.row0.z - m.row2.x) / s,
+     (m.row1.x - m.row0.y) / s,
+     0.25 * s⟩
+  else if m.row0.x > m.row1.y && m.row0.x > m.row2.z then
+    let s := (1.0 + m.row0.x - m.row1.y - m.row2.z).sqrt * 2.0
+    ⟨0.25 * s,
+     (m.row0.y + m.row1.x) / s,
+     (m.row0.z + m.row2.x) / s,
+     (m.row2.y - m.row1.z) / s⟩
+  else if m.row1.y > m.row2.z then
+    let s := (1.0 + m.row1.y - m.row0.x - m.row2.z).sqrt * 2.0
+    ⟨(m.row0.y + m.row1.x) / s,
+     0.25 * s,
+     (m.row1.z + m.row2.y) / s,
+     (m.row0.z - m.row2.x) / s⟩
+  else
+    let s := (1.0 + m.row2.z - m.row0.x - m.row1.y).sqrt * 2.0
+    ⟨(m.row0.z + m.row2.x) / s,
+     (m.row1.z + m.row2.y) / s,
+     0.25 * s,
+     (m.row1.x - m.row0.y) / s⟩
 
 end HouLean.Matrix3

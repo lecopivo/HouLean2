@@ -1,10 +1,11 @@
 import HouLean.Data.Defs
 import HouLean.Data.Float
 import HouLean.Data.Vector3
+import HouLean.Data.Vector4
 import HouLean.Data.Matrix3
 import HouLean.Data.Matrix3LinearAlgebra
+import HouLean.Data.RigidScaleTransform
+import HouLean.Data.RigidScaleVelocity
+import HouLean.Data.Transform
 import HouLean.Data.Array
 import HouLean.Data.Prod
-
-
-

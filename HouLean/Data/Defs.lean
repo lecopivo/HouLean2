@@ -47,7 +47,7 @@ deriving Repr
 instance : Inhabited Matrix4 := ⟨{}⟩
 
 
-/-- Rigid transformation with scaling. 
+/-- Rigid transformation with scaling.
 -/
 structure RigidScaleTransform where
   translate : Vector3 := ⟨0,0,0⟩
@@ -55,13 +55,22 @@ structure RigidScaleTransform where
   scale : Float := 1
 instance : Inhabited RigidScaleTransform := ⟨{}⟩
 
-/-- Rigid transformation with scaling. 
+
+/-- Rigid body velocity with scaling.
+    Represents instantaneous velocity in SE(3) Lie algebra.
 -/
-structure ScrewTransform where
-  translate : Vector3 := ⟨0,0,0⟩
-  axisAngle : Vector3 := ⟨0,0,0⟩
-  scale : Float := 1
-instance : Inhabited ScrewTransform := ⟨{}⟩
+structure RigidScaleVelocity where
+  velocity : Vector3 := ⟨0,0,0⟩
+  angularVelocity : Vector3 := ⟨0,0,0⟩
+  scaleVelocity : Float := 0
+instance : Inhabited RigidScaleVelocity := ⟨{}⟩
+
+
+inductive TransformOrder where
+  | SRT | STR | RST | RTS | TSR | TRS
+
+inductive RotationOrder where
+  | XYZ | XZY | YXZ | YZX | ZXY | ZYX
 
 /-- Transform parameters for geometric operations -/
 structure Transform where
@@ -78,9 +87,9 @@ structure Transform where
   /-- Pivot rotation applied before main rotation -/
   pivotRotate : Vector3 := ⟨0, 0, 0⟩
   /-- Transform order: 0=SRT, 1=STR, 2=RST, 3=RTS, 4=TSR, 5=TRS -/
-  xOrd : Int := 0
+  xOrd : Int := 0 -- TransformOrder
   /-- Rotation order: 0=XYZ, 1=XZY, 2=YXZ, 3=YZX, 4=ZXY, 5=ZYX -/
-  rOrd : Int := 0
+  rOrd : Int := 0  -- RotationOrder
 instance : Inhabited Transform := ⟨{}⟩
 
 /-- Bounding box specification -/
@@ -101,4 +110,3 @@ structure Plane where
   /-- Distance along normal from origin -/
   dist : Float := 0
 instance : Inhabited Plane := ⟨{}⟩
-

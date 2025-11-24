@@ -8,6 +8,13 @@ namespace HouLean.LeanGraph
 
 initialize registerTraceClass `HouLean.lean_graph
 
+/-- Trace class for LeanGraph elaboration -/
+register_option trace.HouLean.LeanGraph.typecheck : Bool := {
+  defValue := false
+  descr := "trace elaboration of LeanGraph nodes to Lean expressions"
+}
+
+
 inductive PortType where
   | builtin (name type : String)
   | struct  (name type : String) (subports : Array PortType)
@@ -26,7 +33,7 @@ def PortType.name (t : PortType) : String :=
 partial def PortType.toString (t : PortType) (indent : String := "")  : String :=
   match t with
   | .builtin n tn => s!"{indent}{n} : {tn}"
-  | .struct  n tn xs => 
+  | .struct  n tn xs =>
     let xs := xs.map (fun x => x.toString (indent ++ "  ")) |>.joinl (map:=id) (·++"\n"++·)
     s!"{indent}{n} : \{\n{xs}\n{indent} : {tn}}"
 
@@ -39,7 +46,7 @@ structure NodeType where
   outputs : Array PortType
 deriving ToJson, FromJson, Inhabited, Repr
 
-def NodeType.toString (t : NodeType) : String := 
+def NodeType.toString (t : NodeType) : String :=
   let inputs := t.inputs.joinl (map:=PortType.toString) (·++"\n"++·)
   let outputs := t.outputs.joinl (map:=PortType.toString) (·++"\n"++·)
   s!"{t.name} {t.leanConstant}\ninputs:\n{inputs}\noutputs:\n{outputs}"
@@ -67,13 +74,13 @@ structure Connection where
   /-- Target node of the connection -/
   inputNodeName : String
   inputIndex : List Nat
-  outputRelPos : Float  
+  outputRelPos : Float
   inputRelPos : Float
   /-- Implicit connections are not actual connections
   but indicate that the target/input port depends on the
-  source/output port. 
+  source/output port.
 
-  The main difference from normal connactions is that 
+  The main difference from normal connactions is that
   there can be multiple implicit connections going into
   the same input port. -/
   isImplicit := false
@@ -88,4 +95,3 @@ structure LeanGraph where
   nodes : Array Node
   connections : Array Connection
 deriving ToJson, FromJson, Inhabited, Repr
-

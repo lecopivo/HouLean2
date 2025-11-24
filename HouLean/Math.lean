@@ -9,17 +9,17 @@ set_option linter.unusedVariables false
 -- Trigonometric Functions
 -- ============================================================================
 
-/-- Sine function. 
+/-- Sine function.
 
 Applied elementwise for vectors and matrices. -/
 declfun sin {α} (x : α) : α
 
-/-- Cosine function. 
+/-- Cosine function.
 
 Applied elementwise for vectors and matrices. -/
 declfun cos {α} (x : α) : α
 
-/-- Tangent function. 
+/-- Tangent function.
 
 Applied elementwise for vectors and matrices. -/
 declfun tan {α} (x : α) : α
@@ -311,6 +311,20 @@ declfun insideBox {α} (point boxMin boxMax : α) : Bool
 
 Returns the closest point on segment from `a` to `b`. -/
 declfun projectToSegment {α} (point a b : α) : α
+
+
+-- ============================================================================
+-- Transformations
+-- ============================================================================
+
+/-- Transform point. -/
+declfun transformPoint {T} {P} (transform : T) (point : P) : P
+
+/-- Transform vector. This usually ignores translation vector of a trasformation. -/
+declfun transformVector {T} {V} (transform : T) (vector : V) : V
+
+/-- Transform normal. -/
+declfun transformNormal {T} {N} (transform : T) (normal : N) : N
 
 
 end HouLean.Math

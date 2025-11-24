@@ -37,10 +37,10 @@ def AttribTypeTag.toLeanType : AttribTypeTag → Type
   | matrix3Array => Array Matrix3
   | matrix4 => Matrix4
   | matrix4Array => Array Matrix4
-  | dict => Lean.Json  -- can we model dictionaries directly in Lean? 
+  | dict => Lean.Json  -- can we model dictionaries directly in Lean?
   | dictArray => Array Lean.Json
 
-def AttribTypeTag.typeAnnotation : AttribTypeTag → String 
+def AttribTypeTag.typeAnnotation : AttribTypeTag → String
   | float => "f"
   | floatArray => "f[]"
   | int => "i"
@@ -61,10 +61,7 @@ def AttribTypeTag.typeAnnotation : AttribTypeTag → String
   | matrix4Array => "m4[]"
   | dict => "d"
   | dictArray => "d[]"
-  
 
 instance : CoeSort AttribTypeTag Type := ⟨fun t => t.toLeanType⟩
 
 def AttribUntyped := (t : AttribTypeTag) × t.toLeanType
-
-

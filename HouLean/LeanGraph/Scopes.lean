@@ -1,4 +1,6 @@
-import HouLean.LeanGraph.Traverse
+import HouLean.LeanGraph.LeanGraph
+import HouLean.LeanGraph.LambdaNodes
+import HouLean.LeanGraph.DirectedGraph
 
 /-! In this file we analyze scopes of the Lean Graph.
 
@@ -15,10 +17,10 @@ as not all scopes are comparable. In that case the network is considered to be i
 
 -/
 
-open Lean Meta Elab Term Std
+open Lean Meta Elab Term Std HouLean.DAG
 
 namespace HouLean
-namespace LeanGraph.Traverse
+namespace LeanGraph
 
 /-- Scope hierarchy for nodes in the graph -/
 inductive Scope where
@@ -99,8 +101,119 @@ partial def directChild (h : ScopeHierarchy) (parent : Scope) (child : Scope) : 
 
 end ScopeHierarchy
 
+/-- Context for graph traversal -/
+structure Context where
+  /-- All nodes in the graph by name -/
+  nodeMap : HashMap String Node
+  /-- Connections indexed by input node name -/
+  inputConnections : HashMap String (Array Connection)
+  /-- Connections indexed by output node name -/
+  outputConnections : HashMap String (Array Connection)
+
+/-- Build the traversal context from a LeanGraph -/
+def buildContext (graph : LeanGraph) : CoreM Context := do
+  let nodeMap := HashMap.ofList (graph.nodes.map (fun n => (n.name, n)) |>.toList)
+
+  let mut inputConnections : HashMap String (Array Connection) := {}
+  let mut outputConnections : HashMap String (Array Connection) := {}
+
+  for node in graph.nodes do
+    inputConnections := inputConnections.insert node.name #[]
+    outputConnections := outputConnections.insert node.name #[]
+
+  for wire in graph.connections do
+    inputConnections := inputConnections.alter wire.inputNodeName fun wires? =>
+      some (wires?.getD #[] |>.push wire)
+    outputConnections := outputConnections.alter wire.outputNodeName fun wires? =>
+      some (wires?.getD #[] |>.push wire)
+
+  return {
+    nodeMap
+    inputConnections
+    outputConnections
+  }
+
+/-- Get all nodes that are connected directly to `nodeName` -/
+def getNodeBackDeps (nodeName : String) (ctx : Context) : Array Node :=
+  let inputConnections := ctx.inputConnections[nodeName]?.getD #[]
+  let nodeMap := ctx.nodeMap
+  let deps := inputConnections.filterMap (fun wire => nodeMap[wire.outputNodeName]?)
+  deps
+
+
+inductive IONode where
+  | output (name : String)
+  | input (name : String)
+  | ground
+deriving Hashable, BEq, Repr
+
+def IONode.isInput (n : IONode) : Bool :=
+  match n with
+  | .input _ => true
+  | _ => false
+
+def IONode.toScope (n : IONode) : Scope :=
+  match n with
+  | .input n | .output n => .node n
+  | .ground => .ground
+
+/-- Extract subnetwork consisting only of input/output nodes which is then used to compute immediate post-dominators.
+-/
+partial def extractInputOutputSubgraphCore (node : Node) : (ReaderT Context <| MonadCacheT String (HashSet IONode) <| StateT (DiGraph IONode) <| TermElabM) (HashSet IONode) :=
+  checkCache node.name fun _ => do
+
+  withTraceNode `HouLean.LeanGraph.typecheck
+     (fun _ => return m!"Processing node {node.name}") do
+
+  let mut r : HashSet IONode := ∅
+
+  if node.type.leanConstant == ``HouLean.input then
+    trace[HouLean.LeanGraph.typecheck] m!"Adding input node {node.name}"
+    modify (fun g => {g with nodes := g.nodes.insert  (.input node.name)})
+    r := r.insert (.input node.name)
+    -- no return as there might be dependently typed input
+
+  -- Depth-first search: process all dependencies first
+  let deps := getNodeBackDeps node.name (← read)
+  r ← deps.foldlM (init := r) (fun r node => do
+    let r' ← extractInputOutputSubgraphCore node
+    return r.union r')
+
+  if node.type.leanConstant == ``HouLean.output then
+    trace[HouLean.LeanGraph.typecheck] m!"Adding output node {node.name}"
+    for src in r do
+      trace[HouLean.LeanGraph.typecheck] m!"Adding connection node {repr src} -> {node.name}"
+      modify (fun g => g.addEdge src (.output node.name))
+
+    -- any subsequent calculation gets choked throught this node
+    r := (∅ : HashSet IONode).insert (.output node.name)
+
+  -- nodes with no outputs and not depending on any input nodes are considered to be directly
+  -- connected to the ground scope
+  if let some wires := (← read).outputConnections[node.name]? then
+    if wires.size = 0 && ¬(r.any (·.isInput)) then
+      for src in r do
+        trace[HouLean.LeanGraph.typecheck] m!"Adding connection node {repr src} -> {repr IONode.ground}"
+        modify (fun g => g.addEdge src .ground)
+
+  return r
+
+
+def extractInputOutputSubgraph (graph : LeanGraph) (ctx : Context) : TermElabM (DiGraph IONode) := do
+  withTraceNode `HouLean.LeanGraph.typecheck
+     (fun _ => return m!"Extracting subgraph for flow analysis.") do
+
+  let go := do
+    for node in graph.nodes.reverse do
+      let _ ← extractInputOutputSubgraphCore node
+    pure ()
+  let (_,graph) ← (go ctx).run default
+
+  return graph
+
+
 /-- Build the scope hierarchy from immediate post-dominators -/
-def buildScopeHierarchy (graph : LeanGraph) (idom : HashMap String String)
+def buildScopeHierarchy (graph : LeanGraph) (idom : HashMap IONode IONode)
     (ctx : Context) : TermElabM ScopeHierarchy := do
 
   withTraceNode `HouLean.LeanGraph.typecheck
@@ -109,16 +222,16 @@ def buildScopeHierarchy (graph : LeanGraph) (idom : HashMap String String)
   -- Build the parent relationship from idom
   let mut parents : HashMap Scope Scope := {}
   let mut inputs : HashMap Scope (HashSet String) := {}
-  for (inputName, outputName) in idom.toList do
-    let childScope := Scope.node inputName
-    let parentScope := Scope.node outputName
-    let some childNode := ctx.nodeMap[inputName]? | throwError "Invalid node name {inputName}"
-    if childNode.type.leanConstant == ``HouLean.input then
-      inputs := inputs.alter parentScope (fun ins? => (ins?.getD {}).insert inputName)
-    else
+  for (srcNode, trgNode) in idom.toList do
+    let childScope := srcNode.toScope
+    let parentScope := trgNode.toScope
+    match srcNode with
+    | .input srcName =>
+      inputs := inputs.alter parentScope (fun ins? => (ins?.getD {}).insert srcName)
+    | .output _ =>
       parents := parents.insert childScope parentScope
-      trace[HouLean.LeanGraph.typecheck] "Scope parent: {childScope} -> {parentScope}"
-
+    | .ground =>
+      throwError "Bug in {decl_name%}, invalid idom hierarchy!"
 
   -- Find the root scope (unconnected output node)
   let mut rootScope : Scope := .ground
@@ -207,7 +320,6 @@ partial def assignNodeScopes (graph : LeanGraph) (ctx : Context) (hierarchy : Sc
       scopes := scopes.erase (.node nodeName)
 
     modify (fun (cache, vis) => (cache.insert nodeName scopes, vis))
-    trace[HouLean.LeanGraph.typecheck] "Node {nodeName} -> {scopes.toList}"
     return scopes
 
 
@@ -246,7 +358,7 @@ def analyzeScopesComplete (graph : LeanGraph) (ctx : Context)
 
   trace[HouLean.LeanGraph.typecheck] "Immediate post-dominators:"
   for (node, dom) in idom.toList do
-    trace[HouLean.LeanGraph.typecheck] "  {node} -> {dom}"
+    trace[HouLean.LeanGraph.typecheck] "  {repr node} -> {repr dom}"
 
   -- Build scope hierarchy
   let hierarchy ← buildScopeHierarchy graph idom ctx
@@ -269,9 +381,12 @@ def extractScopeSubgraph (graph : LeanGraph)
 
   let mut graphs : HashMap Scope (HashMap String (HashSet String)) := {}
 
+  for (scope,_) in hierarchy.containsMap do
+    graphs := graphs.insert scope {}
+
   for node in graph.nodes do
     let some scope := nodeScopes[node.name]? | throwError "bug in {decl_name%}, invalid node {node.name}"
-    graphs := graphs.insert scope (HashMap.emptyWithCapacity 0 |>.insert node.name {})
+    graphs := graphs.alter scope (fun g? => ((g?.getD (HashMap.emptyWithCapacity 0)) |>.insert node.name {}))
 
   for wire in graph.connections do
     let mut srcNode := wire.outputNodeName
@@ -288,6 +403,8 @@ def extractScopeSubgraph (graph : LeanGraph)
     else if srcScope == .node trgNode then
       -- all good too, we are just exiting the scope
       pure ()
+    -- if source node in `srcScope` is used in some deeper scope `trgScope` we find the one
+    -- upper scope `trgScope'` that is immediate subscope of `srcScope`
     else if hierarchy.scopeContains srcScope trgScope then
       let .some (.node trgNode') := hierarchy.directChild srcScope trgScope
         | throwError "Invalid scope structure, can't find immediate child for {srcScope} \
@@ -303,5 +420,5 @@ def extractScopeSubgraph (graph : LeanGraph)
 
   return graphs
 
-end LeanGraph.Traverse
+end LeanGraph
 end HouLean

@@ -51,12 +51,12 @@ structure XformParams where
 instance : Inhabited XformParams := ⟨{}⟩
 
 /-- Transform geometry using translation, rotation, and scaling
-  
+
 Example:
 ```lean
-let transformed = xform { 
+let transformed = xform {
   xform.translate := ⟨0, 1, 0⟩,
-  xform.rotate := ⟨0, 45, 0⟩ 
+  xform.rotate := ⟨0, 45, 0⟩
 } myGeo
 ```
 -/
@@ -200,7 +200,7 @@ instance : Inhabited BooleanParams := ⟨{}⟩
 
 Example:
 ```lean
-let result = boolean { 
+let result = boolean {
   operation := 0  -- union
 } sphereGeo cubeGeo
 ```
@@ -315,9 +315,9 @@ Example:
 let cube = box {}
 
 -- Rectangular box with subdivisions
-let subdividedBox = box { 
-  size := ⟨2, 1, 0.5⟩, 
-  divs := ⟨4, 2, 1⟩ 
+let subdividedBox = box {
+  size := ⟨2, 1, 0.5⟩,
+  divs := ⟨4, 2, 1⟩
 }
 
 -- Rotated box
@@ -398,9 +398,9 @@ Example:
 let sphere = sphere {}
 
 -- High-resolution sphere
-let hiResSphere = sphere { 
-  rows := 32, 
-  cols := 64 
+let hiResSphere = sphere {
+  rows := 32,
+  cols := 64
 }
 
 -- Ellipsoid
@@ -480,7 +480,7 @@ Example:
 let grid = grid {}
 
 -- Ground plane (ZX oriented)
-let ground = grid { 
+let ground = grid {
   orientation := 2,  -- ZX plane
   size := ⟨10, 10⟩,
   rows := 20,
@@ -739,7 +739,7 @@ let matched = copyToPoints {
 
 See: https://www.sidefx.com/docs/houdini/nodes/sop/copytopoints.html
 -/
-def copyToPoints (params : CopyToPointsParams := {}) 
+def copyToPoints (params : CopyToPointsParams := {})
     (source target : Geometry) : Geometry :=
   sop_copytopoints_2_0 source target
     params.sourceGroup
@@ -833,7 +833,7 @@ let loopSubdiv = subdivide {
 
 See: https://www.sidefx.com/docs/houdini/nodes/sop/subdivide.html
 -/
-def subdivide (params : SubdivideParams := {}) 
+def subdivide (params : SubdivideParams := {})
     (geo refGeo : Geometry := default) : Geometry :=
   sop_subdivide geo refGeo
     params.subdivideGroup
@@ -1065,7 +1065,7 @@ let twisted = polyExtrude {
 
 See: https://www.sidefx.com/docs/houdini/nodes/sop/polyextrude.html
 -/
-def polyExtrude (params : PolyExtrudeParams := {}) 
+def polyExtrude (params : PolyExtrudeParams := {})
     (geo spine : Geometry := default) : Geometry :=
   sop_polyextrude_2_0 geo spine
     params.group
@@ -1227,14 +1227,14 @@ instance : Inhabited RemeshParams := ⟨{}⟩
 
 Example:
 ```lean
-let remeshed = remesh { 
+let remeshed = remesh {
   targetSize := 0.1,
   iterations := 10,
   sizing := 0  -- uniform
 } myGeo
 ```
 -/
-def remesh (params : RemeshParams := {}) 
+def remesh (params : RemeshParams := {})
     (geo sizing : Geometry := default) : Geometry :=
   sop_remesh_2_0 geo sizing
     params.group
@@ -1293,7 +1293,7 @@ instance : Inhabited BlastParams := ⟨{}⟩
 
 Example:
 ```lean
-let cleaned = blast { 
+let cleaned = blast {
   group := "deleteme",
   groupType := 4  -- primitives
 } myGeo
@@ -1363,7 +1363,7 @@ instance : Inhabited FuseParams := ⟨{}⟩
 
 Example:
 ```lean
-let fused = fuse { 
+let fused = fuse {
   distance := 0.001,
   delDegen := true
 } myGeo
@@ -1449,7 +1449,7 @@ structure AttribCreateParams where
   --     |>.set "default" entry.value
   --     |>.set "string" entry.string
   --   acc.append dict
-  
+
   -- sop_attribcreate_2_0 geo
   --   params.group
   --   params.groupType
@@ -1618,7 +1618,7 @@ let withDistortion = extractTransform {
 } geo1 geo2
 ```
 -/
-def extractTransform (params : ExtractTransformParams := {}) 
+def extractTransform (params : ExtractTransformParams := {})
     (geo0 geo1 : Geometry) : Geometry :=
   sop_extracttransform geo0 geo1
     params.usePieceAttrib.toInt
@@ -2321,7 +2321,7 @@ let withHits = surfaceSplat {
 } surfaceGeo pointsGeo
 ```
 -/
-def surfaceSplat (params : SurfaceSplatParams := {}) 
+def surfaceSplat (params : SurfaceSplatParams := {})
     (surface splat : Geometry) : Geometry :=
   sop_surfacesplat surface splat
     params.bindMask
@@ -2526,7 +2526,7 @@ let capped = sweep {
 } curve crossSection
 ```
 -/
-def sweep (params : SweepParams := {}) 
+def sweep (params : SweepParams := {})
     (backbone crossSection : Geometry) : Geometry :=
   sop_sweep_2_0 backbone crossSection
     params.curveGroup
@@ -2657,7 +2657,7 @@ let conditional = switchIf {
 } geo0 geo1
 ```
 -/
-def switchIf (params : SwitchIfParams := {}) 
+def switchIf (params : SwitchIfParams := {})
     (geo0 geo1 : Geometry) : Geometry :=
   sop_switchif geo0 geo1
     params.mergeCondition
@@ -2780,7 +2780,7 @@ let sizedTets = tetrahedralize {
 } surfaceGeo refGeo
 ```
 -/
-def tetrahedralize (params : TetrahedralizeParams := {}) 
+def tetrahedralize (params : TetrahedralizeParams := {})
     (geo refGeo : Geometry := default) : Geometry :=
   sop_tetrahedralize geo refGeo
     params.group
@@ -2949,19 +2949,19 @@ abbrev grid (params : GridParams := {}) : Geometry :=
 abbrev scatter (params : ScatterParams := {}) (geo : Geometry) : Geometry :=
   SOP.scatter params geo
 
-abbrev copyToPoints (params : CopyToPointsParams := {}) 
+abbrev copyToPoints (params : CopyToPointsParams := {})
     (source target : Geometry) : Geometry :=
   SOP.copyToPoints params source target
 
-abbrev subdivide (params : SubdivideParams := {}) 
+abbrev subdivide (params : SubdivideParams := {})
     (geo : Geometry) (refGeo : Geometry := default) : Geometry :=
   SOP.subdivide params geo refGeo
 
-abbrev polyExtrude (params : PolyExtrudeParams := {}) 
+abbrev polyExtrude (params : PolyExtrudeParams := {})
     (geo : Geometry) (spine : Geometry := default) : Geometry :=
   SOP.polyExtrude params geo spine
 
-abbrev remesh (params : RemeshParams := {}) 
+abbrev remesh (params : RemeshParams := {})
     (geo : Geometry) (sizing : Geometry := default) : Geometry :=
   SOP.remesh params geo sizing
 
@@ -2971,7 +2971,7 @@ abbrev blast (params : BlastParams := {}) (geo : Geometry) : Geometry :=
 abbrev fuse (params : FuseParams := {}) (geo : Geometry) : Geometry :=
   SOP.fuse params geo
 
-abbrev boolean (params : BooleanParams := {}) 
+abbrev boolean (params : BooleanParams := {})
     (geoA geoB : Geometry) : Geometry :=
   SOP.boolean params geoA geoB
 
@@ -2984,7 +2984,7 @@ abbrev extractCentroid (params : ExtractCentroidParams := {}) (geo : Geometry) :
 abbrev extractContours (params : ExtractContoursParams := {}) (geo : Geometry) : Geometry :=
   SOP.extractContours params geo
 
-abbrev extractTransform (params : ExtractTransformParams := {}) 
+abbrev extractTransform (params : ExtractTransformParams := {})
     (geo0 geo1 : Geometry) : Geometry :=
   SOP.extractTransform params geo0 geo1
 
@@ -3015,22 +3015,22 @@ abbrev splitPoints (params : SplitPointsParams := {}) (geo : Geometry) : Geometr
 abbrev stash (params : StashParams := {}) (geo : Geometry) : Geometry :=
   SOP.stash params geo
 
-abbrev surfaceSplat (params : SurfaceSplatParams := {}) 
+abbrev surfaceSplat (params : SurfaceSplatParams := {})
     (surface splat : Geometry) : Geometry :=
   SOP.surfaceSplat params surface splat
 
-abbrev sweep (params : SweepParams := {}) 
+abbrev sweep (params : SweepParams := {})
     (backbone crossSection : Geometry) : Geometry :=
   SOP.sweep params backbone crossSection
 
 abbrev switch (params : SwitchParams := {}) (geo : Geometry) : Geometry :=
   SOP.switch params geo
 
-abbrev switchIf (params : SwitchIfParams := {}) 
+abbrev switchIf (params : SwitchIfParams := {})
     (geo0 geo1 : Geometry) : Geometry :=
   SOP.switchIf params geo0 geo1
 
-abbrev tetrahedralize (params : TetrahedralizeParams := {}) 
+abbrev tetrahedralize (params : TetrahedralizeParams := {})
     (geo refGeo : Geometry := default) : Geometry :=
   SOP.tetrahedralize params geo refGeo
 

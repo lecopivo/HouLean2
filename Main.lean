@@ -105,10 +105,24 @@ unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.Ty
   let ctx : Core.Context := {fileName := "<input>", fileMap := .ofString ""}
   let s : Core.State := { env := env }
 
-  let ((r,pythonCode,inputGeos, outputGeos), sCore, _sMeta, _sElab) ← TermElabM.toIO
-    (ctxCore := ctx) (sCore := s) (ctxMeta := {}) (sMeta := {}) (ctx := {}) (s := {}) do
+  -- let ((r,pythonCode,inputGeos, outputGeos), sCore, _sMeta, _sElab) ←
+  let (r, _) ← TermElabM.toIO (ctxCore := ctx) (sCore := s) (ctxMeta := {}) (sMeta := {}) (ctx := {}) (s := {}) do
     try
-      let r ← graph.typeCheck'
+      let r ← graph.typeCheck
+
+      -- if result has metavariables we can't compile it so terminating early
+      if r.mainProgram.hasMVar then
+        logInfo "Resulting code still has some metavariables!"
+
+        return {
+          graph := r.graph
+          leanCode := r.code
+          pythonCode := ""
+          inputGeos := #[]
+          outputGeos := #[]
+          messages := ← (← Core.getMessageLog).toArray.mapM (·.toJson)
+        }
+
       let apexGraph ← programToApexGraph r.mainProgram
       let outGeos := apexGraph.outputs.filterMap (fun o =>
         if o.1.type.typeTag? == some .geometry ||
@@ -122,21 +136,28 @@ unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.Ty
         else
           none)
       let pythonCode := apexGraph.pythonBuildScript
-      return (r, pythonCode, inGeos, outGeos)
+      -- return (r, pythonCode, inGeos, outGeos)
+      return {
+          graph := r.graph
+          leanCode := r.code
+          pythonCode := pythonCode
+          inputGeos := inGeos
+          outputGeos := outGeos
+          messages := ← (← Core.getMessageLog).toArray.mapM (·.toJson)
+        }
     catch e =>
       logError m!"Type checking failed!\n{e.toMessageData}"
-      return ({ graph := graph, code := "", mainProgram := default }, "", #[], #[])
+      -- return ({ graph := graph, code := "", mainProgram := default }, "", #[], #[])
+      return {
+          graph := graph
+          leanCode := ""
+          pythonCode := ""
+          inputGeos := #[]
+          outputGeos := #[]
+          messages := ← (← Core.getMessageLog).toArray.mapM (·.toJson)
+        }
 
-  let coreMsgs ← sCore.messages.toArray.mapM (·.toJson)
-
-  return {
-    graph := r.graph
-    leanCode := r.code
-    pythonCode := pythonCode
-    inputGeos := inputGeos
-    outputGeos := outputGeos
-    messages := coreMsgs
-  }
+  return r
 
 unsafe def handleRequest (req : Request) (env : Environment) : IO Response :=
   match req with
