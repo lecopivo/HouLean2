@@ -1,6 +1,6 @@
 import HouLean.Apex.Compile.Main
 import HouLean.LeanGraph.LeanGraph
-import HouLean.LeanGraph.Traverse
+import HouLean.LeanGraph.GraphToCode
 import HouLean
 import Qq
 import Lean.Data.Json
@@ -108,7 +108,7 @@ unsafe def typeCheckGraph (graph : LeanGraph) (env : Environment) : IO _root_.Ty
   let ((r,pythonCode,inputGeos, outputGeos), sCore, _sMeta, _sElab) ← TermElabM.toIO
     (ctxCore := ctx) (sCore := s) (ctxMeta := {}) (sMeta := {}) (ctx := {}) (s := {}) do
     try
-      let r ← graph.typeCheck
+      let r ← graph.typeCheck'
       let apexGraph ← programToApexGraph r.mainProgram
       let outGeos := apexGraph.outputs.filterMap (fun o =>
         if o.1.type.typeTag? == some .geometry ||

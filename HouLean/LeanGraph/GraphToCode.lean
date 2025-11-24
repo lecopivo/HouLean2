@@ -9,7 +9,6 @@ namespace LeanGraph
 
 open Traverse
 
-
 namespace GraphToCode
 
 structure Context where
@@ -182,6 +181,28 @@ def monadJoin (m : Expr) (n? : Option Expr) : MetaM Expr :=
 
     throwError m!"Trying to build code for two incompatible monads {m} and {n}!"
 
+
+def getNodeValue (node : Node) : CompileM Expr := do
+
+  if node.type.leanConstant == ``HouLean.output then
+    return (Expr.const ``Unit.unit [])
+
+  -- todo: add support for macro nodes like
+  --    - `struct s merge% s'`
+  --    - `struct s push% pos {0,1, 0.2, 0.3}`
+  --    - `struct s pop% vel`
+  --    - `struct s modify_fun% x (fun x => 10 * x)`
+
+  let fn : Ident := mkIdent node.type.leanConstant
+  let args ← buildArgs node
+
+  let stx ← `($fn $args*)
+  trace[HouLean.LeanGraph.typecheck] "Elaborating: {stx}"
+  let value ← withCurrentNode node.name (elabTerm stx none)
+  trace[HouLean.LeanGraph.typecheck] "Elaborated: {value}"
+  return value
+
+
 partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
   let ctx ← buildContext graph
 
@@ -189,10 +210,10 @@ partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
   let idom := subgraph.computePostDominators
 
   let scopeHierachy ← buildScopeHierarchy graph idom ctx
-  logInfo m!"{scopeHierachy}"
+  -- logInfo m!"{scopeHierachy}"
 
   let scopes ← assignNodeScopes graph ctx scopeHierachy
-  logInfo m!"{scopes.toList}"
+  -- logInfo m!"{scopes.toList}"
 
   let scopeSubgraphs ← extractScopeSubgraph graph scopes scopeHierachy
 
@@ -203,7 +224,7 @@ partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
     let some order := DiGraph.kahnSort ⟨graph⟩
       | throwError m!"Failed to sort subgraph of {scope}"
     subgraphOrders := subgraphOrders.insert scope order
-    logInfo m!"order of scope {scope}: {order}"
+    -- logInfo m!"order of scope {scope}: {order}"
 
   let some groundOrder := subgraphOrders[Scope.ground]?
     | throwError "Bug in {decl_name%}, no order for ground scope"
@@ -212,9 +233,6 @@ partial def graphToCode (graph : LeanGraph) : CompileM Expr := do
   go 0 Scope.ground groundOrder subgraphOrders none
 
 where
-  nodeValue (node : Node) : CompileM Expr :=
-    return mkStrLit node.name
-
   go (depth : Nat) (scope : Scope) (order : List String) (orders : HashMap Scope (List String)) (monad? : Option Expr) : CompileM Expr := do
     if depth > 10 then
       throwError "Too deep scope, likely there is a bug in {decl_name%}"
@@ -229,23 +247,14 @@ where
         | .error e => return m!"[{exceptEmoji r}] {nodeName}: {e.toMessageData}") do
 
       let node := (← read).nodeMap[nodeName]?.get!
-      let args ← buildArgs node
 
-      let fn : Ident := mkIdent node.type.leanConstant
-      let mut value : Expr := default
-      if node.type.leanConstant != ``HouLean.output then
-        let stx ← `($fn $args*)
-        trace[HouLean.LeanGraph.typecheck] "Elaborating: {stx}"
-        value ← withCurrentNode nodeName (elabTerm stx none)
-        trace[HouLean.LeanGraph.typecheck] "Elaborated: {value}"
-      else
-        value := (Expr.const ``Unit.unit [])
+      let mut value ← getNodeValue node
       let mut type ← inferType value
 
       -- input node --
       -----------------
-      -- ?rest ← fun nodeName =>
-      --         ?rest2
+      -- fun nodeName =>
+      --   ?rest
       if node.type.leanConstant == ``HouLean.input then
          return ← withLocalDeclD nodeName.toName type fun var => do
            let rest ← go depth scope ns orders monad?
@@ -256,6 +265,7 @@ where
       if node.type.leanConstant == ``HouLean.output then
         if scope == Scope.node nodeName then
           -- end of scope, we should return the input to the
+          let args ← buildArgs node
           let arg := args[0]!
           let r ← elabTerm arg none
           if let some monad := monad? then
@@ -265,8 +275,8 @@ where
         else
           -- we found an output node of deeper scope
           -- so create a new meta variable for the subscope
-          -- ?rest ← let nodeName := ?restSubscope
-          --         ?rest2
+          -- let nodeName := ?restSubscope
+          --   ?rest
           -- create value for subsocpe
           let some subscope := orders[Scope.node nodeName]?
             | throwError "Can't find order for subscope {Scope.node nodeName}"
@@ -281,8 +291,8 @@ where
 
       -- other nodes --
       -----------------
-      -- ?rest ← let nodeName := nodeValue
-      --         ?rest2
+      -- let nodeName ← nodeValue
+      -- rest
       if let some (monad, type') ← isMonadApp? type then
         return ← withLocalDeclD nodeName.toName type' fun var => do
           let monad' ← monadJoin monad monad?
@@ -291,7 +301,167 @@ where
           if monad' != monad then
             value ← mkAppOptM ``liftM #[monad, monad', none, none, value]
           mkAppM ``Bind.bind #[value, ← mkLambdaFVars #[var] rest]
+
+      -- let nodeName := nodeValue
+      -- rest
       else
         return ← withLetDecl nodeName.toName type value fun var => do
           let rest ← go depth scope ns orders monad?
           mkLetFVars #[var] rest
+
+
+partial def updateNodeTypesCore (code : Expr) : StateT (HashMap String NodeType) CompileM Unit := do
+
+  match code with
+  | .lam n t b bi =>
+    let name := n.toString
+
+    if let some node := (← read).nodeMap[name]? then
+      updateInputNode node t
+
+    withLocalDecl n bi t fun var =>
+      updateNodeTypesCore (b.instantiate1 var)
+
+  | .letE n t v b _ =>
+    let name := n.toString
+    if let some node := (← read).nodeMap[name]? then
+      updateNode node v
+
+    updateNodeTypesCore v
+
+    withLetDecl n t v fun var =>
+      updateNodeTypesCore (b.instantiate1 var)
+
+  | .app (.app bind mx) (.lam n t b _) =>
+    if bind.isAppOfArity ``Bind.bind 4 then
+      let name := n.toString
+      if let some node := (← read).nodeMap[name]? then
+        updateNode node mx
+
+      updateNodeTypesCore mx
+
+      withLocalDeclD n t fun var =>
+        updateNodeTypesCore (b.instantiate1 var)
+
+  | _ =>
+    pure ()
+
+where
+  updateInputNode (node : Node) (type : Expr) : StateT (HashMap String NodeType) CompileM Unit := do
+    let inputPort ← mkPortType (← instantiateMVars (← inferType type)) false "type"
+    let outputPort ← mkPortType (← instantiateMVars type) false node.name
+    trace[HouLean.LeanGraph.typecheck] m!"{node.name} : ({inputPort.toString}) → ({outputPort.toString})"
+    let nodeType : NodeType := { node.type with
+      inputs := #[inputPort]
+      outputs := #[outputPort]
+    }
+    modify (fun s => s.insert node.name nodeType)
+
+  updateNode (node : Node) (value : Expr) : StateT (HashMap String NodeType) CompileM Unit := do
+    if node.type.leanConstant  == ``HouLean.output then
+      return ← updateOutputNode node value
+
+    if node.type.leanConstant  == ``HouLean.eval then
+      return ← updateEvalNode node value
+
+    updateNormalNode node value
+
+  updateOutputNode (node : Node) (value : Expr) : StateT (HashMap String NodeType) CompileM Unit := do
+    let type ← inferType value
+    let inputPort ← forallTelescope type fun _ returnType => do
+        mkPortType (← instantiateMVars returnType) false "output"
+    let outputPort ← mkPortType (← instantiateMVars type) false "function"
+    trace[HouLean.LeanGraph.typecheck] m!"{node.name} : ({inputPort.toString}) → ({outputPort.toString})"
+    let nodeType : NodeType := { node.type with
+      inputs := #[inputPort]
+      outputs := #[outputPort]
+    }
+    modify (fun s => s.insert node.name nodeType)
+
+  updateEvalNode (node : Node) (value : Expr) : StateT (HashMap String NodeType) CompileM Unit := do
+    let fn := value.getArg! 1
+    let type ← instantiateMVars (← inferType fn)
+    let (inputPorts,outputPort) ← forallTelescope type fun xs r => do
+        let funPort ← mkPortType type false "function"
+        let args ← xs.mapM (fun x => do mkPortType (← inferType x) false (← x.fvarId!.getUserName).eraseMacroScopes.toString)
+        let resultPort ← mkPortType r false "output"
+        return (#[funPort] ++ args, resultPort)
+    trace[HouLean.LeanGraph.typecheck] m!"{node.name} : ({inputPorts.map (·.toString)}) → ({outputPort.toString})"
+    let nodeType : NodeType := { node.type with
+      inputs := inputPorts
+      outputs := #[outputPort]
+    }
+    modify (fun s => s.insert node.name nodeType)
+
+  updateNormalNode (node : Node) (value : Expr) : StateT (HashMap String NodeType) CompileM Unit := do
+
+    let (fn, args) := value.withApp (fun fn args => (fn,args))
+
+    forallTelescope (← inferType fn) fun xs _ => do
+
+      let mut inputPorts : Array PortType := #[]
+
+      for arg in args, x in xs do
+        let name ← x.fvarId!.getUserName
+        let bi ← x.fvarId!.getBinderInfo
+
+        -- skip non-explicit arguments
+        unless bi.isExplicit do continue
+
+        let inputPort ← mkPortType (← instantiateMVars (← inferType arg)) false (toString name.eraseMacroScopes)
+        inputPorts := inputPorts.push inputPort
+
+      let outputPort ← mkPortType (← instantiateMVars (← inferType value)) false "output"
+
+      trace[HouLean.LeanGraph.typecheck] m!"{node.name} : {inputPorts.map (·.toString)} → ({outputPort.toString})}"
+
+      let nodeType : NodeType := { node.type with
+        inputs := inputPorts
+        outputs := #[outputPort]
+      }
+      modify (fun s => s.insert node.name nodeType)
+
+  -- todo: add support for macro nodes like
+  --    - `struct s merge% s'`
+  --    - `struct s push% pos {0,1, 0.2, 0.3}`
+  --    - `struct s pop% vel`
+  --    - `struct s modify_fun% x (fun x => 10 * x)`
+
+def updateNodeTypes (code : Expr) (graph : LeanGraph) : CompileM LeanGraph := do
+
+  let (_,s) ← updateNodeTypesCore code {}
+
+  let mut nodes := graph.nodes
+  for i in [0:nodes.size] do
+    let node := nodes[i]!
+    if let some newType := s[node.name]? then
+      nodes := nodes.set! i { node with type := newType }
+
+  return { graph with nodes := nodes }
+
+
+open LeanGraph Traverse PrettyPrinter in
+def typeCheck' (graph : LeanGraph) : TermElabM TypeCheckResult := do
+
+  let ctx ← buildContext graph
+  let ctx : GraphToCode.Context := {
+    nodeMap := ctx.nodeMap
+    inputConnections := ctx.inputConnections
+  }
+  let (leanCode,_) ← graphToCode graph ctx {}
+  let (graph,_) ← updateNodeTypes leanCode graph ctx {}
+
+  -- let code ← delab leanCode
+  let codeBody ← withOptions (fun opts => opts
+      |>.set `pp.structureInstanceTypes true
+      |>.set `pp.funBinderTypes true) <|
+     Meta.ppExpr leanCode
+  let codeBody := s!"{codeBody}".replace "\n" "\n  "
+  let code := s!"import HouLean\n\n\
+  def run :=\n  {codeBody}"
+
+  return {
+    graph := graph
+    code := code
+    mainProgram := leanCode
+  }

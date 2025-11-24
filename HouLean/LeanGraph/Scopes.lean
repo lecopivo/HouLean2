@@ -303,18 +303,5 @@ def extractScopeSubgraph (graph : LeanGraph)
 
   return graphs
 
-
--- /-- Validate that a graph has well-formed scopes -/
--- def validateScopes (graph : LeanGraph) : TermElabM Bool := do
---   let ctx ← buildContext graph
---   let ctx ← analyzeInputOutputFlow graph ctx
-
---   try
---     let _ ← analyzeScopesComplete graph ctx
---     return true
---   catch e =>
---     trace[HouLean.LeanGraph.typecheck] "Scope validation failed: {e.toMessageData}"
---     return false
-
 end LeanGraph.Traverse
 end HouLean

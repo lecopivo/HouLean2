@@ -18,7 +18,11 @@ run_elab
   let .ok graph := fromJson? (α:=LeanGraph) json
     | throwError "failed loading graph!"
 
-  let ctx ← buildContext graph
-  let (e,_) ← graphToCode graph {nodeMap := ctx.nodeMap, inputConnections := ctx.inputConnections} {}
 
-  logInfo e
+  let r ← typeCheck' graph
+  -- let ctx ← buildContext graph
+  -- let (e,_) ← graphToCode graph {nodeMap := ctx.nodeMap, inputConnections := ctx.inputConnections} {}
+
+  -- let (_,_) ← updateNodeTypes e graph {nodeMap := ctx.nodeMap, inputConnections := ctx.inputConnections} {}
+
+  logInfo r.mainProgram
