@@ -35,5 +35,8 @@ def run (geo : Geometry) : VisualizeM Geometry := do
   return geo
 
 
+-- @[apex]
+-- def aa := visualize' "hihi" 0.1001
+
 
 open Lean Meta Qq

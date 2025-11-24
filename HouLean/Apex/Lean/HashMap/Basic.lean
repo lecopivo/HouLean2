@@ -16,6 +16,10 @@ class DictType (α : Type u) extends ApexType (HashMap String α) Dict where
   get? (dict : Dict) (key : String) : α×Bool
   set (dict : Dict) (key : String) (value : α) : Dict
 
+instance [DictType α] : ApexTypeFlatten (HashMap String α) [.dict] where
+  apexFlatten := cast sorry_proof ()
+  apexUnflatten := cast sorry_proof ()
+
 instance : DictType Bool where
   toApex := cast sorry_proof ()
   fromApex := cast sorry_proof ()
@@ -123,5 +127,11 @@ def _root_.Std.HashMap.keys.apex_impl (m : HashMap String α) : Array String :=
 run_meta compilerExt.add (.implementedByName ``HashMap.keys ``HashMap.keys.apex_impl
   #[some 1, none, some 4, some 5]) .global
 
--- #check HashMap.alter
--- #check HashMap.modify
+def _root_.Std.HashMap.alter.apex_impl (m : HashMap String α) (key : String) (f : Option α → Option α) : HashMap String α :=
+  let val? := m.get? key
+  match f val? with
+  | none => m
+  | some val => m.insert key val
+
+run_meta compilerExt.add (.implementedByName ``HashMap.alter ``HashMap.alter.apex_impl
+  #[some 1, some 4, some 5, some 6]) .global

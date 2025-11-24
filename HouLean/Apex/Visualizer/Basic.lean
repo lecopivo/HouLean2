@@ -1,6 +1,7 @@
 import HouLean.Apex.Data
 import HouLean.Apex.Sop
 import HouLean.Apex.Geometry
+import HouLean.Apex.Lean.HashMap
 import HouLean.Meta.AnonymousStruct
 
 open Lean Std
@@ -51,8 +52,8 @@ abbrev VisualizeM' :=
   -- this stores which nodes have visualizer attached to it and how many/index of the highest one
   StateM (HashMap String Int × Geometry)
 
+
 def visualize' {α Options ts ts'} {defaultOpts : Options} [Visualizer α defaultOpts]
-    [ApexTypeFlatten (HashMap String Int) ts']
     [ApexTypeFlatten α ts] [ApexTypeFlatten Options ts']
     (nodeName : String) (x : α) (opts := defaultOpts) :
     VisualizeM' α :=
