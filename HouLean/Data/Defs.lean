@@ -121,6 +121,22 @@ structure BoundingSphere where
 instance : Inhabited BoundingBox := ⟨{}⟩
 
 
+/-- Bounding Capsule  (tapered swept sphere).
+    A capsule is defined by two endpoint centers, each with its own radius.
+    When radii are equal, this is a standard capsule.
+    When radii differ, this is a truncated cone with spherical caps. -/
+structure Capsule where
+  /-- Start point of the capsule's central axis -/
+  start : Vector3 := ⟨0, 0, 0⟩
+  /-- End point of the capsule's central axis -/
+  finish : Vector3 := ⟨0, 1, 0⟩
+  /-- Radius at the start point -/
+  startRadius : Float := 0.5
+  /-- Radius at the end point -/
+  endRadius : Float := 0.5
+instance : Inhabited Capsule := ⟨{}⟩
+
+
 /-- Plane specification -/
 structure Plane where
   /-- Origin point on the plane -/
