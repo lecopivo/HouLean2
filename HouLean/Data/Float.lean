@@ -18,6 +18,8 @@ defun sinh (x : Float) := x.sinh
 defun cosh (x : Float) := x.cosh
 defun tanh (x : Float) := x.tanh
 
+def _root_.Float.pi := Float.acos (-1.0)
+
 -- ============================================================================
 -- Exponential and Logarithmic Functions
 -- ============================================================================
@@ -49,14 +51,14 @@ defun Float.ble (x y : Float) : Bool := (x <= y : Bool)
 -- Custom implementations
 defun abs (x : Float) : Float := x.abs
 
-defun Float.sign (x : Float) : Float := 
+defun Float.sign (x : Float) : Float :=
   if x < 0.0 then -1.0 else if x > 0.0 then 1.0 else 0.0
 
 defun Float.min (x y : Float) : Float := _root_.Min.min x y
 
 defun Float.max (x y : Float) : Float := _root_.Max.max x y
 
-defun Float.clamp (x lo hi : Float) : Float := 
+defun Float.clamp (x lo hi : Float) : Float :=
   if x < lo then lo else if x > hi then hi else x
 
 -- Built-in Float methods
@@ -66,7 +68,7 @@ defun ceil (x : Float) := x.ceil
 -- Custom implementations
 defun round (x : Float) : Float := x.round
 
-defun Float.trunc (x : Float) : Float := 
+defun Float.trunc (x : Float) : Float :=
   if x >= 0.0 then x.floor else x.ceil
 
 defun Float.fract (x : Float) : Float := x - x.floor
@@ -87,20 +89,20 @@ defun Float.length2 (x : Float) : Float := x * x
 
 defun Float.distance (x y : Float) : Float := (y - x).abs
 
-defun Float.distance2 (x y : Float) : Float := 
+defun Float.distance2 (x y : Float) : Float :=
   let d := y - x
   d * d
 
-defun Float.normalize (x : Float) : Float × Float := 
+defun Float.normalize (x : Float) : Float × Float :=
   let len := x.abs
   if len == 0.0 then (0.0, 0.0) else (x / len, len)
 
-defun Float.normalized (x : Float) : Float := 
+defun Float.normalized (x : Float) : Float :=
   if x == 0.0 then 0.0 else if x > 0.0 then 1.0 else -1.0
 
 defun Float.reflect (v n : Float) : Float := v - 2.0 * (v * n) * n
 
-defun Float.refract (v n : Float) (eta : Float) : Float := 
+defun Float.refract (v n : Float) (eta : Float) : Float :=
   let dt := v * n
   let k := 1.0 - eta * eta * (1.0 - dt * dt)
   if k < 0.0 then 0.0 else eta * v - (eta * dt + k.sqrt) * n
@@ -115,14 +117,14 @@ defun Float.compDiv (x y : Float) : Float := x / y
 
 defun Float.lerp (x y : Float) (t : Float) : Float := x + (y - x) * t
 
-defun Float.smoothstep (edge0 edge1 x : Float) : Float := 
+defun Float.smoothstep (edge0 edge1 x : Float) : Float :=
   let t := x.clamp edge0 edge1
   let t := (t - edge0) / (edge1 - edge0)
   t * t * (3.0 - 2.0 * t)
 
 defun Float.step (edge x : Float) : Float := if x < edge then 0.0 else 1.0
 
-defun Float.hermite (p0 p1 t0 t1 : Float) (t : Float) : Float := 
+defun Float.hermite (p0 p1 t0 t1 : Float) (t : Float) : Float :=
   let t2 := t * t
   let t3 := t2 * t
   let h00 := 2.0 * t3 - 3.0 * t2 + 1.0
@@ -131,7 +133,7 @@ defun Float.hermite (p0 p1 t0 t1 : Float) (t : Float) : Float :=
   let h11 := t3 - t2
   h00 * p0 + h10 * t0 + h01 * p1 + h11 * t1
 
-defun Float.catmullRom (p0 p1 p2 p3 : Float) (t : Float) : Float := 
+defun Float.catmullRom (p0 p1 p2 p3 : Float) (t : Float) : Float :=
   let t2 := t * t
   let t3 := t2 * t
   0.5 * ((2.0 * p1) +
@@ -154,15 +156,13 @@ defun Float.degrees (radians : Float) : Float := radians * (180.0 / 3.1415926535
 -- Geometric Queries (scalar versions)
 -- ============================================================================
 
-defun Float.insideBox (point boxMin boxMax : Float) : Bool := 
+defun Float.insideBox (point boxMin boxMax : Float) : Bool :=
   point >= boxMin && point <= boxMax
 
-defun Float.projectToSegment (point a b : Float) : Float := 
+defun Float.projectToSegment (point a b : Float) : Float :=
   let ab := b - a
   let ap := point - a
   let t := ((ap * ab) / (ab * ab)).clamp 0.0 1.0
   a + t * ab
 
 end HouLean.Math
-
-

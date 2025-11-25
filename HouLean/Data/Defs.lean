@@ -103,12 +103,21 @@ structure Transform where
   rOrd : Int := 0  -- RotationOrder
 instance : Inhabited Transform := ⟨{}⟩
 
-/-- Bounding box specification -/
+/-- Bounding box -/
 structure BoundingBox where
   /-- Size of the bounding box -/
   size : Vector3 := ⟨1, 1, 1⟩
   /-- Center position of the bounding box -/
   center : Vector3 := ⟨0, 0, 0⟩
+instance : Inhabited BoundingBox := ⟨{}⟩
+
+
+/-- Bounding sphere -/
+structure BoundingSphere where
+  /-- Center of the bounding sphere -/
+  center : Vector3 := ⟨0, 0, 0⟩
+  /-- Radius of bounding sphere -/
+  radius : Float := 1
 instance : Inhabited BoundingBox := ⟨{}⟩
 
 

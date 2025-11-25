@@ -1,5 +1,6 @@
 import HouLean.Data.Array
 import HouLean.Data.BoundingBox
+import HouLean.Data.BoundingSphere
 import HouLean.Data.Defs
 import HouLean.Data.Float
 import HouLean.Data.Matrix3
