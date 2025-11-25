@@ -10225,16 +10225,16 @@
           {
             "builtin": {
               "name": "input",
-              "type": "HouLean.Vector3"
+              "type": "HouLean.Apex.Geometry"
             }
           }
         ]
       },
       "portValues": [
-        "HouLean.Vector3"
+        "HouLean.Apex.Geometry"
       ],
-      "x": 135.9298968576001,
-      "y": 91.83090135039998
+      "x": -411.8090452035114,
+      "y": 360.7470152687208
     },
     {
       "name": "output",
@@ -10244,23 +10244,9 @@
         "exposeImplicitArgs": false,
         "inputs": [
           {
-            "struct": {
+            "builtin": {
               "name": "output",
-              "type": "Prod HouLean.Vector3 HouLean.Vector3",
-              "subports": [
-                {
-                  "builtin": {
-                    "name": "fst",
-                    "type": "HouLean.Vector3"
-                  }
-                },
-                {
-                  "builtin": {
-                    "name": "snd",
-                    "type": "HouLean.Vector3"
-                  }
-                }
-              ]
+              "type": "HouLean.Apex.VisualizeM HouLean.Apex.Geometry"
             }
           }
         ],
@@ -10268,299 +10254,38 @@
           {
             "builtin": {
               "name": "function",
-              "type": "HouLean.Vector3 \u2192 HouLean.Vector3 \u2192 HouLean.Vector3 \u00d7 HouLean.Vector3"
+              "type": "HouLean.Apex.Geometry \u2192 HouLean.Apex.VisualizeM HouLean.Apex.Geometry"
             }
           }
         ]
       },
       "portValues": [],
-      "x": 726.7200000000001,
-      "y": 157.12
+      "x": 174.67216424113317,
+      "y": 345.99772324219947
     },
     {
-      "name": "Prod_mk",
+      "name": "visualize",
       "type": {
-        "name": "Prod_mk",
-        "leanConstant": "Prod.mk",
+        "name": "visualize",
+        "leanConstant": "HouLean.Apex.visualize",
         "exposeImplicitArgs": false,
         "inputs": [
           {
             "builtin": {
-              "name": "fst",
-              "type": "HouLean.Vector3"
+              "name": "nodeName",
+              "type": "String"
             }
           },
-          {
-            "builtin": {
-              "name": "snd",
-              "type": "HouLean.Vector3"
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "struct": {
-              "name": "output",
-              "type": "Prod HouLean.Vector3 HouLean.Vector3",
-              "subports": [
-                {
-                  "builtin": {
-                    "name": "fst",
-                    "type": "HouLean.Vector3"
-                  }
-                },
-                {
-                  "builtin": {
-                    "name": "snd",
-                    "type": "HouLean.Vector3"
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "portValues": [],
-      "x": 456.75999999999993,
-      "y": 145.84
-    },
-    {
-      "name": "input_1",
-      "type": {
-        "name": "input",
-        "leanConstant": "HouLean.input",
-        "exposeImplicitArgs": false,
-        "inputs": [
-          {
-            "builtin": {
-              "name": "type",
-              "type": "Type"
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "builtin": {
-              "name": "input_1",
-              "type": "HouLean.Vector3"
-            }
-          }
-        ]
-      },
-      "portValues": [
-        "HouLean.Vector3"
-      ],
-      "x": 190.63999999999993,
-      "y": 229.56000000000017
-    },
-    {
-      "name": "eval",
-      "type": {
-        "name": "eval",
-        "leanConstant": "HouLean.eval",
-        "exposeImplicitArgs": false,
-        "inputs": [
-          {
-            "builtin": {
-              "name": "function",
-              "type": "HouLean.Vector3 \u2192 HouLean.Vector3 \u2192 HouLean.Vector3 \u00d7 HouLean.Vector3"
-            }
-          },
-          {
-            "builtin": {
-              "name": "input",
-              "type": "HouLean.Vector3"
-            }
-          },
-          {
-            "builtin": {
-              "name": "input_1",
-              "type": "HouLean.Vector3"
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "struct": {
-              "name": "output",
-              "type": "Prod HouLean.Vector3 HouLean.Vector3",
-              "subports": [
-                {
-                  "builtin": {
-                    "name": "fst",
-                    "type": "HouLean.Vector3"
-                  }
-                },
-                {
-                  "builtin": {
-                    "name": "snd",
-                    "type": "HouLean.Vector3"
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "portValues": [],
-      "x": 1193.5599999999997,
-      "y": 293.92
-    },
-    {
-      "name": "input_2",
-      "type": {
-        "name": "input",
-        "leanConstant": "HouLean.input",
-        "exposeImplicitArgs": false,
-        "inputs": [
-          {
-            "builtin": {
-              "name": "type",
-              "type": "Type"
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "builtin": {
-              "name": "input_2",
-              "type": "HouLean.Vector3"
-            }
-          }
-        ]
-      },
-      "portValues": [
-        "HouLean.Vector3"
-      ],
-      "x": 707.72,
-      "y": 324.08000000000004
-    },
-    {
-      "name": "output_1",
-      "type": {
-        "name": "output",
-        "leanConstant": "HouLean.output",
-        "exposeImplicitArgs": false,
-        "inputs": [
-          {
-            "struct": {
-              "name": "output",
-              "type": "Prod HouLean.Vector3 HouLean.Vector3",
-              "subports": [
-                {
-                  "builtin": {
-                    "name": "fst",
-                    "type": "HouLean.Vector3"
-                  }
-                },
-                {
-                  "builtin": {
-                    "name": "snd",
-                    "type": "HouLean.Vector3"
-                  }
-                }
-              ]
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "builtin": {
-              "name": "function",
-              "type": "HouLean.Vector3 \u2192 HouLean.Vector3 \u00d7 HouLean.Vector3"
-            }
-          }
-        ]
-      },
-      "portValues": [],
-      "x": 1537.1655039999998,
-      "y": 435.760576
-    },
-    {
-      "name": "Math_exp",
-      "type": {
-        "name": "Math_exp",
-        "leanConstant": "HouLean.Math.Exp.exp",
-        "exposeImplicitArgs": false,
-        "inputs": [
           {
             "builtin": {
               "name": "x",
-              "type": "HouLean.Vector3"
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "builtin": {
-              "name": "output",
-              "type": "HouLean.Vector3"
-            }
-          }
-        ]
-      },
-      "portValues": [],
-      "x": 926.4119994923992,
-      "y": 441.01816788577673
-    },
-    {
-      "name": "eval_1",
-      "type": {
-        "name": "eval",
-        "leanConstant": "HouLean.eval",
-        "exposeImplicitArgs": false,
-        "inputs": [
-          {
-            "builtin": {
-              "name": "function",
-              "type": "HouLean.Vector3 \u2192 HouLean.Vector3 \u00d7 HouLean.Vector3"
+              "type": "HouLean.Apex.Geometry"
             }
           },
           {
             "builtin": {
-              "name": "input_2",
-              "type": "HouLean.Vector3"
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "struct": {
-              "name": "output",
-              "type": "Prod HouLean.Vector3 HouLean.Vector3",
-              "subports": [
-                {
-                  "builtin": {
-                    "name": "fst",
-                    "type": "HouLean.Vector3"
-                  }
-                },
-                {
-                  "builtin": {
-                    "name": "snd",
-                    "type": "HouLean.Vector3"
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "portValues": [],
-      "x": 1946.6562352136134,
-      "y": 572.0437182425969
-    },
-    {
-      "name": "Arith_neg",
-      "type": {
-        "name": "Arith_neg",
-        "leanConstant": "Neg.neg",
-        "exposeImplicitArgs": false,
-        "inputs": [
-          {
-            "builtin": {
-              "name": "a",
-              "type": "HouLean.Vector3"
+              "name": "opts",
+              "type": "Unit"
             }
           }
         ],
@@ -10568,167 +10293,40 @@
           {
             "builtin": {
               "name": "output",
-              "type": "HouLean.Vector3"
+              "type": "HouLean.Apex.VisualizeM HouLean.Apex.Geometry"
             }
           }
         ]
       },
-      "portValues": [],
-      "x": 1590.6230553521764,
-      "y": 637.7860560107758
-    },
-    {
-      "name": "output_2",
-      "type": {
-        "name": "output",
-        "leanConstant": "HouLean.output",
-        "exposeImplicitArgs": false,
-        "inputs": [
-          {
-            "builtin": {
-              "name": "output",
-              "type": "?_"
-            }
-          }
-        ],
-        "outputs": [
-          {
-            "builtin": {
-              "name": "function",
-              "type": "?_"
-            }
-          }
-        ]
-      },
-      "portValues": [],
-      "x": 2245.485043250791,
-      "y": 556.675379543542
+      "portValues": [
+        "\"visualize\"",
+        "",
+        ""
+      ],
+      "x": -95.55494396867516,
+      "y": 335.71563999280306
     }
   ],
   "connections": [
-    {
-      "outputNodeName": "input_1",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "Prod_mk",
-      "inputIndex": [
-        1
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 88.0,
-      "isImplicit": false
-    },
     {
       "outputNodeName": "input",
       "outputIndex": [
         0
       ],
-      "inputNodeName": "Prod_mk",
+      "inputNodeName": "visualize",
       "inputIndex": [
-        0
+        1
       ],
       "outputRelPos": 60.0,
-      "inputRelPos": 60.0,
+      "inputRelPos": 88.0,
       "isImplicit": false
     },
     {
-      "outputNodeName": "Prod_mk",
+      "outputNodeName": "visualize",
       "outputIndex": [
         0
       ],
       "inputNodeName": "output",
-      "inputIndex": [
-        0
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 60.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "output",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "eval",
-      "inputIndex": [
-        0
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 60.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "eval",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "output_1",
-      "inputIndex": [
-        0
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 60.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "input_2",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "eval",
-      "inputIndex": [
-        1
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 88.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "Math_exp",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "eval",
-      "inputIndex": [
-        2
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 116.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "output_1",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "eval_1",
-      "inputIndex": [
-        0
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 60.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "Arith_neg",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "eval_1",
-      "inputIndex": [
-        1
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 88.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "eval_1",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "output_2",
       "inputIndex": [
         0
       ],

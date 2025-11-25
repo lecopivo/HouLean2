@@ -2,6 +2,7 @@ import HouLean.LeanGraph.Scopes
 import HouLean.LeanGraph.Linearization
 import HouLean.LeanGraph.GraphToCodeInit
 
+
 open Lean Meta Elab Term Std Qq
 
 namespace HouLean
@@ -460,6 +461,14 @@ structure TypeCheckResult where
   code : String
   mainProgram : Expr
 
+open Qq Apex in
+def maybeAddWithVisualizer (leanCode : Expr) : TermElabM Expr := do
+  forallTelescope (← inferType leanCode) fun xs r => do
+    unless ← isDefEq r q(VisualizeM Geometry) do
+      return leanCode
+    let e ← mkAppM ``Apex.withVisualizer #[← Apex.Compiler.betaThroughLet (leanCode.beta xs)]
+    return ← mkLambdaFVars xs e
+
 open LeanGraph PrettyPrinter in
 def typeCheck (graph : LeanGraph) : TermElabM TypeCheckResult := do
 
@@ -468,10 +477,10 @@ def typeCheck (graph : LeanGraph) : TermElabM TypeCheckResult := do
     nodeMap := ctx.nodeMap
     inputConnections := ctx.inputConnections
   }
-  let (leanCode,s) ← graphToCode graph ctx {}
+  let (leanCode,s) ← withSynthesizeLight (graphToCode graph ctx {})
   let (graph,_s) ← updateNodeTypes graph ctx s
 
-  let leanCode ← instantiateMVars leanCode
+  let leanCode ← instantiateMVars (← maybeAddWithVisualizer leanCode)
 
   -- let code ← delab leanCode
   let codeBody ← withOptions (fun opts => opts

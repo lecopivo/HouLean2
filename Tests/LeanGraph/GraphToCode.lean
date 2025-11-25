@@ -22,8 +22,12 @@ def typeCheckGraph (filePath : String) : TermElabM Unit := do
   let types := r.graph.nodes.map (·.type)
   let t := types.map (fun t => t.toString)
 
+  let mvars := (r.mainProgram.collectMVars {}).result
+
   logInfo r.code
   logInfo m!"{t}"
+  if mvars.size ≠ 0 then
+    logInfo m!"mvar types: {← mvars.mapM (fun m => do pure (Expr.mvar m, ← m.getType))}"
 
 
 /--
@@ -65,6 +69,8 @@ info: [output HouLean.output
  type : Type
  outputs:
  input : ?_]
+---
+info: mvar types: [(?m.1, Type)]
 -/
 #guard_msgs in
 run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_2.json"
@@ -101,8 +107,9 @@ run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_3.json"
 info: import HouLean
 
 def run :=
-  let output_1 := ?m.11;
-  output_1
+  withVisualizer
+    (let output_1 := ?m.11;
+    output_1)
 ---
 info: [output HouLean.output
  inputs:
@@ -119,6 +126,8 @@ info: [output HouLean.output
  output : ?_
  outputs:
  function : ?_]
+---
+info: mvar types: [(?m.11, VisualizeM Geometry)]
 -/
 #guard_msgs in
 run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_4.json"
@@ -146,6 +155,11 @@ info: [output HouLean.output
  type : Type
  outputs:
  input_1 : ?_]
+---
+info: mvar types: [(?m.14, (Float → Float) → Type),
+ (?m.18,
+  let output := fun input => input;
+  (input_1 : ?m.7) → ?m.17 input_1)]
 -/
 #guard_msgs in
 run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_5.json"
@@ -346,8 +360,9 @@ run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_11.json"
 info: import HouLean
 
 def run :=
-  let output := ?m.18;
-  output
+  withVisualizer
+    (let output := ?m.18;
+    output)
 ---
 info: [input HouLean.input
  inputs:
@@ -370,6 +385,8 @@ info: [input HouLean.input
  output : ?_
  outputs:
  function : ?m.1 → ?m.1]
+---
+info: mvar types: [(?m.18, VisualizeM Geometry)]
 -/
 #guard_msgs in
 run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_12.json"
@@ -434,9 +451,44 @@ info: [input HouLean.input
  output : ?_
  outputs:
  function : ?m.1 → ?m.1]
+---
+info: mvar types: [(?m.1, Type), (?m.14, Inhabited ?m.1)]
 -/
 #guard_msgs in
 run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_14.json"
+
+
+/--
+info: import HouLean
+
+def run :=
+  fun (input : Geometry) =>
+    withVisualizer
+      (let output := fun (input : Geometry) => do
+        let visualize ← visualize "visualize" input default
+        pure visualize;
+      output input)
+---
+info: [input HouLean.input
+ inputs:
+ type : Type
+ outputs:
+ input : HouLean.Apex.Geometry,
+ output HouLean.output
+ inputs:
+ output : HouLean.Apex.VisualizeM HouLean.Apex.Geometry
+ outputs:
+ function : Geometry → VisualizeM Geometry,
+ visualize HouLean.Apex.visualize
+ inputs:
+ nodeName : String
+ x : HouLean.Apex.Geometry
+ opts : Unit
+ outputs:
+ output : HouLean.Apex.VisualizeM HouLean.Apex.Geometry]
+-/
+#guard_msgs in
+run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_19.json"
 
 
 set_option trace.HouLean.LeanGraph.typecheck true

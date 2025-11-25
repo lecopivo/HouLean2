@@ -960,16 +960,16 @@ class NodeEditorWidget(QWidget):
 
         # warn about multiple output geometries
         if manyOutputGeos:
-            index = len(msgs)+1
+            index = len(msgs)
             msgNode.parm(f"severity{index+1}").set(1)
-            msgNode.parm(f"errormsg{index+1}").set(f"Multiple output geometries {outputGeos}, returning only the first one {geouputGeos[0]}!")
+            msgNode.parm(f"errormsg{index+1}").set(f"Multiple output geometries {outputGeos}, returning only the first one {outputGeos[0]}!")
             msgNode.parm(f"enable{index+1}").set(1)
 
         # pass on type checker and compiler errors and warnings
         for index, msg in enumerate(msgs):
             severity = msg["severity"]
             msgText = msg["data"].replace("`","'")
-
+            print(f"setting msg of index: {index}, to node {msgNode}, of severity {severity}\n{msgText}")
             if severity == "information":
                 msgNode.parm(f"severity{index+1}").set(0)
                 msgNode.parm(f"errormsg{index+1}").set(msgText)
