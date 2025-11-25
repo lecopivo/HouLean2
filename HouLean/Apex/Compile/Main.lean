@@ -452,6 +452,8 @@ partial def compileConstant (e : Expr) :
     return (#[], .leaf (.literal (.bool false)))
   if (← isDefEq e (.const `HouLean.Apex.Geometry.default [])) then
     return (#[], .leaf (.literal .empty_geometry))
+  if (← isDefEq e (.const `HouLean.Apex.Dict.default [])) then
+    return (#[], .leaf (.literal .empty_dict))
 
   -- discard inputs
   if let some (_inputs,output) ← tryCompileImplementedBy e #[] then
@@ -751,7 +753,7 @@ partial def compileApplication (e : Expr) :
 /-- Compile let expression -/
 partial def compileLet (n : Name) (t : Expr) (v : Expr) (b : Expr) :
     GraphCompileM (Array PortBundle × PortBundle) := do
-  if t.isForall then
+  if (← whnf t).isForall then
     return ← compile (b.instantiate1 v)
 
   withLetDecl n t v fun x => do
@@ -934,7 +936,6 @@ def programToApexGraph (e : Expr) : MetaM ApexGraph := do
     fixInputOutputTypes
 
 
-
 open Elab Term Command in
 /-- Print APEX graph for given Lean expression. -/
 elab t:"#apex_graph" x:term : command => do
@@ -942,7 +943,6 @@ elab t:"#apex_graph" x:term : command => do
   let x ← elabTermAndSynthesize x none
   let g ← programToApexGraph x
   logInfoAt t s!"{g}"
-
 
 
 -- todo: move this somewhere

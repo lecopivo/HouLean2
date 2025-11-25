@@ -2,57 +2,54 @@ import HouLean.Init
 import HouLean.Apex.ApexType
 import HouLean.Apex.Generated.Nodes
 import HouLean.Apex.Compile.ImplementedBy
+import HouLean.Apex.Lean.Ite
 
 open HouLean Apex Compiler
 
 namespace HouLean.Apex.Compiler
 
--- @[apex_implements Option] -- this should work too as `argMap` is trivial here
-abbrev Maybe (α : Type u) := α × Bool
+-- not sure if it shoudl be
+--     - ApexType (Option α) (α×Bool)
+-- or  - ApexType (Option α) (A×Bool)
+instance {α A} [ApexType α A] [Inhabited A] : ApexType (Option α) (A×Bool) where
+  toApex x? :=
+    match x? with
+    | some x => (toApex x, true)
+    | none => (default, false)
+  fromApex := fun (x, valid) =>  if valid then some (fromApex x) else none
 
--- @[apex_implements Option.some] -- this should work as `argMap` is trivial here
-def Maybe.some {α} (val : α) : Maybe α := ⟨val, true⟩
 
--- @[apex_implements Option.none] -- what syntax should be here/should I figure out `argMap` automatically?
-def Maybe.none {α} [Inhabited α] : Maybe α := ⟨default, false⟩
+variable
+  {α A} [ApexType α A] [Inhabited A]
+  {β B} [ApexType β B] [Inhabited B]
 
--- ideally this should just be
--- attribute [apex] Option -- and it will generate all this stuff automatically 
+def _root_.Option.some.apex_impl (x : α) : Option α := fromApex (α:=Option α) (toApex x, true)
 
-def _root_.Option.toMaybe {α} [Inhabited α] (val? : Option α) : Maybe α := 
-  match val? with
-  | .some val => ⟨val, true⟩
-  | .none => ⟨default, false⟩
+run_meta compilerExt.add (.implementedByName ``Option.some ``Option.some.apex_impl #[some 0, none, none, none, some 1]) default
 
-def Maybe.toOption {α} (val? : Maybe α) : Option α := 
-  match val?.2 with
-  | true => .some val?.1
-  | false => .none
+def _root_.Option.none.apex_impl : Option α := fromApex (α:=Option α) (default, false)
 
-def Maybe.map {α β} (f : α → β) (x : Maybe α) : Maybe β :=
-  ⟨f x.1, x.2⟩
+run_meta compilerExt.add (.implementedByName ``Option.none ``Option.none.apex_impl #[some 0, none, none, none]) default
 
-unsafe def Maybe.optionRec {α : Type u} [Inhabited α] 
-  {motive : Option α → Sort v} (n : motive .none)
-  (s : (val : α) → motive (.some val)) (t : Option α) : motive t :=
-  let t' := t.toMaybe
-  if t'.2 then
-    unsafeCast (s t'.1)
+-- def _root_.Option.getD.apex_impl
+
+-- def _root_.Option.map.apex_impl (f : α → β) (x? : Option α) : Option β :=
+--   let (x, valid) := toApex x?
+--   if valid then
+--     some (f (fromApex x))
+--   else
+--     none
+
+-- run_meta compilerExt.add (.implementedByName ``Option.map ``Option.map.apex_impl #[some 0, none, none, none, some 1, some 2, some 3]) default
+
+def _root_.Option.rec.apex_impl {motive : Option α → Sort u_1}
+    (n : motive none) (s : ((val : α) → motive (some val))) (t? : Option α) : motive t? :=
+  let tvalid := toApex t?
+  let t := tvalid.1
+  let valid := tvalid.2
+  if valid then
+    cast sorry_proof (s (fromApex t))
   else
-    unsafeCast n
+    cast sorry_proof n
 
-end HouLean.Apex.Compiler
-
-instance {α A} [Inhabited α] [ApexType α A] : ApexType (Option α) (Maybe A) where
-  toApex x := x.toMaybe.map toApex
-  fromApex x := x.toOption.map fromApex
-
--- constructors and recursor
-run_meta compilerExt.add (.implementedByName ``Option.some ``Maybe.some #[some 0, some 1]) default
-run_meta compilerExt.add (.implementedByName ``Option.none ``Maybe.none #[some 0, none]) default
-run_meta compilerExt.add (.implementedByName ``Option.rec ``Maybe.optionRec #[some 0, none, some 1, some 2, some 3, some 4]) default
-
--- compilation morphism
-run_meta compilerExt.add (.implementedByName ``Option.toMaybe ``id' #[none, some 2]) default
-run_meta compilerExt.add (.implementedByName ``Maybe.toOption ``id' #[none, some 1]) default
-
+run_meta compilerExt.add (.implementedByName ``Option.rec ``Option.rec.apex_impl #[some 0, none, none, none, some 1, some 2, some 3, some 4]) default

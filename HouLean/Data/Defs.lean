@@ -47,21 +47,32 @@ deriving Repr
 instance : Inhabited Matrix4 := ⟨{}⟩
 
 
-/-- Rigid transformation with scaling.
+/-- Rigid transformation without scaling.
 -/
-structure RigidScaleTransform where
+structure RigidTransform where
   translate : Vector3 := ⟨0,0,0⟩
   orient : Vector4 := ⟨0,0,0,1⟩
+instance : Inhabited RigidTransform := ⟨{}⟩
+
+/-- Rigid transformation with scaling.
+-/
+structure RigidScaleTransform extends RigidTransform where
   scale : Float := 1
 instance : Inhabited RigidScaleTransform := ⟨{}⟩
 
 
-/-- Rigid body velocity with scaling.
+/-- Rigid body velocity without scaling.
     Represents instantaneous velocity in SE(3) Lie algebra.
 -/
-structure RigidScaleVelocity where
+structure RigidVelocity where
   velocity : Vector3 := ⟨0,0,0⟩
   angularVelocity : Vector3 := ⟨0,0,0⟩
+instance : Inhabited RigidVelocity := ⟨{}⟩
+
+/-- Rigid body velocity with scaling.
+    Represents instantaneous velocity in SE(3) Lie algebra with scale rate.
+-/
+structure RigidScaleVelocity extends RigidVelocity where
   scaleVelocity : Float := 0
 instance : Inhabited RigidScaleVelocity := ⟨{}⟩
 

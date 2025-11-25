@@ -66,6 +66,5 @@ def visualize' {α Options ts ts'} {defaultOpts : Options} [Visualizer α defaul
       (fun (opts, x, (visualizers, visGeo)) =>
         (opts, x, (visualizers, visGeo.merge (Visualizer.visualize x opts))))
       (fun (opts, x, (visualizers, visGeo)) =>
-        let visualizers := visualizers.alter nodeName (fun count? => some (count?.map (·+1) |>.getD 0))
         (opts, x, (visualizers, visGeo))))
     |>.snd

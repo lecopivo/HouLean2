@@ -3,7 +3,9 @@ import HouLean.Data.Defs
 import HouLean.Data.Vector3
 import HouLean.Data.Vector4
 import HouLean.Data.Float
+import HouLean.Data.RigidTransform
 import HouLean.Data.RigidScaleTransform
+import HouLean.Data.RigidVelocity
 
 open HouLean.Math
 
@@ -13,42 +15,43 @@ namespace HouLean.RigidScaleVelocity
 -- Construction
 -- ============================================================================
 
-def zero : RigidScaleVelocity := ⟨⟨0,0,0⟩, ⟨0,0,0⟩, 0⟩
+def zero : RigidScaleVelocity := ⟨RigidVelocity.zero, 0⟩
 
 def fromVelocity (v : Vector3) : RigidScaleVelocity :=
-  ⟨v, ⟨0,0,0⟩, 0⟩
+  ⟨RigidVelocity.fromVelocity v, 0⟩
 
 def fromAngularVelocity (w : Vector3) : RigidScaleVelocity :=
-  ⟨⟨0,0,0⟩, w, 0⟩
+  ⟨RigidVelocity.fromAngularVelocity w, 0⟩
 
 def fromScaleVelocity (s : Float) : RigidScaleVelocity :=
-  ⟨⟨0,0,0⟩, ⟨0,0,0⟩, s⟩
+  ⟨RigidVelocity.zero, s⟩
+
+def fromRigidVelocity (rv : RigidVelocity) : RigidScaleVelocity :=
+  ⟨rv, 0⟩
 
 -- ============================================================================
 -- Lie algebra operations (vector space structure)
 -- ============================================================================
 
 defun add (a b : RigidScaleVelocity) : RigidScaleVelocity :=
-  ⟨a.velocity + b.velocity,
-   a.angularVelocity + b.angularVelocity,
+  ⟨a.toRigidVelocity.add b.toRigidVelocity,
    a.scaleVelocity + b.scaleVelocity⟩
 
 instance : HAdd RigidScaleVelocity RigidScaleVelocity RigidScaleVelocity := ⟨add⟩
 
 defun sub (a b : RigidScaleVelocity) : RigidScaleVelocity :=
-  ⟨a.velocity - b.velocity,
-   a.angularVelocity - b.angularVelocity,
+  ⟨a.toRigidVelocity.sub b.toRigidVelocity,
    a.scaleVelocity - b.scaleVelocity⟩
 
 instance : HSub RigidScaleVelocity RigidScaleVelocity RigidScaleVelocity := ⟨sub⟩
 
 defun neg (v : RigidScaleVelocity) : RigidScaleVelocity :=
-  ⟨-v.velocity, -v.angularVelocity, -v.scaleVelocity⟩
+  ⟨v.toRigidVelocity.neg, -v.scaleVelocity⟩
 
 instance : Neg RigidScaleVelocity := ⟨neg⟩
 
 def smul (v : RigidScaleVelocity) (t : Float) : RigidScaleVelocity :=
-  ⟨t * v.velocity, t * v.angularVelocity, t * v.scaleVelocity⟩
+  ⟨v.toRigidVelocity.smul t, t * v.scaleVelocity⟩
 
 instance : HMul Float RigidScaleVelocity RigidScaleVelocity :=
   ⟨fun s v => smul v s⟩
@@ -63,12 +66,9 @@ defun hDiv (v : RigidScaleVelocity) (t : Float) : RigidScaleVelocity :=
 
 /-- Integrate velocity over time to get a transform (exponential map) -/
 def toTransform (vel : RigidScaleVelocity) (dt : Float) : RigidScaleTransform :=
-  let t := dt * vel.velocity
-  let aa := dt * vel.angularVelocity
-  let q := if aa.length == 0 then ⟨0,0,0,1⟩
-           else aa.normalized.axisAngleToQuat aa.length
+  let rigidPart := vel.toRigidVelocity.toTransform dt
   let s := 1.0 + dt * vel.scaleVelocity
-  ⟨t, q, s⟩
+  ⟨rigidPart, s⟩
 
 
 -- ============================================================================
@@ -77,11 +77,9 @@ def toTransform (vel : RigidScaleVelocity) (dt : Float) : RigidScaleTransform :=
 
 /-- Extract velocity from a transform with time step dt (logarithm map) -/
 def fromTransform (xform : RigidScaleTransform) (dt : Float := 1) : RigidScaleVelocity :=
-  let (axis, angle) := xform.orient.quatToAxisAngle
-  let angVel := (angle / dt) * axis
-  let vel := xform.translate / dt
+  let rigidVel := RigidVelocity.fromTransform xform.toRigidTransform dt
   let scaleVel := (xform.scale - 1.0) / dt
-  ⟨vel, angVel, scaleVel⟩
+  ⟨rigidVel, scaleVel⟩
 
 /-- Compute velocity needed to go from xform1 to xform2 in time dt -/
 def fromTransformDelta (xform1 xform2 : RigidScaleTransform) (dt : Float) : RigidScaleVelocity :=
@@ -93,8 +91,7 @@ def fromTransformDelta (xform1 xform2 : RigidScaleTransform) (dt : Float) : Rigi
 -- ============================================================================
 
 defun beq (a b : RigidScaleVelocity) : Bool :=
-  a.velocity.beq b.velocity &&
-  a.angularVelocity.beq b.angularVelocity &&
+  a.toRigidVelocity.beq b.toRigidVelocity &&
   a.scaleVelocity == b.scaleVelocity
 
 instance : BEq RigidScaleVelocity := ⟨beq⟩
@@ -105,17 +102,17 @@ instance : BEq RigidScaleVelocity := ⟨beq⟩
 
 /-- Total magnitude (Euclidean norm in velocity space) -/
 def magnitude (vel : RigidScaleVelocity) : Float :=
-  Float.sqrt (vel.velocity.length2 +
-              vel.angularVelocity.length2 +
+  Float.sqrt (vel.toRigidVelocity.velocity.length2 +
+              vel.toRigidVelocity.angularVelocity.length2 +
               vel.scaleVelocity * vel.scaleVelocity)
 
 /-- Linear speed -/
 def linearSpeed (vel : RigidScaleVelocity) : Float :=
-  vel.velocity.length
+  vel.toRigidVelocity.linearSpeed
 
 /-- Angular speed (magnitude of angular velocity) -/
 def angularSpeed (vel : RigidScaleVelocity) : Float :=
-  vel.angularVelocity.length
+  vel.toRigidVelocity.angularSpeed
 
 /-- Normalize velocity to unit magnitude -/
 def normalized (vel : RigidScaleVelocity) : RigidScaleVelocity :=
@@ -131,8 +128,7 @@ def distance (a b : RigidScaleVelocity) : Float :=
 -- ============================================================================
 
 defun lerp (a b : RigidScaleVelocity) (t : Float) : RigidScaleVelocity :=
-  ⟨a.velocity.lerp b.velocity t,
-   a.angularVelocity.lerp b.angularVelocity t,
+  ⟨a.toRigidVelocity.lerp b.toRigidVelocity t,
    a.scaleVelocity + (b.scaleVelocity - a.scaleVelocity) * t⟩
 
 -- ============================================================================
@@ -140,13 +136,13 @@ defun lerp (a b : RigidScaleVelocity) (t : Float) : RigidScaleVelocity :=
 -- ============================================================================
 
 def withVelocity (vel : RigidScaleVelocity) (v : Vector3) : RigidScaleVelocity :=
-  ⟨v, vel.angularVelocity, vel.scaleVelocity⟩
+  ⟨vel.toRigidVelocity.withVelocity v, vel.scaleVelocity⟩
 
 def withAngularVelocity (vel : RigidScaleVelocity) (w : Vector3) : RigidScaleVelocity :=
-  ⟨vel.velocity, w, vel.scaleVelocity⟩
+  ⟨vel.toRigidVelocity.withAngularVelocity w, vel.scaleVelocity⟩
 
 def withScaleVelocity (vel : RigidScaleVelocity) (s : Float) : RigidScaleVelocity :=
-  ⟨vel.velocity, vel.angularVelocity, s⟩
+  ⟨vel.toRigidVelocity, s⟩
 
 -- ============================================================================
 -- Physical quantities
@@ -154,12 +150,11 @@ def withScaleVelocity (vel : RigidScaleVelocity) (s : Float) : RigidScaleVelocit
 
 /-- Kinetic energy (assuming unit mass/inertia) -/
 def kineticEnergy (vel : RigidScaleVelocity) : Float :=
-  0.5 * (vel.velocity.length2 + vel.angularVelocity.length2)
+  vel.toRigidVelocity.kineticEnergy
 
 /-- Dot product in velocity space -/
 defun dot (a b : RigidScaleVelocity) : Float :=
-  a.velocity.dot b.velocity +
-  a.angularVelocity.dot b.angularVelocity +
+  a.toRigidVelocity.dot b.toRigidVelocity +
   a.scaleVelocity * b.scaleVelocity
 
 -- ============================================================================
@@ -168,32 +163,17 @@ defun dot (a b : RigidScaleVelocity) : Float :=
 
 /-- Get screw axis (direction of angular velocity) -/
 def screwAxis (vel : RigidScaleVelocity) : Vector3 :=
-  let angSpeed := vel.angularSpeed
-  if angSpeed == 0 then ⟨0, 1, 0⟩
-  else vel.angularVelocity.hDiv angSpeed
+  vel.toRigidVelocity.screwAxis
 
 /-- Get pitch (linear velocity along screw axis per unit angular velocity) -/
 def pitch (vel : RigidScaleVelocity) : Float :=
-  let angSpeed := vel.angularSpeed
-  if angSpeed == 0 then 0
-  else vel.velocity.dot (vel.screwAxis) / angSpeed
+  vel.toRigidVelocity.pitch
 
 /-- Decompose into rotation about axis and translation along axis -/
 def decompose (vel : RigidScaleVelocity) : RigidScaleVelocity × RigidScaleVelocity :=
-  let axis := vel.screwAxis
-  let angSpeed := vel.angularSpeed
-
-  if angSpeed == 0 then
-    -- Pure translation
-    (⟨⟨0,0,0⟩, ⟨0,0,0⟩, vel.scaleVelocity⟩,
-     ⟨vel.velocity, ⟨0,0,0⟩, 0⟩)
-  else
-    -- Decompose velocity into parallel and perpendicular components
-    let velParallel := (vel.velocity.dot axis) * axis
-    let velPerp := vel.velocity - velParallel
-
-    (⟨velPerp, vel.angularVelocity, vel.scaleVelocity⟩,
-     ⟨velParallel, ⟨0,0,0⟩, 0⟩)
+  let (rotPart, transPart) := vel.toRigidVelocity.decompose
+  (⟨rotPart, vel.scaleVelocity⟩,
+   ⟨transPart, 0⟩)
 
 -- ============================================================================
 -- Apply velocity to points (instantaneous change)
@@ -202,11 +182,11 @@ def decompose (vel : RigidScaleVelocity) : RigidScaleVelocity × RigidScaleVeloc
 /-- Compute instantaneous change in point position -/
 def applyToPoint (vel : RigidScaleVelocity) (p : Vector3) : Vector3 :=
   -- v_point = v_linear + ω × p + s * p (where s is scale velocity)
-  vel.velocity + vel.angularVelocity.cross p + vel.scaleVelocity * p
+  vel.toRigidVelocity.applyToPoint p + vel.scaleVelocity * p
 
 /-- Compute instantaneous change in vector (no translation) -/
 def applyToVector (vel : RigidScaleVelocity) (v : Vector3) : Vector3 :=
-  vel.angularVelocity.cross v + vel.scaleVelocity * v
+  vel.toRigidVelocity.applyToVector v + vel.scaleVelocity * v
 
 -- ============================================================================
 -- Clamping and limiting
@@ -215,20 +195,9 @@ def applyToVector (vel : RigidScaleVelocity) (v : Vector3) : Vector3 :=
 /-- Clamp velocity components to maximum values -/
 def clamp (vel : RigidScaleVelocity)
           (maxLinear maxAngular maxScale : Float) : RigidScaleVelocity :=
-  let linSpeed := vel.linearSpeed
-  let angSpeed := vel.angularSpeed
-
-  let linClamped := if linSpeed > maxLinear && linSpeed > 0 then
-    (maxLinear / linSpeed) * vel.velocity
-  else vel.velocity
-
-  let angClamped := if angSpeed > maxAngular && angSpeed > 0 then
-    (maxAngular / angSpeed) * vel.angularVelocity
-  else vel.angularVelocity
-
+  let rigidClamped := vel.toRigidVelocity.clamp maxLinear maxAngular
   let scaleClamped := vel.scaleVelocity.clamp (-maxScale) maxScale
-
-  ⟨linClamped, angClamped, scaleClamped⟩
+  ⟨rigidClamped, scaleClamped⟩
 
 /-- Clamp total magnitude while preserving direction -/
 def clampMagnitude (vel : RigidScaleVelocity) (maxMag : Float) : RigidScaleVelocity :=

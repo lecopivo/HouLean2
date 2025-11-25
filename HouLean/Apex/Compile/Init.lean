@@ -18,7 +18,7 @@ protected def VariadicArg.default [Inhabited α] : (n : Nat) → VariadicArg α 
 instance {α} [Inhabited α] : Inhabited (VariadicArg α n) := ⟨VariadicArg.default n⟩
 
 syntax "#a[" term,* "]" : term
-macro_rules 
+macro_rules
 | `(#a[]) => `(VariadicArg.nil)
 | `(#a[$x:term]) => `(VariadicArg.cons $x .nil)
 | `(#a[$x:term,$xs:term,*]) => `(VariadicArg.cons $x #a[$xs:term,*])
@@ -29,23 +29,23 @@ inductive Apex.VariadicArg' : List ApexTypeTag  → Type u where
   | cons {t : ApexTypeTag} {ts : List ApexTypeTag} (head : t.toType) (tail : VariadicArg' ts) : VariadicArg' (t::ts)
 
 namespace Apex.VariadicArg'
-def append {ts ts'} (xs : VariadicArg' ts) (ys : VariadicArg' ts') : VariadicArg' (ts ++ ts') := 
+def append {ts ts'} (xs : VariadicArg' ts) (ys : VariadicArg' ts') : VariadicArg' (ts ++ ts') :=
   match ts, xs with
   | [], _ => ys
   | _::_, .cons x xs => .cons x (xs.append ys)
 
-def split {ts ts'} (xs : VariadicArg' (ts++ts')) : VariadicArg' ts × VariadicArg' ts' := 
+def split {ts ts'} (xs : VariadicArg' (ts++ts')) : VariadicArg' ts × VariadicArg' ts' :=
   match ts, xs with
   | [], xs => (.nil, xs)
-  | _::_, .cons x xys => 
+  | _::_, .cons x xys =>
     let (xs,y) := xys.split
     (.cons x xs, y)
 
 end Apex.VariadicArg'
 
-/-- This class maps Lean type `α` to Apex compatible type `β`. 
+/-- This class maps Lean type `α` to Apex compatible type `β`.
 
-This extensible type level function mapping α to β is used to 
+This extensible type level function mapping α to β is used to
 transform Lean code to a smaller subset of Lean which is supported
 by Apex compiler. Therefore many APEX compiler extensions can be done
 through providing instances like `ApexType` and one does not have to
@@ -301,15 +301,19 @@ instance : ApexType Vector4Array Vector4Array where
 ----------------------------------------------------------------------------------------------------
 -- Instances for ApexTypeFlatten
 
+instance {ts} : ApexTypeFlatten (VariadicArg' ts) ts where
+  apexFlatten x := x
+  apexUnflatten x := x
+
 instance {α β ts ts'} [ApexTypeFlatten α ts] [ApexTypeFlatten β ts'] : ApexTypeFlatten (α×β) (ts++ts') where
   apexFlatten := fun (x,y) => (apexFlatten x).append (apexFlatten y)
-  apexUnflatten := fun xy => 
+  apexUnflatten := fun xy =>
     let (x,y) := xy.split
     (apexUnflatten x, apexUnflatten y)
 
 unsafe instance [ApexTypeFlatten α ts] [ApexTypeFlatten β ss] : ApexTypeFlatten (MProd α β) (ts ++ ss) where
   apexFlatten := fun ⟨x,y⟩ => (apexFlatten x).append (apexFlatten y)
-  apexUnflatten := fun xy => 
+  apexUnflatten := fun xy =>
     let (x,y) := xy.split
     ⟨apexUnflatten x, apexUnflatten y⟩
 

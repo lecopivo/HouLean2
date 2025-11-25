@@ -17,6 +17,7 @@ inductive LiteralVal
   | matrix3 (val : Matrix3)
   | matrix4 (val : Matrix4)
   | empty_geometry
+  | empty_dict
 deriving Inhabited, Repr
 
 def LiteralVal.toString : LiteralVal → String
@@ -31,9 +32,14 @@ def LiteralVal.toString : LiteralVal → String
   | .matrix3 m => s!"hou.Matrix3(({m.row0.x},{m.row0.y},{m.row0.z},{m.row1.x},{m.row1.y},{m.row2.z},{m.row2.x},{m.row2.y},{m.row2.z}))"
   | .matrix4 m => s!"hou.Matrix4(({m.row0.x},{m.row0.y},{m.row0.z},{m.row0.w},{m.row1.x},{m.row1.y},{m.row1.z},{m.row1.w},{m.row2.x},{m.row2.y},{m.row2.z},{m.row2.w},{m.row3.x},{m.row3.y},{m.row3.z},{m.row3.w}))"
   | .empty_geometry => "empty_geometry"
+  | .empty_dict => "empty_dict"
 
 def LiteralVal.isEmptyGeometry : LiteralVal → Bool
   | .empty_geometry => true
+  | _ => false
+
+def LiteralVal.isEmptyDict : LiteralVal → Bool
+  | .empty_dict => true
   | _ => false
 
 inductive OutputConnection
@@ -50,31 +56,31 @@ structure ApexGraph where
   wires : Array (PortId × PortId)
   /-- Stores information saying which ports must be set to which value. -/
   literals : Array (LiteralVal × PortId)
-  /-- Each input port corresponds to multiple ports. 
+  /-- Each input port corresponds to multiple ports.
 
-  When connection to an input of a graph one should connect to all the input ports. 
+  When connection to an input of a graph one should connect to all the input ports.
 
   There are more like temporary connections that are still missing the source port. -/
   inputs : Array (LocalPort × Array PortId)
-  /-- output is either a port or directly fething an input. 
+  /-- output is either a port or directly fething an input.
 
   There are more like temporary connections that are still missing target port. -/
   outputs : Array (LocalPort × OutputConnection)
 deriving Inhabited
 
 
-def ApexGraph.printPort (g : ApexGraph) (p : PortId) : String := 
+def ApexGraph.printPort (g : ApexGraph) (p : PortId) : String :=
   match p with
   | .port p =>
     let port := g.ports[p]!
     if ¬port.isVariadic then
       s!"/{g.nodes[port.nodeId]!.name}/{port.name}[{if g.ports[p]!.dir == .input then "in" else "out"}]"
     else
-      s!"/{g.nodes[port.nodeId]!.name}/{port.name}[⋯][{if g.ports[p]!.dir == .input then "in" else "out"}]"    
+      s!"/{g.nodes[port.nodeId]!.name}/{port.name}[⋯][{if g.ports[p]!.dir == .input then "in" else "out"}]"
   | .subport p i =>
     s!"/{g.nodes[g.ports[p]!.nodeId]!.name}/{g.ports[p]!.name}[{i}][{if g.ports[p]!.dir == .input then "in" else "out"}]"
 
-instance : ToString ApexGraph := ⟨fun g => 
+instance : ToString ApexGraph := ⟨fun g =>
   Id.run do
     let mut s := "Nodes:\n"
     for n in g.nodes, i in [0:g.nodes.size] do
@@ -111,9 +117,9 @@ instance : ToString ApexGraph := ⟨fun g =>
     for (val, portId) in g.literals, i in Array.range g.literals.size do
       let portStr := g.printPort portId
       match val with
-      | .int val => 
+      | .int val =>
         s := s ++ s!"  {i}: int {val} -> {portStr} \n"
-      | .float val => 
+      | .float val =>
         s := s ++ s!"  {i}: float {val} -> {portStr} \n"
       | .str str =>
         s := s ++ s!"  {i}: str \"{str}\" -> {portStr} \n"
@@ -132,7 +138,9 @@ instance : ToString ApexGraph := ⟨fun g =>
       | .matrix4 v =>
         s := s ++ s!"  {i}: matrix4 \"{repr v}\" -> {portStr} \n"
       | .empty_geometry =>
-        s := s ++ s!"  {i}: emptY_geometry -> {portStr} \n"
+        s := s ++ s!"  {i}: empty_geometry -> {portStr} \n"
+      | .empty_dict =>
+        s := s ++ s!"  {i}: empty_dict -> {portStr} \n"
     return s⟩
 
 -- def ApexGraph.addInt (g : ApexGraph) (val : Int) (port : Port) : ApexGraph :=
@@ -192,7 +200,7 @@ def ApexGraph.addInput (g : ApexGraph) (name : Name) (type : PortType) : (ApexGr
     dir := .output
   }
   ({g with inputs := g.inputs.push (port,#[])}, id)
-  
+
 
 abbrev PortBundle := ArrayTree PortPtr
 
@@ -204,9 +212,9 @@ partial def arrayToProdBundle (ps : Array PortBundle) : PortBundle :=
   else
     .node #[ps[0]!, arrayToProdBundle ps[1:].toArray]
 
-def isVariadic'? (port : ArrayTree Port) : Option Port := 
+def isVariadic'? (port : ArrayTree Port) : Option Port :=
   match port with
-  | .leaf p => 
+  | .leaf p =>
     if p.isVariadic' then
       p
     else
@@ -214,9 +222,9 @@ def isVariadic'? (port : ArrayTree Port) : Option Port :=
   | .node .. =>
     none
 
-def isVariadic? (port : ArrayTree Port) : Option Port := 
+def isVariadic? (port : ArrayTree Port) : Option Port :=
   match port with
-  | .leaf p => 
+  | .leaf p =>
     if p.isVariadic then
       p
     else
@@ -224,32 +232,32 @@ def isVariadic? (port : ArrayTree Port) : Option Port :=
   | .node .. =>
     none
 
-/-- Add a node to the graph with optional subports 
+/-- Add a node to the graph with optional subports
 
 argPorts are used to derive the shape for `VariadicArg'` shapes -/
-def ApexGraph.addNode (g : ApexGraph) (nodeType : NodeType) (nodeName : String) (argPorts : Array PortBundle) : 
+def ApexGraph.addNode (g : ApexGraph) (nodeType : NodeType) (nodeName : String) (argPorts : Array PortBundle) :
     MetaM struct { graph : ApexGraph, nodeId : Nat, inputs : Array PortBundle, output : PortBundle} := do
   let nodeOff := g.nodes.size
   let portOff := g.ports.size
 
-  let inputs : Array (ArrayTree Port) := 
+  let inputs : Array (ArrayTree Port) :=
     nodeType.inputs.map (fun input =>
-    input.map (fun localPort => 
-      {localPort with 
+    input.map (fun localPort =>
+      {localPort with
         globalId := localPort.localId + portOff
         nodeId := nodeOff}))
 
-  let output : (ArrayTree Port) := 
-    nodeType.output.map (fun localPort => 
-      {localPort with 
+  let output : (ArrayTree Port) :=
+    nodeType.output.map (fun localPort =>
+      {localPort with
         globalId := localPort.localId + portOff
         nodeId := nodeOff})
-  
+
   let mut ports : Array Port := #[]
   if nodeType.hasRunData then
-    ports := ports.push { 
-      localId := 0, globalId := portOff, 
-      name := .anonymous, type := .rundata, 
+    ports := ports.push {
+      localId := 0, globalId := portOff,
+      name := .anonymous, type := .rundata,
       dir := .output, nodeId := nodeOff}
   ports := ports ++ (inputs.map (·.flatten)).flatten ++ output.flatten
 
@@ -322,7 +330,7 @@ def ApexGraph.addValueNode (g : ApexGraph) (t : ApexTypeTag) : MetaM (ApexGraph 
     throwError s!"APEX compiler bug in {decl_name%}, something went wrong adding value node!"
 
 
-def LiteralVal.typeTag (val : LiteralVal) : ApexTypeTag := 
+def LiteralVal.typeTag (val : LiteralVal) : ApexTypeTag :=
   match val with
   | .float .. => .float
   | .int .. => .int
@@ -335,8 +343,9 @@ def LiteralVal.typeTag (val : LiteralVal) : ApexTypeTag :=
   | .matrix3 .. => .matrix3
   | .matrix4 .. => .matrix4
   | .empty_geometry => .geometry
+  | .empty_dict => .dict
 
-def ApexGraph.ensurePortSize (g : ApexGraph) (globalPortId : Nat) (size : Nat) : ApexGraph := 
+def ApexGraph.ensurePortSize (g : ApexGraph) (globalPortId : Nat) (size : Nat) : ApexGraph :=
   let nodeId := g.ports[globalPortId]!.nodeId
   {g with nodes := g.nodes.modify nodeId (fun node => node.ensureSubportSize globalPortId size) }
 
@@ -382,28 +391,28 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
     unless g.ports[src]!.dir == .output do
       throwError s!"Graph output can be connected only to output port!\n{repr src} -> {repr trg}"
 
-    let port := { g.ports[src]!.toLocalPort with 
+    let port := { g.ports[src]!.toLocalPort with
       dir := .input
       localId := g.outputs.size
       name := name
-    }     
+    }
     return {g with outputs := g.outputs.push (port, .port src)}
 
   | .subport id i, .output name =>
     unless g.ports[id]!.dir == .output do
       throwError s!"Graph output can be connected only to output port!\n{repr src} -> {repr trg}"
 
-    let port := { g.ports[id]!.toLocalPort with 
+    let port := { g.ports[id]!.toLocalPort with
       dir := .input
       localId := g.outputs.size
       name := name.appendAfter (toString i)
-    }     
+    }
     return {g with outputs := g.outputs.push (port, .subport id i)}
 
   | .literal val, .output name =>
     if val.isEmptyGeometry then
       return g
-  
+
     let port : LocalPort := default
     let port := {port with
       localId := g.outputs.size
@@ -413,28 +422,28 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
     }
     return {g with outputs := g.outputs.push ({port with name := name}, .literal val)}
 
-  | .input id, trg =>    
+  | .input id, trg =>
     unless id < g.inputs.size do
       throwError s!"Connecting to non-existent input port!\n{repr src} -> {repr trg}"
     match trg with
-    | .port trg => 
+    | .port trg =>
       unless g.ports[trg]!.dir == .input do
         throwError s!"Graph input can be connected only to input port!\n{repr src} -> {repr trg}"
 
       return {g with inputs := g.inputs.modify id (fun (t,ports) => (t, ports.push (.port trg)))}
-    | .subport trg j => 
+    | .subport trg j =>
       let g := g.ensurePortSize trg (j+1)
       return {g with inputs := g.inputs.modify id (fun (t,ports) => (t, ports.push (.subport trg j)))}
 
     | .output name =>
-      let port := { g.inputs[id]!.1 with 
+      let port := { g.inputs[id]!.1 with
         dir := .input
         localId := g.outputs.size
         name := name
-      }     
+      }
       return {g with outputs := g.outputs.push (port, .input id)}
-    | _ => 
-      throwError s!"Trying to make an invalid connection {repr src} -> {repr trg}" 
+    | _ =>
+      throwError s!"Trying to make an invalid connection {repr src} -> {repr trg}"
   | _, _ =>
     throwError s!"Trying to make an invalid connection {repr src} -> {repr trg}"
 
@@ -471,19 +480,19 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
 --   let nodeOff := g.nodes.size
 --   let portOff := g.ports.size
 
---   let ports := localPorts.map (fun p => 
+--   let ports := localPorts.map (fun p =>
 --     {p with globalId := portOff + p.localId, nodeId := nodeOff : Port})
 
---   let stateIn := stateType.mapIdx fun i (name,typeName) => 
---     { localId  := 2*i + localPorts.size, 
+--   let stateIn := stateType.mapIdx fun i (name,typeName) =>
+--     { localId  := 2*i + localPorts.size,
 --       globalId := 2*i + localPorts.size + portOff
 --       nodeId := nodeOff
 --       name := name
 --       type := .builtin typeName
 --       dir := .input : Port}
 
---   let stateOut := stateType.mapIdx fun i (name,typeName) => 
---     { localId  := 2*i + 1 + localPorts.size, 
+--   let stateOut := stateType.mapIdx fun i (name,typeName) =>
+--     { localId  := 2*i + 1 + localPorts.size,
 --       globalId := 2*i + 1 + localPorts.size + portOff
 --       nodeId := nodeOff
 --       name := name
@@ -492,7 +501,7 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
 
 --   let statePorts := stateIn.flatten.zip stateOut.flatten |>.map (fun (x,y) => #[x,y]) |>.flatten
 --   let ports := ports ++ statePorts
-  
+
 --   let node : Node := {
 --     type := nodeType
 --     globalId := nodeOff
@@ -517,7 +526,7 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
 --     stateIn := stateIn.mapIdx (fun _ p => p.globalId)
 --     stateOut := stateOut.mapIdx (fun _ p => p.globalId)
 --   }
-  
+
 --   return (g, r)
 
 -- structure ForEndPorts where
@@ -527,7 +536,7 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
 -- deriving Inhabited
 
 
--- def ApexGraph.addForEnd (g : ApexGraph) (stateType : ApexStaticType) : 
+-- def ApexGraph.addForEnd (g : ApexGraph) (stateType : ApexStaticType) :
 --     ApexGraph × ForEndPorts :=
 --   Id.run do
 
@@ -546,19 +555,19 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
 --   let nodeOff := g.nodes.size
 --   let portOff := g.ports.size
 
---   let ports := localPorts.map (fun p => 
+--   let ports := localPorts.map (fun p =>
 --     {p with globalId := portOff + p.localId, nodeId := nodeOff : Port})
 
---   let stateIn := stateType.mapIdx fun i (name,typeName) => 
---     { localId  := 2*i + localPorts.size, 
+--   let stateIn := stateType.mapIdx fun i (name,typeName) =>
+--     { localId  := 2*i + localPorts.size,
 --       globalId := 2*i + localPorts.size + portOff
 --       nodeId := nodeOff
 --       name := name
 --       type := .builtin typeName
 --       dir := .input : Port}
 
---   let stateOut := stateType.mapIdx fun i (name,typeName) => 
---     { localId  := 2*i + 1 + localPorts.size, 
+--   let stateOut := stateType.mapIdx fun i (name,typeName) =>
+--     { localId  := 2*i + 1 + localPorts.size,
 --       globalId := 2*i + 1 + localPorts.size + portOff
 --       nodeId := nodeOff
 --       name := name
@@ -567,7 +576,7 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
 
 --   let statePorts := stateIn.flatten.zip stateOut.flatten |>.map (fun (x,y) => #[x,y]) |>.flatten
 --   let ports := ports ++ statePorts
-  
+
 --   let node : Node := {
 --     type := nodeType
 --     globalId := nodeOff
@@ -590,19 +599,19 @@ partial def ApexGraph.addConnection (g : ApexGraph) (src trg : PortPtr) : MetaM 
 --     stateIn := stateIn.mapIdx (fun _ p => p.globalId)
 --     stateOut := stateOut.mapIdx (fun _ p => p.globalId)
 --   }
-  
+
 --   return (g, r)
 
 -- todo: implement this!
 -- should we have port index or node index. Can I have two subports with the same name
--- but of different ports on a single node? 
+-- but of different ports on a single node?
 
 def formatStrName (name : String) : String := name.replace "." "_"
 def formatName (name : Name) : String := formatStrName (toString name.eraseMacroScopes)
 
 def ensureUniqueName (_nodeId : Nat) (_dir : PortDir) (name : Name) : String := formatName name
-  
-def ApexGraph.pythonBuildScript (g : ApexGraph) : String := 
+
+def ApexGraph.pythonBuildScript (g : ApexGraph) : String :=
 Id.run do
   let mut s := ""
 
@@ -625,14 +634,14 @@ Id.run do
   for (src, trg) in g.wires do
     match src with
     | .port id =>
-      s := s ++ s!"srcId = {id}" ++ "\n"      
+      s := s ++ s!"srcId = {id}" ++ "\n"
     | .subport id localId =>
-      s := s ++ s!"srcId = graph.subPorts({id})[{localId}]" ++ "\n"      
+      s := s ++ s!"srcId = graph.subPorts({id})[{localId}]" ++ "\n"
     match trg with
     | .port id =>
-      s := s ++ s!"trgId = {id}" ++ "\n"      
+      s := s ++ s!"trgId = {id}" ++ "\n"
     | .subport id localId =>
-      s := s ++ s!"trgId = graph.subPorts({id})[{localId}]" ++ "\n"      
+      s := s ++ s!"trgId = graph.subPorts({id})[{localId}]" ++ "\n"
     s := s ++ s!"graph.addWire(srcId, trgId)" ++ "\n"
 
   s := s ++ "\n# Add Inputs" ++ "\n"
@@ -646,9 +655,9 @@ Id.run do
       for inputId in inputs do
         match inputId with
         | .port id =>
-          s := s ++ s!"trgId = {id}" ++ "\n"      
+          s := s ++ s!"trgId = {id}" ++ "\n"
         | .subport id localId =>
-          s := s ++ s!"trgId = graph.subPorts({id})[{localId}]" ++ "\n"      
+          s := s ++ s!"trgId = graph.subPorts({id})[{localId}]" ++ "\n"
         s := s ++ s!"graph.addWire(srcId, trgId)" ++ "\n"
 
   s := s ++ "\n# Add Outputs" ++ "\n"
@@ -660,18 +669,18 @@ Id.run do
       s := s ++ s!"outputPortId = graph.addGraphOutput(outputNodeId, \"{name}\")" ++ "\n"
       match output with
       | .port portId =>
-        s := s ++ s!"graph.addWire({portId}, outputPortId)" ++ "\n"    
+        s := s ++ s!"graph.addWire({portId}, outputPortId)" ++ "\n"
       | .subport id i =>
-        s := s ++ s!"srcId = graph.subPorts({id})[{i}]" ++ "\n"      
-        s := s ++ s!"graph.addWire(srcId, outputPortId)" ++ "\n"    
+        s := s ++ s!"srcId = graph.subPorts({id})[{i}]" ++ "\n"
+        s := s ++ s!"graph.addWire(srcId, outputPortId)" ++ "\n"
       | .input inputId =>
-        s := s ++ s!"graph.addWire(inputs[{inputId}], outputPortId)" ++ "\n"    
+        s := s ++ s!"graph.addWire(inputs[{inputId}], outputPortId)" ++ "\n"
       | .literal _val =>
         pure () -- maybe drop down a value node?
 
   s := s ++ "\n# Set Literal Values" ++ "\n"
   for (val, portId) in g.literals do
-    if val.isEmptyGeometry then
+    if val.isEmptyGeometry || val.isEmptyDict then
       continue
     match portId with
     | .port id =>
@@ -687,4 +696,3 @@ Id.run do
   s := s ++ "graph.layout()" ++ "\n"
   s := s ++ "graph.saveToGeometry(geo)" ++ "\n"
   return s
-
