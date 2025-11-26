@@ -2,6 +2,7 @@
 import HouLean.Apex.Compile.Extension
 import HouLean.Apex.Generated.Defs
 import HouLean.Meta.ProdLike
+import HouLean.Meta.EnumType
 
 namespace HouLean.Apex
 
@@ -247,7 +248,7 @@ instance : ApexType Vector4Array Vector4Array where
 
 -- instance : ToVariadicUntyped Float 1 where
 --   toVarUntyped x := #a[.float x]
---   fromVarUntyped x := 
+--   fromVarUntyped x :=
 --     match x with
 --     | #a[.float x] => x
 --     | _ => panic! "invalid extraction of variadic untyped!"

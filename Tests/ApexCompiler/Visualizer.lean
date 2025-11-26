@@ -58,24 +58,42 @@ def t3 (v? : Option Float) := v?.map (· + 0.1)
 
 
 @[apex]
-def t4 (geo : Geometry) (toVis : String) (id : Int) :=
-  let go : VisualizeM' Geometry := do
-    let geo ← visualize' "a" geo
+def t4 (geo : Geometry) (toVis : String) (id : Nat) :=
+  let go : VisualizeM Geometry := do
+    let geo ← visualize "a" geo
     let geo := geo.subdivide
-    let geo ← visualize' "b" geo
+    let geo ← visualize "b" geo
     return geo
   let (geo, info, vis) := go (toVis, id) (fromApex (Dict.default), default)
   let vis := vis.pack |>.setPointAttrib 0 "__visualizer" (1 : Int)
   (geo.merge vis, info)
 
 
-set_option trace.HouLean.Apex.compiler true in
 @[apex]
 def t5 (x : Float) :=
   let dict := (fromApex (Dict.default) : HashMap String Float)
   dict.insert "a" x
 
 
-open Lean Meta Qq
+@[apex]
+def t6 :=
+  let output := fun (input : HouLean.Apex.Geometry) => do
+    let visualize ← HouLean.Apex.visualize "a" input default
+    let SOP_subdivide : HouLean.Apex.Geometry := HouLean.Apex.SOP.subdivide default visualize
+    let visualize_1 ← HouLean.Apex.visualize "b" SOP_subdivide default
+    pure visualize_1;
+  output
 
-#check Option.bind
+
+@[apex]
+def t7 :=
+  fun (input : HouLean.Apex.Geometry) =>
+    HouLean.Apex.withVisualizer
+      ((let output := fun (input : HouLean.Apex.Geometry) => do
+          let visualize ← HouLean.Apex.visualize "visualize" input default
+          pure visualize;
+        output)
+        input)
+
+
+open Lean Meta Qq

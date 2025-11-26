@@ -5267,6 +5267,12 @@
       "inputs": [
         {
           "builtin": {
+            "name": "nodeName",
+            "type": "String"
+          }
+        },
+        {
+          "builtin": {
             "name": "x",
             "type": "?_"
           }
@@ -6373,33 +6379,6 @@
           "builtin": {
             "name": "output",
             "type": "?_"
-          }
-        }
-      ]
-    },
-    {
-      "name": "withVisualizer",
-      "leanConstant": "HouLean.Apex.withVisualizer",
-      "exposeImplicitArgs": false,
-      "inputs": [
-        {
-          "builtin": {
-            "name": "visId",
-            "type": "Int"
-          }
-        },
-        {
-          "builtin": {
-            "name": "go",
-            "type": "HouLean.Apex.VisualizeM HouLean.Apex.Geometry"
-          }
-        }
-      ],
-      "outputs": [
-        {
-          "builtin": {
-            "name": "geometry",
-            "type": "HouLean.Apex.Geometry"
           }
         }
       ]
@@ -10204,6 +10183,33 @@
           }
         }
       ]
+    },
+    {
+      "name": "withVisualizer",
+      "leanConstant": "HouLean.Apex.withVisualizer",
+      "exposeImplicitArgs": false,
+      "inputs": [
+        {
+          "builtin": {
+            "name": "visId",
+            "type": "Int"
+          }
+        },
+        {
+          "builtin": {
+            "name": "go",
+            "type": "HouLean.Apex.VisualizeM HouLean.Apex.Geometry"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "builtin": {
+            "name": "geometry",
+            "type": "HouLean.Apex.Geometry"
+          }
+        }
+      ]
     }
   ],
   "nodes": [
@@ -10233,8 +10239,8 @@
       "portValues": [
         "HouLean.Apex.Geometry"
       ],
-      "x": -411.8090452035114,
-      "y": 360.7470152687208
+      "x": 93.0,
+      "y": 248.0
     },
     {
       "name": "output",
@@ -10246,7 +10252,7 @@
           {
             "builtin": {
               "name": "output",
-              "type": "HouLean.Apex.VisualizeM HouLean.Apex.Geometry"
+              "type": "HouLean.Apex.Geometry"
             }
           }
         ],
@@ -10254,75 +10260,220 @@
           {
             "builtin": {
               "name": "function",
-              "type": "HouLean.Apex.Geometry \u2192 HouLean.Apex.VisualizeM HouLean.Apex.Geometry"
+              "type": "HouLean.Apex.Geometry \u2192 HouLean.Apex.Geometry"
             }
           }
         ]
       },
       "portValues": [],
-      "x": 174.67216424113317,
-      "y": 345.99772324219947
+      "x": 479.0,
+      "y": 250.0
     },
     {
-      "name": "visualize",
+      "name": "Geometry_boundingBox",
       "type": {
-        "name": "visualize",
-        "leanConstant": "HouLean.Apex.visualize",
+        "name": "Geometry_boundingBox",
+        "leanConstant": "HouLean.Apex.Geometry.boundingBox",
         "exposeImplicitArgs": false,
         "inputs": [
           {
             "builtin": {
-              "name": "nodeName",
-              "type": "String"
-            }
-          },
-          {
-            "builtin": {
-              "name": "x",
+              "name": "g",
               "type": "HouLean.Apex.Geometry"
             }
           },
           {
             "builtin": {
-              "name": "opts",
-              "type": "Unit"
+              "name": "orient",
+              "type": "Bool"
+            }
+          },
+          {
+            "builtin": {
+              "name": "local'",
+              "type": "Bool"
             }
           }
         ],
         "outputs": [
           {
-            "builtin": {
-              "name": "output",
-              "type": "HouLean.Apex.VisualizeM HouLean.Apex.Geometry"
+            "struct": {
+              "name": "geometry2",
+              "type": "AnonStruct.HouLean.Apex.Geometry2",
+              "subports": [
+                {
+                  "builtin": {
+                    "name": "center",
+                    "type": "HouLean.Vector3"
+                  }
+                },
+                {
+                  "builtin": {
+                    "name": "size",
+                    "type": "HouLean.Vector3"
+                  }
+                },
+                {
+                  "builtin": {
+                    "name": "min",
+                    "type": "HouLean.Vector3"
+                  }
+                },
+                {
+                  "builtin": {
+                    "name": "max",
+                    "type": "HouLean.Vector3"
+                  }
+                },
+                {
+                  "struct": {
+                    "name": "xform",
+                    "type": "HouLean.Matrix4",
+                    "subports": [
+                      {
+                        "struct": {
+                          "name": "row0",
+                          "type": "HouLean.Vector4",
+                          "subports": [
+                            {
+                              "builtin": {
+                                "name": "x",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "y",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "z",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "w",
+                                "type": "Float"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "struct": {
+                          "name": "row1",
+                          "type": "HouLean.Vector4",
+                          "subports": [
+                            {
+                              "builtin": {
+                                "name": "x",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "y",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "z",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "w",
+                                "type": "Float"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "struct": {
+                          "name": "row2",
+                          "type": "HouLean.Vector4",
+                          "subports": [
+                            {
+                              "builtin": {
+                                "name": "x",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "y",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "z",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "w",
+                                "type": "Float"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "struct": {
+                          "name": "row3",
+                          "type": "HouLean.Vector4",
+                          "subports": [
+                            {
+                              "builtin": {
+                                "name": "x",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "y",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "z",
+                                "type": "Float"
+                              }
+                            },
+                            {
+                              "builtin": {
+                                "name": "w",
+                                "type": "Float"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
             }
           }
         ]
       },
-      "portValues": [
-        "\"visualize\"",
-        "",
-        ""
-      ],
-      "x": -95.55494396867516,
-      "y": 335.71563999280306
+      "portValues": [],
+      "x": 341.0,
+      "y": 57.0
     }
   ],
   "connections": [
     {
       "outputNodeName": "input",
-      "outputIndex": [
-        0
-      ],
-      "inputNodeName": "visualize",
-      "inputIndex": [
-        1
-      ],
-      "outputRelPos": 60.0,
-      "inputRelPos": 88.0,
-      "isImplicit": false
-    },
-    {
-      "outputNodeName": "visualize",
       "outputIndex": [
         0
       ],

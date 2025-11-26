@@ -1154,7 +1154,8 @@
    "name": "visualize",
    "leanConstant": "HouLean.Apex.visualize",
    "inputs":
-   [{"builtin": {"type": "?_", "name": "x"}},
+   [{"builtin": {"type": "String", "name": "nodeName"}},
+    {"builtin": {"type": "?_", "name": "x"}},
     {"builtin": {"type": "?_", "name": "opts"}}]},
   {"outputs":
    [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "geometry"}}],
@@ -1389,14 +1390,6 @@
    "name": "Math_sinh",
    "leanConstant": "HouLean.Math.Sinh.sinh",
    "inputs": [{"builtin": {"type": "?_", "name": "x"}}]},
-  {"outputs":
-   [{"builtin": {"type": "HouLean.Apex.Geometry", "name": "geometry"}}],
-   "name": "withVisualizer",
-   "leanConstant": "HouLean.Apex.withVisualizer",
-   "inputs":
-   [{"builtin": {"type": "Int", "name": "visId"}},
-    {"builtin":
-     {"type": "HouLean.Apex.VisualizeM HouLean.Apex.Geometry", "name": "go"}}]},
   {"outputs":
    [{"struct":
      {"type": "Prod HouLean.Vector3 Float",

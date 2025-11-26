@@ -20,6 +20,12 @@ instance {α A} [ApexType α A] [DictType α] : ApexTypeFlatten (HashMap String 
   apexFlatten := fun _ => cast sorry_proof ()
   apexUnflatten := fun _ => default
 
+instance {α A} [ApexType α A] [ApexType A A] [DictType A] : DictType α where
+  toApex := fun _ => default
+  fromApex := fun _ => default
+  get? dict key := DictType.get? (α:=A) dict key
+  set dict key value := DictType.set (α:=A) dict key (toApex value)
+
 instance : DictType Bool where
   toApex := fun _ => default
   fromApex := fun _ => default
@@ -134,3 +140,10 @@ def _root_.Std.HashMap.alter.apex_impl (m : HashMap String α) (key : String) (f
 
 run_meta compilerExt.add (.implementedByName ``HashMap.alter ``HashMap.alter.apex_impl
   #[some 1, some 4, some 5, some 6]) .global
+
+
+def _root_.Std.HashMap.emptyWithCapacity.apex_impl {α A} [ApexType α A] [DictType α] :
+    HashMap String α := fromApex Dict.default
+
+run_meta compilerExt.add (.implementedByName ``HashMap.emptyWithCapacity ``HashMap.emptyWithCapacity.apex_impl
+  #[some 0, none, none, none]) .global
