@@ -24,7 +24,7 @@ def blend (bg : Layer) (fg? mask? : Option Layer) (parms : BlendParams) : CopM L
   let outputSig := bgSig
 
   let cwd_node := ""
-  let requests := toApex #[(2:Int)]
+  let requests := toApex #[(2:Int)] -- TODO: figure out what to do about requests!
   let parms := parms.toDict
 
   match bg, fg, mask with

@@ -73,12 +73,6 @@
       "default_value": false
     },
     {
-      "name": "addprims",
-      "label": "Set Imports from Geometry",
-      "type": "Button",
-      "help": ""
-    },
-    {
       "name": "numprims",
       "label": "Outputs",
       "type": "Folder",

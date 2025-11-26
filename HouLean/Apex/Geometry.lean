@@ -511,8 +511,8 @@ namespace Geometry
   geo_FromDisk filepath primname
 
 -- @[Apex_unfold] Deformation
-@[apex_unfold] def lattice (g : Geometry) (restGeo : Geometry) (deformedGeo : Geometry) 
-            (divsX divsY divsZ : Int) (group : String := "") 
+@[apex_unfold] def lattice (g : Geometry) (restGeo : Geometry) (deformedGeo : Geometry)
+            (divsX divsY divsZ : Int) (group : String := "")
             (interpType : Int := 0) (updateNormals : Bool := true) : Geometry :=
   geo_Lattice g restGeo deformedGeo divsX divsY divsZ group interpType updateNormals
 
