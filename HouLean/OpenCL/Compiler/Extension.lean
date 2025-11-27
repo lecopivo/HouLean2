@@ -1,6 +1,5 @@
--- import HouLean.OpenCL.Compile.Types
--- import HouLean.OpenCL.Generated.Defs
 import Lean
+import HouLean.OpenCL.Basic
 
 open Lean Meta
 
@@ -127,6 +126,10 @@ def addOCLType (type : Expr) (oclType : OpenCLType) : MetaM Unit := do
   compilerExt.add (.type keys oclType)
 
 def getOCLType (type : Expr) : MetaM OpenCLType := do
+  let mut type := type
+  if type.isAppOfArity ``OpenCLM 1 then
+    type := type.appArg!
+
   let s := compilerExt.getState (← getEnv)
   let m ← s.oclTypes.getMatch type
   unless m.size = 1 do
@@ -137,6 +140,10 @@ def getOCLType (type : Expr) : MetaM OpenCLType := do
   return m[0]!
 
 def getOCLType? (type : Expr) : MetaM (Option OpenCLType) := do
+  let mut type := type
+  if type.isAppOfArity ``OpenCLM 1 then
+    type := type.appArg!
+
   let s := compilerExt.getState (← getEnv)
   let m ← s.oclTypes.getMatch type
   unless m.size = 1 do

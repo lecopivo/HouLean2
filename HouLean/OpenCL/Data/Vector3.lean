@@ -1,6 +1,8 @@
 import HouLean.Data.Vector3
+import HouLean.OpenCL.Basic
 import HouLean.OpenCL.Data.Float
-import HouLean.OpenCL.Data.Bool
+import HouLean.OpenCL.Data.Int
+import HouLean.OpenCL.Data.Unit
 
 namespace HouLean.OpenCL
 
@@ -8,31 +10,47 @@ open Compiler Qq HouLean Math
 
 run_meta addOCLType q(Vector3) (.atom "float3" "f3")
 
-
 run_meta addOCLFunction q(Vector3.mk) "(float3)" (kind := .constructor)
 run_meta addOCLFunction q(Vector3.x) ".x" (kind := .postfix)
 run_meta addOCLFunction q(Vector3.y) ".y" (kind := .postfix)
 run_meta addOCLFunction q(Vector3.z) ".z" (kind := .postfix)
 
 
-run_meta addOCLFunction q(Vector3.add) "+" (kind :=.infix)
-run_meta addOCLFunction q(fun x y : Vector3 => x + y) "+" (kind :=.infix)
+opaque Vector3.vload3 (idx : UInt64) (array : ArrayRef Vector3) : OpenCLM Vector3
+opaque Vector3.vstore3 (val : Vector3) (idx : UInt64) (array : ArrayRef Vector3) : OpenCLM Unit
 
-run_meta addOCLFunction q(Vector3.sub) "-" (kind :=.infix)
-run_meta addOCLFunction q(fun x y : Vector3 => x - y) "-" (kind :=.infix)
+instance : ArrayType Vector3 where
+  get array idx := Vector3.vload3 idx array
+  set array idx val := Vector3.vstore3 val idx array
 
-run_meta addOCLFunction q(Vector3.neg) "-" (kind :=.prefix)
-run_meta addOCLFunction q(fun x : Vector3 => - x) "-" (kind :=.prefix)
+run_meta addOCLType q(ArrayRef Vector3) (.atom "global float restrict *" "v3[]")
 
-run_meta addOCLFunction q(Vector3.smul) "*" (kind :=.infix)
-run_meta addOCLFunction q(fun (x : Vector3) (s : Float) => x * s) "*" (kind :=.infix)
-run_meta addOCLFunction q(fun (s : Float) (x : Vector3) => s * x) "*" (kind :=.infix)
+run_meta addOCLFunction q(Vector3.vload3) "vload3"
+run_meta addOCLFunction q(Vector3.vstore3) "vstore3"
 
-run_meta addOCLFunction q(Vector3.hDiv) "/" (kind :=.infix)
-run_meta addOCLFunction q(fun (x : Vector3) (s : Float) => x / s) "/" (kind :=.infix)
+-- todo: remove these, they should be automatic
+run_meta compileFunction q(fun (arr : ArrayRef Vector3) idx => ArrayType.get arr idx)
+set_option trace.HouLean.OpenCL.compiler true in
+run_meta compileFunction q(fun (arr : ArrayRef Vector3) idx val => ArrayType.set arr idx val)
 
-run_meta addOCLFunction q(Vector3.div) "/" (kind :=.infix)
-run_meta addOCLFunction q(fun (x y : Vector3) => x / y) "/" (kind :=.infix)
+run_meta addOCLFunction q(Vector3.add) " + " (kind :=.infix)
+run_meta addOCLFunction q(fun x y : Vector3 => x + y) " + " (kind :=.infix)
+
+run_meta addOCLFunction q(Vector3.sub) " - " (kind :=.infix)
+run_meta addOCLFunction q(fun x y : Vector3 => x - y) " - " (kind :=.infix)
+
+run_meta addOCLFunction q(Vector3.neg) " -" (kind :=.prefix)
+run_meta addOCLFunction q(fun x : Vector3 => - x) " -" (kind :=.prefix)
+
+run_meta addOCLFunction q(Vector3.smul) " * " (kind :=.infix)
+run_meta addOCLFunction q(fun (x : Vector3) (s : Float) => x * s) " * " (kind :=.infix)
+run_meta addOCLFunction q(fun (s : Float) (x : Vector3) => s * x) " * " (kind :=.infix)
+
+run_meta addOCLFunction q(Vector3.hDiv) " / " (kind :=.infix)
+run_meta addOCLFunction q(fun (x : Vector3) (s : Float) => x / s) " / " (kind :=.infix)
+
+run_meta addOCLFunction q(Vector3.div) " / " (kind :=.infix)
+run_meta addOCLFunction q(fun (x y : Vector3) => x / y) " / " (kind :=.infix)
 
 
 -- Vector operations

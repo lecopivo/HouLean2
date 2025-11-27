@@ -66,8 +66,12 @@ partial def compileExpr (e : Expr) : CompileM String := do
 
   | .letE name type val body _ =>
     throwError m!"can't have let binding in an expression {e}"
+  | .lit (.natVal val) =>
+    return s!"{val}"
+  | .lit (.strVal val) =>
+    return val
   | _ =>
-    throwError m!"Do not know how to compile {e}"
+    throwError m!"Do not know how to compile {e}, {e.ctorName}"
 
 
 
@@ -85,6 +89,18 @@ partial def compileFunBody (e : Expr) : CompileM String := do
         pure s!"const {oclType.name} {name} = {← compileExpr val};\n\
                 {← compileFunBody body}"
   | .app .. =>
+
+    if e.isAppOfArity ``bind 6 then
+      let mx := e.appFn!.appArg!
+      let f := e.appArg!
+      return ← forallBoundedTelescope (← inferType f) (some 1) fun xs _ => do
+        let name ← xs[0]!.fvarId!.getUserName
+        let type ← getOCLType (← inferType xs[0]!)
+        let body := f.beta xs
+        withFVars xs #[type] do
+          pure s!"const {type.name} {name} = {← compileExpr mx};\n\
+                  {← compileFunBody body}"
+
     return s!"return {← compileExpr e};"
   | _ => throwError m!"Do not know how to compile {e}"
 
@@ -163,7 +179,7 @@ def compileFunction (f : Expr) : MetaM Unit := do
     let argTypes ← liftM <| xs.mapM inferType >>= (·.mapM getOCLType)
     let argNames ← xs.mapM (fun x => nameToString <$> x.fvarId!.getUserName)
     let args : Array String :=
-      argTypes.zip argNames |>.map (fun (t,n) => s!"const {t.name} {n}")
+      argTypes.zip argNames |>.map (fun (t,n) => s!"{t.name} {n}")
 
     let args := args.joinl (map:=id) (·++", "++·)
 
