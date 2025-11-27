@@ -1,4 +1,6 @@
 import Lean
+import HouLean.Meta.ProdLike
+import HouLean.Meta.EnumType
 
 open Lean Meta
 
@@ -7,14 +9,14 @@ namespace HouLean
 structure Vector2 where
   x : Float := 0.0
   y : Float := 0.0
-deriving Repr
+deriving Repr, ProdLike
 instance : Inhabited Vector2 := ⟨{}⟩
 
 structure Vector3 where
   x : Float := 0.0
   y : Float := 0.0
   z : Float := 0.0
-deriving Repr
+deriving Repr, ProdLike
 instance : Inhabited Vector3 := ⟨{}⟩
 
 structure Vector4 where
@@ -22,20 +24,20 @@ structure Vector4 where
   y : Float := 0.0
   z : Float := 0.0
   w : Float := 0.0
-deriving Repr
+deriving Repr, ProdLike
 instance : Inhabited Vector4 := ⟨{}⟩
 
 structure Matrix2 where
   row0 : Vector2 := ⟨1,0⟩
   row1 : Vector2 := ⟨0,1⟩
-deriving Repr
+deriving Repr, ProdLike
 instance : Inhabited Matrix2 := ⟨{}⟩
 
 structure Matrix3 where
   row0 : Vector3 := ⟨1,0,0⟩
   row1 : Vector3 := ⟨0,1,0⟩
   row2 : Vector3 := ⟨0,0,1⟩
-deriving Repr
+deriving Repr, ProdLike
 instance : Inhabited Matrix3 := ⟨{}⟩
 
 structure Matrix4 where
@@ -43,7 +45,7 @@ structure Matrix4 where
   row1 : Vector4 := ⟨0,1,0,0⟩
   row2 : Vector4 := ⟨0,0,1,0⟩
   row3 : Vector4 := ⟨0,0,0,1⟩
-deriving Repr
+deriving Repr, ProdLike
 instance : Inhabited Matrix4 := ⟨{}⟩
 
 
@@ -52,14 +54,15 @@ instance : Inhabited Matrix4 := ⟨{}⟩
 structure RigidTransform where
   translate : Vector3 := ⟨0,0,0⟩
   orient : Vector4 := ⟨0,0,0,1⟩
+deriving ProdLike
 instance : Inhabited RigidTransform := ⟨{}⟩
 
 /-- Rigid transformation with scaling.
 -/
 structure RigidScaleTransform extends RigidTransform where
   scale : Float := 1
+deriving ProdLike
 instance : Inhabited RigidScaleTransform := ⟨{}⟩
-
 
 /-- Rigid body velocity without scaling.
     Represents instantaneous velocity in SE(3) Lie algebra.
@@ -67,6 +70,7 @@ instance : Inhabited RigidScaleTransform := ⟨{}⟩
 structure RigidVelocity where
   velocity : Vector3 := ⟨0,0,0⟩
   angularVelocity : Vector3 := ⟨0,0,0⟩
+deriving ProdLike
 instance : Inhabited RigidVelocity := ⟨{}⟩
 
 /-- Rigid body velocity with scaling.
@@ -74,14 +78,17 @@ instance : Inhabited RigidVelocity := ⟨{}⟩
 -/
 structure RigidScaleVelocity extends RigidVelocity where
   scaleVelocity : Float := 0
+deriving ProdLike
 instance : Inhabited RigidScaleVelocity := ⟨{}⟩
 
 
 inductive TransformOrder where
   | SRT | STR | RST | RTS | TSR | TRS
+deriving EnumType
 
 inductive RotationOrder where
   | XYZ | XZY | YXZ | YZX | ZXY | ZYX
+deriving EnumType
 
 /-- Transform parameters for geometric operations -/
 structure Transform where
@@ -101,6 +108,7 @@ structure Transform where
   xOrd : Int := 0 -- TransformOrder
   /-- Rotation order: 0=XYZ, 1=XZY, 2=YXZ, 3=YZX, 4=ZXY, 5=ZYX -/
   rOrd : Int := 0  -- RotationOrder
+deriving ProdLike
 instance : Inhabited Transform := ⟨{}⟩
 
 /-- Bounding box -/
@@ -109,6 +117,7 @@ structure BoundingBox where
   size : Vector3 := ⟨1, 1, 1⟩
   /-- Center position of the bounding box -/
   center : Vector3 := ⟨0, 0, 0⟩
+deriving ProdLike
 instance : Inhabited BoundingBox := ⟨{}⟩
 
 
@@ -118,6 +127,7 @@ structure BoundingSphere where
   center : Vector3 := ⟨0, 0, 0⟩
   /-- Radius of bounding sphere -/
   radius : Float := 1
+deriving ProdLike
 instance : Inhabited BoundingBox := ⟨{}⟩
 
 
@@ -134,6 +144,7 @@ structure Capsule where
   startRadius : Float := 0.5
   /-- Radius at the end point -/
   endRadius : Float := 0.5
+deriving ProdLike
 instance : Inhabited Capsule := ⟨{}⟩
 
 
@@ -145,4 +156,5 @@ structure Plane where
   normal : Vector3 := ⟨0, 1, 0⟩
   /-- Distance along normal from origin -/
   dist : Float := 0
+deriving ProdLike
 instance : Inhabited Plane := ⟨{}⟩

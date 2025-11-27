@@ -7,14 +7,14 @@ namespace HouLean.Vex.Compiler
 
 /-- Data for a bound variable like `v@P`, `@Cd`, `@name`, ... -/
 structure BoundVariable where
-  /-- Name of the identifier of a bound variable. 
+  /-- Name of the identifier of a bound variable.
   Potentially containing macro scopes, namespaces etc. -/
   name : Name
-  /-- String name that should be used when passing VEX code to VEX compiler.  -/  
+  /-- String name that should be used when passing VEX code to VEX compiler.  -/
   strName : String
-  /-- Is output/export variable i.e. it appeared on lhs of an assignment.  -/  
+  /-- Is output/export variable i.e. it appeared on lhs of an assignment.  -/
   isExport : Bool := false
-  /-- Type of the variable, infered from type annotation like `v@`, `s[]@`, ...  -/  
+  /-- Type of the variable, infered from type annotation like `v@`, `s[]@`, ...  -/
   type? : Option AttribTypeTag
 deriving Repr
 
@@ -95,24 +95,23 @@ def BoundVariables.knownTypes : Std.HashMap String AttribTypeTag :=
 
 If known attribute has been annotated with different type, we keep that type
 and do not throw any error or produce any warning. -/
-def BoundVariables.fixKnownTypes (vars : BoundVariables) :  BoundVariables := 
-  vars.map (fun _ var => 
-    let t? := 
+def BoundVariables.fixKnownTypes (vars : BoundVariables) :  BoundVariables :=
+  vars.map (fun _ var =>
+    let t? :=
       match var.type? with
       | some t => some t
       | none => knownTypes[var.strName]?
     { var with type? := t? })
 
 
-/-- Make the value of `BoundVariable.strName` a uniqe string name such that they do not clash with 
-existing identifiers in `snippet`. 
+/-- Make the value of `BoundVariable.strName` a uniqe string name such that they do not clash with
+existing identifiers in `snippet`.
 
 TODO: provide proper implementation of this function! -/
 def BoundVariables.mkUniqueStrNames (vars : BoundVariables) (snippet : TSyntax ``vexSnippet) :
-    BoundVariables := 
+    BoundVariables :=
   vars.map (fun _ var => {var with strName := "__bound_var_" ++ var.strName})
 
 def BoundVariables.mkCVexParamList (vars : BoundVariables) : MacroM (TSyntax ``cvexParamList) := do
   let params ← vars.valuesArray.mapM (·.toCVexParam)
   return Lean.mkNode ``cvexParamList #[Syntax.mkSep params (Lean.mkAtom ";")]
-

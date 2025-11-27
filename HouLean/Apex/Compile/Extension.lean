@@ -11,17 +11,14 @@ inductive SingleExtension where
 
   These functions might not have the same Lean type but they should
   have the same `ApexFunType`.
-  
-  This is also used for types. We might have `src` 
+
+  This is also used for types. We might have `src`
   -/
-  | implementedByName (src : Name) (trg : Name) (argMap : Array (Option Nat)) 
+  | implementedByName (src : Name) (trg : Name) (argMap : Array (Option Nat))
   /-- During compilation we replace `src` with `trg`.
 
-  These functions might not have the same Lean type but they should
-  have the same `ApexFunType`.
-
-  Replacing `Expr` with `Expr` is used when we need to 
-  replace `@Array.get Float` and `@Array.get Int` with different 
+  Replacing `Expr` with `Expr` is used when we need to
+  replace `@Array.get Float` and `@Array.get Int` with different
   functions.
 
   `src` and `trg` must have the same APEX types
@@ -38,7 +35,7 @@ deriving Inhabited
 /-- Enviroment extension that holds all necessary information for the APEX compiler. -/
 structure Extension where
   /-- Builtin APEX types, other types are registered with `ApexType` class -/
-  apexTypes : NameMap ApexTypeTag 
+  apexTypes : NameMap ApexTypeTag
   implementedByName : NameMap (Name × Array (Option Nat))
   implementedByExpr : ExprMap Expr
   nodeTypes : ExprMap NodeType -- this should be just a `NameMap NodeType` !
@@ -64,5 +61,3 @@ initialize compilerExt : CompilerExt ←
       | .unfold name =>
         {es with toUnfold := es.toUnfold.insert name}
   }
-
-

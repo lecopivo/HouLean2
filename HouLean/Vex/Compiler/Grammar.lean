@@ -190,9 +190,9 @@ syntax:max str : vexExpr
 
 /-- VEX attribute access with type prefix. -/
 syntax:max (name := attrAccess)
-  ("s[]@" <|> "i[]@" <|> "f[]@" <|> "v[]@" <|> "p[]@" <|> "u[]@" <|> "d[]@" <|> 
+  ("s[]@" <|> "i[]@" <|> "f[]@" <|> "v[]@" <|> "p[]@" <|> "u[]@" <|> "d[]@" <|>
    "m2[]@" <|> "m3[]@" <|> "m4[]@" <|>
-   "s@" <|> "i@" <|> "f@" <|> "v@" <|> "p@" <|> "u@" <|> "d@" <|> 
+   "s@" <|> "i@" <|> "f@" <|> "v@" <|> "p@" <|> "u@" <|> "d@" <|>
    "m2@" <|> "m3@" <|> "m4@" <|> "@") ident : vexExpr
 
 /-- VEX global variable access. -/
@@ -253,7 +253,7 @@ syntax:500 atomic("(" type ")") vexExpr:500 : vexExpr
 
 /-- A VEX type constructor (for built-in types only). -/
 syntax:500 (name := typeConstructor)
-  ("int" <|> "float" <|> "vector" <|> "vector2" <|> "vector4" <|> 
+  ("int" <|> "float" <|> "vector" <|> "vector2" <|> "vector4" <|>
    "matrix" <|> "matrix2" <|> "matrix3" <|> "string" <|> "dict" <|> "bsdf")
   "(" vexExpr ")" : vexExpr
 
@@ -693,4 +693,3 @@ syntax cvexParam := vexParamDecl "=" vexExpr
 syntax cvexParamList := sepBy(cvexParam, ";")
 
 syntax "cvex" ident "(" cvexParamList ")" "{" vexSnippet "}" : cvexProgram
-
