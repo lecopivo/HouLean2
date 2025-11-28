@@ -1,5 +1,6 @@
 import Lean
 import HouLean.OpenCL.Basic
+import HouLean.Meta.AnonymousStruct
 
 open Lean Meta
 
@@ -101,8 +102,6 @@ deriving Inhabited
 
 
 
-
-
 abbrev CompilerExt := SimpleScopedEnvExtension SingleExtension Extension
 
 
@@ -118,6 +117,96 @@ initialize compilerExt : CompilerExt ←
         {es with implementedBy := es.implementedBy.insert src (trg, argMap)}
       | .function keys oclFunc =>
         {es with oclFunctions := es.oclFunctions.insertCore keys oclFunc}
+  }
+
+
+/-- Weak head normal forma for OpenCL compilation. -/
+def whnfC (e : Expr) : MetaM Expr :=
+  withConfig (fun cfg => {cfg with zeta := false, zetaDelta := false, iota := false}) <|
+    whnfR e
+
+open Lean Elab Command PrettyPrinter in
+def addOpenCLType (type : Expr) (name : String) (shortName : String) (definition? : Option String) : CommandElabM Unit := do
+
+  let name := Syntax.mkStrLit name
+  let shortName := Syntax.mkStrLit shortName
+  let definition? : Term ←
+    match definition? with
+    | some d => `(term| $(Syntax.mkStrLit d))
+    | none => `(term| none)
+
+  let typeStx ← liftTermElabM <| delab type
+
+  let cmd ← `(command| instance : OpenCLType $typeStx where
+    name := $name
+    shortName := $shortName
+    definition? := $definition?
+  )
+
+  elabCommand cmd
+
+
+open Qq
+def getOpenCLType? (type : Expr) (doWhnf := false) :
+    MetaM (Option struct { name : String,
+                           shortName : String,
+                           definition? : Option String}) := do
+  let mut type := type
+  if doWhnf then
+    type ← whnfC type
+  let cls ← mkAppM ``OpenCL.OpenCLType #[type]
+  let some inst ← synthInstance? cls | return none
+
+  try
+    let name ← unsafe evalExpr String q(String) (← mkAppOptM ``OpenCL.OpenCLType.name #[type, inst])
+    let shortName ← unsafe evalExpr String q(String) (← mkAppOptM ``OpenCL.OpenCLType.shortName #[type, inst])
+    let definition? ← unsafe evalExpr (Option String) q(Option String) (← mkAppOptM ``OpenCL.OpenCLType.definition? #[type, inst])
+    return .some { name, shortName, definition? }
+  catch e =>
+    throwError e.toMessageData
+
+
+def getOpenCLFunction? (f : Expr) (doWhnf := false) :
+    MetaM (Option struct { name : String,
+                           kind : OpenCLFunction.FunKind,
+                           definition? : Option String }) := do
+  let mut f := f
+  if doWhnf then
+    f ← forallTelescope (← inferType f) fun xs _ => do
+      let body ← whnfC (f.beta xs)
+      mkLambdaFVars xs body
+  let cls ← mkAppM ``OpenCL.OpenCLFunction #[f]
+  logInfo cls
+  let some inst ← synthInstance? cls | return none
+  try
+    let name ← unsafe evalExpr String q(String) (← mkAppOptM ``OpenCL.OpenCLFunction.name #[none, f, inst])
+    let kind ← unsafe evalExpr OpenCLFunction.FunKind q(OpenCLFunction.FunKind) (← mkAppOptM ``OpenCL.OpenCLFunction.kind #[none, f, inst])
+    let definition? ← unsafe evalExpr (Option String) q(Option String) (← mkAppOptM ``OpenCL.OpenCLFunction.definition? #[none, f, inst])
+    return .some { name, kind, definition? }
+  catch e =>
+    throwError e.toMessageData
+
+
+def getOpenCLApp? (e : Expr) (doWhnf := false) :
+    MetaM (Option struct { name : String,
+                           kind : OpenCLFunction.FunKind,
+                           definition? : Option String,
+                           fn : Expr,
+                           args : Array Expr }) := do
+  let mut e := e
+  if doWhnf then
+    e ← whnfC e
+  let (fn, args) := e.withApp fun fn args => (fn,args)
+  let info ← getFunInfo fn
+  let firstExplicit := info.paramInfo.findIdx (fun p => p.isExplicit)
+  let fn := fn.beta (args[0:firstExplicit])
+  let args := args[firstExplicit:].toArray
+  let some data ← getOpenCLFunction? fn false | return none
+
+  return some {
+    data with
+    fn
+    args
   }
 
 

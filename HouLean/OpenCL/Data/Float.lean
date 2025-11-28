@@ -7,20 +7,20 @@ namespace HouLean.OpenCL
 open Compiler Qq
 
 -- bootstrap types
-run_meta addOCLType q(Float) (.atom "float" "f")
+run_meta addOCLType q(Float) (.atom "double" "d")
+run_meta addOCLType q(Float32) (.atom "float" "f")
 
+run_meta addOCLFunction q(Float.neg) " -" (kind := .prefix)
+run_meta addOCLFunction q(Float.add) " + " (kind := .infix)
+run_meta addOCLFunction q(Float.sub) " - " (kind := .infix)
+run_meta addOCLFunction q(Float.mul) " * " (kind := .infix)
+run_meta addOCLFunction q(Float.div) " / " (kind := .infix)
 
-run_meta addOCLFunction q(Float.neg) "-" (kind := .prefix)
-run_meta addOCLFunction q(Float.add) "+" (kind := .infix)
-run_meta addOCLFunction q(Float.sub) "-" (kind := .infix)
-run_meta addOCLFunction q(Float.mul) "*" (kind := .infix)
-run_meta addOCLFunction q(Float.div) "/" (kind := .infix)
-
-run_meta addOCLFunction q(fun x y : Float => x + y) "*" (kind := .infix)
-run_meta addOCLFunction q(fun x y : Float => x - y) "-" (kind := .infix)
-run_meta addOCLFunction q(fun x y : Float => x * y) "*" (kind := .infix)
-run_meta addOCLFunction q(fun x y : Float => x / y) "/" (kind := .infix)
-run_meta addOCLFunction q(fun x : Float => - x) "-" (kind := .prefix)
+run_meta addOCLFunction q(fun x y : Float => x + y) " + " (kind := .infix)
+run_meta addOCLFunction q(fun x y : Float => x - y) " - " (kind := .infix)
+run_meta addOCLFunction q(fun x y : Float => x * y) " * " (kind := .infix)
+run_meta addOCLFunction q(fun x y : Float => x / y) " / " (kind := .infix)
+run_meta addOCLFunction q(fun x : Float => - x) " -" (kind := .prefix)
 
 
 

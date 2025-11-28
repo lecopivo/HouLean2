@@ -1,5 +1,8 @@
+import Lean
+
 namespace HouLean
 
+abbrev Float64 := Float
 
 opaque OpenCL.RealWorld.nonemptyType : NonemptyType.{0}
 
@@ -8,17 +11,260 @@ opaque OpenCL.RealWorld.nonemptyType : NonemptyType.{0}
 instance OpenCL.RealWorld.instNonempty : Nonempty OpenCL.RealWorld :=
   by exact OpenCL.RealWorld.nonemptyType.property
 
+
+/-- OpenCL Context/Monad. This is the context in which kernels are executed, -/
 abbrev OpenCLM := StateM OpenCL.RealWorld
 
 
 namespace OpenCL
 
+
+-- =================================================================================================
+-- OpenCL Type
+-- =================================================================================================
+
+class OpenCLType (α : Type u) where
+  /-- Name of the corresponding OpenCL type -/
+  name : String
+  /-- Short name used for function name mangling when doing monomorphization -/
+  shortName : String
+  /-- For non built in types we store its OpenCL definition.
+
+  The structure shape might not be the same for OpenCL and Lean. -/
+  definition? : Option String := none
+
+/-- Atomic OpenCL types are char, uchar, short, ushort, int, uint, long, ulong, float, double
+
+These are the types we can have pointers to and can have short vector version of, like `float3` -/
+class AtomicOpenCLType (α : Type) extends OpenCLType α where
+  valid : (α = Char) ∨
+          (α = Int16) ∨ (α = UInt16) ∨
+          (α = Int32) ∨ (α = UInt32) ∨
+          (α = Int64) ∨ (α = UInt64) ∨
+          (α = Float32) ∨ (α = Float64)
+
+
+instance : AtomicOpenCLType Char where
+  name := "char"
+  shortName := "c"
+  valid := by simp
+
+instance : AtomicOpenCLType Int16 where
+  name := "short"
+  shortName := "s"
+  valid := by simp
+
+instance : AtomicOpenCLType UInt16 where
+  name := "ushort"
+  shortName := "us"
+  valid := by simp
+
+instance : AtomicOpenCLType Int32 where
+  name := "int"
+  shortName := "i"
+  valid := by simp
+
+instance : AtomicOpenCLType UInt32 where
+  name := "uint"
+  shortName := "ui"
+  valid := by simp
+
+instance : AtomicOpenCLType Int64 where
+  name := "long"
+  shortName := "l"
+  valid := by simp
+
+instance : AtomicOpenCLType UInt64 where
+  name := "ulong"
+  shortName := "ul"
+  valid := by simp
+
+instance : AtomicOpenCLType Float32 where
+  name := "float"
+  shortName := "f"
+  valid := by simp
+
+instance : AtomicOpenCLType Float64 where
+  name := "double"
+  shortName := "d"
+  valid := by simp
+
+/-- OpenCL short vector types are allowed of only a specific length. This class allows to enforce
+this restriction on the size `n`. -/
+class AllowedVectorSize (n : Nat) where
+  valid : n = 2 || n = 3 || n = 4 || n = 8 || n = 16
+
+instance : AllowedVectorSize 2 := ⟨by simp⟩
+instance : AllowedVectorSize 3 := ⟨by simp⟩
+instance : AllowedVectorSize 4 := ⟨by simp⟩
+instance : AllowedVectorSize 8 := ⟨by simp⟩
+instance : AllowedVectorSize 16 := ⟨by simp⟩
+
+instance [t : AtomicOpenCLType T] [AllowedVectorSize n] : OpenCLType (Vector T n) where
+  name := s!"{t.name}{n}"
+  shortName := s!"{t.shortName}{n}"
+
+
+-- =================================================================================================
+-- OpenCL Function
+-- =================================================================================================
+
+namespace OpenCLFunction
+-- -- todo: decide what variants are actually needed
+-- inductive ArgKind where
+--   | input  -- e.g. const float x
+--   | output  -- e.g. float * x
+--   | ref  -- e.g. const float * x
+-- deriving BEq, Inhabited
+
+-- structure Argument where
+--   typeName : String
+--   name : String
+--   kind : ArgKind
+-- deriving BEq, Inhabited
+
+inductive FunKind where
+  | normal
+  | infix
+  | prefix
+  | postfix
+  | constructor
+  | elemget
+  | elemset
+deriving BEq, Inhabited
+
+-- inductive Body where
+--   | builtin
+--   | code (s : String)
+-- deriving BEq, Inhabited
+
+end OpenCLFunction
+
+open OpenCLFunction in
+class OpenCLFunction {F : Type} (f : F) where
+  name : String
+  kind : FunKind := .normal
+  definition? : Option String := none
+deriving BEq, Inhabited
+
+
+-- =========================
+-- = Arithmetic operations =
+-- =========================
+
+
+section ArithmeticOperations
+
+variable {α} [AtomicOpenCLType α]
+
+instance [Add α] : OpenCLFunction (@HAdd.hAdd α α α _) where
+  name := " + "
+  kind := .infix
+
+instance [Sub α] : OpenCLFunction (@HSub.hSub α α α _) where
+  name := " - "
+  kind := .infix
+
+instance [Mul α] : OpenCLFunction (@HMul.hMul α α α _) where
+  name := " * "
+  kind := .infix
+
+instance [Div α] : OpenCLFunction (@HDiv.hDiv α α α _) where
+  name := " / "
+  kind := .infix
+
+instance [Neg α] : OpenCLFunction (@Neg.neg α _) where
+  name := " -"
+  kind := .prefix
+
+
+variable {n} [AllowedVectorSize n]
+
+instance [Add α] : OpenCLFunction (@HAdd.hAdd (Vector α n) (Vector α n) (Vector α n) _) where
+  name := " + "
+  kind := .infix
+
+instance [Sub α] : OpenCLFunction (@HSub.hSub (Vector α n) (Vector α n) (Vector α n) _) where
+  name := " - "
+  kind := .infix
+
+instance [Mul α] : OpenCLFunction (@HMul.hMul α (Vector α n) (Vector α n) _) where
+  name := " * "
+  kind := .infix
+
+instance [Neg α] : OpenCLFunction (@Neg.neg (Vector α n) _) where
+  name := " -"
+  kind := .prefix
+
+
+end ArithmeticOperations
+
+
+-- =================================================================================================
+-- Pointers
+-- =================================================================================================
+
 opaque ArrayRef.nonemptyType (α : Type) : NonemptyType.{0}
+/-- Pointer i.e. something like `float *` on OpenCL level. -/
+def Pointer (α : Type) : Type := (ArrayRef.nonemptyType α).type
+instance {α} [AtomicOpenCLType α] : Nonempty (Pointer α) :=
+  by exact (ArrayRef.nonemptyType α).property
 
-def ArrayRef (α : Type) : Type := (ArrayRef.nonemptyType α).type
+opaque ArrayConstRef.nonemptyType (α : Type) : NonemptyType.{0}
+def ConstPointer (α : Type) : Type := (ArrayConstRef.nonemptyType α).type
+instance : Nonempty (ConstPointer α) :=
+  by exact (ArrayConstRef.nonemptyType α).property
 
-variable {α T} [Inhabited α]
+/-- Cast pointer to a pointer to a constant data. -/
+opaque Pointer.toConst {α} (a : Pointer α) : ConstPointer α := unsafe unsafeCast a
 
-class ArrayType (α : Type) where
-  get : ArrayRef α → UInt64 → OpenCLM α
-  set : ArrayRef α → UInt64 → α → OpenCLM Unit
+instance : Coe (Pointer α) (ConstPointer α) := ⟨Pointer.toConst⟩
+
+/-- Type `α` can be stored and loaeds from a pointer to type `A`.
+
+For example `α := Vector Float32 3` and `A := Float32` for storing and loading `float3` to/from `float *`  -/
+class ArrayType (α : Type) (A : outParam Type) where
+  get : ConstPointer A → UInt64 → OpenCLM α
+  set : Pointer A → UInt64 → α → OpenCLM Unit
+
+attribute [reducible] ArrayType.get ArrayType.set
+
+section LoadAndStore
+
+variable {α} [Inhabited α]
+
+opaque ConstPointer.get [AtomicOpenCLType α] (a : ConstPointer α) (offset : UInt64) : OpenCLM α
+opaque Pointer.set [AtomicOpenCLType α] (a : Pointer α) (offset : UInt64) (val : α) : OpenCLM Unit
+
+opaque ConstPointer.vload [AtomicOpenCLType α] [AllowedVectorSize n] (offset : UInt64) (a : ConstPointer α) : OpenCLM (Vector α n)
+opaque Pointer.vstore [AtomicOpenCLType α] [AllowedVectorSize n] (val : Vector α n) (offset : UInt64) (a : Pointer α) : OpenCLM Unit
+
+variable [AtomicOpenCLType α]
+
+@[reducible]
+instance [AtomicOpenCLType α] : ArrayType α α where
+  get := ConstPointer.get
+  set := Pointer.set
+
+instance : OpenCLFunction (ConstPointer.get (α:=α)) where
+  name := ""
+  kind := .elemget
+
+instance : OpenCLFunction (Pointer.set (α:=α)) where
+  name := ""
+  kind := .elemset
+
+variable [AllowedVectorSize n]
+
+@[reducible]
+instance : ArrayType (Vector α n) α where
+  get ptr off := ConstPointer.vload off ptr
+  set ptr off val := Pointer.vstore val off ptr
+
+instance : OpenCLFunction (ConstPointer.vload (α:=α) (n:=n)) where
+  name := s!"vload{n}"
+
+instance : OpenCLFunction (Pointer.vstore (α:=α) (n:=n)) where
+  name := s!"vstore{n}"
+
+end LoadAndStore

@@ -1,5 +1,6 @@
 import HouLean.OpenCL.Data.Vector3
 import HouLean.OpenCL.Data.Matrix3
+import HouLean.OpenCL.Data.ArrayRef
 import HouLean.OpenCL.WorkItemFunctions
 
 open HouLean OpenCL
@@ -29,7 +30,7 @@ def Grid.bbmax (g : Grid) : Vector3 := {
   z := g.bbmin.z + g.voxsize * g.res.z.toInt32.toFloat
 }
 
-def getQuadStencilWeightFromDistVec (dx : Vector3) := sorry
+def getQuadStencilWeightFromDistVec (dx : Vector3) : Float := sorry
 
 def Grid.toGridIntSpace (g : Grid) (p : Vector3) : Int3 := sorry
 
@@ -173,3 +174,8 @@ def p2g (npts : Nat)
   mass_grid.set g_coord grid_mass
   vel_grid.set g_coord grid_vel
   return
+
+
+
+open Qq
+run_meta Compiler.compileFunction q(p2g)
