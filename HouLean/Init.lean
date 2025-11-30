@@ -1,5 +1,5 @@
-import Lean 
-import Qq 
+import Lean
+import Qq
 
 namespace HouLean
 
@@ -12,12 +12,17 @@ abbrev Id' (α : Type u) := α
 /-- Reducible version of `id` -/
 abbrev id' {α} (a : α) := a
 
+class SetElem (coll : Type u) (idx : Type v) (elem : outParam (Type w))
+              (valid : outParam (coll → idx → Prop)) where
+  setElem (xs : coll) (i : idx) (x : elem) (h : valid xs i) : coll
 
-class SetElem (coll : Type u) (idx : Type v) (elem : outParam (Type w)) where
-  setElem : coll → idx → elem → coll
+class SetElem? (coll : Type u) (idx : Type v) (elem : outParam (Type w))
+              (valid : outParam (coll → idx → Prop)) extends SetElem coll idx elem valid where
+  setElem? (xs : coll) (i : idx) (x : elem) : Option coll
+  setElem! [Inhabited elem] (xs : coll) (i : idx) (x : elem) : coll
 
 export SetElem (setElem)
-
+export SetElem? (setElem? setElem!)
 
 axiom sorryProofAxiom {P : Prop} : P
 axiom sorryTermAxiom {P : Sort u} : P
@@ -54,5 +59,3 @@ def _root_.Array.joinrM [Monad m] [Inhabited β] (xs : Array α) (map : α → m
 
 def _root_.Array.joinr [Inhabited β] (xs : Array α) (map : α → β) (op : β → β → β) : β := Id.run do
   xs.joinrM map op
-
-

@@ -6,16 +6,16 @@ import HouLean.Apex.Lean.Option
 
 namespace HouLean.Apex
 
-open Generated 
+open Generated
 
 -- todo: remove GetElem and SetElem and just have internal get/set
 --       the type As is not supposed to be used by users so
 --       there is not point in using these classes, plus they will
 --       likelly cause havoc on product types
 /-- `α` is an arbitary Lean type and `As` is an array Apex type -/
-class ArrayType (α : Type) (As : outParam Type) extends 
+class ArrayType (α : Type) (As : outParam Type) extends
   GetElem? As Int α (fun _ _ => True),
-  SetElem As Int α,
+  SetElem As Int α (fun _ _ => True),
   ApexType (Array α) As where
 
   empty : As
@@ -33,7 +33,7 @@ class ArrayType (α : Type) (As : outParam Type) extends
   extend : As → As → As
   reverse : As → As
 
-  
+
 -- Array-specific operations as individual typeclasses
 
 class ArrayFind (α : Type) (arr : outParam Type) where
@@ -67,7 +67,7 @@ instance (priority:=low) {α A As} [ApexType α A] [ArrayType A As] : ArrayType 
 
   getElem a i h := fromApex a[i]
   getElem? a i := a[i]?.map fromApex
-  getElem! {d} a i := 
+  getElem! {d} a i :=
     have : Inhabited A := ⟨toApex d.1⟩
     fromApex (a[i]!)
   setElem a i v := setElem a i (toApex v : A)
@@ -90,7 +90,7 @@ instance (priority:=low) {α A As} [ApexType α A] [ArrayType A As] : ArrayType 
 instance : ArrayType Bool BoolArray where
   getElem a i _ := (array_GetBool a i default).1
   getElem? a i := fromApex (array_GetBool a i default)
-  setElem a i v := (array_SetBool a i v).1
+  setElem a i v _ := (array_SetBool a i v).1
   empty := .default
   length := array_LengthBool
   null := NullBoolArray
@@ -120,7 +120,7 @@ instance : ArraySort Bool BoolArray where
 instance : ArrayType Int IntArray where
   getElem a i _ := (array_GetInt a i default).1
   getElem? a i := fromApex (array_GetInt a i default)
-  setElem a i v := (array_SetInt a i v).1
+  setElem a i v _ := (array_SetInt a i v).1
   empty := .default
   length := array_LengthInt
   null := NullIntArray
@@ -169,7 +169,7 @@ instance : ArraySort Int IntArray where
 instance : ArrayType Float FloatArray where
   getElem a i _ := (array_GetFloat a i default).1
   getElem? a i := fromApex (array_GetFloat a i default)
-  setElem a i v := (array_SetFloat a i v).1
+  setElem a i v _ := (array_SetFloat a i v).1
   empty := FloatArray.empty
   length := array_LengthFloat
   null := NullFloatArray
@@ -221,7 +221,7 @@ instance : ArraySort Float FloatArray where
 instance : ArrayType String StringArray where
   getElem a i _ := (array_GetString a i default).1
   getElem? a i := fromApex (array_GetString a i default)
-  setElem a i v := (array_SetString a i v).1
+  setElem a i v _ := (array_SetString a i v).1
   empty := .default
   length := array_LengthString
   null := NullStringArray
@@ -252,7 +252,7 @@ instance : ArraySort String StringArray where
 instance : ArrayType Vector2 Vector2Array where
   getElem a i _ := (array_GetVector2 a i default).1
   getElem? a i := fromApex (array_GetVector2 a i default)
-  setElem a i v := (array_SetVector2 a i v).1
+  setElem a i v _ := (array_SetVector2 a i v).1
   empty := .default
   length := array_LengthVector2
   null := NullVector2Array
@@ -303,7 +303,7 @@ instance : ArraySort Vector2 Vector2Array where
 instance : ArrayType Vector3 Vector3Array where
   getElem a i _ := (array_GetVector3 a i default).1
   getElem? a i := fromApex (array_GetVector3 a i default)
-  setElem a i v := (array_SetVector3 a i v).1
+  setElem a i v _ := (array_SetVector3 a i v).1
   empty := .default
   length := array_LengthVector3
   null := NullVector3Array
@@ -354,7 +354,7 @@ instance : ArraySort Vector3 Vector3Array where
 instance : ArrayType Vector4 Vector4Array where
   getElem a i _ := (array_GetVector4 a i default).1
   getElem? a i := fromApex (array_GetVector4 a i default)
-  setElem a i v := (array_SetVector4 a i v).1
+  setElem a i v _ := (array_SetVector4 a i v).1
   empty := .default
   length := array_LengthVector4
   null := NullVector4Array
@@ -405,7 +405,7 @@ instance : ArraySort Vector4 Vector4Array where
 instance : ArrayType Matrix3 Matrix3Array where
   getElem a i _ := (array_GetMatrix3 a i default).1
   getElem? a i := fromApex (array_GetMatrix3 a i default)
-  setElem a i v := (array_SetMatrix3 a i v).1
+  setElem a i v _ := (array_SetMatrix3 a i v).1
   empty := .default
   length := array_LengthMatrix3
   null := NullMatrix3Array
@@ -440,7 +440,7 @@ instance : ArrayLerp Matrix3 Matrix3Array where
 instance : ArrayType Matrix4 Matrix4Array where
   getElem a i _ := (array_GetMatrix4 a i default).1
   getElem? a i := fromApex (array_GetMatrix4 a i default)
-  setElem a i v := (array_SetMatrix4 a i v).1
+  setElem a i v _ := (array_SetMatrix4 a i v).1
   empty := .default
   length := array_LengthMatrix4
   null := NullMatrix4Array
@@ -476,7 +476,7 @@ instance : ArrayLerp Matrix4 Matrix4Array where
 instance : ArrayType Geometry GeometryArray where
   getElem a i _ := (array_GetGeometry a i default).1
   getElem? a i := fromApex (array_GetGeometry a i default)
-  setElem a i v := (array_SetGeometry a i v).1
+  setElem a i v _ := (array_SetGeometry a i v).1
   empty := .default
   length := array_LengthGeometry
   null := NullGeometryArray
@@ -493,7 +493,7 @@ instance : ArrayType Geometry GeometryArray where
 instance : ArrayType Dict DictArray where
   getElem a i _ := (array_GetDict a i default).1
   getElem? a i := fromApex (array_GetDict a i default)
-  setElem a i v := (array_SetDict a i v).1
+  setElem a i v _ := (array_SetDict a i v).1
   empty := .default
   length := array_LengthDict
   null := NullDictArray
@@ -510,7 +510,7 @@ instance : ArrayType Dict DictArray where
 instance : ArrayType DynamicPath DynamicPathArray where
   getElem a i _ := (array_GetDynamicPath a i default).1
   getElem? a i := fromApex (array_GetDynamicPath a i default)
-  setElem a i v := (array_SetDynamicPath a i v).1
+  setElem a i v _ := (array_SetDynamicPath a i v).1
   empty := .default
   length := array_LengthDynamicPath
   null := NullDynamicPathArray
@@ -527,7 +527,7 @@ instance : ArrayType DynamicPath DynamicPathArray where
 instance : ArrayType ApexNodeID ApexNodeIDArray where
   getElem a i _ := (array_GetApexNodeID a i default).1
   getElem? a i := fromApex (array_GetApexNodeID a i default)
-  setElem a i v := (array_SetApexNodeID a i v).1
+  setElem a i v _ := (array_SetApexNodeID a i v).1
   empty := .default
   length := array_LengthApexNodeID
   null := NullApexNodeIDArray
@@ -547,7 +547,7 @@ instance : ArrayFind ApexNodeID ApexNodeIDArray where
 instance : ArrayType ApexPortID ApexPortIDArray where
   getElem a i _ := (array_GetApexPortID a i default).1
   getElem? a i := fromApex (array_GetApexPortID a i default)
-  setElem a i v := (array_SetApexPortID a i v).1
+  setElem a i v _ := (array_SetApexPortID a i v).1
   empty := .default
   length := array_LengthApexPortID
   null := NullApexPortIDArray
@@ -567,7 +567,7 @@ instance : ArrayFind ApexPortID ApexPortIDArray where
 instance : ArrayType FBIKSkeleton FBIKSkeletonArray where
   getElem a i _ := (array_GetFBIKSkeleton a i default).1
   getElem? a i := fromApex (array_GetFBIKSkeleton a i default)
-  setElem a i v := (array_SetFBIKSkeleton a i v).1
+  setElem a i v _ := (array_SetFBIKSkeleton a i v).1
   empty := .default
   length := array_LengthFBIKSkeleton
   null := NullFBIKSkeletonArray
@@ -584,7 +584,7 @@ instance : ArrayType FBIKSkeleton FBIKSkeletonArray where
 instance : ArrayType FBIKSolver FBIKSolverArray where
   getElem a i _ := (array_GetFBIKSolver a i default).1
   getElem? a i := fromApex (array_GetFBIKSolver a i default)
-  setElem a i v := (array_SetFBIKSolver a i v).1
+  setElem a i v _ := (array_SetFBIKSolver a i v).1
   empty := .default
   length := array_LengthFBIKSolver
   null := NullFBIKSolverArray
@@ -601,7 +601,7 @@ instance : ArrayType FBIKSolver FBIKSolverArray where
 instance : ArrayType FBIKTarget FBIKTargetArray where
   getElem a i _ := (array_GetFBIKTarget a i default).1
   getElem? a i := fromApex (array_GetFBIKTarget a i default)
-  setElem a i v := (array_SetFBIKTarget a i v).1
+  setElem a i v _ := (array_SetFBIKTarget a i v).1
   empty := .default
   length := array_LengthFBIKTarget
   null := NullFBIKTargetArray
@@ -618,7 +618,7 @@ instance : ArrayType FBIKTarget FBIKTargetArray where
 instance : ArrayType SimRootDataId SimRootDataIdArray where
   getElem a i _ := (array_GetSimRootDataId a i default).1
   getElem? a i := fromApex (array_GetSimRootDataId a i default)
-  setElem a i v := (array_SetSimRootDataId a i v).1
+  setElem a i v _ := (array_SetSimRootDataId a i v).1
   empty := .default
   length := array_LengthSimRootDataId
   null := NullSimRootDataIdArray

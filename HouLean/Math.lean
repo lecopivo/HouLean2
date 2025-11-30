@@ -158,10 +158,22 @@ For vectors, computes the sum of component-wise products.
 For matrices, computes trace of `xᵀ * y`. -/
 declfun dot {α} (x y : α) : Float
 
-/-- Cross product of 3D vectors.
+
+/-- Cross product of two vectors.
+
+Cross product of 2d vectors is a scalar.
+Cross product of 3d vectors is an another 3d vectors perpendicular to the input vectors.
+Cross product of 4d vectors is a 8d vector.
+
+In general cross product(also called outer product) of two vectors is an anti-symmetric matrix.
+
+Two dimensional anti-symmetric matrix has only one degree of freedom,
+three dimansional has three degress of freedom and
+four dimansonal has eight degress of freedom. Hence the output vector dimensionas.
 
 Returns a vector perpendicular to both input vectors. -/
-declfun cross (x y : Vector3) : Vector3
+declfun cross {α} {β} (x y : α) : β
+
 
 /-- Length of a vector or matrix. Also known as l₂ norm or Euclidean norm.
 

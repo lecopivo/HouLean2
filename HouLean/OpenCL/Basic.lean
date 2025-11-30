@@ -131,7 +131,7 @@ inductive FunKind where
   | constructor
   | elemget
   | elemset
-deriving BEq, Inhabited
+deriving BEq, Inhabited, Lean.ToExpr
 
 -- inductive Body where
 --   | builtin

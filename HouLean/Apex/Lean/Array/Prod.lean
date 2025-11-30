@@ -13,16 +13,16 @@ instance : ArrayType (α×β) (As×Bs) where
     let xi ← xs[i]?
     let yi ← ys[i]?
     pure (xi, yi)
-  getElem! := fun {d} (xs,ys) i => 
+  getElem! := fun {d} (xs,ys) i =>
     have : Inhabited α := ⟨d.1.1⟩
     have : Inhabited β := ⟨d.1.2⟩
     (xs[i]!, ys[i]!)
-  setElem := fun (xs,ys) i (x,y) => (setElem xs i x, setElem ys i y)
+  setElem := fun (xs,ys) i (x,y) _ => (setElem xs i x .intro, setElem ys i y .intro)
   length := fun (xs,ys) => length α xs
   empty := (ArrayType.empty α, ArrayType.empty β)
   null := fun (xs, ys) => (null α xs, null β ys)
 --  build := fun elems => sorry
-  append := fun (xs, ys) (x,y) => 
+  append := fun (xs, ys) (x,y) =>
     let (xs',i) := append xs x
     let (ys',_) := append ys y
     ((xs',ys'), i)
@@ -31,7 +31,7 @@ instance : ArrayType (α×β) (As×Bs) where
   clear := fun (xs,ys) => (clear α xs, clear β ys)
   extend := fun (xs,ys) (xs',ys') => (extend α xs xs', extend β ys ys')
   reverse := fun (xs,ys) => (reverse α xs, reverse β ys)
-  fromApex := fun (xs,ys) => 
+  fromApex := fun (xs,ys) =>
     let xs : Array α := fromApex xs
     let ys : Array β := fromApex ys
     xs.zip ys

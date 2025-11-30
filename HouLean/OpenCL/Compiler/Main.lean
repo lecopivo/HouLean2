@@ -1,148 +1,135 @@
-import HouLean.Data.Defs
-import HouLean.OpenCL.Compiler.Extension
+import HouLean.OpenCL.Compiler.Types
 
 open Lean Meta Qq HouLean
 
 namespace HouLean.OpenCL.Compiler
 
-structure Context where
-  fvarMap : ExprMap String := {}
-
-structure State where
-  -- fvarMap
-  -- lines : Array String
-
-set_option linter.unusedVariables false
-
-abbrev CompileM := ReaderT Compiler.Context <| StateT State <| MetaM
-
-def withFVars (xs : Array Expr) (types : Array OpenCLType) (go : CompileM α) : CompileM α := do
+def withFVars (xs : Array Expr) (go : Array String → CompileM α) : CompileM α := do
   let names ← xs.mapM (fun x => nameToString <$> x.fvarId!.getUserName)
+  -- todo: ensure that names are unique!
+  --       we should store the current names that has been bound
+  --       and if we want to use already existing name we just bump a counter on it
   fun ctx =>
   let ctx := { ctx with
       fvarMap := (xs.zip names).foldl (init := ctx.fvarMap) (fun m (x,n) => m.insert x n)
     }
-  go ctx
+  go names ctx
 
-inductive CodeExpr where
-  | fvar (name : String)
-  | app (fn : OpenCLFunction) (args : Array OpenCLCode)
+def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
+    CompileM (Option struct { oclFun : OCLFunction,
+                           fn : Expr,
+                           args : Array Expr }) := do
+  let mut e := e
+  if doWhnf then
+    e ← whnfC e
+  let (fn, args) := e.withApp fun fn args => (fn,args)
+  let info ← getFunInfo fn
+  let firstExplicit := info.paramInfo.findIdx (fun p => p.isExplicit)
+  let fn := fn.beta (args[0:firstExplicit])
+  let args := args[firstExplicit:].toArray
 
--- bunch of let bindings, add support for `if then else` and `for(..){ .. }`
-inductive CodeBody where
-  | letE (name : String) (type : OpenCLType) (val : CodeExpr) (body : CodeBody)
-  | ret (val : CodeExpr)
+  if let some oclFun ← getOpenCLFunction? fn false then
+    return some { oclFun, fn, args }
+  else
+    trace[HouLean.OpenCL.compiler] s!"Trying to compile {fn}! "
+    let _ ← compileFunction fn
+    if let some oclFun ← getOpenCLFunction? fn false then
+      return some { oclFun, fn, args }
+    else
+      return none
 
 
-partial def compileExpr (e : Expr) : CompileM String := do
+partial def compileExpr (e : Expr) : CompileM CodeExpr := do
+  withTraceNode `HouLean.OpenCL.compiler
+    (fun r => do
+      match r with
+      | .ok c =>  return m!"[{checkEmoji}] {e} ==> {← c.toString}"
+      | .error m => return m!"[{crossEmoji}] {e}\n{m.toMessageData}") do
+
+  if (← inferType (← inferType e)).isProp then
+    return .errased
+
+  let e' := e
+  let e ← whnfC e
+  if e != e' then
+    trace[HouLean.OpenCL.compiler] "Reduced {e'} ==> {e}"
+
   match e with
   | .app .. =>
-    let (fn, args) ← getOCLFunApp e
-    let argCodes ← args.mapM compileExpr
-
-    match fn.kind with
-    | .normal =>
-      let args := argCodes.joinl (map:=id) (·++", "++·)
-      return s!"{fn.name}({args})"
-    | .constructor =>
-      let args := argCodes.joinl (map:=id) (·++", "++·)
-      return s!"{fn.name}\{{args}}"
-    | .infix =>
-      let args := argCodes.joinl (map:=id) (·++fn.name++·)
-      return s!"({args})"
-    | .prefix =>
-      unless args.size = 1 do
-        throwError m!"Invalid application of prefix function '{fn.name}' to arguments {args}!"
-      return s!"{fn.name}{argCodes[0]!}"
-    | .postfix =>
-      unless args.size = 1 do
-        throwError m!"Invalid application of postfix function '{fn.name}' to arguments {args}!"
-      return s!"{argCodes[0]!}{fn.name}"
+    let some ⟨oclFun, _fn, args⟩ ← getOpenCLAppOrCompile? e
+      | throwError m!"Failed to find OpenCL iplementation for {e}! {e.getAppFn.ctorName}"
+    let args ← args.mapM compileExpr
+    return .app oclFun args
 
   | .fvar .. =>
     let some varName := (← read).fvarMap[e]?
-      | throwError m!"Unrecognized free variable {e}!"
-    return varName
+      | throwError m!"Unrecognized free variable {e}! {(← read).fvarMap.toArray}"
+    return .fvar varName
 
-  | .letE name type val body _ =>
+  | .letE .. =>
     throwError m!"can't have let binding in an expression {e}"
   | .lit (.natVal val) =>
-    return s!"{val}"
+    return .lit (toString val)
   | .lit (.strVal val) =>
-    return val
+    return .lit val
   | _ =>
-    throwError m!"Do not know how to compile {e}, {e.ctorName}"
+    throwError m!"Don't know how to compiler {e}, case {e.ctorName}!"
 
 
-
-partial def compileFunBody (e : Expr) : CompileM String := do
+partial def compileFunBody (e : Expr) : CompileM CodeBody := do
   match e with
   | .letE name type val body _ =>
 
     -- todo: we have to determine if `val` is compilable
     --       we might have to decompose it and introduce few more let bindings
 
+    let valueCode ← compileExpr val
+
     withLetDecl name type val fun var => do
-      let oclType ← getOCLType type
+      let some oclType ← getOpenCLType? type
+        | throwError m!"Not an OpenCL type {type} in\n{e}"
       let body := body.instantiate1 var
-      withFVars #[var] #[oclType] do
-        pure s!"const {oclType.name} {name} = {← compileExpr val};\n\
-                {← compileFunBody body}"
+      withFVars #[var] fun names => do
+        let bodyCode ← compileFunBody body
+        trace[HouLean.OpenCL.compiler] "vars after introducing {names}:\n{(← read).fvarMap.toArray}"
+        return .letE names[0]! oclType valueCode bodyCode
+
   | .app .. =>
 
     if e.isAppOfArity ``bind 6 then
+
       let mx := e.appFn!.appArg!
+      let valueCode ← compileExpr mx
+
       let f := e.appArg!
       return ← forallBoundedTelescope (← inferType f) (some 1) fun xs _ => do
-        let name ← xs[0]!.fvarId!.getUserName
-        let type ← getOCLType (← inferType xs[0]!)
+        let type ← inferType xs[0]!
+        let some oclType ← getOpenCLType? type
+          | throwError m!"Not an OpenCL type {type} in\n{e}"
         let body := f.beta xs
-        withFVars xs #[type] do
-          pure s!"const {type.name} {name} = {← compileExpr mx};\n\
-                  {← compileFunBody body}"
+        withFVars xs fun names => do
+          let bodyCode ← compileFunBody body
+          return .letE names[0]! oclType valueCode bodyCode
 
-    return s!"return {← compileExpr e};"
+    let returnValue ← compileExpr e
+    return .ret returnValue
+
   | _ => throwError m!"Do not know how to compile {e}"
 
 
-
-def compileFun (f : Expr) (name : String) : CompileM String := do
-  forallTelescope (← inferType f) fun xs r => do
-    let body := f.beta xs
-
-    let returnType ← getOCLType r
-    let argTypes ← liftM <| xs.mapM inferType >>= (·.mapM getOCLType)
-    let argNames ← xs.mapM (fun x => nameToString <$> x.fvarId!.getUserName)
-    let args : Array String :=
-      argTypes.zip argNames |>.map (fun (t,n) => s!"const {t.name} {n}")
-
-    let args := args.joinl (map:=id) (·++", "++·)
-
-    withFVars xs argTypes do
-
-      let bodyCode ← compileFunBody body
-      let bodyCode := bodyCode.replace "\n" "\n  "
-
-      let code : String :=
-        s!"{returnType.name} {name}({args})\n\
-           \{\n\
-           {bodyCode}\n}"
-
-      return code
-
-
+/-- To keep readability of the resutling code we rename certain functions to more sane names. -/
 def funNameOverrideMap : NameMap Name :=
   ({} : NameMap Name)
     |>.insert ``HMul.hMul `mul
     |>.insert ``HAdd.hAdd `add
 
-def mangleName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM String := do
+def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM String := do
   let mut typeSuffix := ""
 
   for arg in args do
     let t ← inferType arg
     if t.isSort then
-      let oclType ← getOCLType arg
+      let oclType ← getOpenCLType arg
       typeSuffix := typeSuffix ++ oclType.shortName
 
   let funName := funName.eraseMacroScopes
@@ -150,54 +137,73 @@ def mangleName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM Str
   let prfx := funName.getPrefix
   let mut name := funName.getString!
 
-  if let some t ← getOCLType? (.const prfx []) then
+  -- todo: we completely erase fuction namespaces except for member functions
+  --       most likely this is not be a good idea!
+  --       keeping all namespaces is too long though
+  --       maybe erasing `HouLean` only is enough
+
+  if let some t ← getOpenCLType? (.const prfx []) then
     name := t.name ++ "_" ++ name
 
-  let r := name ++ typeSuffix
+  let mut r := name
+  if typeSuffix != "" then
+    r := r ++ "_" ++ typeSuffix
+
+  trace[HouLean.OpenCL.compiler] "Mangled function name {funName} ==> {r}"
 
   return r
 
 
-def compileFunction (f : Expr) : MetaM Unit := do
+def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
 
   forallTelescope (← inferType f) fun xs returnType => do
-    let body := f.beta xs
+    let body ← whnfC (f.beta xs)
 
     let (fn, args) := body.withApp (fun fn args => (fn,args))
     let .const funName _ := fn
-      | throwError "Expected constant head function in {body}"
+      | throwError "Expected constant head function in {body}!"
+
+    trace[HouLean.OpenCL.compiler] "Compiling {fn}"
 
     let funInfo ← getFunInfo fn
-    let name ← mangleName funName funInfo args
+    let name ← mangleFunName funName funInfo args
 
     -- unfold definition of the function and basic reduction (mainly to reduce instances)
-    let body ← withConfig (fun cfg => {cfg with zetaDelta := false, zeta := false}) <|
-      whnfI body
     let body := (← unfold body funName).expr
 
-    let returnType ← getOCLType returnType
-    let argTypes ← liftM <| xs.mapM inferType >>= (·.mapM getOCLType)
-    let argNames ← xs.mapM (fun x => nameToString <$> x.fvarId!.getUserName)
-    let args : Array String :=
-      argTypes.zip argNames |>.map (fun (t,n) => s!"{t.name} {n}")
-
-    let args := args.joinl (map:=id) (·++", "++·)
+    trace[HouLean.OpenCL.compiler] "Compiling {fn}:\n{body}"
 
 
-    let go :=
-      withFVars xs argTypes do
+    let returnType ← getOpenCLType returnType
+    let argTypes ← liftM <| xs.mapM inferType >>= (·.mapM getOpenCLType)
+
+    let go : CompileM CodeFunction :=
+      withFVars xs fun argNames => do
 
         let bodyCode ← compileFunBody body
+        return {
+          name := name
+          args := argTypes.zip argNames
+          body := bodyCode
+          returnType := returnType
+        }
 
-        let code : String :=
-          s!"{returnType.name} {name}({args})\n\
-             \{\n\
-             {bodyCode}\n}"
+    let code ← go
+    modify (fun s => {s with compiledFunctions := s.compiledFunctions.push code})
+    let codeStr ← code.toString
+    trace[HouLean.OpenCL.compiler] "compiled {f} to:\n{codeStr}"
+    addOpenCLFunction f name .normal codeStr
+    return code
 
-        return code
+run_meta compileFunctionRef.set compileFunctionCore
 
-    let (code,_) ← go {} {}
+open Elab Term in
+elab "#opencl_compile" f:term : command => do
+  Command.liftTermElabM do
+  let f ← elabTerm f none
+  let (_,s) ← compileFunction f {} {}
 
-    trace[HouLean.OpenCL.compiler] "compiled {f} to:\n{code}"
-
-    addOCLFunction f name (body := .code code)
+  let msgs ← s.compiledFunctions.mapM (fun c => c.toString)
+  let msg := msgs.joinl (map:=id) (·++"\n\n"++·)
+  logInfo m!"compiled function: {s.compiledFunctions.map (fun c => c.name)}"
+  logInfo m!"{msg}"

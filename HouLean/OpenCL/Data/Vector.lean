@@ -1,6 +1,6 @@
 import HouLean.Data.Vector3
 import HouLean.OpenCL.Basic
-import HouLean.OpenCL.Compiler.Extension
+import HouLean.OpenCL.Compiler.Main
 -- import HouLean.OpenCL.Data.Float
 -- import HouLean.OpenCL.Data.Int
 -- import HouLean.OpenCL.Data.Unit
@@ -43,12 +43,40 @@ instance [AtomicOpenCLType α] [AllowedVectorSize n] : OpenCLFunction (Vector.mk
     s!"({t.name})"
   kind := .constructor
 
-open Lean Meta Compiler
-run_meta
+-- open Lean Meta Compiler
+-- run_meta
 
-  let some data ← Compiler.getOpenCLApp? q(#v[(1.0:Float32),2.0,3.0]) | logError "failed"
-  logInfo data.name
-  pure ()
+--   let some data ← Compiler.getOpenCLApp? q(#v[(1.0:Float32),2.0,3.0]) | logError "failed"
+--   logInfo data.oclFun.name
+--   pure ()
+
+
+def foo (x y : Float) :=
+  let a := x * x
+  let b := a / y
+  x + y + a + b
+
+
+#check Cross.cross
+
+defun cross (u v : Vector Float32 2) : Float32 :=
+  u.x * v.y - u.y * v.x
+
+
+def dot (u v : Vector Float32 2) :=
+  u.x * v.x + u.y * v.y
+
+def foo1 (u v : Vector Float32 2) :=
+  cross u v * u + dot u v * u
+
+
+-- set_option trace.HouLean.OpenCL.compiler true
+-- set_option pp.proofs.withType true
+open Compiler
+run_meta compileFunctionRef.set compileFunctionCore
+
+#opencl_compile foo1
+
 ##exit
 
 run_meta addOCLType q(Vector Float32 2) (.atom "float2" "f2")

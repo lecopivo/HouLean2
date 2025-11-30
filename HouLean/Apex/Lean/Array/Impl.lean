@@ -8,41 +8,41 @@ abbrev HouLean.Apex.GetArrayType (α : Type) {As : Type} [ArrayType α As] := As
 
 run_meta compilerExt.add (.implementedByName ``Array ``GetArrayType #[some 0, none, none]) default
 
-def Array.emptyWithCapacity.apex_impl {α As} [ArrayType α As] (_c : Nat) : Array α := 
+def Array.emptyWithCapacity.apex_impl {α As} [ArrayType α As] (_c : Nat) : Array α :=
   fromApex (ArrayType.empty α)
 
-run_meta compilerExt.add (.implementedByName ``Array.mkEmpty ``Array.emptyWithCapacity.apex_impl 
+run_meta compilerExt.add (.implementedByName ``Array.mkEmpty ``Array.emptyWithCapacity.apex_impl
   #[some 0, none, none, some 1]) default
-run_meta compilerExt.add (.implementedByName ``Array.emptyWithCapacity ``Array.emptyWithCapacity.apex_impl 
+run_meta compilerExt.add (.implementedByName ``Array.emptyWithCapacity ``Array.emptyWithCapacity.apex_impl
   #[some 0, none, none, some 1]) default
 
-def Array.size.apex_impl {α As} [ArrayType α As] (a : Array α) : Nat := 
+def Array.size.apex_impl {α As} [ArrayType α As] (a : Array α) : Nat :=
   (ArrayType.length α (toApex a)).toNat
 
 run_meta compilerExt.add (.implementedByName ``Array.size ``Array.size.apex_impl #[some 0, none, none, some 1]) default
 
-def Array.getInternal.apex_impl {α As} [ArrayType α As] (a : Array α) (i : @Nat) (_h : LT.lt i a.size) : α := 
+def Array.getInternal.apex_impl {α As} [ArrayType α As] (a : Array α) (i : @Nat) (_h : LT.lt i a.size) : α :=
   getElem (toApex a) (Int.ofNat i) .intro
 
-run_meta compilerExt.add (.implementedByName ``Array.getInternal ``Array.getInternal.apex_impl 
+run_meta compilerExt.add (.implementedByName ``Array.getInternal ``Array.getInternal.apex_impl
   #[some 0, none, none, some 1, some 2, some 3]) default
 
-def Array.get!Internal.apex_impl {α As} [ArrayType α As] (a : Array α) (i : @Nat) : α := 
+def Array.get!Internal.apex_impl {α As} [ArrayType α As] (a : Array α) (i : @Nat) : α :=
   getElem (toApex a) (Int.ofNat i) .intro
 
-run_meta compilerExt.add (.implementedByName ``Array.get!Internal ``Array.get!Internal.apex_impl 
+run_meta compilerExt.add (.implementedByName ``Array.get!Internal ``Array.get!Internal.apex_impl
   #[some 0, none, none, some 2, some 3]) default
 
-def Array.push.apex_impl {α As} [ArrayType α As] (a : Array α) (v : α) : Array α := 
+def Array.push.apex_impl {α As} [ArrayType α As] (a : Array α) (v : α) : Array α :=
   fromApex (ArrayType.append (toApex a) v).1
 
-run_meta compilerExt.add (.implementedByName ``Array.push ``Array.push.apex_impl 
+run_meta compilerExt.add (.implementedByName ``Array.push ``Array.push.apex_impl
   #[some 0, none, none, some 1, some 2]) default
 
-def Array.set.apex_impl {α As} [ArrayType α As] (a : Array α) (i : Nat) (v : α) (_h : i < a.size) : Array α :=
-  fromApex (setElem (toApex a) (Int.ofNat i) v)
+def Array.set.apex_impl {α As} [ArrayType α As] (a : Array α) (i : Nat) (v : α) (h : i < a.size) : Array α :=
+  fromApex (setElem (toApex a) (Int.ofNat i) v .intro)
 
-run_meta compilerExt.add (.implementedByName ``Array.set ``Array.set.apex_impl 
+run_meta compilerExt.add (.implementedByName ``Array.set ``Array.set.apex_impl
   #[some 0, none, none, some 1, some 2, some 3, some 4]) default
 
 -- todo:
