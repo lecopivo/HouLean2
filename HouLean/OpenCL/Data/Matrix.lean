@@ -34,13 +34,15 @@ def matrixMk16 (row0 row1 row2 row3 row4 row5 row6 row7
   ⟨#v[row0,row1,row2,row3,row4,row5,row6,row7,
       row8,row9,row10,row11,row12,row13,row14,row15]⟩
 
-implemented_by (row0 row1 : Vector α n) :
-  #m[row0,row1] = matrixMk2 row0 row1 := by rfl
-implemented_by (row0 row1 row2 : Vector α n) :
-  #m[row0,row1,row2] = matrixMk3 row0 row1 row2 := by rfl
-implemented_by (row0 row1 row2 row3 : Vector α n) :
-  #m[row0,row1,row2,row3] = matrixMk4 row0 row1 row2 row3 := by rfl
+section
+variable (row0 row1 row2 row3 : Vector α n)
+implemented_by : #m[row0,row1] = matrixMk2 row0 row1 := by rfl
+implemented_by : #m[row0,row1,row2] = matrixMk3 row0 row1 row2 := by rfl
+implemented_by : Matrix.mk (vectorMk3 row0 row1 row2) = matrixMk3 row0 row1 row2 := by rfl
+implemented_by : #m[row0,row1,row2,row3] = matrixMk4 row0 row1 row2 row3 := by rfl
+end
 
+section
 variable [AtomicOpenCLType α] [AllowedVectorSize n]
 
 instance : OpenCLFunction (matrixMk2 (α:=α) (n:=n)) where
@@ -106,28 +108,27 @@ instance : OpenCLFunction (@Matrix.row6 (α:=α) (m:=m) (n:=n)) where
 instance : OpenCLFunction (@Matrix.row7 (α:=α) (m:=m) (n:=n)) where
   name := ".row7"
   kind := .postfix
+end
 
--- All these variants as flaky and we will run into problems sooner or later
--- we should have a way to indicate that certain arguments should resolvable at compile time
-implemented_by (a : Matrix α m n) (h : 0 < m) : a.data[0] = a.row0 := by rfl
-implemented_by (a : Matrix α m n) (h : 1 < m) : a.data[1] = a.row1 := by rfl
-implemented_by (a : Matrix α m n) (h : 2 < m) : a.data[2] = a.row2 := by rfl
-implemented_by (a : Matrix α m n) (h : 3 < m) : a.data[3] = a.row3 := by rfl
+implemented_by (a : Matrix α m n) (h : 0 < m) : a.row 0 = a.row0 := by rfl
+implemented_by (a : Matrix α m n) (h : 1 < m) : a.row 1 = a.row1 := by rfl
+implemented_by (a : Matrix α m n) (h : 2 < m) : a.row 2 = a.row2 := by rfl
+implemented_by (a : Matrix α m n) (h : 3 < m) : a.row 3 = a.row3 := by rfl
 
-implemented_by (a : Matrix α m n) (h : 0 < m) : a.data[(⟨0,h⟩:Fin m)] = a.row0 := by rfl
-implemented_by (a : Matrix α m n) (h : 1 < m) : a.data[(⟨1,h⟩:Fin m)] = a.row1 := by rfl
-implemented_by (a : Matrix α m n) (h : 2 < m) : a.data[(⟨2,h⟩:Fin m)] = a.row2 := by rfl
-implemented_by (a : Matrix α m n) (h : 3 < m) : a.data[(⟨3,h⟩:Fin m)] = a.row3 := by rfl
+implemented_by (a : Matrix α m n) (h : 0 < m) : a.row (⟨0,h⟩ : Fin m) = a.row0 := by rfl
+implemented_by (a : Matrix α m n) (h : 1 < m) : a.row (⟨1,h⟩ : Fin m) = a.row1 := by rfl
+implemented_by (a : Matrix α m n) (h : 2 < m) : a.row (⟨2,h⟩ : Fin m) = a.row2 := by rfl
+implemented_by (a : Matrix α m n) (h : 3 < m) : a.row (⟨3,h⟩ : Fin m) = a.row3 := by rfl
 
-implemented_by (a : Matrix α m n) [OfNat (Fin m) 0] : a.data[(0:Fin m)] = a.row0 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin m) 1] : a.data[(1:Fin m)] = a.row1 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin m) 2] : a.data[(2:Fin m)] = a.row2 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin m) 3] : a.data[(3:Fin m)] = a.row3 sorry_proof
+implemented_by (a : Matrix α m n) [OfNat (Fin m) 0] : a.row (0 : Fin m) = a.row0 sorry_proof
+implemented_by (a : Matrix α m n) [OfNat (Fin m) 1] : a.row (1 : Fin m) = a.row1 sorry_proof
+implemented_by (a : Matrix α m n) [OfNat (Fin m) 2] : a.row (2 : Fin m) = a.row2 sorry_proof
+implemented_by (a : Matrix α m n) [OfNat (Fin m) 3] : a.row (3 : Fin m) = a.row3 sorry_proof
 
-implemented_by (a : Matrix α m n) (ij : Nat×Nat) (h) : a[ij]'h = a.data[ij.1][ij.2] := by rfl
-implemented_by (a : Matrix α m n) (i : Fin m) (j : Nat) (h) : a[(i.1,j)]'h = a.data[i][j] := by rfl
-implemented_by (a : Matrix α m n) (i : Nat) (j : Fin n) (h) : a[(i,j.1)]'h = a.data[i][j] := by rfl
-implemented_by (a : Matrix α m n) (i : Fin m) (j : Fin n) : a[(i.1,j.1)] = a.data[i][j] := by rfl
+implemented_by (a : Matrix α m n) (ij : Nat×Nat) (h) : a[ij]'h = (a.row ij.1)[ij.2] := by rfl
+implemented_by (a : Matrix α m n) (i : Fin m) (j : Nat) (h) : a[(i.1,j)]'h = (a.row i)[j] := by rfl
+implemented_by (a : Matrix α m n) (i : Nat) (j : Fin n) (h) : a[(i,j.1)]'h = (a.row i)[j] := by rfl
+implemented_by (a : Matrix α m n) (i : Fin m) (j : Fin n) : a[(i.1,j.1)] = (a.row i)[j] := by rfl
 
 
 -- ofFn
@@ -167,3 +168,16 @@ implemented_by (a : Matrix α 3 n) (b : Matrix β 3 n) (f : Vector α n → Vect
     a.mapRows₂ f b = #m[f a.row0 b.row0, f a.row1 b.row1, f a.row2 b.row2]
 implemented_by (a : Matrix α 4 n) (b : Matrix β 4 n) (f : Vector α n → Vector β n → Vector γ n) :
     a.mapRows₂ f b = #m[f a.row0 b.row0, f a.row1 b.row1, f a.row2 b.row2, f a.row3 b.row3]
+
+
+
+set_option trace.HouLean.OpenCL.compiler true
+
+def foo := (fun A : Matrix Float32 3 3 => A.col 1)
+
+#opencl_compile (fun x => foo x)
+
+#check Matrix.col
+
+-- set_option pp.proofs false in
+-- #opencl_compile (fun u v : Matrix Float64 3 3 => u.matMul v)

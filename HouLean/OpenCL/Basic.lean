@@ -22,23 +22,37 @@ namespace OpenCL
 -- Implemented By
 -- =================================================================================================
 
+
+register_simp_attr opencl_csimp
+
 /-- OpenCL compiler will replace `original` with `replacement` -/
 class ImplementedBy {α} (original : α) (replacement : outParam α) where
   valid : original = replacement
 
 @[inherit_doc ImplementedBy]
-syntax "implemented_by" bracketedBinder* " : " term:55 " = " term (" := " term)? : command
+scoped syntax "implemented_by" bracketedBinder* " : " term:55 " = " term (" := " term)? : command
 
-macro_rules
-| `(implemented_by $bs:bracketedBinder* : $lhs:term = $rhs:term $[ := $prf]?) =>
+
+open Lean Elab Term Command in
+elab_rules : command
+| `(implemented_by $bs:bracketedBinder* : $lhs:term = $rhs:term $[ := $prf]?) => do
+  let id ← `(ident| opencl_compile_rewrite_rule)
+
   match prf with
   | some prf =>
-    `(instance $bs:bracketedBinder* : ImplementedBy ($lhs) ($rhs) where
-      valid := $prf)
+    elabCommand (← `(@[opencl_csimp]
+                     theorem $id $bs* : ($lhs) = ($rhs) := $prf))
   | none =>
-    `(instance $bs:bracketedBinder* : ImplementedBy ($lhs) ($rhs) where
-      valid := sorry_proof)
+    elabCommand (← `(@[opencl_csimp]
+                     theorem $id $bs* : ($lhs) = ($rhs) := by sorry_proof))
 
+
+-- =================================================================================================
+-- Compile Time Value
+-- =================================================================================================
+
+/-- This value of the type `CompTime α` is enforced to be known at compile time. -/
+abbrev CompTime (α : Sort u) := α
 
 -- =================================================================================================
 -- OpenCL Type
@@ -62,7 +76,8 @@ class AtomicOpenCLType (α : Type) extends OpenCLType α where
           (α = Int16) ∨ (α = UInt16) ∨
           (α = Int32) ∨ (α = UInt32) ∨
           (α = Int64) ∨ (α = UInt64) ∨
-          (α = Float32) ∨ (α = Float64)
+          (α = Float32) ∨ (α = Float64) ∨
+          (α = Int) ∨ (α = Nat)
 
 
 instance : AtomicOpenCLType Char where
@@ -109,6 +124,17 @@ instance : AtomicOpenCLType Float64 where
   name := "double"
   shortName := "d"
   valid := by simp
+
+instance : AtomicOpenCLType Int where
+  name := "int"
+  shortName := "i"
+  valid := by simp
+
+instance : AtomicOpenCLType Nat where
+  name := "uint"
+  shortName := "ui"
+  valid := by simp
+
 
 /-- OpenCL short vector types are allowed of only a specific length. This class allows to enforce
 this restriction on the size `n`. -/

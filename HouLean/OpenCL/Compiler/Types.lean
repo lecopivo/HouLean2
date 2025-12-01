@@ -7,12 +7,13 @@ open Lean Meta Qq HouLean
 namespace HouLean.OpenCL.Compiler
 structure Context where
   fvarMap : ExprMap String := {}
+  usedNames : Std.HashMap String Nat := {}
 
 structure State where
   compiledFunctions : Array CodeFunction := #[]
   -- all functions that has been compiled in this run
 
-abbrev CompileM := ReaderT Compiler.Context <| StateT State <| MetaM
+abbrev CompileM := ReaderT Compiler.Context <| StateT State <| SimpM
 
 initialize compileFunctionRef : IO.Ref (Expr → CompileM CodeFunction) ←
   IO.mkRef (fun _ => pure default)

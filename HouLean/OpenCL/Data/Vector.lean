@@ -16,9 +16,8 @@ def vectorMk8 (x0 x1 x2 x3 x4 x5 x6 x7 : α) : Vector α 8 :=
 def vectorMk16 (x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 : α) : Vector α 16 :=
   #v[x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15]
 
-variable [AtomicOpenCLType α]
 
-implemented_by (x y : α) : #v[x,y] = vectorMk2 x y := by rfl
+implemented_by (x y : α) : #v[x,y] = vectorMk2 x y
 implemented_by (x y z : α) : #v[x,y,z] = vectorMk3 x y z := by rfl
 implemented_by (x y z w : α) : #v[x,y,z,w] = vectorMk4 x y z w := by rfl
 implemented_by (x0 x1 x2 x3 x4 x5 x6 x7 : α) :
@@ -27,6 +26,9 @@ implemented_by (x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 : α) :
   #v[x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15]
   =
   (vectorMk16 x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15) := by rfl
+
+section
+variable [AtomicOpenCLType α]
 
 instance : OpenCLFunction (vectorMk2 (α:=α)) where
   name :=
@@ -75,6 +77,8 @@ instance : OpenCLFunction (@Vector.z α n) where
 instance : OpenCLFunction (@Vector.w α n) where
   name := ".w"
   kind := .postfix
+end
+
 
 implemented_by (v : Vector α n) (h) : v[0]'h = v.x := by rfl
 implemented_by (v : Vector α n) (h) : v[1]'h = v.y := by rfl
@@ -114,54 +118,88 @@ end Map
 
 section MapIdx
 variable {β} (f : Nat → α → β)
-implemented_by (v : Vector α 2) : v.mapIdx f = #v[f 0 v.x, f 1 v.y]
-implemented_by (v : Vector α 3) : v.mapIdx f = #v[f 0 v.x, f 1 v.y, f 2 v.z]
-implemented_by (v : Vector α 4) : v.mapIdx f = #v[f 0 v.x, f 1 v.y, f 2 v.z, f 3 v.w]
+implemented_by (v : Vector α 2) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y]
+implemented_by (v : Vector α 3) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y, f 2 v.z]
+implemented_by (v : Vector α 4) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y, f 2 v.z, f 3 v.w]
 end MapIdx
 
 section MapFinIdx
 variable {β}
 implemented_by (v : Vector α 2) (f : (i : Nat) → α → (h : i < 2) → β) :
-  v.mapFinIdx f = #v[f 0 v.x (by grind), f 1 v.y (by grind)]
+  v.mapFinIdx f
+  =
+  let v := v
+  #v[f 0 v.x (by grind), f 1 v.y (by grind)]
+
 implemented_by (v : Vector α 3) (f : (i : Nat) → α → (h : i < 3) → β) :
-  v.mapFinIdx f = #v[f 0 v.x (by grind), f 1 v.y (by grind), f 2 v.z (by grind)]
+  v.mapFinIdx f
+  =
+  let v := v
+  #v[f 0 v.x (by grind), f 1 v.y (by grind), f 2 v.z (by grind)]
+
 implemented_by (v : Vector α 4) (f : (i : Nat) → α → (h : i < 4) → β) :
-  v.mapFinIdx f = #v[f 0 v.x (by grind), f 1 v.y (by grind), f 2 v.z (by grind), f 3 v.w (by grind)]
+  v.mapFinIdx f
+  =
+  let v := v
+  #v[f 0 v.x (by grind), f 1 v.y (by grind), f 2 v.z (by grind), f 3 v.w (by grind)]
+
 end MapFinIdx
 
 
 section ZipMap
 variable (f : α×β → γ)
-implemented_by (u : Vector α 2) (v : Vector β 2) : (u.zip v).map f = #v[f (u.x,v.x), f (u.y,v.y)] := by simp[Vector.x, Vector.y]; grind
-implemented_by (u : Vector α 3) (v : Vector β 3) : (u.zip v).map f = #v[f (u.x,v.x), f (u.y,v.y), f (u.z,v.z)] := by simp[Vector.x, Vector.y, Vector.z]; grind
-implemented_by (u : Vector α 4) (v : Vector β 4) : (u.zip v).map f = #v[f (u.x,v.x), f (u.y,v.y), f (u.z,v.z), f (u.w,v.w)] := by simp[Vector.x, Vector.y, Vector.z, Vector.w]; grind
+implemented_by (u : Vector α 2) (v : Vector β 2) :
+    (u.zip v).map f
+    =
+    let u := u
+    let v := v
+    #v[f (u.x,v.x), f (u.y,v.y)] := by simp[Vector.x, Vector.y]; grind
+
+implemented_by (u : Vector α 3) (v : Vector β 3) :
+    (u.zip v).map f
+    =
+    let u := u
+    let v := v
+    #v[f (u.x,v.x), f (u.y,v.y), f (u.z,v.z)] := by simp[Vector.x, Vector.y, Vector.z]; grind
+
+implemented_by (u : Vector α 4) (v : Vector β 4) :
+    (u.zip v).map f
+    =
+    let u := u
+    let v := v
+    #v[f (u.x,v.x), f (u.y,v.y), f (u.z,v.z), f (u.w,v.w)] := by simp[Vector.x, Vector.y, Vector.z, Vector.w]; grind
+
 implemented_by (u : Vector α 8) (v : Vector β 8) :
     (u.zip v).map f
     =
+    let u := u
+    let v := v
     #v[f (u[0],v[0]), f (u[1],v[1]), f (u[2],v[2]), f (u[3],v[3]),
        f (u[4],v[4]), f (u[5],v[5]), f (u[6],v[6]), f (u[7],v[7])] := by sorry_proof
+
 implemented_by (u : Vector α 16) (v : Vector β 16) :
     (u.zip v).map f
     =
+    let u := u
+    let v := v
     #v[f (u[0],v[0]), f (u[1],v[1]), f (u[2],v[2]), f (u[3],v[3]),
        f (u[4],v[4]), f (u[5],v[5]), f (u[6],v[6]), f (u[7],v[7]),
        f (u[8],v[8]), f (u[9],v[9]), f (u[10],v[10]), f (u[11],v[11]),
        f (u[12],v[12]), f (u[13],v[13]), f (u[14],v[14]), f (u[15],v[15])] := sorry_proof
 end ZipMap
 
-
 section Foldl
 variable {β} (f : β → α → β) (init : β)
-implemented_by (u : Vector α 2) : u.foldl f init = f (f init u.x) u.y
-implemented_by (u : Vector α 3) : u.foldl f init = f (f (f init u.x) u.y) u.z
-implemented_by (u : Vector α 4) : u.foldl f init = f (f (f (f init u.x) u.y) u.z) u.w
+implemented_by (u : Vector α 2) : u.foldl f init = let u:= u; f (f init u.x) u.y
+implemented_by (u : Vector α 3) : u.foldl f init = let u:= u; f (f (f init u.x) u.y) u.z
+implemented_by (u : Vector α 4) : u.foldl f init = let u:= u; f (f (f (f init u.x) u.y) u.z) u.w
 end Foldl
 
 section Foldr
 variable {β} (f : α → β → β) (init : β)
-implemented_by (u : Vector α 2) : u.foldr f init = f u.x (f u.y init)
-implemented_by (u : Vector α 3) : u.foldr f init = f u.x (f u.y (f u.z init))
-implemented_by (u : Vector α 4) : u.foldr f init = f u.x (f u.y (f u.z (f u.w init)))
+implemented_by (u : Vector α 2) : u.foldr f init = let u:= u; f u.x (f u.y init)
+implemented_by (u : Vector α 3) : u.foldr f init = let u:= u; f u.x (f u.y (f u.z init))
+implemented_by (u : Vector α 4) : u.foldr f init = let u:= u; f u.x (f u.y (f u.z (f u.w init)))
 end Foldr
 
 section Sum
@@ -173,5 +211,6 @@ open Compiler
 run_meta compileFunctionRef.set compileFunctionCore
 set_option trace.HouLean.OpenCL.compiler true
 
--- set_option pp.proofs false in
--- #opencl_compile (fun x y : Vector Float32 4 => x.dot y)
+
+@[opencl_csimp] theorem add_zero [Add α] [Zero α] (x : α) : (0 : α) + x = x := sorry_proof
+@[opencl_csimp] theorem zero_add [Add α] [Zero α] (x : α) : x + (0 : α) = x := sorry_proof

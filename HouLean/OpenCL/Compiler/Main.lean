@@ -6,12 +6,17 @@ namespace HouLean.OpenCL.Compiler
 
 def withFVars (xs : Array Expr) (go : Array String → CompileM α) : CompileM α := do
   let names ← xs.mapM (fun x => nameToString <$> x.fvarId!.getUserName)
-  -- todo: ensure that names are unique!
-  --       we should store the current names that has been bound
-  --       and if we want to use already existing name we just bump a counter on it
   fun ctx =>
+  -- ensure unique names
+  let (usedNames, names) := names.foldl (init:=(ctx.usedNames, #[])) (fun (un, ns) n =>
+    if let some c := un[n]? then
+      (un.insert n (c+1), ns.push s!"{n}{c+1}")
+    else
+      (un.insert n 0, ns.push s!"{n}")
+      )
   let ctx := { ctx with
       fvarMap := (xs.zip names).foldl (init := ctx.fvarMap) (fun m (x,n) => m.insert x n)
+      usedNames := usedNames
     }
   go names ctx
 
@@ -27,11 +32,12 @@ def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
   let firstExplicit := info.paramInfo.findIdx (fun p => p.isExplicit)
   let fn := fn.beta (args[0:firstExplicit])
   let args := args[firstExplicit:].toArray
+  let args ← args.filterM (fun arg => do return !(← liftM (inferType arg >>= inferType)).isProp)
 
   if let some oclFun ← getOpenCLFunction? fn false then
     return some { oclFun, fn, args }
   else
-    trace[HouLean.OpenCL.compiler] s!"Trying to compile {fn}! "
+    trace[HouLean.OpenCL.compiler] m!"Trying to compile {fn}! "
     let _ ← compileFunction fn
     if let some oclFun ← getOpenCLFunction? fn false then
       return some { oclFun, fn, args }
@@ -39,17 +45,17 @@ def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
       return none
 
 
-/-- Replace `e` with `replacement` if there is an instance `ImplementedBy origial replacement`. -/
-partial def implementedBy (original : Expr) : MetaM Expr := do
-  let type ← inferType original
-  let replacement ← mkFreshExprMVar type
-  let cls ← mkConstWithFreshMVarLevels ``ImplementedBy
-  let cls := mkAppN cls #[type, original, replacement]
-  if let some _ ← synthInstance? cls then
-    trace[HouLean.OpenCL.compiler] "implemented by {original} ==> {replacement}"
-    return ← implementedBy (← instantiateMVars replacement)
-  else
-    return original
+-- /-- Replace `e` with `replacement` if there is an instance `ImplementedBy origial replacement`. -/
+-- partial def implementedBy (original : Expr) : MetaM Expr := do
+--   let type ← inferType original
+--   let replacement ← mkFreshExprMVar type
+--   let cls ← mkConstWithFreshMVarLevels ``ImplementedBy
+--   let cls := mkAppN cls #[type, original, replacement]
+--   if let some _ ← synthInstance? cls then
+--     trace[HouLean.OpenCL.compiler] "implemented by {original} ==> {replacement}"
+--     return ← implementedBy (← instantiateMVars replacement)
+--   else
+--     return original
 
 
 partial def compileExpr (e : Expr) : CompileM CodeExpr := do
@@ -62,15 +68,14 @@ partial def compileExpr (e : Expr) : CompileM CodeExpr := do
   if (← inferType (← inferType e)).isProp then
     return .errased
 
-  let e ← implementedBy e
-
   let e' := e
-  let e ← whnfC e
+  let e := (← Simp.simp e).expr
   if e != e' then
-    trace[HouLean.OpenCL.compiler] "Reduced {e'} ==> {e}"
+    trace[HouLean.OpenCL.compiler] "Rewriten\n{e'}\n==>\n{e}"
 
   match e with
   | .app .. =>
+    trace[HouLean.OpenCL.compiler] "compiling exp, app case {e}"
     let some ⟨oclFun, _fn, args⟩ ← getOpenCLAppOrCompile? e
       | throwError m!"Failed to find OpenCL iplementation for {e}! {e.getAppFn.ctorName}"
     let args ← args.mapM compileExpr
@@ -93,10 +98,15 @@ partial def compileExpr (e : Expr) : CompileM CodeExpr := do
 
 partial def compileFunBody (e : Expr) : CompileM CodeBody := do
   match e with
-  | .letE name type val body _ =>
+  | .letE name type val body nondep =>
 
     -- todo: we have to determine if `val` is compilable
     --       we might have to decompose it and introduce few more let bindings
+    let val := (← Simp.simp val).expr
+    if val.isLet then
+      return ← letTelescope val fun xs valbody => do
+        let e' ← mkLetFVars xs (.letE name type valbody body nondep)
+        compileFunBody e'
 
     let valueCode ← compileExpr val
 
@@ -110,6 +120,9 @@ partial def compileFunBody (e : Expr) : CompileM CodeBody := do
         return .letE names[0]! oclType valueCode bodyCode
 
   | .app .. =>
+    let e := (← Simp.simp e).expr
+    if e.isLet then
+      return ← compileFunBody e
 
     if e.isAppOfArity ``bind 6 then
 
@@ -141,6 +154,8 @@ def funNameOverrideMap : NameMap Name :=
 def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM String := do
   let mut typeSuffix := ""
 
+  trace[HouLean.OpenCL.compiler] "mangling function name with args {args}"
+
   for arg in args, info in info.paramInfo do
     if info.isExplicit then
       continue
@@ -148,7 +163,7 @@ def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM 
     if (← isClass? t).isSome then
       -- we do not include typeclasses in mangled function name
       continue
-    else if t.isSort then
+    else if t.isType then
       let oclType ← getOpenCLType arg
       typeSuffix := typeSuffix ++ oclType.shortName
     else if ← isDefEq t q(Nat) then
@@ -188,12 +203,14 @@ def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
 
     trace[HouLean.OpenCL.compiler] "Compiling {fn}:\n{body}"
 
-
     let returnType ← getOpenCLType returnType
-    let argTypes ← liftM <| xs.mapM inferType >>= (·.mapM getOpenCLType)
+
+    -- filter out prop arguments
+    let xs' ← xs.filterM (fun x => do return !(← liftM (inferType x >>= inferType)).isProp)
+    let argTypes ← liftM <| xs'.mapM inferType >>= (·.mapM getOpenCLType)
 
     let go : CompileM CodeFunction :=
-      withFVars xs fun argNames => do
+      withFVars xs' fun argNames => do
 
         let bodyCode ← compileFunBody body
         return {
@@ -210,13 +227,30 @@ def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
     addOpenCLFunction f name .normal codeStr
     return code
 
-run_meta compileFunctionRef.set compileFunctionCore
+initialize compileFunctionRef.set compileFunctionCore
+
+-- First, get the extension for your simp attribute
+def getOpenCLTheorems : MetaM SimpTheorems := do
+  let ext ← Lean.Meta.getSimpExtension? `opencl_csimp
+  match ext with
+  | none => throwError "simp attribute `opencl_csimp' not found"
+  | some ext =>
+    ext.getTheorems
+
 
 open Elab Term in
 elab "#opencl_compile" f:term : command => do
   Command.liftTermElabM do
   let f ← elabTermAndSynthesize f none
-  let (_,s) ← compileFunction f {} {}
+
+  let simpMthds := Simp.mkDefaultMethodsCore #[]
+  let simpCtx : Simp.Context ← Simp.mkContext
+    (config := {zetaDelta := false, zeta := false, iota := false})
+    (simpTheorems := #[← getOpenCLTheorems])
+  let simpState : Simp.State := {}
+  let ctx : Context := {}
+  let state : State := {}
+  let ((_,s),_) ← compileFunction f ctx state simpMthds.toMethodsRef simpCtx |>.run simpState
 
   let msgs ← s.compiledFunctions.mapM (fun c => c.toString)
   let msg := msgs.joinl (map:=id) (·++"\n\n"++·)

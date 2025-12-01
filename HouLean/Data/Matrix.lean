@@ -32,7 +32,7 @@ def row (a : Matrix α m n) (i : Nat) (h : i < m := by get_elem_tactic) :
     Vector α n := a.data[i]
 
 def col (a : Matrix α m n) (j : Nat) (h : j < n := by get_elem_tactic) :
-    Vector α m := Vector.ofFn fun i => a.data[i][j]
+    Vector α m := Vector.ofFn fun i => a[(i.1,j)]
 
 -- row projections
 def row0 (a : Matrix α m n) (h : 0 < m := by get_elem_tactic) := a.row 0
