@@ -1,19 +1,22 @@
-import HouLean.OpenCL.Data.Vector3
+import HouLean.Data.Vector
+import HouLean.OpenCL.Data.Vector
+import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.WorkItemFunctions
 
 open HouLean OpenCL
 
 
+
 instance : Coe UInt32 UInt64 := ⟨fun i => i.toUInt64⟩
 
-def t1 (a b c : ArrayRef Vector3) : OpenCLM Unit := do
+def t1 (a b c : Pointer Float32) : OpenCLM Unit := do
 
   let i ← getGlobalId 0
 
-  let ai ← ArrayType.get a i.toUInt64
-  let bi ← ArrayType.get b i.toUInt64
+  let ai : Vector Float32 3 ← ArrayType.get a.toConst i.toUInt64
+  let bi : Vector Float32 3 ← ArrayType.get b.toConst i.toUInt64
 
-  let u := ai.cross bi
+  let u := ai.cross3 bi
   let v := ai - (u.dot bi)*u
 
   ArrayType.set c i v
@@ -21,4 +24,6 @@ def t1 (a b c : ArrayRef Vector3) : OpenCLM Unit := do
 open Compiler Qq
 
 set_option trace.HouLean.OpenCL.compiler true in
-run_meta compileFunction q(t1)
+
+
+#opencl_compile t1

@@ -1,8 +1,7 @@
 import Lean
+import HouLean.Init
 
 namespace HouLean
-
-abbrev Float64 := Float
 
 opaque OpenCL.RealWorld.nonemptyType : NonemptyType.{0}
 
@@ -17,6 +16,28 @@ abbrev OpenCLM := StateM OpenCL.RealWorld
 
 
 namespace OpenCL
+
+
+-- =================================================================================================
+-- Implemented By
+-- =================================================================================================
+
+/-- OpenCL compiler will replace `original` with `replacement` -/
+class ImplementedBy {α} (original : α) (replacement : outParam α) where
+  valid : original = replacement
+
+@[inherit_doc ImplementedBy]
+syntax "implemented_by" bracketedBinder* " : " term:55 " = " term (" := " term)? : command
+
+macro_rules
+| `(implemented_by $bs:bracketedBinder* : $lhs:term = $rhs:term $[ := $prf]?) =>
+  match prf with
+  | some prf =>
+    `(instance $bs:bracketedBinder* : ImplementedBy ($lhs) ($rhs) where
+      valid := $prf)
+  | none =>
+    `(instance $bs:bracketedBinder* : ImplementedBy ($lhs) ($rhs) where
+      valid := sorry_proof)
 
 
 -- =================================================================================================

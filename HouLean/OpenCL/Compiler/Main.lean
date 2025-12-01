@@ -39,6 +39,19 @@ def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
       return none
 
 
+/-- Replace `e` with `replacement` if there is an instance `ImplementedBy origial replacement`. -/
+partial def implementedBy (original : Expr) : MetaM Expr := do
+  let type ← inferType original
+  let replacement ← mkFreshExprMVar type
+  let cls ← mkConstWithFreshMVarLevels ``ImplementedBy
+  let cls := mkAppN cls #[type, original, replacement]
+  if let some _ ← synthInstance? cls then
+    trace[HouLean.OpenCL.compiler] "implemented by {original} ==> {replacement}"
+    return ← implementedBy (← instantiateMVars replacement)
+  else
+    return original
+
+
 partial def compileExpr (e : Expr) : CompileM CodeExpr := do
   withTraceNode `HouLean.OpenCL.compiler
     (fun r => do
@@ -48,6 +61,8 @@ partial def compileExpr (e : Expr) : CompileM CodeExpr := do
 
   if (← inferType (← inferType e)).isProp then
     return .errased
+
+  let e ← implementedBy e
 
   let e' := e
   let e ← whnfC e
@@ -126,26 +141,26 @@ def funNameOverrideMap : NameMap Name :=
 def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM String := do
   let mut typeSuffix := ""
 
-  for arg in args do
+  for arg in args, info in info.paramInfo do
+    if info.isExplicit then
+      continue
     let t ← inferType arg
-    if t.isSort then
+    if (← isClass? t).isSome then
+      -- we do not include typeclasses in mangled function name
+      continue
+    else if t.isSort then
       let oclType ← getOpenCLType arg
       typeSuffix := typeSuffix ++ oclType.shortName
+    else if ← isDefEq t q(Nat) then
+      let n ← unsafe evalExpr Nat q(Nat) arg
+      typeSuffix := typeSuffix ++ toString n
+    else
+      throwError m!"don't know how to mangle function name with implicit argument of type {t}"
 
   let funName := funName.eraseMacroScopes
   let funName := funNameOverrideMap.get? funName |>.getD funName
-  let prfx := funName.getPrefix
-  let mut name := funName.getString!
 
-  -- todo: we completely erase fuction namespaces except for member functions
-  --       most likely this is not be a good idea!
-  --       keeping all namespaces is too long though
-  --       maybe erasing `HouLean` only is enough
-
-  if let some t ← getOpenCLType? (.const prfx []) then
-    name := t.name ++ "_" ++ name
-
-  let mut r := name
+  let mut r := toString funName.eraseMacroScopes |>.replace "." "_" |>.toLower
   if typeSuffix != "" then
     r := r ++ "_" ++ typeSuffix
 
@@ -200,7 +215,7 @@ run_meta compileFunctionRef.set compileFunctionCore
 open Elab Term in
 elab "#opencl_compile" f:term : command => do
   Command.liftTermElabM do
-  let f ← elabTerm f none
+  let f ← elabTermAndSynthesize f none
   let (_,s) ← compileFunction f {} {}
 
   let msgs ← s.compiledFunctions.mapM (fun c => c.toString)

@@ -1,5 +1,9 @@
 import Lean
 
+/-! In this file we define Python like syntax. This will allows us to write python like code
+and translate it to Lean code.
+-/
+
 namespace HouLean.Python
 
 -- Declare Python syntax categories

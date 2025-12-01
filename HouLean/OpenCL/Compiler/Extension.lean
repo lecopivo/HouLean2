@@ -223,8 +223,8 @@ def addOpenCLFunction (f : Expr) (name : String) (kind : OpenCLFunction.FunKind)
   let kindExpr := toExpr kind
   let defExpr ← mkAppM ``Option.some #[mkStrLit definition]
 
-  let type ← mkAppM ``OpenCL.OpenCLFunction #[f]
-  let val ← mkAppOptM ``OpenCL.OpenCLFunction.mk #[none, f, nameExpr, kindExpr, defExpr]
+  let type ← mkAppM ``OpenCL.OpenCLFunction #[f] >>= instantiateMVars
+  let val ← mkAppOptM ``OpenCL.OpenCLFunction.mk #[none, f, nameExpr, kindExpr, defExpr] >>= instantiateMVars
 
   let name := s!"instOpenCLFunction{name.capitalize}".toName
 

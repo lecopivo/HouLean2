@@ -5,11 +5,20 @@ namespace HouLean.OpenCL
 open Compiler Qq
 
 -- bootstrap types
-run_meta addOCLType q(Bool) (.atom "bool" "b")
+instance : OpenCLType Bool where
+  name := "bool"
+  shortName := "b"
 
 
-run_meta addOCLFunction q(Bool.and) "&&" (kind := .infix)
-run_meta addOCLFunction q(fun a b : Bool => a && b) "&&" (kind := .infix)
+instance : OpenCLFunction Bool.and where
+  name := " && "
+  kind := .infix
 
-run_meta addOCLFunction q(Bool.or) "||" (kind := .infix)
-run_meta addOCLFunction q(fun a b : Bool => a || b) "||" (kind := .infix)
+instance : OpenCLFunction Bool.or where
+  name := " || "
+  kind := .infix
+
+run_meta compileFunctionRef.set compileFunctionCore
+
+set_option trace.HouLean.OpenCL.compiler true
+#opencl_compile fun a b : Bool => a && b || a

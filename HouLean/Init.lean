@@ -3,6 +3,8 @@ import Qq
 
 namespace HouLean
 
+abbrev Float64 := Float
+
 /-! Kitchen sink file for the very general declarations that are useful everywhere
 -/
 

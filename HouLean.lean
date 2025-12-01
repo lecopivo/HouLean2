@@ -14,3 +14,5 @@ import HouLean.Apex.Visualizer.Basic
 import HouLean.Meta.AnonymousStruct
 import HouLean.LeanGraph.Init
 import HouLean.LeanGraph.GraphToCode
+
+import HouLean.OpenCL.Compiler.Main

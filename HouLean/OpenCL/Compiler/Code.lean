@@ -48,7 +48,7 @@ partial def CodeExpr.toString (c : CodeExpr) (maybeBracket := false) : CoreM Str
       return e
     | .constructor =>
       let args ← args.mapM (·.toString)
-      let args := args.joinl (map:=id) (·++ fn.name ++·)
+      let args := args.joinl (map:=id) (·++ ", " ++·)
       let e := s!"{fn.name}\{{args}}"
       return e
 

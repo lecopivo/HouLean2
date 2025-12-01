@@ -149,6 +149,28 @@ Applied elementwise for vectors and matrices. -/
 -- declfun mod {α} (x y : α) : α
 
 -- ============================================================================
+-- Approximatelly equal
+-- ============================================================================
+
+class ApproxEqual (α : Type) where
+  defaultTol : α
+  /-- Checks if `x` is approximatelly equal to `y` at tollerance `tol`.
+
+  For scalars values this is: `approxEqual x y tol == |x - y| ≤ tol`
+
+  For vector values like vectors or matrices this is: `approxEqual x y tol == ∀ i, |x[i] - y[i]| ≤ tol` -/
+  approxEqual (x y : α) (tol : α) : Bool
+
+export ApproxEqual (approxEqual)
+
+  /-- Checks if `x` is approximatelly equal to `y` at default tollerance.
+  For `Float32` this is `1e-6` for `Float64` it is `1e-12`. -/
+macro x:term " ≈ " y:term : term => `(ApproxEqual.approxEqual $x $y ApproxEqual.defaultTol)
+@[inherit_doc approxEqual]
+macro x:term " ≈[" tol:term "] " y:term : term => `(ApproxEqual.approxEqual $x $y $tol)
+
+
+-- ============================================================================
 -- Vector Operations
 -- ============================================================================
 
@@ -337,6 +359,7 @@ declfun transformVector {T} {V} (transform : T) (vector : V) : V
 
 /-- Transform normal. -/
 declfun transformNormal {T} {N} (transform : T) (normal : N) : N
+
 
 
 end HouLean.Math
