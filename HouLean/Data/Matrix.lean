@@ -44,6 +44,15 @@ def row5 (a : Matrix α m n) (h : 5 < m := by get_elem_tactic) := a.row 5
 def row6 (a : Matrix α m n) (h : 6 < m := by get_elem_tactic) := a.row 6
 def row7 (a : Matrix α m n) (h : 7 < m := by get_elem_tactic) := a.row 7
 
+def col0 (a : Matrix α m n) (h : 0 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,0)]
+def col1 (a : Matrix α m n) (h : 1 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,1)]
+def col2 (a : Matrix α m n) (h : 2 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,2)]
+def col3 (a : Matrix α m n) (h : 3 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,3)]
+def col4 (a : Matrix α m n) (h : 4 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,4)]
+def col5 (a : Matrix α m n) (h : 5 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,5)]
+def col6 (a : Matrix α m n) (h : 6 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,6)]
+def col7 (a : Matrix α m n) (h : 7 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,7)]
+
 def xx (a : Matrix α m n) (h : m > 0 ∧ n > 0 := by get_elem_tactic) : α := a.data[0][0]
 def xy (a : Matrix α m n) (h : m > 0 ∧ n > 1 := by get_elem_tactic) : α := a.data[0][1]
 def xz (a : Matrix α m n) (h : m > 0 ∧ n > 2 := by get_elem_tactic) : α := a.data[0][2]

@@ -6,18 +6,20 @@ namespace HouLean.OpenCL.Compiler
 
 def withFVars (xs : Array Expr) (go : Array String → CompileM α) : CompileM α := do
   let names ← xs.mapM (fun x => nameToString <$> x.fvarId!.getUserName)
-  fun ctx =>
-  -- ensure unique names
+  fun ctx => do
+  -- Ensure unique names by appending counters for duplicates
   let (usedNames, names) := names.foldl (init:=(ctx.usedNames, #[])) (fun (un, ns) n =>
-    if let some c := un[n]? then
-      (un.insert n (c+1), ns.push s!"{n}{c+1}")
+    if let some count := un[n]? then
+      (un.insert n (count + 1), ns.push s!"{n}{count + 1}")
     else
-      (un.insert n 0, ns.push s!"{n}")
-      )
+      (un.insert n 0, ns.push n))
+
   let ctx := { ctx with
-      fvarMap := (xs.zip names).foldl (init := ctx.fvarMap) (fun m (x,n) => m.insert x n)
+      fvarMap := (xs.zip names).foldl (init := ctx.fvarMap) (fun m (x, n) => m.insert x n)
       usedNames := usedNames
     }
+
+  trace[HouLean.OpenCL.compiler] "Introduced variables: {names}"
   go names ctx
 
 def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
@@ -27,83 +29,94 @@ def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
   let mut e := e
   if doWhnf then
     e ← whnfC e
-  let (fn, args) := e.withApp fun fn args => (fn,args)
+
+  let (fn, args) := e.withApp fun fn args => (fn, args)
   let info ← getFunInfo fn
   let firstExplicit := info.paramInfo.findIdx (fun p => p.isExplicit)
   let fn := fn.beta (args[0:firstExplicit])
   let args := args[firstExplicit:].toArray
-  let args ← args.filterM (fun arg => do return !(← liftM (inferType arg >>= inferType)).isProp)
+
+  -- Filter out proof arguments
+  let args ← args.filterM (fun arg => do
+    let argTypeTy ← liftM (inferType arg >>= inferType)
+    return !argTypeTy.isProp)
+
+  trace[HouLean.OpenCL.compiler] "Looking for OpenCL function: {fn} with {args.size} explicit args"
 
   if let some oclFun ← getOpenCLFunction? fn false then
+    trace[HouLean.OpenCL.compiler] "✓ Found existing OpenCL function for {fn}"
     return some { oclFun, fn, args }
   else
-    trace[HouLean.OpenCL.compiler] m!"Trying to compile {fn}! "
+    trace[HouLean.OpenCL.compiler] "Compiling new function: {fn}"
     let _ ← compileFunction fn
     if let some oclFun ← getOpenCLFunction? fn false then
+      trace[HouLean.OpenCL.compiler] "✓ Successfully compiled {fn}"
       return some { oclFun, fn, args }
     else
+      trace[HouLean.OpenCL.compiler] "✗ Failed to compile {fn}"
       return none
-
-
--- /-- Replace `e` with `replacement` if there is an instance `ImplementedBy origial replacement`. -/
--- partial def implementedBy (original : Expr) : MetaM Expr := do
---   let type ← inferType original
---   let replacement ← mkFreshExprMVar type
---   let cls ← mkConstWithFreshMVarLevels ``ImplementedBy
---   let cls := mkAppN cls #[type, original, replacement]
---   if let some _ ← synthInstance? cls then
---     trace[HouLean.OpenCL.compiler] "implemented by {original} ==> {replacement}"
---     return ← implementedBy (← instantiateMVars replacement)
---   else
---     return original
 
 
 partial def compileExpr (e : Expr) : CompileM CodeExpr := do
   withTraceNode `HouLean.OpenCL.compiler
     (fun r => do
       match r with
-      | .ok c =>  return m!"[{checkEmoji}] {e} ==> {← c.toString}"
-      | .error m => return m!"[{crossEmoji}] {e}\n{m.toMessageData}") do
+      | .ok c => return m!"[{checkEmoji}] Expression compiled: {e}\n  → {← c.toString}"
+      | .error m => return m!"[{crossEmoji}] Failed to compile expression: {e}\n  Error: {m.toMessageData}") do
 
+  -- Skip proof expressions
   if (← inferType (← inferType e)).isProp then
+    trace[HouLean.OpenCL.compiler] "Skipping proof expression: {e}"
     return .errased
 
-  let e' := e
+  let e_orig := e
   let e := (← Simp.simp e).expr
-  if e != e' then
-    trace[HouLean.OpenCL.compiler] "Rewriten\n{e'}\n==>\n{e}"
+
+  if e != e_orig then
+    trace[HouLean.OpenCL.compiler] "Simplified expression:\n  Before: {e_orig}\n  After:  {e}"
 
   match e with
   | .app .. =>
-    trace[HouLean.OpenCL.compiler] "compiling exp, app case {e}"
-    let some ⟨oclFun, _fn, args⟩ ← getOpenCLAppOrCompile? e
-      | throwError m!"Failed to find OpenCL iplementation for {e}! {e.getAppFn.ctorName}"
+    trace[HouLean.OpenCL.compiler] "Compiling application: {e}"
+    let some ⟨oclFun, fn, args⟩ ← getOpenCLAppOrCompile? e
+      | throwError m!"No OpenCL implementation found for: {e}\n  Function head: {e.getAppFn}\n  Constructor: {e.getAppFn.ctorName}"
+
+    trace[HouLean.OpenCL.compiler] "Compiling {args.size} arguments for {fn}"
     let args ← args.mapM compileExpr
     return .app oclFun args
 
   | .fvar .. =>
     let some varName := (← read).fvarMap[e]?
-      | throwError m!"Unrecognized free variable {e}! {(← read).fvarMap.toArray}"
+      | throwError m!"Unrecognized free variable: {e}\n  Available variables: {(← read).fvarMap.toArray.map (·.1)}"
+    trace[HouLean.OpenCL.compiler] "Resolved free variable {e} → {varName}"
     return .fvar varName
 
   | .letE .. =>
-    throwError m!"can't have let binding in an expression {e}"
+    throwError m!"Unexpected let binding in expression (should be in body): {e}"
+
   | .lit (.natVal val) =>
+    trace[HouLean.OpenCL.compiler] "Nat literal: {val}"
     return .lit (toString val)
+
   | .lit (.strVal val) =>
+    trace[HouLean.OpenCL.compiler] "String literal: {val}"
     return .lit val
+
   | _ =>
-    throwError m!"Don't know how to compiler {e}, case {e.ctorName}!"
+    throwError m!"Cannot compile expression of type {e.ctorName}: {e}"
 
 
 partial def compileFunBody (e : Expr) : CompileM CodeBody := do
+  trace[HouLean.OpenCL.compiler] "Compiling function body: {e}"
+
   match e with
   | .letE name type val body nondep =>
+    trace[HouLean.OpenCL.compiler] "Let binding: {name} : {type}"
 
-    -- todo: we have to determine if `val` is compilable
-    --       we might have to decompose it and introduce few more let bindings
+    -- Simplify the value and check if it introduces nested lets
     let val := (← Simp.simp val).expr
     if val.isLet then
+      trace[HouLean.OpenCL.compiler] "Flattening nested let bindings in {name}"
       return ← letTelescope val fun xs valbody => do
         let e' ← mkLetFVars xs (.letE name type valbody body nondep)
         compileFunBody e'
@@ -112,19 +125,27 @@ partial def compileFunBody (e : Expr) : CompileM CodeBody := do
 
     withLetDecl name type val fun var => do
       let some oclType ← getOpenCLType? type
-        | throwError m!"Not an OpenCL type {type} in\n{e}"
+        | throwError m!"Type {type} is not an OpenCL type\n  In let binding: {name}\n  Full expression: {e}"
+
       let body := body.instantiate1 var
       withFVars #[var] fun names => do
+        trace[HouLean.OpenCL.compiler] "Created let binding: {names[0]!} : {oclType.name}"
         let bodyCode ← compileFunBody body
-        trace[HouLean.OpenCL.compiler] "vars after introducing {names}:\n{(← read).fvarMap.toArray}"
         return .letE names[0]! oclType valueCode bodyCode
 
   | .app .. =>
+    let e_orig := e
     let e := (← Simp.simp e).expr
+
+    if e != e_orig then
+      trace[HouLean.OpenCL.compiler] "Body simplified:\n  Before: {e_orig}\n  After:  {e}"
+
     if e.isLet then
       return ← compileFunBody e
 
+    -- Handle monadic bind
     if e.isAppOfArity ``bind 6 then
+      trace[HouLean.OpenCL.compiler] "Compiling monadic bind"
 
       let mx := e.appFn!.appArg!
       let valueCode ← compileExpr mx
@@ -133,19 +154,24 @@ partial def compileFunBody (e : Expr) : CompileM CodeBody := do
       return ← forallBoundedTelescope (← inferType f) (some 1) fun xs _ => do
         let type ← inferType xs[0]!
         let some oclType ← getOpenCLType? type
-          | throwError m!"Not an OpenCL type {type} in\n{e}"
+          | throwError m!"Type {type} is not an OpenCL type\n  In monadic bind\n  Full expression: {e}"
+
         let body := f.beta xs
         withFVars xs fun names => do
+          trace[HouLean.OpenCL.compiler] "Monadic bind variable: {names[0]!} : {oclType.name}"
           let bodyCode ← compileFunBody body
           return .letE names[0]! oclType valueCode bodyCode
 
+    -- Terminal case: return value
+    trace[HouLean.OpenCL.compiler] "Return statement"
     let returnValue ← compileExpr e
     return .ret returnValue
 
-  | _ => throwError m!"Do not know how to compile {e}"
+  | _ =>
+    throwError m!"Cannot compile body expression of type {e.ctorName}: {e}"
 
 
-/-- To keep readability of the resutling code we rename certain functions to more sane names. -/
+/-- Function name overrides for better readability in generated code -/
 def funNameOverrideMap : NameMap Name :=
   ({} : NameMap Name)
     |>.insert ``HMul.hMul `mul
@@ -154,88 +180,108 @@ def funNameOverrideMap : NameMap Name :=
 def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM String := do
   let mut typeSuffix := ""
 
-  trace[HouLean.OpenCL.compiler] "mangling function name with args {args}"
+  trace[HouLean.OpenCL.compiler] "Mangling function name: {funName}"
+  trace[HouLean.OpenCL.compiler] "  Arguments: {args.size}"
 
-  for arg in args, info in info.paramInfo do
-    if info.isExplicit then
+  for arg in args, paramInfo in info.paramInfo do
+    if paramInfo.isExplicit then
       continue
-    let t ← inferType arg
-    if (← isClass? t).isSome then
-      -- we do not include typeclasses in mangled function name
+
+    let argType ← inferType arg
+
+    if (← isClass? argType).isSome then
+      -- Skip typeclasses in mangled name
+      trace[HouLean.OpenCL.compiler] "  Skipping typeclass argument: {argType}"
       continue
-    else if t.isType then
+    else if argType.isType then
       let oclType ← getOpenCLType arg
       typeSuffix := typeSuffix ++ oclType.shortName
-    else if ← isDefEq t q(Nat) then
+      trace[HouLean.OpenCL.compiler] "  Type argument: {arg} → {oclType.shortName}"
+    else if ← isDefEq argType q(Nat) then
       let n ← unsafe evalExpr Nat q(Nat) arg
       typeSuffix := typeSuffix ++ toString n
+      trace[HouLean.OpenCL.compiler] "  Nat argument: {n}"
     else
-      throwError m!"don't know how to mangle function name with implicit argument of type {t}"
+      throwError m!"Cannot mangle function name with implicit argument of type: {argType}\n  Argument: {arg}"
 
   let funName := funName.eraseMacroScopes
   let funName := funNameOverrideMap.get? funName |>.getD funName
 
-  let mut r := toString funName.eraseMacroScopes |>.replace "." "_" |>.toLower
+  let mut mangledName := toString funName.eraseMacroScopes |>.replace "." "_" |>.toLower
   if typeSuffix != "" then
-    r := r ++ "_" ++ typeSuffix
+    mangledName := mangledName ++ "_" ++ typeSuffix
 
-  trace[HouLean.OpenCL.compiler] "Mangled function name {funName} ==> {r}"
-
-  return r
+  trace[HouLean.OpenCL.compiler] "  Result: {funName} → {mangledName}"
+  return mangledName
 
 
 def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
+  withTraceNode `HouLean.OpenCL.compiler
+    (fun r => do
+      match r with
+      | .ok c => return m!"[{checkEmoji}] Compiling function: {f}\n{← c.toString}"
+      | .error m => return m!"[{crossEmoji}] Compiling function: {f}\n  Error: {m.toMessageData}") do
 
   forallTelescope (← inferType f) fun xs returnType => do
     let body ← whnfC (f.beta xs)
 
-    let (fn, args) := body.withApp (fun fn args => (fn,args))
+    let (fn, args) := body.withApp (fun fn args => (fn, args))
     let .const funName _ := fn
-      | throwError "Expected constant head function in {body}!"
+      | throwError "Expected constant function head, got: {fn}\n  In body: {body}"
 
-    trace[HouLean.OpenCL.compiler] "Compiling {fn}"
+    trace[HouLean.OpenCL.compiler] "Function name: {funName}"
+    trace[HouLean.OpenCL.compiler] "Return type: {returnType}"
 
     let funInfo ← getFunInfo fn
-    let name ← mangleFunName funName funInfo args
+    let mangledName ← mangleFunName funName funInfo args
 
-    -- unfold definition of the function and basic reduction (mainly to reduce instances)
+    -- Unfold definition and reduce instances
     let body := (← unfold body funName).expr
-
-    trace[HouLean.OpenCL.compiler] "Compiling {fn}:\n{body}"
+    trace[HouLean.OpenCL.compiler] "After unfolding:\n{body}"
 
     let returnType ← getOpenCLType returnType
 
-    -- filter out prop arguments
-    let xs' ← xs.filterM (fun x => do return !(← liftM (inferType x >>= inferType)).isProp)
+    -- Filter out proof arguments
+    let xs' ← xs.filterM (fun x => do
+      let xTypeTy ← liftM (inferType x >>= inferType)
+      return !xTypeTy.isProp)
+
+    trace[HouLean.OpenCL.compiler] "Function parameters: {xs'.size} (filtered from {xs.size})"
+
     let argTypes ← liftM <| xs'.mapM inferType >>= (·.mapM getOpenCLType)
 
     let go : CompileM CodeFunction :=
       withFVars xs' fun argNames => do
+        trace[HouLean.OpenCL.compiler] "Compiling body with arguments: {argNames}"
 
         let bodyCode ← compileFunBody body
-        return {
-          name := name
+
+        let codeFunc := {
+          name := mangledName
           args := argTypes.zip argNames
           body := bodyCode
           returnType := returnType
         }
 
+        return codeFunc
+
     let code ← go
     modify (fun s => {s with compiledFunctions := s.compiledFunctions.push code})
+
     let codeStr ← code.toString
-    trace[HouLean.OpenCL.compiler] "compiled {f} to:\n{codeStr}"
-    addOpenCLFunction f name .normal codeStr
+    trace[HouLean.OpenCL.compiler] "✓ Successfully compiled function: {mangledName}"
+    trace[HouLean.OpenCL.compiler] "Generated code:\n{codeStr}"
+
+    addOpenCLFunction f mangledName .normal codeStr
     return code
 
 initialize compileFunctionRef.set compileFunctionCore
 
--- First, get the extension for your simp attribute
 def getOpenCLTheorems : MetaM SimpTheorems := do
   let ext ← Lean.Meta.getSimpExtension? `opencl_csimp
   match ext with
-  | none => throwError "simp attribute `opencl_csimp' not found"
-  | some ext =>
-    ext.getTheorems
+  | none => throwError "Simp attribute `opencl_csimp` not found"
+  | some ext => ext.getTheorems
 
 
 open Elab Term in
@@ -250,9 +296,11 @@ elab "#opencl_compile" f:term : command => do
   let simpState : Simp.State := {}
   let ctx : Context := {}
   let state : State := {}
-  let ((_,s),_) ← compileFunction f ctx state simpMthds.toMethodsRef simpCtx |>.run simpState
+
+  let ((_, s), _) ← compileFunction f ctx state simpMthds.toMethodsRef simpCtx |>.run simpState
+
+  logInfo m!"✓ Compiled {s.compiledFunctions.size} function(s): {s.compiledFunctions.map (·.name)}"
 
   let msgs ← s.compiledFunctions.mapM (fun c => c.toString)
-  let msg := msgs.joinl (map:=id) (·++"\n\n"++·)
-  logInfo m!"compiled function: {s.compiledFunctions.map (fun c => c.name)}"
-  logInfo m!"{msg}"
+  let msg := msgs.joinl (map := id) (· ++ "\n\n" ++ ·)
+  logInfo m!"\n{msg}"

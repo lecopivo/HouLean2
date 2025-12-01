@@ -1,90 +1,53 @@
-import HouLean.OpenCL.Data.Vector3
-import HouLean.OpenCL.Data.Matrix3
-import HouLean.OpenCL.Data.ArrayRef
+import HouLean.OpenCL.Data.Vector
+import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.WorkItemFunctions
 
 open HouLean OpenCL
 
-structure Int3 where
-  x : Int
-  y : Int
-  z : Int
-
-instance : Add Int3 := sorry
-
-structure Coord where
-  x : Int32
-  y : Int32
-  z : Int32
-
-def gridToLinearIdx (coord : Int3) (res : Int3) : Int64 := sorry
+def gridToLinearIdx (coord : Vector Int 3) (res : Vector Nat 3) : Int64 := sorry
 
 structure Grid where
-  res : Int3
-  bbmin : Vector3
-  voxsize : Float
+  res : Vector Nat 3
+  bbmin : Vector Float32 3
+  voxsize : Float32
 
-def Grid.bbmax (g : Grid) : Vector3 := {
-  x := g.bbmin.x + g.voxsize * g.res.x.toInt32.toFloat
-  y := g.bbmin.y + g.voxsize * g.res.y.toInt32.toFloat
-  z := g.bbmin.z + g.voxsize * g.res.z.toInt32.toFloat
-}
+def Grid.bbmax (g : Grid) : Vector Float32 3 :=
+  g.bbmin + g.voxsize * g.res.map (·.toFloat32)
 
-def getQuadStencilWeightFromDistVec (dx : Vector3) : Float := sorry
+def getQuadStencilWeightFromDistVec (dx : Vector Float32 3) : Float32 := sorry
 
-def Grid.toGridIntSpace (g : Grid) (p : Vector3) : Int3 := sorry
-
-instance : ArrayType Int3 where
-  get := sorry
-  set := sorry
-
-instance : ArrayType Int where
-  get := sorry
-  set := sorry
-
-instance : ArrayType Nat where
-  get := sorry
-  set := sorry
-
-instance : ArrayType Float where
-  get := sorry
-  set := sorry
-
-instance : ArrayType Matrix3 where
-  get := sorry
-  set := sorry
+def Grid.toGridIntSpace (g : Grid) (p : Vector Float32 3) : Vector Int 3 := sorry
 
 def VDBRef (α : Type) : Type := sorry
 
-def VDBRef.get {α} (grid : VDBRef α) (coord : Coord) : OpenCLM α := sorry
-def VDBRef.set {α} (grid : VDBRef α) (coord : Coord) (val : α) : OpenCLM Unit := sorry
+def VDBRef.get {α} (grid : VDBRef α) (coord : Vector Int32 3) : OpenCLM α := sorry
+def VDBRef.set {α} (grid : VDBRef α) (coord : Vector Int32 3) (val : α) : OpenCLM Unit := sorry
 
-def VDBRef.isActive {α} (grid : VDBRef α) (coord : Coord) : OpenCLM Bool := sorry
+def VDBRef.isActive {α} (grid : VDBRef α) (coord : Vector Int32 3) : OpenCLM Bool := sorry
 
-def getMass (density gridscale dx : Float) : Float :=
-  let vol0 := Float.pow (dx / gridscale) 3.0
+def getMass (density gridscale dx : Float32) : Float32 :=
+  let vol0 := (dx / gridscale).pow 3.0
   let mass := density * vol0
   mass
 
-def getQuadStencilWeightFromDistVec (v : Vector3) : Float := sorry
 
 def p2g (npts : Nat)
-      (P : ArrayRef Vector3)
-      (v : ArrayRef Vector3)
-      (density : ArrayRef Float)
-      (C : ArrayRef Matrix3)
-      (xformtoworld : Matrix4)
-      (tilestartsxyz : ArrayRef Int3)
-      (mass_grid : VDBRef Float) -- todo: change to vdb reference
-      (vel_grid : VDBRef Vector3)  -- todo: change to vdb reference
-      (gridscale : ArrayRef Float)
-      (res : Int3)
-      (bbmin : Vector3)
-      (dx : Float)
-      (cellcounts : ArrayRef Int)
-      (celloffsets : ArrayRef Int)
-      (sortidx : ArrayRef Nat)
-      (girdidx : ArrayRef Int64)
+      (P : ConstPointer Float32)
+      (v : ConstPointer Float32)
+      (density : ConstPointer Float32)
+      (C : ConstPointer Float32)
+      (xformtoworld : Matrix Float32 4 4)
+      (tilestartsxyz : ConstPointer Int)
+      (mass_grid : VDBRef Float32)
+      (vel_grid : VDBRef (Vector Float32 3))
+      (gridscale : ConstPointer Float32)
+      (res : Vector Nat 3)
+      (bbmin : Vector Float32 3)
+      (dx : Float32)
+      (cellcounts : ConstPointer Int)
+      (celloffsets : ConstPointer Int)
+      (sortidx : ConstPointer Nat)
+      (girdidx : ConstPointer Int64)
       : OpenCLM Unit := do
 
   -- cnanovdb_readaccessor mass_grid_acc;
@@ -178,4 +141,3 @@ def p2g (npts : Nat)
 
 
 open Qq
-run_meta Compiler.compileFunction q(p2g)

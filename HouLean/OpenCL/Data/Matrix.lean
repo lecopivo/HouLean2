@@ -125,6 +125,21 @@ implemented_by (a : Matrix α m n) [OfNat (Fin m) 1] : a.row (1 : Fin m) = a.row
 implemented_by (a : Matrix α m n) [OfNat (Fin m) 2] : a.row (2 : Fin m) = a.row2 sorry_proof
 implemented_by (a : Matrix α m n) [OfNat (Fin m) 3] : a.row (3 : Fin m) = a.row3 sorry_proof
 
+implemented_by (a : Matrix α m n) (h : 0 < n) : a.col 0 = a.col0 := by rfl
+implemented_by (a : Matrix α m n) (h : 1 < n) : a.col 1 = a.col1 := by rfl
+implemented_by (a : Matrix α m n) (h : 2 < n) : a.col 2 = a.col2 := by rfl
+implemented_by (a : Matrix α m n) (h : 3 < n) : a.col 3 = a.col3 := by rfl
+
+implemented_by (a : Matrix α m n) (h : 0 < n) : a.col (⟨0,h⟩ : Fin n) = a.col0 := by rfl
+implemented_by (a : Matrix α m n) (h : 1 < n) : a.col (⟨1,h⟩ : Fin n) = a.col1 := by rfl
+implemented_by (a : Matrix α m n) (h : 2 < n) : a.col (⟨2,h⟩ : Fin n) = a.col2 := by rfl
+implemented_by (a : Matrix α m n) (h : 3 < n) : a.col (⟨3,h⟩ : Fin n) = a.col3 := by rfl
+
+implemented_by (a : Matrix α m n) [OfNat (Fin n) 0] : a.col (0 : Fin n) = a.col0 sorry_proof
+implemented_by (a : Matrix α m n) [OfNat (Fin n) 1] : a.col (1 : Fin n) = a.col1 sorry_proof
+implemented_by (a : Matrix α m n) [OfNat (Fin n) 2] : a.col (2 : Fin n) = a.col2 sorry_proof
+implemented_by (a : Matrix α m n) [OfNat (Fin n) 3] : a.col (3 : Fin n) = a.col3 sorry_proof
+
 implemented_by (a : Matrix α m n) (ij : Nat×Nat) (h) : a[ij]'h = (a.row ij.1)[ij.2] := by rfl
 implemented_by (a : Matrix α m n) (i : Fin m) (j : Nat) (h) : a[(i.1,j)]'h = (a.row i)[j] := by rfl
 implemented_by (a : Matrix α m n) (i : Nat) (j : Fin n) (h) : a[(i,j.1)]'h = (a.row i)[j] := by rfl
@@ -168,16 +183,3 @@ implemented_by (a : Matrix α 3 n) (b : Matrix β 3 n) (f : Vector α n → Vect
     a.mapRows₂ f b = #m[f a.row0 b.row0, f a.row1 b.row1, f a.row2 b.row2]
 implemented_by (a : Matrix α 4 n) (b : Matrix β 4 n) (f : Vector α n → Vector β n → Vector γ n) :
     a.mapRows₂ f b = #m[f a.row0 b.row0, f a.row1 b.row1, f a.row2 b.row2, f a.row3 b.row3]
-
-
-
-set_option trace.HouLean.OpenCL.compiler true
-
-def foo := (fun A : Matrix Float32 3 3 => A.col 1)
-
-#opencl_compile (fun x => foo x)
-
-#check Matrix.col
-
--- set_option pp.proofs false in
--- #opencl_compile (fun u v : Matrix Float64 3 3 => u.matMul v)

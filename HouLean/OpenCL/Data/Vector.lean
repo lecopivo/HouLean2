@@ -206,11 +206,3 @@ section Sum
 variable [Add α] [Zero α]
 implemented_by (u : Vector α n) : u.sum = u.foldl (· + ·) 0
 end Sum
-
-open Compiler
-run_meta compileFunctionRef.set compileFunctionCore
-set_option trace.HouLean.OpenCL.compiler true
-
-
-@[opencl_csimp] theorem add_zero [Add α] [Zero α] (x : α) : (0 : α) + x = x := sorry_proof
-@[opencl_csimp] theorem zero_add [Add α] [Zero α] (x : α) : x + (0 : α) = x := sorry_proof
