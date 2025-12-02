@@ -6,39 +6,21 @@ namespace HouLean.OpenCL
 
 open Compiler Qq
 
--- bootstrap types
-run_meta addOCLType q(Float) (.atom "double" "d")
-run_meta addOCLType q(Float32) (.atom "float" "f")
-
-run_meta addOCLFunction q(Float.neg) " -" (kind := .prefix)
-run_meta addOCLFunction q(Float.add) " + " (kind := .infix)
-run_meta addOCLFunction q(Float.sub) " - " (kind := .infix)
-run_meta addOCLFunction q(Float.mul) " * " (kind := .infix)
-run_meta addOCLFunction q(Float.div) " / " (kind := .infix)
-
-run_meta addOCLFunction q(fun x y : Float => x + y) " + " (kind := .infix)
-run_meta addOCLFunction q(fun x y : Float => x - y) " - " (kind := .infix)
-run_meta addOCLFunction q(fun x y : Float => x * y) " * " (kind := .infix)
-run_meta addOCLFunction q(fun x y : Float => x / y) " / " (kind := .infix)
-run_meta addOCLFunction q(fun x : Float => - x) " -" (kind := .prefix)
-
-
-
 -- ============================================================================
 -- Trigonometric Functions
 -- ============================================================================
 
 -- Built-in Float methods
-run_meta addOCLFunction q(Float.sin) "sin"
-run_meta addOCLFunction q(Float.cos) "cos"
-run_meta addOCLFunction q(Float.tan) "tan"
-run_meta addOCLFunction q(Float.asin) "asin"
-run_meta addOCLFunction q(Float.acos) "acos"
-run_meta addOCLFunction q(Float.atan) "atan"
-run_meta addOCLFunction q(Float.atan2) "atan2"
-run_meta addOCLFunction q(Float.sinh) "sinh"
-run_meta addOCLFunction q(Float.cosh) "cosh"
-run_meta addOCLFunction q(Float.tanh) "tanh"
+implemented_by : Float.sin = oclFunction _ "sin"
+implemented_by : Float.cos = oclFunction _ "cos"
+implemented_by : Float.tan = oclFunction _ "tan"
+implemented_by : Float.asin = oclFunction _ "asin"
+implemented_by : Float.acos = oclFunction _ "acos"
+implemented_by : Float.atan = oclFunction _ "atan"
+implemented_by : Float.atan2 = oclFunction _ "atan2"
+implemented_by : Float.sinh = oclFunction _ "sinh"
+implemented_by : Float.cosh = oclFunction _ "cosh"
+implemented_by : Float.tanh = oclFunction _ "tanh"
 
 
 -- ============================================================================
@@ -46,14 +28,13 @@ run_meta addOCLFunction q(Float.tanh) "tanh"
 -- ============================================================================
 
 -- Built-in Float methods
-run_meta addOCLFunction q(Float.exp) "exp"
-run_meta addOCLFunction q(Float.exp2) "exp2"
-run_meta addOCLFunction q(Float.log) "log"
-run_meta addOCLFunction q(Float.log2) "log2"
-run_meta addOCLFunction q(Float.log10) "log10"
-run_meta addOCLFunction q(Float.pow) "pow"
-run_meta addOCLFunction q(Float.sqrt) "sqrt"
-
+implemented_by : Float.exp = oclFunction _ "exp"
+implemented_by : Float.exp2 = oclFunction _ "exp2"
+implemented_by : Float.log = oclFunction _ "log"
+implemented_by : Float.log2 = oclFunction _ "log2"
+implemented_by : Float.log10 = oclFunction _ "log10"
+implemented_by : Float.pow = oclFunction _ "pow"
+implemented_by : Float.sqrt = oclFunction _ "sqrt"
 -- run_meta compileFunction q(Float.invsqrt)
 
 -- ============================================================================
@@ -61,68 +42,83 @@ run_meta addOCLFunction q(Float.sqrt) "sqrt"
 -- ============================================================================
 
 --run_meta addOCLFunction q(fun x y : Float => x = y) "==" (kind := .infix)
-run_meta addOCLFunction q(fun x y : Float => x == y) "==" (kind := .infix)
--- run_meta addOCLFunction q(fun x y : Float => x < y) "<" (kind := .infix)
--- run_meta addOCLFunction q(fun x y : Float => x ≤ y) "<=" (kind := .infix
+implemented_by (x y : Float) : (x == y) = (oclFunction (Float → Float → Bool) " == " .infix) x y
+implemented_by (x y : Float) : (x < y) = (oclFunction (Float → Float → Bool) " < " .infix) x y
+implemented_by (x y : Float) : (x ≤ y) = (oclFunction (Float → Float → Bool) " <= " .infix) x y
+implemented_by (x y : Float) : (x > y) = (oclFunction (Float → Float → Bool) " > " .infix) x y
+implemented_by (x y : Float) : (x ≥ y) = (oclFunction (Float → Float → Bool) " >= " .infix) x y
+
 
 -- ============================================================================
 -- Basic Arithmetic and Comparison
 -- ============================================================================
 
 -- Custom implementations
-run_meta addOCLFunction q(Float.abs) "fabs"
--- run_meta compileFunction q(Float.sign)
-run_meta addOCLFunction q(Float.abs) "fabs"
-run_meta addOCLFunction q(fun x y : Float => min x y) "min"
-run_meta addOCLFunction q(fun x y : Float => max x y) "max"
--- run_meta compileFunction q(Float.clamp)
-run_meta addOCLFunction q(Float.floor) "floor"
-run_meta addOCLFunction q(Float.ceil) "ceil"
-run_meta addOCLFunction q(Float.round) "round"
-run_meta addOCLFunction q(Float.trunc) "trunc"
-run_meta addOCLFunction q(Float.fract) "fract"
-run_meta addOCLFunction q(Float.mod) "fmod"
+implemented_by : Float.abs = oclFunction _ "fabs"
+-- #opencl_compile Float.sign
+implemented_by (x y : Float) : min x y = (oclFunction (Float → Float → Float) "min") x y
+implemented_by (x y : Float) : max x y = (oclFunction (Float → Float → Float) "max") x y
+-- #opencl_compile Float.clamp
+implemented_by : Float.floor = oclFunction _ "floor"
+implemented_by : Float.ceil = oclFunction _ "ceil"
+implemented_by : Float.round = oclFunction _ "round"
+implemented_by : Float.trunc = oclFunction _ "trunc"
+implemented_by : Float.fract = oclFunction _ "fract"
+implemented_by : Float.mod = oclFunction _ "fmod"
+
 
 -- ============================================================================
 -- Vector Operations (scalar versions)
 -- ============================================================================
 
-run_meta compileFunction q(Float.dot)
-run_meta compileFunction q(Float.length)
-run_meta compileFunction q(Float.length2)
-run_meta compileFunction q(Float.distance)
-run_meta compileFunction q(Float.distance2)
--- run_meta compileFunction q(Float.noramlize)
--- run_meta compileFunction q(Float.noramlized)
--- run_meta compileFunction q(Float.reflect)
--- run_meta compileFunction q(Float.refract)
-run_meta compileFunction q(Float.compMul)
-run_meta compileFunction q(Float.compDiv)
+-- attribute [opencl_compile]
+--   Float.dot
+--   Float.length
+--   Float.length2
+--   Float.distance
+--   Float.distance2
+--   Float.normalize
+--   Float.normalized
+--   Float.reflect
+--   Float.refract
+--   Float.compMul
+--   Float.compDiv
+
+-- #opencl_compile Float.dot
+-- #opencl_compile Float.length
+-- #opencl_compile Float.length2
+-- #opencl_compile Float.distance
+-- #opencl_compile Float.distance2
+-- -- #opencl_compile Float.normalize
+-- -- #opencl_compile Float.normalized
+-- #opencl_compile Float.reflect
+-- -- #opencl_compile Float.refract
+-- #opencl_compile Float.compMul
+-- #opencl_compile Float.compDiv
 
 
 -- ============================================================================
 -- Interpolation and Smoothing
 -- ============================================================================
 
-run_meta compileFunction q(Float.lerp)
--- run_meta compileFunction q(Float.smoothstep)
--- run_meta compileFunction q(Float.step)
--- run_meta compileFunction q(Float.hermite)
--- run_meta compileFunction q(Float.catmullRom)
-run_meta compileFunction q(Float.slerp)
+-- #opencl_compile Float.lerp
+-- -- #opencl_compile Float.smoothstep
+-- -- #opencl_compile Float.step
+-- #opencl_compile Float.hermite
+-- #opencl_compile Float.catmullRom
+-- #opencl_compile Float.slerp
 
 
 -- ============================================================================
 -- Conversion and Construction
 -- ============================================================================
 
--- run_meta compileFunction q(Float.radians)
--- run_meta compileFunction q(Float.degrees)
-
+-- #opencl_compile Float.radians
+-- #opencl_compile Float.degrees
 
 -- ============================================================================
 -- Geometric Queries (scalar versions)
 -- ============================================================================
 
--- run_meta compileFunction q(Float.insideBox)
--- run_meta compileFunction q(Float.projectToSegment)
+-- #opencl_compile Float.insideBox
+-- #opencl_compile Float.projectToSegment

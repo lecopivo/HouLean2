@@ -39,7 +39,7 @@ def Array.push.apex_impl {α As} [ArrayType α As] (a : Array α) (v : α) : Arr
 run_meta compilerExt.add (.implementedByName ``Array.push ``Array.push.apex_impl
   #[some 0, none, none, some 1, some 2]) default
 
-def Array.set.apex_impl {α As} [ArrayType α As] (a : Array α) (i : Nat) (v : α) (h : i < a.size) : Array α :=
+def Array.set.apex_impl {α As} [ArrayType α As] (a : Array α) (i : Nat) (v : α) (_h : i < a.size) : Array α :=
   fromApex (setElem (toApex a) (Int.ofNat i) v .intro)
 
 run_meta compilerExt.add (.implementedByName ``Array.set ``Array.set.apex_impl

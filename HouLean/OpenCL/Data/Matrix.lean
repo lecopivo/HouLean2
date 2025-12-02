@@ -202,7 +202,7 @@ end
 open NormalMatrixVecMul
 
 
-#opencl_compile (fun (A : Matrix Float32 3 3) (u v : Vector Float32 3) =>
-  let a := u.dot v
-  let v' := A * A * v
-  u.dot v' + a)
+-- #opencl_compile (fun (A : Matrix Float32 3 3) (u v : Vector Float32 3) =>
+--   let a := u.dot v
+--   let v' := A * A * v
+--   u.dot v' + a)

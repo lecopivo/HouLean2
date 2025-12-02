@@ -138,257 +138,256 @@ def shearToMatrix3 (shear : Vector3) : Matrix3 :=
    ⟨0, 1, shear.z⟩,
    ⟨0, 0, 1⟩⟩
 
-#exit
 -- ============================================================================
 -- Matrix conversion
 -- ============================================================================
 
-/-- Convert to 4x4 transformation matrix -/
-def toMatrix4 (xform : Transform) : Matrix4 :=
-  let order := xform.getTransformOrder
-  let rotOrder := xform.getRotationOrder
+-- /-- Convert to 4x4 transformation matrix -/
+-- def toMatrix4 (xform : Transform) : Matrix4 :=
+--   let order := xform.getTransformOrder
+--   let rotOrder := xform.getRotationOrder
 
-  -- Build component matrices
-  let T := Matrix4.fromTranslation xform.translate
-  let R := Matrix4.fromMatrix3 (eulerToMatrix3 xform.rotate rotOrder)
-  let S := Matrix4.fromScale xform.scale
-  let Sh := Matrix4.fromMatrix3 (shearToMatrix3 xform.shear)
-  let P := Matrix4.fromTranslation xform.pivot
-  let Pinv := Matrix4.fromTranslation (-xform.pivot)
-  let PR := Matrix4.fromMatrix3 (eulerToMatrix3 xform.pivotRotate rotOrder)
-  let PRinv := Matrix4.fromMatrix3 (eulerToMatrix3 (-xform.pivotRotate) rotOrder)
+--   -- Build component matrices
+--   let T := Matrix4.fromTranslation xform.translate
+--   let R := Matrix4.fromMatrix3 (eulerToMatrix3 xform.rotate rotOrder)
+--   let S := Matrix4.fromScale xform.scale
+--   let Sh := Matrix4.fromMatrix3 (shearToMatrix3 xform.shear)
+--   let P := Matrix4.fromTranslation xform.pivot
+--   let Pinv := Matrix4.fromTranslation (-xform.pivot)
+--   let PR := Matrix4.fromMatrix3 (eulerToMatrix3 xform.pivotRotate rotOrder)
+--   let PRinv := Matrix4.fromMatrix3 (eulerToMatrix3 (-xform.pivotRotate) rotOrder)
 
-  -- Apply pivot transformation
-  let pivoted := P * PR
-  let unpivoted := PRinv * Pinv
+--   -- Apply pivot transformation
+--   let pivoted := P * PR
+--   let unpivoted := PRinv * Pinv
 
-  -- Compose according to transform order
-  let result := match order with
-    | TransformOrder.SRT => T * pivoted * R * S * Sh * unpivoted
-    | TransformOrder.STR => pivoted * R * T * S * Sh * unpivoted
-    | TransformOrder.RST => T * pivoted * S * Sh * R * unpivoted
-    | TransformOrder.RTS => T * S * Sh * pivoted * R * unpivoted
-    | TransformOrder.TSR => pivoted * S * Sh * R * T * unpivoted
-    | TransformOrder.TRS => pivoted * R * S * Sh * T * unpivoted
+--   -- Compose according to transform order
+--   let result := match order with
+--     | TransformOrder.SRT => T * pivoted * R * S * Sh * unpivoted
+--     | TransformOrder.STR => pivoted * R * T * S * Sh * unpivoted
+--     | TransformOrder.RST => T * pivoted * S * Sh * R * unpivoted
+--     | TransformOrder.RTS => T * S * Sh * pivoted * R * unpivoted
+--     | TransformOrder.TSR => pivoted * S * Sh * R * T * unpivoted
+--     | TransformOrder.TRS => pivoted * R * S * Sh * T * unpivoted
 
-  result
+--   result
 
-/-- Convert to 3x3 matrix (no translation, ignores pivot) -/
-def toMatrix3 (xform : Transform) : Matrix3 :=
-  let order := xform.getTransformOrder
-  let rotOrder := xform.getRotationOrder
+-- /-- Convert to 3x3 matrix (no translation, ignores pivot) -/
+-- def toMatrix3 (xform : Transform) : Matrix3 :=
+--   let order := xform.getTransformOrder
+--   let rotOrder := xform.getRotationOrder
 
-  let R := eulerToMatrix3 xform.rotate rotOrder
-  let S := Matrix3.fromDiagonal xform.scale
-  let Sh := shearToMatrix3 xform.shear
+--   let R := eulerToMatrix3 xform.rotate rotOrder
+--   let S := Matrix3.fromDiagonal xform.scale
+--   let Sh := shearToMatrix3 xform.shear
 
-  match order with
-    | TransformOrder.SRT | TransformOrder.STR => R * S * Sh
-    | TransformOrder.RST | TransformOrder.RTS => S * Sh * R
-    | TransformOrder.TSR | TransformOrder.TRS => R * S * Sh
+--   match order with
+--     | TransformOrder.SRT | TransformOrder.STR => R * S * Sh
+--     | TransformOrder.RST | TransformOrder.RTS => S * Sh * R
+--     | TransformOrder.TSR | TransformOrder.TRS => R * S * Sh
 
--- ============================================================================
--- Apply transform to geometry
--- ============================================================================
+-- -- ============================================================================
+-- -- Apply transform to geometry
+-- -- ============================================================================
 
-/-- Apply transform to a point -/
-defun transformPoint (xform : Transform) (p : Vector3) : Vector3 :=
-  let m := xform.toMatrix4
-  let p4 : Vector4 := ⟨p.x, p.y, p.z, 1⟩
-  let result := m * p4
-  ⟨result.x, result.y, result.z⟩
+-- /-- Apply transform to a point -/
+-- defun transformPoint (xform : Transform) (p : Vector3) : Vector3 :=
+--   let m := xform.toMatrix4
+--   let p4 : Vector4 := ⟨p.x, p.y, p.z, 1⟩
+--   let result := m * p4
+--   ⟨result.x, result.y, result.z⟩
 
-/-- Apply transform to a vector (no translation) -/
-def transformVector (xform : Transform) (v : Vector3) : Vector3 :=
-  let m := xform.toMatrix3
-  m * v
+-- /-- Apply transform to a vector (no translation) -/
+-- def transformVector (xform : Transform) (v : Vector3) : Vector3 :=
+--   let m := xform.toMatrix3
+--   m * v
 
-/-- Apply transform to a normal (inverse transpose) -/
-def transformNormal (xform : Transform) (n : Vector3) : Vector3 :=
-  let m := xform.toMatrix3
-  -- For normals, use inverse transpose
-  let mInv := m.inverse
-  (mInv.transpose * n).normalized
+-- /-- Apply transform to a normal (inverse transpose) -/
+-- def transformNormal (xform : Transform) (n : Vector3) : Vector3 :=
+--   let m := xform.toMatrix3
+--   -- For normals, use inverse transpose
+--   let mInv := m.inverse
+--   (mInv.transpose * n).normalized
 
-instance : HMul Transform Vector3 Vector3 := ⟨transformPoint⟩
+-- instance : HMul Transform Vector3 Vector3 := ⟨transformPoint⟩
 
--- ============================================================================
--- Conversion to/from RigidScaleTransform
--- ============================================================================
+-- -- ============================================================================
+-- -- Conversion to/from RigidScaleTransform
+-- -- ============================================================================
 
-/-- Convert to RigidScaleTransform (loses shear, pivot, non-uniform scale)
-    Uses average scale as uniform scale -/
-def toRigidScaleTransform (xform : Transform) : RigidScaleTransform :=
-  let rotOrder := xform.getRotationOrder
-  let euler_rad := xform.rotate.radians
-  let q := euler_rad.eulerToQuat  -- Uses XYZ order by default
+-- /-- Convert to RigidScaleTransform (loses shear, pivot, non-uniform scale)
+--     Uses average scale as uniform scale -/
+-- def toRigidScaleTransform (xform : Transform) : RigidScaleTransform :=
+--   let rotOrder := xform.getRotationOrder
+--   let euler_rad := xform.rotate.radians
+--   let q := euler_rad.eulerToQuat  -- Uses XYZ order by default
 
-  -- For proper rotation order, build quaternion
-  let q := match rotOrder with
-    | RotationOrder.XYZ => euler_rad.eulerToQuat
-    | _ => (eulerToMatrix3 xform.rotate rotOrder).matrix3ToQuat
+--   -- For proper rotation order, build quaternion
+--   let q := match rotOrder with
+--     | RotationOrder.XYZ => euler_rad.eulerToQuat
+--     | _ => (eulerToMatrix3 xform.rotate rotOrder).matrix3ToQuat
 
-  let avgScale := (xform.scale.x + xform.scale.y + xform.scale.z) / 3.0
+--   let avgScale := (xform.scale.x + xform.scale.y + xform.scale.z) / 3.0
 
-  ⟨xform.translate, q, avgScale⟩
+--   ⟨xform.translate, q, avgScale⟩
 
-/-- Convert from RigidScaleTransform (sets TRS order, XYZ rotation order) -/
-def fromRigidScaleTransform (rst : RigidScaleTransform) : Transform :=
-  let euler := rst.orient.quatToEuler.degrees
-  let s := ⟨rst.scale, rst.scale, rst.scale⟩
-  ⟨rst.translate, euler, s, ⟨0,0,0⟩, ⟨0,0,0⟩, ⟨0,0,0⟩, 5, 0⟩  -- TRS, XYZ
+-- /-- Convert from RigidScaleTransform (sets TRS order, XYZ rotation order) -/
+-- def fromRigidScaleTransform (rst : RigidScaleTransform) : Transform :=
+--   let euler := rst.orient.quatToEuler.degrees
+--   let s := ⟨rst.scale, rst.scale, rst.scale⟩
+--   ⟨rst.translate, euler, s, ⟨0,0,0⟩, ⟨0,0,0⟩, ⟨0,0,0⟩, 5, 0⟩  -- TRS, XYZ
 
-/-- Try to convert to RigidScaleTransform, returns None if has shear or pivot -/
-def tryToRigidScaleTransform (xform : Transform) : Option RigidScaleTransform :=
-  if xform.shear != ⟨0,0,0⟩ || xform.pivot != ⟨0,0,0⟩ || xform.pivotRotate != ⟨0,0,0⟩ then
-    none
-  else if xform.scale.x != xform.scale.y || xform.scale.y != xform.scale.z then
-    none  -- Non-uniform scale
-  else
-    some (xform.toRigidScaleTransform)
+-- /-- Try to convert to RigidScaleTransform, returns None if has shear or pivot -/
+-- def tryToRigidScaleTransform (xform : Transform) : Option RigidScaleTransform :=
+--   if xform.shear != ⟨0,0,0⟩ || xform.pivot != ⟨0,0,0⟩ || xform.pivotRotate != ⟨0,0,0⟩ then
+--     none
+--   else if xform.scale.x != xform.scale.y || xform.scale.y != xform.scale.z then
+--     none  -- Non-uniform scale
+--   else
+--     some (xform.toRigidScaleTransform)
 
--- ============================================================================
--- Component access and modification
--- ============================================================================
+-- -- ============================================================================
+-- -- Component access and modification
+-- -- ============================================================================
 
-def withTranslate (xform : Transform) (t : Vector3) : Transform :=
-  { xform with translate := t }
+-- def withTranslate (xform : Transform) (t : Vector3) : Transform :=
+--   { xform with translate := t }
 
-def withRotate (xform : Transform) (r : Vector3) : Transform :=
-  { xform with rotate := r }
+-- def withRotate (xform : Transform) (r : Vector3) : Transform :=
+--   { xform with rotate := r }
 
-def withScale (xform : Transform) (s : Vector3) : Transform :=
-  { xform with scale := s }
+-- def withScale (xform : Transform) (s : Vector3) : Transform :=
+--   { xform with scale := s }
 
-def withUniformScale (xform : Transform) (s : Float) : Transform :=
-  { xform with scale := ⟨s, s, s⟩ }
+-- def withUniformScale (xform : Transform) (s : Float) : Transform :=
+--   { xform with scale := ⟨s, s, s⟩ }
 
-def withShear (xform : Transform) (sh : Vector3) : Transform :=
-  { xform with shear := sh }
+-- def withShear (xform : Transform) (sh : Vector3) : Transform :=
+--   { xform with shear := sh }
 
-def withPivot (xform : Transform) (p : Vector3) : Transform :=
-  { xform with pivot := p }
+-- def withPivot (xform : Transform) (p : Vector3) : Transform :=
+--   { xform with pivot := p }
 
-def withPivotRotate (xform : Transform) (r : Vector3) : Transform :=
-  { xform with pivotRotate := r }
+-- def withPivotRotate (xform : Transform) (r : Vector3) : Transform :=
+--   { xform with pivotRotate := r }
 
-def withTransformOrder (xform : Transform) (order : TransformOrder) : Transform :=
-  { xform with xOrd := order.toInt }
+-- def withTransformOrder (xform : Transform) (order : TransformOrder) : Transform :=
+--   { xform with xOrd := order.toInt }
 
-def withRotationOrder (xform : Transform) (order : RotationOrder) : Transform :=
-  { xform with rOrd := order.toInt }
+-- def withRotationOrder (xform : Transform) (order : RotationOrder) : Transform :=
+--   { xform with rOrd := order.toInt }
 
--- ============================================================================
--- Queries
--- ============================================================================
+-- -- ============================================================================
+-- -- Queries
+-- -- ============================================================================
 
-/-- Check if transform has uniform scale -/
-def hasUniformScale (xform : Transform) : Bool :=
-  xform.scale.x == xform.scale.y && xform.scale.y == xform.scale.z
+-- /-- Check if transform has uniform scale -/
+-- def hasUniformScale (xform : Transform) : Bool :=
+--   xform.scale.x == xform.scale.y && xform.scale.y == xform.scale.z
 
-/-- Check if transform has shear -/
-def hasShear (xform : Transform) : Bool :=
-  xform.shear != ⟨0, 0, 0⟩
+-- /-- Check if transform has shear -/
+-- def hasShear (xform : Transform) : Bool :=
+--   xform.shear != ⟨0, 0, 0⟩
 
-/-- Check if transform has pivot -/
-def hasPivot (xform : Transform) : Bool :=
-  xform.pivot != ⟨0, 0, 0⟩ || xform.pivotRotate != ⟨0, 0, 0⟩
+-- /-- Check if transform has pivot -/
+-- def hasPivot (xform : Transform) : Bool :=
+--   xform.pivot != ⟨0, 0, 0⟩ || xform.pivotRotate != ⟨0, 0, 0⟩
 
-/-- Check if transform is identity -/
-def isIdentity (xform : Transform) : Bool :=
-  xform.translate == ⟨0,0,0⟩ &&
-  xform.rotate == ⟨0,0,0⟩ &&
-  xform.scale == ⟨1,1,1⟩ &&
-  xform.shear == ⟨0,0,0⟩ &&
-  xform.pivot == ⟨0,0,0⟩ &&
-  xform.pivotRotate == ⟨0,0,0⟩
+-- /-- Check if transform is identity -/
+-- def isIdentity (xform : Transform) : Bool :=
+--   xform.translate == ⟨0,0,0⟩ &&
+--   xform.rotate == ⟨0,0,0⟩ &&
+--   xform.scale == ⟨1,1,1⟩ &&
+--   xform.shear == ⟨0,0,0⟩ &&
+--   xform.pivot == ⟨0,0,0⟩ &&
+--   xform.pivotRotate == ⟨0,0,0⟩
 
-/-- Check if this can be losslessly converted to RigidScaleTransform -/
-def isRigidScaleCompatible (xform : Transform) : Bool :=
-  xform.hasUniformScale && !xform.hasShear && !xform.hasPivot
+-- /-- Check if this can be losslessly converted to RigidScaleTransform -/
+-- def isRigidScaleCompatible (xform : Transform) : Bool :=
+--   xform.hasUniformScale && !xform.hasShear && !xform.hasPivot
 
--- ============================================================================
--- Comparison
--- ============================================================================
+-- -- ============================================================================
+-- -- Comparison
+-- -- ============================================================================
 
-defun beq (a b : Transform) : Bool :=
-  a.translate.beq b.translate &&
-  a.rotate.beq b.rotate &&
-  a.scale.beq b.scale &&
-  a.shear.beq b.shear &&
-  a.pivot.beq b.pivot &&
-  a.pivotRotate.beq b.pivotRotate &&
-  a.xOrd == b.xOrd &&
-  a.rOrd == b.rOrd
+-- defun beq (a b : Transform) : Bool :=
+--   a.translate.beq b.translate &&
+--   a.rotate.beq b.rotate &&
+--   a.scale.beq b.scale &&
+--   a.shear.beq b.shear &&
+--   a.pivot.beq b.pivot &&
+--   a.pivotRotate.beq b.pivotRotate &&
+--   a.xOrd == b.xOrd &&
+--   a.rOrd == b.rOrd
 
-instance : BEq Transform := ⟨beq⟩
+-- instance : BEq Transform := ⟨beq⟩
 
--- ============================================================================
--- Interpolation
--- ============================================================================
+-- -- ============================================================================
+-- -- Interpolation
+-- -- ============================================================================
 
-defun lerp (a b : Transform) (t : Float) : Transform :=
-  ⟨a.translate.lerp b.translate t,
-   a.rotate.lerp b.rotate t,
-   a.scale.lerp b.scale t,
-   a.shear.lerp b.shear t,
-   a.pivot.lerp b.pivot t,
-   a.pivotRotate.lerp b.pivotRotate t,
-   a.xOrd,  -- Keep first transform's orders
-   a.rOrd⟩
+-- defun lerp (a b : Transform) (t : Float) : Transform :=
+--   ⟨a.translate.lerp b.translate t,
+--    a.rotate.lerp b.rotate t,
+--    a.scale.lerp b.scale t,
+--    a.shear.lerp b.shear t,
+--    a.pivot.lerp b.pivot t,
+--    a.pivotRotate.lerp b.pivotRotate t,
+--    a.xOrd,  -- Keep first transform's orders
+--    a.rOrd⟩
 
--- ============================================================================
--- Utilities
--- ============================================================================
+-- -- ============================================================================
+-- -- Utilities
+-- -- ============================================================================
 
-/-- Reset to identity -/
-def reset : Transform := identity
+-- /-- Reset to identity -/
+-- def reset : Transform := identity
 
-/-- Get determinant (from matrix) -/
-def determinant (xform : Transform) : Float :=
-  xform.toMatrix3.determinant
+-- /-- Get determinant (from matrix) -/
+-- def determinant (xform : Transform) : Float :=
+--   xform.toMatrix3.determinant
 
-/-- Check if transform preserves handedness (positive determinant) -/
-def preservesHandedness (xform : Transform) : Bool :=
-  xform.determinant > 0
+-- /-- Check if transform preserves handedness (positive determinant) -/
+-- def preservesHandedness (xform : Transform) : Bool :=
+--   xform.determinant > 0
 
-end HouLean.Transform
+-- end HouLean.Transform
 
--- ============================================================================
--- Matrix4 helper functions (add to Matrix4 namespace)
--- ============================================================================
+-- -- ============================================================================
+-- -- Matrix4 helper functions (add to Matrix4 namespace)
+-- -- ============================================================================
 
-namespace HouLean.Matrix4
+-- namespace HouLean.Matrix4
 
-def fromTranslation (t : Vector3) : Matrix4 :=
-  ⟨⟨1, 0, 0, t.x⟩,
-   ⟨0, 1, 0, t.y⟩,
-   ⟨0, 0, 1, t.z⟩,
-   ⟨0, 0, 0, 1⟩⟩
+-- def fromTranslation (t : Vector3) : Matrix4 :=
+--   ⟨⟨1, 0, 0, t.x⟩,
+--    ⟨0, 1, 0, t.y⟩,
+--    ⟨0, 0, 1, t.z⟩,
+--    ⟨0, 0, 0, 1⟩⟩
 
-def fromScale (s : Vector3) : Matrix4 :=
-  ⟨⟨s.x, 0, 0, 0⟩,
-   ⟨0, s.y, 0, 0⟩,
-   ⟨0, 0, s.z, 0⟩,
-   ⟨0, 0, 0, 1⟩⟩
+-- def fromScale (s : Vector3) : Matrix4 :=
+--   ⟨⟨s.x, 0, 0, 0⟩,
+--    ⟨0, s.y, 0, 0⟩,
+--    ⟨0, 0, s.z, 0⟩,
+--    ⟨0, 0, 0, 1⟩⟩
 
-def fromMatrix3 (m : Matrix3) : Matrix4 :=
-  ⟨⟨m.row0.x, m.row0.y, m.row0.z, 0⟩,
-   ⟨m.row1.x, m.row1.y, m.row1.z, 0⟩,
-   ⟨m.row2.x, m.row2.y, m.row2.z, 0⟩,
-   ⟨0, 0, 0, 1⟩⟩
+-- def fromMatrix3 (m : Matrix3) : Matrix4 :=
+--   ⟨⟨m.row0.x, m.row0.y, m.row0.z, 0⟩,
+--    ⟨m.row1.x, m.row1.y, m.row1.z, 0⟩,
+--    ⟨m.row2.x, m.row2.y, m.row2.z, 0⟩,
+--    ⟨0, 0, 0, 1⟩⟩
 
-end HouLean.Matrix4
+-- end HouLean.Matrix4
 
--- ============================================================================
--- Matrix3 helper functions (add to Matrix3 namespace)
--- ============================================================================
+-- -- ============================================================================
+-- -- Matrix3 helper functions (add to Matrix3 namespace)
+-- -- ============================================================================
 
-namespace HouLean.Matrix3
+-- namespace HouLean.Matrix3
 
-def fromDiagonal (d : Vector3) : Matrix3 :=
-  ⟨⟨d.x, 0, 0⟩,
-   ⟨0, d.y, 0⟩,
-   ⟨0, 0, d.z⟩⟩
+-- def fromDiagonal (d : Vector3) : Matrix3 :=
+--   ⟨⟨d.x, 0, 0⟩,
+--    ⟨0, d.y, 0⟩,
+--    ⟨0, 0, d.z⟩⟩
 
-end HouLean.Matrix3
+-- end HouLean.Matrix3

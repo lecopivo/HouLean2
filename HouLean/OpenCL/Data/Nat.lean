@@ -7,4 +7,3 @@ namespace HouLean.OpenCL
 open Compiler Qq
 
 -- bootstrap types
-run_meta addOCLType q(Nat) (.atom "uint" "i")

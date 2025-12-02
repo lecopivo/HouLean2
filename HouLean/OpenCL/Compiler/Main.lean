@@ -316,6 +316,7 @@ def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
 
     -- Unfold definition and reduce instances
     let body := (← unfold body funName).expr
+    let body := ( ← Simp.simp body).expr
     trace[HouLean.OpenCL.compiler] "After unfolding:\n{body}"
 
     let returnType ← getOpenCLType returnType
@@ -407,7 +408,7 @@ elab_rules : command
 
 
 open Lean Elab Command Term Meta in
-elab "#opencl_generate_function_variants" module:str varArg:num f:term : command => do
+elab "#opencl_generate_function_variants" _module:str varArg:num f:term : command => do
   liftTermElabM do
   let f ← elabTermAndSynthesize f none
 

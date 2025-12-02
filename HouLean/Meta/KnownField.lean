@@ -7,7 +7,7 @@ namespace HouLean
 open Lean Elab Command in
 /-- Register common field name and type of an (anonymous) struct.
 
-Defines a class `className` that provides `get$name` and `set$name` functions to 
+Defines a class `className` that provides `get$name` and `set$name` functions to
 get and set this field from a structure.
 
 -- todo: When you define a new structure, please add `deriving KnownFields`, like:
@@ -41,10 +41,6 @@ elab (docComment)? "#known_field" shortName:ident longName:ident className:ident
   if shortName != longName then
     elabCommand cmdShortAbbrev
 
-structure Transform where
-  P : Vector3
-  orient : Vector4
-  scale : Vector3
 
 /-- Position of an object. -/
 #known_field P position HasPosition Vector3
@@ -63,17 +59,6 @@ structure Transform where
 
 /-- Orientation quaternion of an object. -/
 #known_field trans transform HasTransform Transform
-
-instance {α} [HasPosition α] [HasOrient α] [HasScale α] : HasTransform α where
-  gettransform x := {
-      P := getP x
-      orient := getorient x
-      scale := getscale x
-    }
-  settransform x t := 
-    x |> (setP · t.P)
-      |> (setorient · t.orient)
-      |> (setscale · t.scale)
 
 /-- Name identifying an object. -/
 #known_field name name HasName String

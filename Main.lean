@@ -24,7 +24,6 @@ def Request.continue : Request → Bool
   | quit => false
   | _ => true
 
-
 def program : String :=
 "import HouLean
 

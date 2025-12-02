@@ -1,11 +1,11 @@
 import Lean
 
--- todo: this is Lean notation that will allows up to specify node position while writing 
+-- todo: this is Lean notation that will allows up to specify node position while writing
 --       lean code
 
 open Lean Elab Term
 elab:min x:term "at" "(" ("-")? (num <|> scientific) ", " ("-")? (num <|> scientific) ")" : term => do
-  let x ← elabTerm x none   
+  let x ← elabTerm x none
 
   -- data storing coordinates
   let data := (default : MData)
@@ -18,7 +18,13 @@ elab:min x:term "at" "(" ("-")? (num <|> scientific) ", " ("-")? (num <|> scient
 
   return x
 
-#check 
+/--
+info: let a := 1 + 2;
+let b := 10 + a;
+a + b : Nat
+-/
+#guard_msgs in
+#check
   let a := 1 + 2     at (10.123, 23.143)
   let b := 10 + a    at (-15, -5.132)
   a + b

@@ -1,2 +1,2 @@
 import HouLean.LeanGraph.LeanGraph
-import HouLean.LeanGraph.Traverse
+-- import HouLean.LeanGraph.Traverse
