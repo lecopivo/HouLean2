@@ -32,49 +32,31 @@ def row (a : Matrix α m n) (i : Nat) (h : i < m := by get_elem_tactic) :
     Vector α n := a.data[i]
 
 def col (a : Matrix α m n) (j : Nat) (h : j < n := by get_elem_tactic) :
-    Vector α m := Vector.ofFn fun i => a[(i.1,j)]
-
--- row projections
-def row0 (a : Matrix α m n) (h : 0 < m := by get_elem_tactic) := a.row 0
-def row1 (a : Matrix α m n) (h : 1 < m := by get_elem_tactic) := a.row 1
-def row2 (a : Matrix α m n) (h : 2 < m := by get_elem_tactic) := a.row 2
-def row3 (a : Matrix α m n) (h : 3 < m := by get_elem_tactic) := a.row 3
-def row4 (a : Matrix α m n) (h : 4 < m := by get_elem_tactic) := a.row 4
-def row5 (a : Matrix α m n) (h : 5 < m := by get_elem_tactic) := a.row 5
-def row6 (a : Matrix α m n) (h : 6 < m := by get_elem_tactic) := a.row 6
-def row7 (a : Matrix α m n) (h : 7 < m := by get_elem_tactic) := a.row 7
-
-def col0 (a : Matrix α m n) (h : 0 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,0)]
-def col1 (a : Matrix α m n) (h : 1 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,1)]
-def col2 (a : Matrix α m n) (h : 2 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,2)]
-def col3 (a : Matrix α m n) (h : 3 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,3)]
-def col4 (a : Matrix α m n) (h : 4 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,4)]
-def col5 (a : Matrix α m n) (h : 5 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,5)]
-def col6 (a : Matrix α m n) (h : 6 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,6)]
-def col7 (a : Matrix α m n) (h : 7 < n := by get_elem_tactic) := Vector.ofFn fun i : Fin m => a[(i.1,7)]
-
-def xx (a : Matrix α m n) (h : m > 0 ∧ n > 0 := by get_elem_tactic) : α := a.data[0][0]
-def xy (a : Matrix α m n) (h : m > 0 ∧ n > 1 := by get_elem_tactic) : α := a.data[0][1]
-def xz (a : Matrix α m n) (h : m > 0 ∧ n > 2 := by get_elem_tactic) : α := a.data[0][2]
-def xw (a : Matrix α m n) (h : m > 0 ∧ n > 3 := by get_elem_tactic) : α := a.data[0][3]
-
-def yx (a : Matrix α m n) (h : m > 1 ∧ n > 0 := by get_elem_tactic) : α := a.data[1][0]
-def yy (a : Matrix α m n) (h : m > 1 ∧ n > 1 := by get_elem_tactic) : α := a.data[1][1]
-def yz (a : Matrix α m n) (h : m > 1 ∧ n > 2 := by get_elem_tactic) : α := a.data[1][2]
-def yw (a : Matrix α m n) (h : m > 1 ∧ n > 3 := by get_elem_tactic) : α := a.data[1][3]
-
-def zx (a : Matrix α m n) (h : m > 2 ∧ n > 0 := by get_elem_tactic) : α := a.data[2][0]
-def zy (a : Matrix α m n) (h : m > 2 ∧ n > 1 := by get_elem_tactic) : α := a.data[2][1]
-def zz (a : Matrix α m n) (h : m > 2 ∧ n > 2 := by get_elem_tactic) : α := a.data[2][2]
-def zw (a : Matrix α m n) (h : m > 2 ∧ n > 3 := by get_elem_tactic) : α := a.data[2][3]
-
-def wx (a : Matrix α m n) (h : m > 3 ∧ n > 0 := by get_elem_tactic) : α := a.data[3][0]
-def wy (a : Matrix α m n) (h : m > 3 ∧ n > 1 := by get_elem_tactic) : α := a.data[3][1]
-def wz (a : Matrix α m n) (h : m > 3 ∧ n > 2 := by get_elem_tactic) : α := a.data[3][2]
-def ww (a : Matrix α m n) (h : m > 3 ∧ n > 3 := by get_elem_tactic) : α := a.data[3][3]
+    Vector α m := Vector.ofFn fun i => a[i.1,j]
 
 
--- todo: add support for `#m[xx,xy; yx,yy]`
+def xx (a : Matrix α m n) (h : m > 0 ∧ n > 0 := by get_elem_tactic) : α := a[0,0]
+def xy (a : Matrix α m n) (h : m > 0 ∧ n > 1 := by get_elem_tactic) : α := a[0,1]
+def xz (a : Matrix α m n) (h : m > 0 ∧ n > 2 := by get_elem_tactic) : α := a[0,2]
+def xw (a : Matrix α m n) (h : m > 0 ∧ n > 3 := by get_elem_tactic) : α := a[0,3]
+
+def yx (a : Matrix α m n) (h : m > 1 ∧ n > 0 := by get_elem_tactic) : α := a[1,0]
+def yy (a : Matrix α m n) (h : m > 1 ∧ n > 1 := by get_elem_tactic) : α := a[1,1]
+def yz (a : Matrix α m n) (h : m > 1 ∧ n > 2 := by get_elem_tactic) : α := a[1,2]
+def yw (a : Matrix α m n) (h : m > 1 ∧ n > 3 := by get_elem_tactic) : α := a[1,3]
+
+def zx (a : Matrix α m n) (h : m > 2 ∧ n > 0 := by get_elem_tactic) : α := a[2,0]
+def zy (a : Matrix α m n) (h : m > 2 ∧ n > 1 := by get_elem_tactic) : α := a[2,1]
+def zz (a : Matrix α m n) (h : m > 2 ∧ n > 2 := by get_elem_tactic) : α := a[2,2]
+def zw (a : Matrix α m n) (h : m > 2 ∧ n > 3 := by get_elem_tactic) : α := a[2,3]
+
+def wx (a : Matrix α m n) (h : m > 3 ∧ n > 0 := by get_elem_tactic) : α := a[3,0]
+def wy (a : Matrix α m n) (h : m > 3 ∧ n > 1 := by get_elem_tactic) : α := a[3,1]
+def wz (a : Matrix α m n) (h : m > 3 ∧ n > 2 := by get_elem_tactic) : α := a[3,2]
+def ww (a : Matrix α m n) (h : m > 3 ∧ n > 3 := by get_elem_tactic) : α := a[3,3]
+
+
+-- todo: add support for `;` to separate row `#m[xx,xy; yx,yy]`
 macro "#m[" rows:term,* "]" : term => `(⟨#v[ $rows,* ]⟩)
 
 -- Matrix operations
@@ -92,18 +74,17 @@ def mapRows₂ (f : Vector α n → Vector β n → Vector γ n)
   { data := (a.data.zip b.data).map f.uncurry }
 
 def transpose (a : Matrix α m n) : Matrix α n m :=
-  ofFn (fun j i _ => a[(i,j)])
+  ofFn (fun j i _ => a[i,j])
 
 -- Identity matrix
-def identity [Zero α] [One α] (n : Nat) : Matrix α n n :=
+def identity (α : Type) [Zero α] [One α] (n : Nat) : Matrix α n n :=
   { data := Vector.ofFn fun i =>
       Vector.ofFn fun j =>
         if i.val = j.val then 1 else 0 }
 
 -- Zero matrix
-def zero [Zero α] (m n : Nat) : Matrix α m n :=
+def zero (α : Type) [Zero α] (m n : Nat) : Matrix α m n :=
   { data := Vector.ofFn fun _ => Vector.ofFn fun _ => 0 }
-
 
 def add [Add α] (a b : Matrix α m n) : Matrix α m n :=
   mapRows₂ (· + ·) a b
@@ -111,36 +92,47 @@ def add [Add α] (a b : Matrix α m n) : Matrix α m n :=
 def sub [Sub α] (a b : Matrix α m n) : Matrix α m n :=
   mapRows₂ (· - ·) a b
 
--- Instances
-instance [Add α] : Add (Matrix α m n) where
-  add := add
+def smul [Mul α] (s : α) (a : Matrix α m n) : Matrix α m n :=
+  mapRows (s*·) a
 
-instance [Sub α] : Sub (Matrix α m n) where
-  sub := sub
+def sdiv [Div α] (a : Matrix α m n) (s : α) : Matrix α m n :=
+  mapRows (·/s) a
 
 def matMul [Add α] [Mul α] [Zero α] (a : Matrix α m k) (b : Matrix α k n) : Matrix α m n :=
   ofFn (fun i j _ => (a.row i).dot (b.col j))
 
--- instance [Zero α] [Add α] [Mul α] : HMul (Matrix α m k) (Matrix α k n) (Matrix α m n) where
---   hMul := mul
+def vecMul [Add α] [Mul α] [Zero α] (v : Vector α m) (a : Matrix α m n) : Vector α n :=
+  .ofFn fun j => v.dot (a.col j)
 
--- instance [Mul α] : HMul α (Matrix α m n) (Matrix α m n) where
---   hMul := scalar_mul
+def mulVec [Add α] [Mul α] [Zero α] (a : Matrix α m n) (v : Vector α n) : Vector α m :=
+  .ofFn fun i => (a.row i).dot v
+
+-- Instances
+instance [Add α] : Add (Matrix α m n) := ⟨add⟩
+instance [Sub α] : Sub (Matrix α m n) := ⟨sub⟩
+instance [Mul α] : HMul α (Matrix α m n) (Matrix α m n) := ⟨smul⟩
+instance [Div α] : HDiv (Matrix α m n) α (Matrix α m n) := ⟨sdiv⟩
+
+instance [Add α] [Zero α] [Mul α] : HMul (Vector α m) (Matrix α m n) (Vector α n) := ⟨vecMul⟩
+instance [Add α] [Zero α] [Mul α] : HMul (Matrix α m k) (Matrix α k n) (Matrix α m n) := ⟨matMul⟩
+
+end Matrix
+namespace NormalMatrixVecMul
+scoped instance [Add α] [Zero α] [Mul α] : HMul (Matrix α m n) (Vector α n) (Vector α m) := ⟨Matrix.mulVec⟩
+end NormalMatrixVecMul
+namespace HoudiniMatrixVecMul
+scoped instance [Add α] [Zero α] [Mul α] : HMul (Matrix α m n) (Vector α m) (Vector α n) := ⟨fun a v => Matrix.vecMul v a⟩
+end HoudiniMatrixVecMul
+namespace Matrix
 
 instance [Zero α] : Zero (Matrix α m n) where
-  zero := zero m n
+  zero := zero α m n
 
 instance [Zero α] [One α] : One (Matrix α n n) where
-  one := identity n
+  one := identity α n
 
 -- ToString instance for debugging
 instance [ToString α] : ToString (Matrix α m n) where
   toString a :=
     "[" ++ String.intercalate ",\n " (a.data.toList.map fun row =>
       "[" ++ String.intercalate ", " (row.toList.map toString) ++ "]") ++ "]"
-
-
--- syntax "#m[" sepBy(term,* , ";") "]" : term
-
--- macro_rules
--- | `(#m[ $x:term,* ; $rest ]) => sorry

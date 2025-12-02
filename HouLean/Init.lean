@@ -14,6 +14,15 @@ abbrev Id' (α : Type u) := α
 /-- Reducible version of `id` -/
 abbrev id' {α} (a : α) := a
 
+-- Element access syntax
+-- this overrides default Lean's syntax
+syntax:max (name := getElemsStx) term noWs "[" withoutPosition(term) ", " withoutPosition(term),* "]" : term
+
+-- We might use `getElem!` if working with guaranteed access is complicated/confusing to the users
+macro_rules (kind := getElemsStx)
+| `($x:ident[ $i:term , $is,* ]) => `(getElem $x ($i,$is,*) (by get_elem_tactic))
+
+
 class SetElem (coll : Type u) (idx : Type v) (elem : outParam (Type w))
               (valid : outParam (coll → idx → Prop)) where
   setElem (xs : coll) (i : idx) (x : elem) (h : valid xs i) : coll
@@ -61,3 +70,6 @@ def _root_.Array.joinrM [Monad m] [Inhabited β] (xs : Array α) (map : α → m
 
 def _root_.Array.joinr [Inhabited β] (xs : Array α) (map : α → β) (op : β → β → β) : β := Id.run do
   xs.joinrM map op
+
+
+def sum {α} [Add α] [Zero α] (f : Fin n → α) : α := Fin.foldl n (init := 0) (· + f ·)

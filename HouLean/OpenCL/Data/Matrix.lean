@@ -1,4 +1,5 @@
 import HouLean.OpenCL.Data.Vector
+import HouLean.OpenCL.Data.Fin
 import HouLean.Data.Matrix
 
 namespace HouLean.OpenCL
@@ -38,8 +39,15 @@ section
 variable (row0 row1 row2 row3 : Vector α n)
 implemented_by : #m[row0,row1] = matrixMk2 row0 row1 := by rfl
 implemented_by : #m[row0,row1,row2] = matrixMk3 row0 row1 row2 := by rfl
-implemented_by : Matrix.mk (vectorMk3 row0 row1 row2) = matrixMk3 row0 row1 row2 := by rfl
 implemented_by : #m[row0,row1,row2,row3] = matrixMk4 row0 row1 row2 row3 := by rfl
+
+implemented_by : Matrix.mk (vectorMk2 row0 row1) = matrixMk2 row0 row1 := by rfl
+implemented_by : Matrix.mk (vectorMk3 row0 row1 row2) = matrixMk3 row0 row1 row2 := by rfl
+implemented_by : Matrix.mk (vectorMk4 row0 row1 row2 row3) = matrixMk4 row0 row1 row2 row3 := by rfl
+
+implemented_by (f : Fin 2 → Vector α n) : Matrix.mk (.ofFn f) = matrixMk2 (f 0) (f 1) := by rfl
+implemented_by (f : Fin 3 → Vector α n) : Matrix.mk (.ofFn f) = matrixMk3 (f 0) (f 1) (f 2) := by rfl
+implemented_by (f : Fin 4 → Vector α n) : Matrix.mk (.ofFn f) = matrixMk4 (f 0) (f 1) (f 2) (f 3) := by rfl
 end
 
 section
@@ -75,76 +83,34 @@ instance : OpenCLFunction (matrixMk16 (α:=α) (n:=n)) where
     s!"({t.name})"
   kind := .constructor
 
-
--- Row projection
-instance : OpenCLFunction (@Matrix.row0 (α:=α) (m:=m) (n:=n)) where
-  name := ".row0"
-  kind := .postfix
-
-instance : OpenCLFunction (@Matrix.row1 (α:=α) (m:=m) (n:=n)) where
-  name := ".row1"
-  kind := .postfix
-
-instance : OpenCLFunction (@Matrix.row2 (α:=α) (m:=m) (n:=n)) where
-  name := ".row2"
-  kind := .postfix
-
-instance : OpenCLFunction (@Matrix.row3 (α:=α) (m:=m) (n:=n)) where
-  name := ".row3"
-  kind := .postfix
-
-instance : OpenCLFunction (@Matrix.row4 (α:=α) (m:=m) (n:=n)) where
-  name := ".row4"
-  kind := .postfix
-
-instance : OpenCLFunction (@Matrix.row5 (α:=α) (m:=m) (n:=n)) where
-  name := ".row5"
-  kind := .postfix
-
-instance : OpenCLFunction (@Matrix.row6 (α:=α) (m:=m) (n:=n)) where
-  name := ".row6"
-  kind := .postfix
-
-instance : OpenCLFunction (@Matrix.row7 (α:=α) (m:=m) (n:=n)) where
-  name := ".row7"
-  kind := .postfix
 end
 
-implemented_by (a : Matrix α m n) (h : 0 < m) : a.row 0 = a.row0 := by rfl
-implemented_by (a : Matrix α m n) (h : 1 < m) : a.row 1 = a.row1 := by rfl
-implemented_by (a : Matrix α m n) (h : 2 < m) : a.row 2 = a.row2 := by rfl
-implemented_by (a : Matrix α m n) (h : 3 < m) : a.row 3 = a.row3 := by rfl
+/-- Same as `Matrix.col` but `i` is implicit argument thus forced to be compile time evaluated.
 
-implemented_by (a : Matrix α m n) (h : 0 < m) : a.row (⟨0,h⟩ : Fin m) = a.row0 := by rfl
-implemented_by (a : Matrix α m n) (h : 1 < m) : a.row (⟨1,h⟩ : Fin m) = a.row1 := by rfl
-implemented_by (a : Matrix α m n) (h : 2 < m) : a.row (⟨2,h⟩ : Fin m) = a.row2 := by rfl
-implemented_by (a : Matrix α m n) (h : 3 < m) : a.row (⟨3,h⟩ : Fin m) = a.row3 := by rfl
+todo: maybe have a separate mechanism for compile time arguemnts ... -/
+def _root_.HouLean.Matrix.colI {j : Nat} (a : Matrix α m n) (h : j < n := by get_elem_tactic) : Vector α m :=
+  .ofFn fun i => a[i.1,j]
 
-implemented_by (a : Matrix α m n) [OfNat (Fin m) 0] : a.row (0 : Fin m) = a.row0 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin m) 1] : a.row (1 : Fin m) = a.row1 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin m) 2] : a.row (2 : Fin m) = a.row2 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin m) 3] : a.row (3 : Fin m) = a.row3 sorry_proof
+@[opencl_csimp]
+theorem opencl_rewrite_matrix_row [Inhabited α] (a : Matrix α m n) (i : Nat) (h) :
+    a.row i h
+    =
+    (a |> oclFunction (type := Matrix α m n → Vector α n) s!".row{i}" (kind := .postfix)) := sorry_proof
 
-implemented_by (a : Matrix α m n) (h : 0 < n) : a.col 0 = a.col0 := by rfl
-implemented_by (a : Matrix α m n) (h : 1 < n) : a.col 1 = a.col1 := by rfl
-implemented_by (a : Matrix α m n) (h : 2 < n) : a.col 2 = a.col2 := by rfl
-implemented_by (a : Matrix α m n) (h : 3 < n) : a.col 3 = a.col3 := by rfl
+@[opencl_csimp]
+theorem opencl_rewrite_matrix_col (a : Matrix α m n) (j : Nat) (h) :
+    a.col j h
+    =
+    a.colI (j:=j) h := by rfl
 
-implemented_by (a : Matrix α m n) (h : 0 < n) : a.col (⟨0,h⟩ : Fin n) = a.col0 := by rfl
-implemented_by (a : Matrix α m n) (h : 1 < n) : a.col (⟨1,h⟩ : Fin n) = a.col1 := by rfl
-implemented_by (a : Matrix α m n) (h : 2 < n) : a.col (⟨2,h⟩ : Fin n) = a.col2 := by rfl
-implemented_by (a : Matrix α m n) (h : 3 < n) : a.col (⟨3,h⟩ : Fin n) = a.col3 := by rfl
+@[opencl_csimp]
+theorem opencl_rewrite_matrix_getElem (a : Matrix α m n) (ij : Nat×Nat) (h) :
+    a[ij]'h
+    =
+    (a.row ij.1)[ij.2] := by rfl
 
-implemented_by (a : Matrix α m n) [OfNat (Fin n) 0] : a.col (0 : Fin n) = a.col0 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin n) 1] : a.col (1 : Fin n) = a.col1 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin n) 2] : a.col (2 : Fin n) = a.col2 sorry_proof
-implemented_by (a : Matrix α m n) [OfNat (Fin n) 3] : a.col (3 : Fin n) = a.col3 sorry_proof
 
-implemented_by (a : Matrix α m n) (ij : Nat×Nat) (h) : a[ij]'h = (a.row ij.1)[ij.2] := by rfl
-implemented_by (a : Matrix α m n) (i : Fin m) (j : Nat) (h) : a[(i.1,j)]'h = (a.row i)[j] := by rfl
-implemented_by (a : Matrix α m n) (i : Nat) (j : Fin n) (h) : a[(i,j.1)]'h = (a.row i)[j] := by rfl
-implemented_by (a : Matrix α m n) (i : Fin m) (j : Fin n) : a[(i.1,j.1)] = (a.row i)[j] := by rfl
-
+attribute [opencl_csimp] Matrix.ofFn
 
 -- ofFn
 implemented_by (f : (i j : Nat) → (h : i < 2 ∧ j < n) → α) :
@@ -161,25 +127,82 @@ implemented_by (f : (i j : Nat) → (h : i < 4 ∧ j < n) → α) :
                      .ofFn (fun j => f 3 j (by grind))]
 
 -- map
-implemented_by (a : Matrix α 2 n) (f : α → β) :
-    a.map f = #m[a.row0.map f, a.row1.map f]
-implemented_by (a : Matrix α 3 n) (f : α → β) :
-    a.map f = #m[a.row0.map f, a.row1.map f, a.row2.map f]
-implemented_by (a : Matrix α 4 n) (f : α → β) :
-    a.map f = #m[a.row0.map f, a.row1.map f, a.row2.map f, a.row3.map f]
+implemented_by (a : Matrix α m n) (f : α → β) :
+    a.map f = a.mapRows (fun row => row.map f)
 
 -- mapRows
 implemented_by (a : Matrix α 2 n) (f : Vector α n → Vector β n) :
-    a.mapRows f = #m[f a.row0, f a.row1]
+    a.mapRows f = #m[f (a.row 0), f (a.row 1)]
 implemented_by (a : Matrix α 3 n) (f : Vector α n → Vector β n) :
-    a.mapRows f = #m[f a.row0, f a.row1, f a.row2]
+    a.mapRows f = #m[f (a.row 0), f (a.row 1), f (a.row 2)]
 implemented_by (a : Matrix α 4 n) (f : Vector α n → Vector β n) :
-    a.mapRows f = #m[f a.row0, f a.row1, f a.row2, f a.row3]
+    a.mapRows f = #m[f (a.row 0), f (a.row 1), f (a.row 2), f (a.row 3)]
 
 -- mapRows₂
 implemented_by (a : Matrix α 2 n) (b : Matrix β 2 n) (f : Vector α n → Vector β n → Vector γ n) :
-    a.mapRows₂ f b = #m[f a.row0 b.row0, f a.row1 b.row1]
+    a.mapRows₂ f b = #m[f (a.row 0) (b.row 0), f (a.row 1) (b.row 1)]
 implemented_by (a : Matrix α 3 n) (b : Matrix β 3 n) (f : Vector α n → Vector β n → Vector γ n) :
-    a.mapRows₂ f b = #m[f a.row0 b.row0, f a.row1 b.row1, f a.row2 b.row2]
+    a.mapRows₂ f b = #m[f (a.row 0) (b.row 0), f (a.row 1) (b.row 1), f (a.row 2) (b.row 2)]
 implemented_by (a : Matrix α 4 n) (b : Matrix β 4 n) (f : Vector α n → Vector β n → Vector γ n) :
-    a.mapRows₂ f b = #m[f a.row0 b.row0, f a.row1 b.row1, f a.row2 b.row2, f a.row3 b.row3]
+    a.mapRows₂ f b = #m[f (a.row 0) (b.row 0), f (a.row 1) (b.row 1), f (a.row 2) (b.row 2), f (a.row 3) (b.row 3)]
+
+
+-- identity
+def _root_.HouLean.Matrix.identityN {α} [Zero α] [One α] {n : Nat} : Matrix α n n :=
+  .ofFn (fun i j _ => if i = j then 1 else 0)
+
+implemented_by {α} [Zero α] [One α] : Matrix.identity α n = Matrix.identityN (n:=n) := by rfl
+implemented_by {α} [Zero α] [One α] : (1 : Matrix α n n) = Matrix.identityN (n:=n) := by rfl
+
+-- zero
+def _root_.HouLean.Matrix.zeroN {α} [Zero α] {m n : Nat} : Matrix α m n :=
+  .ofFn (fun _ _ _ => 0)
+
+implemented_by {α} [Zero α] : Matrix.zero α m n = Matrix.zeroN (α := α) (m:=m) (n:=n) := by rfl
+implemented_by {α} [Zero α] : (0 : Matrix α m n) = Matrix.zeroN (α := α) (m:=m) (n:=n) := by rfl
+
+-- add
+implemented_by {α} [Add α] (a b : Matrix α m n) : a + b = a.add b := by rfl
+
+-- sub
+implemented_by {α} [Sub α] (a b : Matrix α m n) : a - b = a.sub b := by rfl
+
+-- smul
+implemented_by {α} [Mul α] (s : α) (a : Matrix α m n) : s * a = a.smul s := by rfl
+
+-- sdiv
+implemented_by {α} [Div α] (s : α) (a : Matrix α m n) : a / s = a.sdiv s := by rfl
+
+-- matMul
+implemented_by {α} [Add α] [Zero α] [Mul α] (a : Matrix α m k) (b : Matrix α k n) : a * b = a.matMul b := by rfl
+
+-- vecMul
+/-- Likely a better implementation of `vecMul` for OpenCL -/
+def _root_.HouLean.Matrix.vecMul_sum_rows [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : Vector α n :=
+  sum fun j : Fin m => v[j] * a.row j
+
+implemented_by [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : a.vecMul v = a.vecMul_sum_rows v
+implemented_by [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : v * a = a.vecMul_sum_rows v
+
+-- mulVec
+section
+open NormalMatrixVecMul
+implemented_by [Add α] [Mul α] [Zero α] (a : Matrix α m n) (v : Vector α n) :
+  a * v = a.mulVec v := by rfl
+end
+section
+open HoudiniMatrixVecMul
+implemented_by [Add α] [Mul α] [Zero α] (a : Matrix α m n) (v : Vector α m) :
+  a * v = a.vecMul v := by rfl
+end
+
+@[opencl_csimp] theorem add_zero [Add α] [Zero α] (a : α) : 0 + a = a := sorry_proof
+@[opencl_csimp] theorem zero_add [Add α] [Zero α] (a : α) : a + 0 = a := sorry_proof
+
+open NormalMatrixVecMul
+
+
+#opencl_compile (fun (A : Matrix Float32 3 3) (u v : Vector Float32 3) =>
+  let a := u.dot v
+  let v' := A * A * v
+  u.dot v' + a)

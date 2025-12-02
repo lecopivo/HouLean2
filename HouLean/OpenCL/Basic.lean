@@ -29,7 +29,13 @@ register_simp_attr opencl_csimp
 class ImplementedBy {α} (original : α) (replacement : outParam α) where
   valid : original = replacement
 
-@[inherit_doc ImplementedBy]
+/-- OpenCL compiler rewrite rule,
+`implemented_by ... : lhs = rhs` will rewrite `rhs` with `lhs` at compile time.
+
+This ia jsut a macro for:
+```
+@[opencl_csimp] theorem opencl_compile_rewrite_rule bs* : lhs = rhs
+``` -/
 scoped syntax "implemented_by" bracketedBinder* " : " term:55 " = " term (" := " term)? : command
 
 
@@ -53,6 +59,11 @@ elab_rules : command
 
 /-- This value of the type `CompTime α` is enforced to be known at compile time. -/
 abbrev CompTime (α : Sort u) := α
+
+/-- This proposition has OpenCL compiler support and it checks that the interpreter evaluates
+`a` to `b`. Only few types are supported like `Nat`, `Int`. -/
+structure CompTimeEq {α} (a b : α) : Prop where
+  eq : a = b
 
 -- =================================================================================================
 -- OpenCL Type
@@ -194,6 +205,11 @@ class OpenCLFunction {F : Type} (f : F) where
   definition? : Option String := none
 deriving BEq, Inhabited
 
+-- todo: replace `Inhabited type` with `spec : type`. The issue is that the compile time simp
+--       get's into infinite recursion as it keeps on simplifying `spec`
+/--  -/
+opaque oclFunction (type : Type) [Inhabited type] (name : String) (kind : OpenCLFunction.FunKind := .normal) : type
+
 
 -- =========================
 -- = Arithmetic operations =
@@ -202,44 +218,44 @@ deriving BEq, Inhabited
 
 section ArithmeticOperations
 
-variable {α} [AtomicOpenCLType α]
+variable {α}
 
-instance [Add α] : OpenCLFunction (@HAdd.hAdd α α α _) where
+instance [AtomicOpenCLType α] [Add α] : OpenCLFunction (@HAdd.hAdd α α α _) where
   name := " + "
   kind := .infix
 
-instance [Sub α] : OpenCLFunction (@HSub.hSub α α α _) where
+instance [AtomicOpenCLType α] [Sub α] : OpenCLFunction (@HSub.hSub α α α _) where
   name := " - "
   kind := .infix
 
-instance [Mul α] : OpenCLFunction (@HMul.hMul α α α _) where
+instance [AtomicOpenCLType α] [Mul α] : OpenCLFunction (@HMul.hMul α α α _) where
   name := " * "
   kind := .infix
 
-instance [Div α] : OpenCLFunction (@HDiv.hDiv α α α _) where
+instance [AtomicOpenCLType α] [Div α] : OpenCLFunction (@HDiv.hDiv α α α _) where
   name := " / "
   kind := .infix
 
-instance [Neg α] : OpenCLFunction (@Neg.neg α _) where
+instance [AtomicOpenCLType α] [Neg α] : OpenCLFunction (@Neg.neg α _) where
   name := " -"
   kind := .prefix
 
 
-variable {n} [AllowedVectorSize n]
+variable {n}
 
-instance [Add α] : OpenCLFunction (@HAdd.hAdd (Vector α n) (Vector α n) (Vector α n) _) where
+instance [AtomicOpenCLType α] [AllowedVectorSize n] [Add α] : OpenCLFunction (@HAdd.hAdd (Vector α n) (Vector α n) (Vector α n) _) where
   name := " + "
   kind := .infix
 
-instance [Sub α] : OpenCLFunction (@HSub.hSub (Vector α n) (Vector α n) (Vector α n) _) where
+instance [AtomicOpenCLType α] [AllowedVectorSize n] [Sub α] : OpenCLFunction (@HSub.hSub (Vector α n) (Vector α n) (Vector α n) _) where
   name := " - "
   kind := .infix
 
-instance [Mul α] : OpenCLFunction (@HMul.hMul α (Vector α n) (Vector α n) _) where
+instance [AtomicOpenCLType α] [AllowedVectorSize n] [Mul α] : OpenCLFunction (@HMul.hMul α (Vector α n) (Vector α n) _) where
   name := " * "
   kind := .infix
 
-instance [Neg α] : OpenCLFunction (@Neg.neg (Vector α n) _) where
+instance [AtomicOpenCLType α] [AllowedVectorSize n] [Neg α] : OpenCLFunction (@Neg.neg (Vector α n) _) where
   name := " -"
   kind := .prefix
 

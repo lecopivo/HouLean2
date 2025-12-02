@@ -30,6 +30,21 @@ def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
   if doWhnf then
     e ← whnfC e
 
+  if e.isAppOf ``oclFunction then
+    try
+      let args := e.getAppArgs
+      let name ← unsafe evalExpr String q(String) args[2]!
+      let kind ← unsafe evalExpr OpenCLFunction.FunKind q(OpenCLFunction.FunKind) args[3]!
+
+      return some {
+        oclFun := { name, kind }
+        fn := e.stripArgsN (args.size - 4)
+        args := args[4:]
+      }
+    catch _ =>
+      throwError "Can't get compiletime value of oclFunction {e}"
+
+
   let (fn, args) := e.withApp fun fn args => (fn, args)
   let info ← getFunInfo fn
   let firstExplicit := info.paramInfo.findIdx (fun p => p.isExplicit)
@@ -56,6 +71,67 @@ def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
       trace[HouLean.OpenCL.compiler] "✗ Failed to compile {fn}"
       return none
 
+def runInterpreter (e : Expr) : MetaM (Option String) := do
+  let type ← inferType e
+
+  try
+    if (← isDefEq type q(Int16)) then
+      let val ← unsafe evalExpr Int16 q(Int16) e
+      return some (toString val)
+
+    if (← isDefEq type q(Int32)) then
+      let val ← unsafe evalExpr Int32 q(Int32) e
+      return some (toString val)
+
+    if (← isDefEq type q(Int64)) then
+      let val ← unsafe evalExpr Int64 q(Int64) e
+      return some (toString val)
+
+    if (← isDefEq type q(UInt16)) then
+      let val ← unsafe evalExpr UInt16 q(UInt16) e
+      return some (toString val)
+
+    if (← isDefEq type q(UInt32)) then
+      let val ← unsafe evalExpr UInt32 q(UInt32) e
+      return some (toString val)
+
+    if (← isDefEq type q(UInt64)) then
+      let val ← unsafe evalExpr UInt64 q(UInt64) e
+      return some (toString val)
+
+    if (← isDefEq type q(Int)) then
+      let val ← unsafe evalExpr Int q(Int) e
+      return some (toString val)
+
+    if (← isDefEq type q(Int)) then
+      let val ← unsafe evalExpr Int q(Int) e
+      return some (toString val)
+
+    if (← isDefEq type q(Float32)) then
+      let val ← unsafe evalExpr Float32 q(Float32) e
+      return some ((toString val) ++ "f")
+
+    if (← isDefEq type q(Float64)) then
+      let val ← unsafe evalExpr Float64 q(Float64) e
+      return some ((toString val) ++ "d")
+
+    if (← isDefEq type q(Nat)) then
+      let val ← unsafe evalExpr Nat q(Nat) e
+      return some (toString val)
+
+    if (← isDefEq type q(Int)) then
+      let val ← unsafe evalExpr Int q(Int) e
+      return some (toString val)
+
+    if (← isDefEq type q(String)) then
+      let val ← unsafe evalExpr String q(String) e
+      return some (toString val)
+
+  catch _ =>
+    return none
+
+  return none
+
 
 partial def compileExpr (e : Expr) : CompileM CodeExpr := do
   withTraceNode `HouLean.OpenCL.compiler
@@ -68,6 +144,9 @@ partial def compileExpr (e : Expr) : CompileM CodeExpr := do
   if (← inferType (← inferType e)).isProp then
     trace[HouLean.OpenCL.compiler] "Skipping proof expression: {e}"
     return .errased
+
+  if let some valueStr ← runInterpreter e then
+    return .lit valueStr
 
   let e_orig := e
   let e := (← Simp.simp e).expr
@@ -284,10 +363,33 @@ def getOpenCLTheorems : MetaM SimpTheorems := do
   | some ext => ext.getTheorems
 
 
-open Elab Term in
-elab "#opencl_compile" f:term : command => do
-  Command.liftTermElabM do
-  let f ← elabTermAndSynthesize f none
+def compileLambda (e : Expr) : CompileM CodeFunction := do
+
+  forallTelescope (← inferType e) fun xs returnType => do
+    let body := e.beta xs
+    let returnType ← getOpenCLType returnType
+    let argTypes ← liftM <| (xs.mapM inferType) >>= (·.mapM getOpenCLType)
+
+    withFVars xs fun argNames => do
+      let compiledBody ← compileFunBody body
+
+      return {
+        name := "(anonymous)"
+        args := argTypes.zip argNames
+        returnType
+        body := compiledBody
+      }
+
+syntax "#opencl_compile" term : command
+open Elab Term Command in
+elab_rules : command
+| `(#opencl_compile%$tk $fstx:term) => runTermElabM fun _ => Term.withDeclName `_opencl_compile do
+  let f ← elabTermAndSynthesize fstx none
+  -- Term.synthesizeSyntheticMVarsNoPostponing
+
+  if f.hasMVar then
+    logErrorAt tk m!"Can't compile, expression has metavariables!"
+    return
 
   let simpMthds := Simp.mkDefaultMethodsCore #[]
   let simpCtx : Simp.Context ← Simp.mkContext
@@ -297,10 +399,58 @@ elab "#opencl_compile" f:term : command => do
   let ctx : Context := {}
   let state : State := {}
 
-  let ((_, s), _) ← compileFunction f ctx state simpMthds.toMethodsRef simpCtx |>.run simpState
+  let ((r, s), _) ← compileLambda f ctx state simpMthds.toMethodsRef simpCtx |>.run simpState
 
-  logInfo m!"✓ Compiled {s.compiledFunctions.size} function(s): {s.compiledFunctions.map (·.name)}"
-
-  let msgs ← s.compiledFunctions.mapM (fun c => c.toString)
+  let msgs ← (s.compiledFunctions.push r).mapM (fun c => c.toString)
   let msg := msgs.joinl (map := id) (· ++ "\n\n" ++ ·)
-  logInfo m!"\n{msg}"
+  logInfoAt tk m!"\n{msg}"
+
+
+open Lean Elab Command Term Meta in
+elab "#opencl_generate_function_variants" module:str varArg:num f:term : command => do
+  liftTermElabM do
+  let f ← elabTermAndSynthesize f none
+
+  let varArg := varArg.getNat
+  forallBoundedTelescope (← inferType f) varArg fun xs _ => do
+
+    let mut variants : Array (Array Expr) := #[]
+
+    for x in xs do
+      let t ← inferType x
+
+      let vars : Array Expr ← show MetaM _ from do
+        if ← isDefEq t q(Type) then
+          pure #[q(UInt16), q(UInt32), q(UInt64),
+                 q(Int16), q(Int32), q(Int64),
+                 q(Float32), q(Float64)]
+        else if ← isDefEq t q(Nat) then
+          pure #[q(2), q(3), q(4)] --, q(8), q(16)]
+        else
+          throwError "Unrecognized variant type {t}"
+
+      if variants.size = 0 then
+        variants := vars.map (#[·])
+      else
+        variants := vars.map (fun v => variants.map (·.push v)) |>.flatten
+
+    let mut generatedFunctions : Array String := #[]
+    for var in variants do
+
+      -- todo: we need to consume all class arguments here!!!
+      let f ← mkAppOptM' f ((var.map some) ++ #[none])
+
+      let simpMthds := Simp.mkDefaultMethodsCore #[]
+      let simpCtx : Simp.Context ← Simp.mkContext
+        (config := {zetaDelta := false, zeta := false, iota := false})
+        (simpTheorems := #[← getOpenCLTheorems])
+      let simpState : Simp.State := {}
+      let ctx : Compiler.Context := {}
+      let state : Compiler.State := {}
+
+      let ((u, _), _) ← compileFunction f ctx state simpMthds.toMethodsRef simpCtx |>.run simpState
+
+      generatedFunctions := generatedFunctions.push u.name
+
+    logInfo m!"Generated functions: {generatedFunctions}"
+  pure ()

@@ -79,26 +79,50 @@ instance : OpenCLFunction (@Vector.w α n) where
   kind := .postfix
 end
 
+def componentProjection (i : Nat) : String :=
+     (if i = 0 then
+        ".x"
+      else if i = 1 then
+        ".y"
+      else if i = 2 then
+        ".y"
+      else if i = 3 then
+        ".w"
+      else if i < 10 then
+        s!".s{i}"
+      else if i = 10 then
+        ".sa"
+      else if i = 11 then
+        ".sb"
+      else if i = 12 then
+        ".sc"
+      else if i = 13 then
+        ".sd"
+      else if i = 14 then
+        ".se"
+      else if i = 15 then
+        ".sf"
+      else
+        panic! "The index has to be known at compile time")
 
-implemented_by (v : Vector α n) (h) : v[0]'h = v.x := by rfl
-implemented_by (v : Vector α n) (h) : v[1]'h = v.y := by rfl
-implemented_by (v : Vector α n) (h) : v[2]'h = v.z := by rfl
-implemented_by (v : Vector α n) (h) : v[3]'h = v.w := by rfl
+@[opencl_csimp]
+theorem opencl_rewrite_vector_getElem_nat [Inhabited α] (v : Vector α n) (i : Nat) (h) :
+    v[i]'h
+    =
+    (v |> oclFunction (type := Vector α n → α) (componentProjection i) (kind := .postfix)) := sorry_proof
 
-implemented_by (v : Vector α n) (h : 0 < n) : v[(⟨0,h⟩:Fin n)] = v.x := by rfl
-implemented_by (v : Vector α n) (h : 1 < n) : v[(⟨1,h⟩:Fin n)] = v.y := by rfl
-implemented_by (v : Vector α n) (h : 2 < n) : v[(⟨2,h⟩:Fin n)] = v.z := by rfl
-implemented_by (v : Vector α n) (h : 3 < n) : v[(⟨3,h⟩:Fin n)] = v.w := by rfl
-
-implemented_by (v : Vector α n) [OfNat (Fin n) 0] : v[(0 : Fin n)] = v.x sorry_proof
-implemented_by (v : Vector α n) [OfNat (Fin n) 1] : v[(1 : Fin n)] = v.y sorry_proof
-implemented_by (v : Vector α n) [OfNat (Fin n) 2] : v[(2 : Fin n)] = v.z sorry_proof
-implemented_by (v : Vector α n) [OfNat (Fin n) 3] : v[(3 : Fin n)] = v.w sorry_proof
+@[opencl_csimp]
+theorem Vector.getElemFin_eq_getElemNat' (v : Vector α n) (i : Fin m) (h) :
+  v[i]'h = v[i.1] := by rfl
 
 -- ofFn
 implemented_by (f : (Fin 2) → α) : Vector.ofFn f = #v[f 0, f 1]
 implemented_by (f : (Fin 3) → α) : Vector.ofFn f = #v[f 0, f 1, f 2]
 implemented_by (f : (Fin 4) → α) : Vector.ofFn f = #v[f 0, f 1, f 2, f 3]
+implemented_by (f : (Fin 8) → α) : Vector.ofFn f = #v[f 0, f 1, f 2, f 3, f 4, f 5, f 6, f 7]
+implemented_by (f : (Fin 16) → α) : Vector.ofFn f =
+  #v[f 0, f 1, f 2, f 3, f 4, f 5, f 6, f 7,
+     f 8, f 9, f 10, f 11, f 12, f 13, f 14, f 15]
 
 -- map
 section Map
@@ -121,6 +145,10 @@ variable {β} (f : Nat → α → β)
 implemented_by (v : Vector α 2) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y]
 implemented_by (v : Vector α 3) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y, f 2 v.z]
 implemented_by (v : Vector α 4) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y, f 2 v.z, f 3 v.w]
+implemented_by (v : Vector α 8) : v.mapIdx f = let v := v; #v[f 0 v[0], f 1 v[1], f 2 v[2], f 3 v[3], f 4 v[4], f 5 v[5], f 6 v[6], f 7 v[7]]
+implemented_by (v : Vector α 16) : v.mapIdx f = let v := v;
+  #v[f 0 v[0], f 1 v[1], f 2 v[2], f 3 v[3], f 4 v[4], f 5 v[5], f 6 v[6], f 7 v[7],
+     f 8 v[8], f 9 v[9], f 10 v[10], f 11 v[11], f 12 v[12], f 13 v[13], f 14 v[14], f 15 v[15]]
 end MapIdx
 
 section MapFinIdx
@@ -206,3 +234,8 @@ section Sum
 variable [Add α] [Zero α]
 implemented_by (u : Vector α n) : u.sum = u.foldl (· + ·) 0
 end Sum
+
+
+implemented_by [Zero α] : (0 : Vector α n) = Vector.zero (α:=α) (n:=n)
+
+implemented_by (a : α) : Vector.replicate n a = .ofFn (fun _ => a)

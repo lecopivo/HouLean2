@@ -6,13 +6,13 @@ open Qq HouLean Math
 variable {α : Type} {n : Nat}
 
 -- todo: move this and add proper error message when grind fails!!!
-def _root_.Vector.x (a : Vector α n) (h : n > 0 := by grind) : α := a[0]
-def _root_.Vector.y (a : Vector α n) (h : n > 1 := by grind) : α := a[1]
-def _root_.Vector.z (a : Vector α n) (h : n > 2 := by grind) : α := a[2]
-def _root_.Vector.w (a : Vector α n) (h : n > 3 := by grind) : α := a[3]
+def _root_.Vector.x (a : Vector α n) (h : 0 < n := by grind) : α := a[0]
+def _root_.Vector.y (a : Vector α n) (h : 1 < n := by grind) : α := a[1]
+def _root_.Vector.z (a : Vector α n) (h : 2 < n := by grind) : α := a[2]
+def _root_.Vector.w (a : Vector α n) (h : 3 < n := by grind) : α := a[3]
 
 
-instance [Mul α] : Mul (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui * v[i])⟩
+-- instance [Mul α] : Mul (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui * v[i])⟩
 -- instance [Mul α] : HMul (Vector α n) α (Vector α n) := ⟨fun v s => v.map (fun vi => vi * s)⟩
 instance [Div α] : HDiv (Vector α n) α (Vector α n) := ⟨fun v s => v.map (fun vi => vi / s)⟩
 instance [Div α] : Div (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui / v[i])⟩
@@ -83,7 +83,7 @@ def fract [Fract α] (x : Vector α n) : Vector α n := x.map Math.fract
 
 variable [Add α] [Sub α] [Mul α] [Div α] [Zero α]
 
-def dot (u v : Vector α n) : α := Vector.sum (u*v : Vector α n)
+def dot (u v : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*v[i])
 -- todo: unify the to `cross` once defun works for these
 def cross2 (u v : Vector α 2) : α := u.x * v.y - u.y * v.x
 def cross3 (u v : Vector α 3) : Vector α 3 :=
@@ -91,9 +91,9 @@ def cross3 (u v : Vector α 3) : Vector α 3 :=
      u.z * v.x - u.x * v.z,
      u.x * v.y - u.y * v.x]
 -- def cross4 (u v : Vector α 3) : Vector α 8 := sorry
-def length2 (u : Vector α n) : α := u.dot u
+def length2 (u : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*u[i])
 def length [Sqrt α] (u : Vector α n) : α := Math.sqrt u.length2
-def distance2 (u v : Vector α n) : α := Vector.sum (u*v : Vector α n)
+def distance2 (u v : Vector α n) : α := (u-v).length2
 def distance [Sqrt α] (u v : Vector α n) : α := Math.sqrt (u.distance2 v)
 def normalize [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n × α :=
   let len := u.length
