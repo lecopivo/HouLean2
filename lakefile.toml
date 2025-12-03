@@ -9,6 +9,7 @@ name = "HouLean"
 name = "houlean"
 root = "Main"
 supportInterpreter = true
+moreLinkArgs = ["-s", "-flto", "-Wl,--gc-sections", "-Wl,--as-needed"]
 
 [[lean_exe]]
 name = "compileToApexGraph"

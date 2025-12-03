@@ -253,8 +253,8 @@ partial def compileFunBody (e : Expr) : CompileM CodeBody := do
 /-- Function name overrides for better readability in generated code -/
 def funNameOverrideMap : NameMap Name :=
   ({} : NameMap Name)
-    |>.insert ``HMul.hMul `mul
-    |>.insert ``HAdd.hAdd `add
+    -- |>.insert ``HMul.hMul `mul
+    -- |>.insert ``HAdd.hAdd `add
 
 def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM String := do
   let mut typeSuffix := ""
@@ -316,7 +316,7 @@ def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
 
     -- Unfold definition and reduce instances
     let body := (← unfold body funName).expr
-    let body := ( ← Simp.simp body).expr
+    let body ← withConfig (fun cfg => {cfg with zeta := false, iota:=false, zetaDelta:=false}) do whnfI body
     trace[HouLean.OpenCL.compiler] "After unfolding:\n{body}"
 
     let returnType ← getOpenCLType returnType

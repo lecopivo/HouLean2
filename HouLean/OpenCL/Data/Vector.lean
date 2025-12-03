@@ -1,5 +1,7 @@
 import HouLean.Data.Vector
 import HouLean.OpenCL.Compiler.Main
+import HouLean.OpenCL.Data.Float
+import HouLean.OpenCL.Data.Fin
 
 namespace HouLean.OpenCL
 
@@ -142,13 +144,21 @@ end Map
 
 section MapIdx
 variable {β} (f : Nat → α → β)
-implemented_by (v : Vector α 2) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y]
-implemented_by (v : Vector α 3) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y, f 2 v.z]
-implemented_by (v : Vector α 4) : v.mapIdx f = let v := v; #v[f 0 v.x, f 1 v.y, f 2 v.z, f 3 v.w]
-implemented_by (v : Vector α 8) : v.mapIdx f = let v := v; #v[f 0 v[0], f 1 v[1], f 2 v[2], f 3 v[3], f 4 v[4], f 5 v[5], f 6 v[6], f 7 v[7]]
-implemented_by (v : Vector α 16) : v.mapIdx f = let v := v;
-  #v[f 0 v[0], f 1 v[1], f 2 v[2], f 3 v[3], f 4 v[4], f 5 v[5], f 6 v[6], f 7 v[7],
-     f 8 v[8], f 9 v[9], f 10 v[10], f 11 v[11], f 12 v[12], f 13 v[13], f 14 v[14], f 15 v[15]]
+implemented_by (v : Vector α 2) : v.mapIdx f = #v[f 0 v.x, f 1 v.y]
+implemented_by (v : Vector α 3) : v.mapIdx f = #v[f 0 v.x, f 1 v.y, f 2 v.z]
+implemented_by (v : Vector α 4) : v.mapIdx f = #v[f 0 v.x, f 1 v.y, f 2 v.z, f 3 v.w]
+implemented_by (v : Vector α 8) :
+  v.mapIdx f
+  =
+  #v[f 0 v[0], f 1 v[1], f 2 v[2], f 3 v[3],
+     f 4 v[4], f 5 v[5], f 6 v[6], f 7 v[7]]
+implemented_by (v : Vector α 16) :
+  v.mapIdx f
+  =
+  #v[f 0 v[0], f 1 v[1], f 2 v[2], f 3 v[3],
+     f 4 v[4], f 5 v[5], f 6 v[6], f 7 v[7],
+     f 8 v[8], f 9 v[9], f 10 v[10], f 11 v[11],
+     f 12 v[12], f 13 v[13], f 14 v[14], f 15 v[15]]
 end MapIdx
 
 section MapFinIdx
@@ -156,19 +166,16 @@ variable {β}
 implemented_by (v : Vector α 2) (f : (i : Nat) → α → (h : i < 2) → β) :
   v.mapFinIdx f
   =
-  let v := v
   #v[f 0 v.x (by grind), f 1 v.y (by grind)]
 
 implemented_by (v : Vector α 3) (f : (i : Nat) → α → (h : i < 3) → β) :
   v.mapFinIdx f
   =
-  let v := v
   #v[f 0 v.x (by grind), f 1 v.y (by grind), f 2 v.z (by grind)]
 
 implemented_by (v : Vector α 4) (f : (i : Nat) → α → (h : i < 4) → β) :
   v.mapFinIdx f
   =
-  let v := v
   #v[f 0 v.x (by grind), f 1 v.y (by grind), f 2 v.z (by grind), f 3 v.w (by grind)]
 
 end MapFinIdx
@@ -179,37 +186,27 @@ variable (f : α×β → γ)
 implemented_by (u : Vector α 2) (v : Vector β 2) :
     (u.zip v).map f
     =
-    let u := u
-    let v := v
     #v[f (u.x,v.x), f (u.y,v.y)] := by simp[Vector.x, Vector.y]; grind
 
 implemented_by (u : Vector α 3) (v : Vector β 3) :
     (u.zip v).map f
     =
-    let u := u
-    let v := v
     #v[f (u.x,v.x), f (u.y,v.y), f (u.z,v.z)] := by simp[Vector.x, Vector.y, Vector.z]; grind
 
 implemented_by (u : Vector α 4) (v : Vector β 4) :
     (u.zip v).map f
     =
-    let u := u
-    let v := v
     #v[f (u.x,v.x), f (u.y,v.y), f (u.z,v.z), f (u.w,v.w)] := by simp[Vector.x, Vector.y, Vector.z, Vector.w]; grind
 
 implemented_by (u : Vector α 8) (v : Vector β 8) :
     (u.zip v).map f
     =
-    let u := u
-    let v := v
     #v[f (u[0],v[0]), f (u[1],v[1]), f (u[2],v[2]), f (u[3],v[3]),
        f (u[4],v[4]), f (u[5],v[5]), f (u[6],v[6]), f (u[7],v[7])] := by sorry_proof
 
 implemented_by (u : Vector α 16) (v : Vector β 16) :
     (u.zip v).map f
     =
-    let u := u
-    let v := v
     #v[f (u[0],v[0]), f (u[1],v[1]), f (u[2],v[2]), f (u[3],v[3]),
        f (u[4],v[4]), f (u[5],v[5]), f (u[6],v[6]), f (u[7],v[7]),
        f (u[8],v[8]), f (u[9],v[9]), f (u[10],v[10]), f (u[11],v[11]),
@@ -218,16 +215,16 @@ end ZipMap
 
 section Foldl
 variable {β} (f : β → α → β) (init : β)
-implemented_by (u : Vector α 2) : u.foldl f init = let u:= u; f (f init u.x) u.y
-implemented_by (u : Vector α 3) : u.foldl f init = let u:= u; f (f (f init u.x) u.y) u.z
-implemented_by (u : Vector α 4) : u.foldl f init = let u:= u; f (f (f (f init u.x) u.y) u.z) u.w
+implemented_by (u : Vector α 2) : u.foldl f init = f (f init u.x) u.y
+implemented_by (u : Vector α 3) : u.foldl f init = f (f (f init u.x) u.y) u.z
+implemented_by (u : Vector α 4) : u.foldl f init = f (f (f (f init u.x) u.y) u.z) u.w
 end Foldl
 
 section Foldr
 variable {β} (f : α → β → β) (init : β)
-implemented_by (u : Vector α 2) : u.foldr f init = let u:= u; f u.x (f u.y init)
-implemented_by (u : Vector α 3) : u.foldr f init = let u:= u; f u.x (f u.y (f u.z init))
-implemented_by (u : Vector α 4) : u.foldr f init = let u:= u; f u.x (f u.y (f u.z (f u.w init)))
+implemented_by (u : Vector α 2) : u.foldr f init = f u.x (f u.y init)
+implemented_by (u : Vector α 3) : u.foldr f init = f u.x (f u.y (f u.z init))
+implemented_by (u : Vector α 4) : u.foldr f init = f u.x (f u.y (f u.z (f u.w init)))
 end Foldr
 
 section Sum
@@ -237,5 +234,30 @@ end Sum
 
 
 implemented_by [Zero α] : (0 : Vector α n) = Vector.zero (α:=α) (n:=n)
-
 implemented_by (a : α) : Vector.replicate n a = .ofFn (fun _ => a)
+
+-- open Math
+-- instance {α} [Exp α] {n} : Exp (Vector α n) where
+--   exp x := x.map exp
+
+-- instance {α} [Sin α] {n} : Sin (Vector α n) where
+--   sin x := x.map sin
+
+-- defun sin (x : Vector Float 4) := x.map sin
+
+-- set_option trace.HouLean.OpenCL.compiler true in
+-- #opencl_compile (fun x : Float => Math.sin x)
+
+-- set_option trace.HouLean.OpenCL.compiler true in
+-- #opencl_compile (fun x : Vector Float 4 => Math.sin x)
+
+-- #opencl_compile (fun x : Vector Float 3 => Math.exp x)
+
+-- #opencl_compile (fun x : Vector Float 2 => Math.exp x)
+attribute [opencl_csimp]
+  Math.sin
+  Math.cos
+  Math.tan
+  Math.asin
+
+#opencl_compile (fun (x : Vector Float 4) (s : Float) => x.sin / x)

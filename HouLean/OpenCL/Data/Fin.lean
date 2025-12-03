@@ -27,3 +27,22 @@ implemented_by (f : Fin 7 → α → α) (init : α) : Fin.foldr 7 f init = f 6 
 implemented_by (f : Fin 8 → α → α) (init : α) : Fin.foldr 8 f init = f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init)))))))
 implemented_by (f : Fin 9 → α → α) (init : α) : Fin.foldr 9 f init = f 8 (f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init))))))))
 implemented_by (f : Fin 10 → α → α) (init : α) : Fin.foldr 10 f init = f 9 (f 8 (f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init)))))))))
+
+
+
+implemented_by (P : Fin 0 → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = true := by simp
+implemented_by (P : Fin 1 → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = decide (P 0) := by simp
+implemented_by (P : Fin 2 → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = decide (P 0) && decide (P 1) := by simp
+implemented_by (P : Fin 3 → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2)
+implemented_by (P : Fin 4 → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2) && decide (P 3)
+implemented_by (P : Fin 5 → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2) && decide (P 3) && decide (P 4)
+implemented_by (P : Fin 6 → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2) && decide (P 3) && decide (P 4) && decide (P 5)
+implemented_by (P : Fin 7 → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2) && decide (P 3) && decide (P 4) && decide (P 5) && decide (P 6)

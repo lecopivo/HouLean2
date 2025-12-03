@@ -1,5 +1,6 @@
 import HouLean.Math
 import HouLean.Data.Defs
+import HouLean.Data.Float
 
 open Qq HouLean Math
 
@@ -73,8 +74,15 @@ def fract [Fract α] (x : Vector α n) : Vector α n := x.map Math.fract
 -- Approximatelly equal
 -- ============================================================================
 
--- def approxEqual [Abs α] [Sub α] [LE α] (x y : Vector α n) (tol : α) : Bool :=
---   (x - y).abs ≤ Vector.replicate n tol
+protected def compMin [Min α] [Inhabited α] (x : Vector α n) : α :=
+  x.toArray.joinl (map:=fun a => a) (fun a b => min a b)
+
+protected def compMax [Max α] [Inhabited α] (x : Vector α n) : α :=
+  x.toArray.joinl (map:=fun a => a) (fun a b => max a b)
+
+def approxEqual [Abs α] [Sub α] [Inhabited α] [Max α] [LE α] [DecidableLE α]
+    (x y : Vector α n) (tol : α) : Bool :=
+  (x - y).abs.compMax ≤ tol
 
 
 -- ============================================================================
@@ -103,6 +111,76 @@ def normalize [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n × α :
     (u / len, len)
 def normalized [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n :=
   u.normalize.1
+
+def reflect [OfNat α 2] (v normal : Vector α n) : Vector α n :=
+  let d := v.dot normal
+  v - 2 * d * normal
+
+def refract [One α] [Sqrt α] [LT α] [DecidableLT α] (v normal : Vector α n) (eta : α) : Vector α n :=
+  let dt := v.dot normal
+  let k := 1 - eta * eta * (1 - dt * dt)
+  if k < 0 then 0
+  else
+    let s := eta * dt + Math.sqrt k
+    eta * v - s * normal
+
+def compMul (x y : Vector α n) : Vector α n :=
+  x.mapFinIdx (fun i xi _ => xi * y[i])
+
+def compDiv (x y : Vector α n) : Vector α n :=
+  x.mapFinIdx (fun i xi _ => xi / y[i])
+
+
+-- ============================================================================
+-- Interpolation and Smoothing (elementwise)
+-- ============================================================================
+
+def smoothstep [Smoothstep α] (edge0 edge1 v : Vector α n) : Vector α n :=
+  v.mapFinIdx (fun i vi _ => Math.smoothstep edge0[i] edge1[i] vi)
+
+def step [Step α] (edge v : Vector α n) : Vector α n :=
+  v.mapFinIdx (fun i vi _ => Math.step edge[i] vi)
+
+def hermite [Hermite α] (p0 p1 t0 t1 : Vector α n) (t : Float) : Vector α n :=
+  .ofFn fun i => Math.hermite p0[i] p1[i] t0[i] t1[i] t
+
+def catmullRom [CatmullRom α] (p0 p1 t0 t1 : Vector α n) (t : Float) : Vector α n :=
+  .ofFn fun i => Math.catmullRom p0[i] p1[i] t0[i] t1[i] t
+
+def slerp [Add α] [Zero α] [Mul α] [Sqrt α] [ApproxEqual α] [Clamp α] [One α] [Neg α] [Acos α] [Abs α]
+    [Sin α] [Sub α] [Lerp (Vector α n)] [HMul Float α α]
+    (v w : Vector α n) (t : Float) : Vector α n :=
+  let d := v.normalized.dot w.normalized
+  let d := Math.clamp d (-1) 1
+  let theta := Math.acos d
+  if theta ≈ 0 then
+    Math.lerp v w t
+  else
+    let s := Math.sin theta
+    let a := (Math.sin ((1 - t) * theta)) / s
+    let b := (Math.sin (t * theta)) / s
+    a * v + b * w
+
+instance : ApproxEqual Float where
+  defaultTol := 1e-12
+  approxEqual x y tol := (x - y).abs ≤ tol
+
+instance : Lerp (Vector Float n) where
+  lerp x y w := (1-w)*x + w*y
+
+
+-- ============================================================================
+-- Geometric Queries
+-- ============================================================================
+
+def insideBox [LE α] [DecidableLE α] (point boxMin boxMax : Vector α n) : Bool :=
+  ∀ i : Fin n, boxMin[i] ≤ point[i] ∧ point[i] ≤ boxMax[i]
+
+def projectToSegment [Clamp α] [One α] (point a b : Vector α n) : Vector α n :=
+  let ab := b - a
+  let ap := point - a
+  let t := Math.clamp ((ap.dot ab) / ab.length2) 0 1
+  a + t * ab
 
 
 end Math

@@ -161,46 +161,26 @@ def _root_.HouLean.Matrix.zeroN {α} [Zero α] {m n : Nat} : Matrix α m n :=
 implemented_by {α} [Zero α] : Matrix.zero α m n = Matrix.zeroN (α := α) (m:=m) (n:=n) := by rfl
 implemented_by {α} [Zero α] : (0 : Matrix α m n) = Matrix.zeroN (α := α) (m:=m) (n:=n) := by rfl
 
--- add
-implemented_by {α} [Add α] (a b : Matrix α m n) : a + b = a.add b := by rfl
-
--- sub
-implemented_by {α} [Sub α] (a b : Matrix α m n) : a - b = a.sub b := by rfl
-
--- smul
-implemented_by {α} [Mul α] (s : α) (a : Matrix α m n) : s * a = a.smul s := by rfl
-
--- sdiv
-implemented_by {α} [Div α] (s : α) (a : Matrix α m n) : a / s = a.sdiv s := by rfl
-
--- matMul
-implemented_by {α} [Add α] [Zero α] [Mul α] (a : Matrix α m k) (b : Matrix α k n) : a * b = a.matMul b := by rfl
+-- add works
+-- sub works
+-- smul works
+-- sdiv works
+-- matMul works
 
 -- vecMul
 /-- Likely a better implementation of `vecMul` for OpenCL -/
 def _root_.HouLean.Matrix.vecMul_sum_rows [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : Vector α n :=
   sum fun j : Fin m => v[j] * a.row j
-
 implemented_by [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : a.vecMul v = a.vecMul_sum_rows v
-implemented_by [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : v * a = a.vecMul_sum_rows v
 
--- mulVec
-section
-open NormalMatrixVecMul
-implemented_by [Add α] [Mul α] [Zero α] (a : Matrix α m n) (v : Vector α n) :
-  a * v = a.mulVec v := by rfl
-end
-section
-open HoudiniMatrixVecMul
-implemented_by [Add α] [Mul α] [Zero α] (a : Matrix α m n) (v : Vector α m) :
-  a * v = a.vecMul v := by rfl
-end
 
-@[opencl_csimp] theorem add_zero [Add α] [Zero α] (a : α) : 0 + a = a := sorry_proof
-@[opencl_csimp] theorem zero_add [Add α] [Zero α] (a : α) : a + 0 = a := sorry_proof
+-- @[opencl_csimp] theorem add_zero [Add α] [Zero α] (a : α) : 0 + a = a := sorry_proof
+-- @[opencl_csimp] theorem zero_add [Add α] [Zero α] (a : α) : a + 0 = a := sorry_proof
 
-open NormalMatrixVecMul
 
+-- open NormalMatrixVecMul
+
+-- #opencl_compile (fun (s : Float32) (v : Vector Float32 3) (a b : Matrix Float32 3 3) => ((s * (a - b) / s) * a) * v)
 
 -- #opencl_compile (fun (A : Matrix Float32 3 3) (u v : Vector Float32 3) =>
 --   let a := u.dot v
