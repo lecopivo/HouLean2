@@ -241,11 +241,32 @@ partial def compileFunBody (e : Expr) : CompileM CodeBody := do
           let bodyCode ← compileFunBody body
           return .letE names[0]! oclType valueCode bodyCode
 
+    -- Handle monadic bind
+    if e.isAppOfArity ``ite 5 then
+      let cond ← mkAppOptM ``decide #[e.getArg! 1, none]
+      let tr := e.getArg! 3
+      let el := e.getArg! 4
+      let cond ← compileExpr cond
+      let tr ← compileFunBody tr
+      let el ← compileFunBody el
+      return .ite cond tr el
+
+    if e.isAppOfArity ``pure 4 then
+      let e := e.appArg!
+      let returnValue ← compileExpr e
+      return .ret returnValue
+
     -- Terminal case: return value
     trace[HouLean.OpenCL.compiler] "Return statement"
     let returnValue ← compileExpr e
     return .ret returnValue
 
+  | .fvar .. =>
+    let returnValue ← compileExpr e
+    return .ret returnValue
+  | .const .. =>
+    let returnValue ← compileExpr e
+    return .ret returnValue
   | _ =>
     throwError m!"Cannot compile body expression of type {e.ctorName}: {e}"
 

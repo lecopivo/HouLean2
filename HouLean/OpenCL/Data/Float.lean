@@ -43,10 +43,10 @@ implemented_by : Float.sqrt = oclFunction _ "sqrt"
 
 --run_meta addOCLFunction q(fun x y : Float => x = y) "==" (kind := .infix)
 implemented_by (x y : Float) : (x == y) = (oclFunction (Float → Float → Bool) " == " .infix) x y
-implemented_by (x y : Float) : (x < y) = (oclFunction (Float → Float → Bool) " < " .infix) x y
-implemented_by (x y : Float) : (x ≤ y) = (oclFunction (Float → Float → Bool) " <= " .infix) x y
-implemented_by (x y : Float) : (x > y) = (oclFunction (Float → Float → Bool) " > " .infix) x y
-implemented_by (x y : Float) : (x ≥ y) = (oclFunction (Float → Float → Bool) " >= " .infix) x y
+implemented_by (x y : Float) : decide (x < y) = (oclFunction (Float → Float → Bool) " < " .infix) x y
+implemented_by (x y : Float) : decide (x ≤ y) = (oclFunction (Float → Float → Bool) " <= " .infix) x y
+implemented_by (x y : Float) : decide (x > y) = (oclFunction (Float → Float → Bool) " > " .infix) x y
+implemented_by (x y : Float) : decide (x ≥ y) = (oclFunction (Float → Float → Bool) " >= " .infix) x y
 
 
 -- ============================================================================

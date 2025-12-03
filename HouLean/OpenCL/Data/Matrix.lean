@@ -172,17 +172,3 @@ implemented_by {α} [Zero α] : (0 : Matrix α m n) = Matrix.zeroN (α := α) (m
 def _root_.HouLean.Matrix.vecMul_sum_rows [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : Vector α n :=
   sum fun j : Fin m => v[j] * a.row j
 implemented_by [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : a.vecMul v = a.vecMul_sum_rows v
-
-
--- @[opencl_csimp] theorem add_zero [Add α] [Zero α] (a : α) : 0 + a = a := sorry_proof
--- @[opencl_csimp] theorem zero_add [Add α] [Zero α] (a : α) : a + 0 = a := sorry_proof
-
-
--- open NormalMatrixVecMul
-
--- #opencl_compile (fun (s : Float32) (v : Vector Float32 3) (a b : Matrix Float32 3 3) => ((s * (a - b) / s) * a) * v)
-
--- #opencl_compile (fun (A : Matrix Float32 3 3) (u v : Vector Float32 3) =>
---   let a := u.dot v
---   let v' := A * A * v
---   u.dot v' + a)

@@ -71,15 +71,28 @@ partial def CodeExpr.toString (c : CodeExpr) (maybeBracket := false) : CoreM Str
 -- bunch of let bindings, add support for `if then else` and `for(..){ .. }`
 inductive CodeBody where
   | letE (name : String) (type : OCLType) (val : CodeExpr) (body : CodeBody)
+  | ite (cond : CodeExpr) (t e : CodeBody)
   | ret (val : CodeExpr)
 deriving Inhabited
 
-def CodeBody.toString (c : CodeBody) (indent := "") : MetaM String := do
+def CodeBody.toString (c : CodeBody) (indent := "") (indentIncr := "    ") : MetaM String := do
   match c with
+  | .letE _ _ (.app { name := _, kind := .elemset} #[ptr, off, val]) b =>
+    let ptr ← ptr.toString
+    let off ← off.toString
+    let val ← val.toString
+    let body ← b.toString indent
+    return s!"{indent}{ptr}[{off}] = {val};\n{body}"
+
   | .letE n t v b =>
     let value ← v.toString
     let body ← b.toString indent
     return s!"{indent}{t.name} {n} = {value};\n{body}"
+  | .ite c t e =>
+    let c ← c.toString
+    let t ← t.toString (indent ++ indentIncr)
+    let e ← e.toString (indent ++ indentIncr)
+    return s!"{indent}if ({c})\n{indent}\{\n{t}\n{indent}}\n{indent}else\n{indent}\{\n{e}\n{indent}}"
   | ret v =>
     let value ← v.toString
     return s!"{indent}return {value};"
@@ -94,6 +107,6 @@ structure CodeFunction where
 deriving Inhabited
 
 def CodeFunction.toString (c : CodeFunction) : MetaM String := do
-  let body ← c.body.toString "    "
+  let body ← c.body.toString "    " "    "
   let args := c.args.map (fun (t,n) => s!"{t.name} {n}") |>.joinl (map:=id) (· ++ ", " ++ ·)
   return s!"{c.returnType.name} {c.name}({args})\n\{\n{body}\n}"

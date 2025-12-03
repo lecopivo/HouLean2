@@ -1,5 +1,6 @@
 import Lean
 import HouLean.Init
+import HouLean.Meta.SimpTheoremName
 
 namespace HouLean
 
@@ -42,7 +43,16 @@ scoped syntax "implemented_by" bracketedBinder* " : " term:55 " = " term (" := "
 open Lean Elab Term Command in
 elab_rules : command
 | `(implemented_by $bs:bracketedBinder* : $lhs:term = $rhs:term $[ := $prf]?) => do
-  let id ← `(ident| opencl_compile_rewrite_rule)
+  -- let lhsStr ← liftTermElabM <|
+  --   withAutoBoundImplicit do
+  --   elabBinders bs fun _ => do
+  --   let lhs ← elabTermAndSynthesize lhs none
+  --   Meta.exprToString lhs
+
+  -- ugh this is ugly ...
+  let id ← `(ident| opencl_rewrite_rule)
+  -- let Lean.Syntax.ident _ _ id _ := id.raw | throwError s!"bug in {decl_name%}"
+  -- let id := mkIdent (id.append (.mkSimple lhsStr))
 
   match prf with
   | some prf =>
@@ -157,6 +167,11 @@ instance : AllowedVectorSize 3 := ⟨by simp⟩
 instance : AllowedVectorSize 4 := ⟨by simp⟩
 instance : AllowedVectorSize 8 := ⟨by simp⟩
 instance : AllowedVectorSize 16 := ⟨by simp⟩
+instance : AllowedVectorSize (1+1) := ⟨by simp⟩
+instance : AllowedVectorSize (2+1) := ⟨by simp⟩
+instance : AllowedVectorSize (3+1) := ⟨by simp⟩
+instance : AllowedVectorSize (7+1) := ⟨by simp⟩
+instance : AllowedVectorSize (15+1) := ⟨by simp⟩
 
 instance [t : AtomicOpenCLType T] [AllowedVectorSize n] : OpenCLType (Vector T n) where
   name := s!"{t.name}{n}"
@@ -278,6 +293,18 @@ def ConstPointer (α : Type) : Type := (ArrayConstRef.nonemptyType α).type
 instance : Nonempty (ConstPointer α) :=
   by exact (ArrayConstRef.nonemptyType α).property
 
+
+inductive PointerType where
+  | default | global | loc | priv
+
+opaque Pointer'.nonemptyType (α : Type) (const := false) (restrict := false) (type := PointerType.default) : NonemptyType.{0}
+set_option linter.unusedVariables false in
+/-- Pointer i.e. something like `float *` on OpenCL level. -/
+def Pointer' (α : Type) (const := false) (restrict := false) (type := PointerType.default) : Type := (Pointer'.nonemptyType α const restrict type).type
+instance {α}  {const restrict type} [AtomicOpenCLType α] : Nonempty (Pointer' α const restrict type) :=
+  by exact (Pointer'.nonemptyType α const restrict type).property
+
+
 /-- Cast pointer to a pointer to a constant data. -/
 opaque Pointer.toConst {α} (a : Pointer α) : ConstPointer α := unsafe unsafeCast a
 
@@ -298,6 +325,9 @@ variable {α} [Inhabited α]
 
 opaque ConstPointer.get [AtomicOpenCLType α] (a : ConstPointer α) (offset : UInt64) : OpenCLM α
 opaque Pointer.set [AtomicOpenCLType α] (a : Pointer α) (offset : UInt64) (val : α) : OpenCLM Unit
+
+-- opaque Pointer'.get [AtomicOpenCLType α] {c r t} (a : Pointer' α c r t) (offset : UInt64) : OpenCLM α
+-- opaque Pointer'.set [AtomicOpenCLType α] {r t} (a : Pointer' α (const:=false) r t) (offset : UInt64) (val : α) : OpenCLM Unit
 
 opaque ConstPointer.vload [AtomicOpenCLType α] [AllowedVectorSize n] (offset : UInt64) (a : ConstPointer α) : OpenCLM (Vector α n)
 opaque Pointer.vstore [AtomicOpenCLType α] [AllowedVectorSize n] (val : Vector α n) (offset : UInt64) (a : Pointer α) : OpenCLM Unit

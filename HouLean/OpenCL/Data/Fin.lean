@@ -1,4 +1,5 @@
 import HouLean.OpenCL.Compiler.Main
+import HouLean.OpenCL.Data.Init
 
 namespace HouLean.OpenCL
 
@@ -16,6 +17,7 @@ implemented_by (f : α → Fin 8 → α) (init : α) : Fin.foldl 8 f init = f (f
 implemented_by (f : α → Fin 9 → α) (init : α) : Fin.foldl 9 f init = f (f (f (f (f (f (f (f (f init 0) 1) 2) 3) 4) 5) 6) 7) 8
 implemented_by (f : α → Fin 10 → α) (init : α) : Fin.foldl 10 f init = f (f (f (f (f (f (f (f (f (f init 0) 1) 2) 3) 4) 5) 6) 7) 8) 9
 
+
 implemented_by (f : Fin 0 → α → α) (init : α) : Fin.foldr 0 f init = init
 implemented_by (f : Fin 1 → α → α) (init : α) : Fin.foldr 1 f init = f 0 init
 implemented_by (f : Fin 2 → α → α) (init : α) : Fin.foldr 2 f init = f 1 (f 0 init)
@@ -27,7 +29,6 @@ implemented_by (f : Fin 7 → α → α) (init : α) : Fin.foldr 7 f init = f 6 
 implemented_by (f : Fin 8 → α → α) (init : α) : Fin.foldr 8 f init = f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init)))))))
 implemented_by (f : Fin 9 → α → α) (init : α) : Fin.foldr 9 f init = f 8 (f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init))))))))
 implemented_by (f : Fin 10 → α → α) (init : α) : Fin.foldr 10 f init = f 9 (f 8 (f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init)))))))))
-
 
 
 implemented_by (P : Fin 0 → Prop) [∀ i, Decidable (P i)] :
