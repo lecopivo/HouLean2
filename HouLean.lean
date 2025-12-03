@@ -102,6 +102,7 @@ import HouLean.Meta.KnownField
 import HouLean.Meta.OverloadedFunction
 import HouLean.Meta.ParamStruct
 import HouLean.Meta.ProdLike
+import HouLean.Meta.SimpTheoremName
 import HouLean.Meta.Structure
 import HouLean.OpenCL.Basic
 import HouLean.OpenCL.Compiler.Code
@@ -112,6 +113,7 @@ import HouLean.OpenCL.Data.ArrayRef
 import HouLean.OpenCL.Data.Bool
 import HouLean.OpenCL.Data.Fin
 import HouLean.OpenCL.Data.Float
+import HouLean.OpenCL.Data.Init
 import HouLean.OpenCL.Data.Int
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Data.Nat

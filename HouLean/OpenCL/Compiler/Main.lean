@@ -1,4 +1,5 @@
 import HouLean.OpenCL.Compiler.Types
+import HouLean.Meta.Float
 
 open Lean Meta Qq HouLean
 
@@ -109,11 +110,11 @@ def runInterpreter (e : Expr) : MetaM (Option String) := do
 
     if (← isDefEq type q(Float32)) then
       let val ← unsafe evalExpr Float32 q(Float32) e
-      return some ((toString val) ++ "f")
+      return some (Float.toString' val.toFloat ++ "f")
 
     if (← isDefEq type q(Float64)) then
       let val ← unsafe evalExpr Float64 q(Float64) e
-      return some ((toString val) ++ "d")
+      return some (Float.toString' val ++ "d")
 
     if (← isDefEq type q(Nat)) then
       let val ← unsafe evalExpr Nat q(Nat) e

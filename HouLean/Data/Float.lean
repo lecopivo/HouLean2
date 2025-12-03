@@ -18,7 +18,19 @@ defun sinh (x : Float) := x.sinh
 defun cosh (x : Float) := x.cosh
 defun tanh (x : Float) := x.tanh
 
+defun sin (x : Float32) := x.sin
+defun cos (x : Float32) := x.cos
+defun tan (x : Float32) := x.tan
+defun asin (x : Float32) := x.asin
+defun acos (x : Float32) := x.acos
+defun atan (x : Float32) := x.atan
+defun atan2 (y x : Float32) := y.atan2 x
+defun sinh (x : Float32) := x.sinh
+defun cosh (x : Float32) := x.cosh
+defun tanh (x : Float32) := x.tanh
+
 def _root_.Float.pi := Float.acos (-1.0)
+def _root_.Float32.pi := Float32.acos (-1.0)
 
 -- ============================================================================
 -- Exponential and Logarithmic Functions
@@ -32,9 +44,17 @@ defun log2 (x : Float) := x.log2
 defun log10 (x : Float) := x.log10
 defun pow (x y : Float) := x.pow y
 defun sqrt (x : Float) := x.sqrt
-
--- Custom implementations
 defun Float.invsqrt (x : Float) : Float := 1.0 / x.sqrt
+
+defun exp (x : Float32) := x.exp
+defun exp2 (x : Float32) := x.exp2
+defun log (x : Float32) := x.log
+defun log2 (x : Float32) := x.log2
+defun log10 (x : Float32) := x.log10
+defun pow (x y : Float32) := x.pow y
+defun sqrt (x : Float32) := x.sqrt
+defun Float32.invsqrt (x : Float32) : Float32 := 1.0 / x.sqrt
+
 
 -- ============================================================================
 -- Comparison operations
@@ -43,6 +63,7 @@ defun Float.invsqrt (x : Float) : Float := 1.0 / x.sqrt
 defun beq (x y : Float) : Bool := x.beq y
 defun Float.blt (x y : Float) : Bool := (x < y : Bool)
 defun Float.ble (x y : Float) : Bool := (x <= y : Bool)
+
 
 -- ============================================================================
 -- Basic Arithmetic and Comparison
@@ -77,39 +98,60 @@ defun Float.mod (x y : Float) : Float :=
   let q := (x / y).floor
   x - q * y
 
+
+defun abs (x : Float32) : Float32 := x.abs
+
+defun Float32.sign (x : Float32) : Float32 :=
+  if x < 0.0 then -1.0 else if x > 0.0 then 1.0 else 0.0
+
+defun Float32.min (x y : Float32) : Float32 := _root_.Min.min x y
+
+defun Float32.max (x y : Float32) : Float32 := _root_.Max.max x y
+
+defun Float32.clamp (x lo hi : Float32) : Float32 :=
+  if x < lo then lo else if x > hi then hi else x
+
+-- Built-in Float32 methods
+defun floor (x : Float32) := x.floor
+defun ceil (x : Float32) := x.ceil
+
+-- Custom implementations
+defun round (x : Float32) : Float32 := x.round
+
+defun Float32.trunc (x : Float32) : Float32 :=
+  if x >= 0.0 then x.floor else x.ceil
+
+defun Float32.fract (x : Float32) : Float32 := x - x.floor
+
+defun Float32.mod (x y : Float32) : Float32 :=
+  let q := (x / y).floor
+  x - q * y
+
+
 -- ============================================================================
 -- Vector Operations (scalar versions)
 -- ============================================================================
 
 defun Float.dot (x y : Float) : Float := x * y
-
 defun Float.length (x : Float) : Float := x.abs
-
 defun Float.length2 (x : Float) : Float := x * x
-
 defun Float.distance (x y : Float) : Float := (y - x).abs
-
 defun Float.distance2 (x y : Float) : Float :=
   let d := y - x
   d * d
-
 defun Float.normalize (x : Float) : Float × Float :=
   let len := x.abs
   if len == 0.0 then (0.0, 0.0) else (x / len, len)
-
 defun Float.normalized (x : Float) : Float :=
   if x == 0.0 then 0.0 else if x > 0.0 then 1.0 else -1.0
-
 defun Float.reflect (v n : Float) : Float := v - 2.0 * (v * n) * n
-
 defun Float.refract (v n : Float) (eta : Float) : Float :=
   let dt := v * n
   let k := 1.0 - eta * eta * (1.0 - dt * dt)
   if k < 0.0 then 0.0 else eta * v - (eta * dt + k.sqrt) * n
-
 defun Float.compMul (x y : Float) : Float := x * y
-
 defun Float.compDiv (x y : Float) : Float := x / y
+
 
 -- ============================================================================
 -- Interpolation and Smoothing

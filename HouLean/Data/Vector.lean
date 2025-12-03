@@ -141,15 +141,15 @@ def smoothstep [Smoothstep α] (edge0 edge1 v : Vector α n) : Vector α n :=
 def step [Step α] (edge v : Vector α n) : Vector α n :=
   v.mapFinIdx (fun i vi _ => Math.step edge[i] vi)
 
-def hermite [Hermite α] (p0 p1 t0 t1 : Vector α n) (t : Float) : Vector α n :=
+def hermite [Hermite α α] (p0 p1 t0 t1 : Vector α n) (t : α) : Vector α n :=
   .ofFn fun i => Math.hermite p0[i] p1[i] t0[i] t1[i] t
 
-def catmullRom [CatmullRom α] (p0 p1 t0 t1 : Vector α n) (t : Float) : Vector α n :=
+def catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Vector α n) (t : α) : Vector α n :=
   .ofFn fun i => Math.catmullRom p0[i] p1[i] t0[i] t1[i] t
 
 def slerp [Add α] [Zero α] [Mul α] [Sqrt α] [ApproxEqual α] [Clamp α] [One α] [Neg α] [Acos α] [Abs α]
-    [Sin α] [Sub α] [Lerp (Vector α n)] [HMul Float α α]
-    (v w : Vector α n) (t : Float) : Vector α n :=
+    [Sin α] [Sub α] [Lerp (Vector α n) α]
+    (v w : Vector α n) (t : α) : Vector α n :=
   let d := v.normalized.dot w.normalized
   let d := Math.clamp d (-1) 1
   let theta := Math.acos d
@@ -165,7 +165,7 @@ instance : ApproxEqual Float where
   defaultTol := 1e-12
   approxEqual x y tol := (x - y).abs ≤ tol
 
-instance : Lerp (Vector Float n) where
+instance : Lerp (Vector Float n) Float where
   lerp x y w := (1-w)*x + w*y
 
 

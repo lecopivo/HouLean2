@@ -248,10 +248,10 @@ def smoothstep [Smoothstep α] (edge0 edge1 v : Matrix α m n) : Matrix α m n :
 def step [Step α] (edge v : Matrix α m n) : Matrix α m n :=
   v.mapRowsFinIdx (fun i vi _ => Vector.step (edge.row i) vi)
 
-def hermite [Hermite α] (p0 p1 t0 t1 : Matrix α m n) (t : Float) : Matrix α m n :=
+def hermite [Hermite α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Matrix α m n :=
   .ofFn fun i j _ => Math.hermite p0[i,j] p1[i,j] t0[i,j] t1[i,j] t
 
-def catmullRom [CatmullRom α] (p0 p1 t0 t1 : Matrix α m n) (t : Float) : Matrix α m n :=
+def catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Matrix α m n :=
   .ofFn fun i j _ => Math.catmullRom p0[i,j] p1[i,j] t0[i,j] t1[i,j] t
 
 

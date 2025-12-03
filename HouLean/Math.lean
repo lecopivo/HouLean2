@@ -178,7 +178,7 @@ macro x:term " ≈[" tol:term "] " y:term : term => `(ApproxEqual.approxEqual $x
 
 For vectors, computes the sum of component-wise products.
 For matrices, computes trace of `xᵀ * y`. -/
-declfun dot {α} (x y : α) : Float
+declfun dot {α} {β : outParam Type} (x y : α) : β
 
 
 /-- Cross product of two vectors.
@@ -194,36 +194,35 @@ three dimansional has three degress of freedom and
 four dimansonal has eight degress of freedom. Hence the output vector dimensionas.
 
 Returns a vector perpendicular to both input vectors. -/
-declfun cross {α} {β} (x y : α) : β
-
+declfun cross {α} {β : outParam Type} (x y : α) : β
 
 /-- Length of a vector or matrix. Also known as l₂ norm or Euclidean norm.
 
 For vectors, returns `sqrt(dot(x, x))`.
 For matrices, returns Frobenius norm. -/
-declfun length {α} (x : α) : Float
+declfun length {α} {β : outParam Type} (x : α) : β
 
 /-- Squared length of a vector or matrix.
 
 More efficient than `length` when only comparing magnitudes.
 Returns `dot(x, x)`. -/
-declfun length2 {α} (x : α) : Float
+declfun length2 {α} {β : outParam Type} (x : α) : β
 
 /-- Distance between two points.
 
 Returns `length(y - x)`. -/
-declfun distance {α} (x y : α) : Float
+declfun distance {α} {β : outParam Type} (x y : α) : β
 
 /-- Squared distance between two points.
 
 More efficient than `distance` when only comparing distances.
 Returns `length2(y - x)`. -/
-declfun distance2 {α} (x y : α) : Float
+declfun distance2 {α} {β : outParam Type} (x y : α) : β
 
 /-- Normalize a vector and return both the normalized vector and its original length.
 
 `normalize x = (normalized x, length x)` -/
-declfun normalize {α} (x : α) : α × Float
+declfun normalize {α} {β : outParam Type} (x : α) : α × β
 
 /-- Normalize a vector to unit length.
 
@@ -242,7 +241,7 @@ declfun reflect {α} (v n : α) : α
 using ratio of indices of refraction `eta`.
 Normal `n` should be normalized.
 Returns zero vector if total internal reflection occurs. -/
-declfun refract {α} (v n : α) (eta : Float) : α
+declfun refract {α} {β} (v n : α) (eta : β) : α
 
 /-- Component-wise multiplication.
 
@@ -274,7 +273,7 @@ declfun ble {α} (x y : α) : Bool
 
 `lerp x y 0 = x` and `lerp x y 1 = y`.
 Applied elementwise for vectors and matrices. -/
-declfun lerp {α} (x y : α) (t : Float) : α
+declfun lerp {α} {β} (x y : α) (t : β) : α
 
 /-- Smooth Hermite interpolation.
 
@@ -292,18 +291,18 @@ declfun step {α} (edge x : α) : α
 /-- Cubic Hermite spline interpolation.
 
 Interpolates between points with specified tangents. -/
-declfun hermite {α} (p0 p1 t0 t1 : α) (t : Float) : α
+declfun hermite {α} {β} (p0 p1 t0 t1 : α) (t : β) : α
 
 /-- Catmull-Rom spline interpolation.
 
 Interpolates smoothly through control points. -/
-declfun catmullRom {α} (p0 p1 p2 p3 : α) (t : Float) : α
+declfun catmullRom {α} {β} (p0 p1 p2 p3 : α) (t : β) : α
 
 /-- Spherical linear interpolation for unit vectors.
 
 Interpolates along the great circle between two unit vectors.
 More appropriate than `lerp` for rotations and directions. -/
-declfun slerp {α} (x y : α) (t : Float) : α
+declfun slerp {α} {β} (x y : α) (t : β) : α
 
 
 -- ============================================================================
