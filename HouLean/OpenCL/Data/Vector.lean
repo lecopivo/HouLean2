@@ -126,6 +126,14 @@ implemented_by (f : (Fin 16) → α) : Vector.ofFn f =
   #v[f 0, f 1, f 2, f 3, f 4, f 5, f 6, f 7,
      f 8, f 9, f 10, f 11, f 12, f 13, f 14, f 15]
 
+-- ofFnM
+section
+variable {m} [Monad m]
+implemented_by (f : (Fin 2) → m α) : Vector.ofFnM f = do pure #v[← f 0, ← f 1]
+implemented_by (f : (Fin 3) → m α) : Vector.ofFnM f = do pure #v[← f 0, ← f 1, ← f 2]
+implemented_by (f : (Fin 4) → m α) : Vector.ofFnM f = do pure #v[← f 0, ← f 1, ← f 2, ← f 3]
+end
+
 -- map
 section Map
 variable {β} (f : α → β)
@@ -141,6 +149,14 @@ implemented_by (v : Vector α 16) :
                  f v[8],f v[9],f v[10],f v[11],
                  f v[12],f v[13],f v[14],f v[15]]
 end Map
+
+-- mapM
+section MapM
+variable {m} [Monad m] {β} (f : α → m β)
+implemented_by (v : Vector α 2) : v.mapM f = do pure #v[← f v.x, ← f v.y]
+implemented_by (v : Vector α 3) : v.mapM f = do pure #v[← f v.x, ← f v.y, ← f v.z]
+implemented_by (v : Vector α 4) : v.mapM f = do pure #v[← f v.x, ← f v.y, ← f v.z, ← f v.w]
+end MapM
 
 section MapIdx
 variable {β} (f : Nat → α → β)

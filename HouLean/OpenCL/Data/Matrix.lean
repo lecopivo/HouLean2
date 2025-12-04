@@ -1,5 +1,6 @@
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Fin
+import HouLean.OpenCL.Data.Int
 import HouLean.Data.Matrix
 
 namespace HouLean.OpenCL
@@ -23,6 +24,24 @@ instance [t : AtomicOpenCLType α] [AllowedVectorSize n] : OpenCLType (Matrix α
       ((Array.range m).foldl (init:=s!"typedef struct\{")
         (fun s i => s ++ s!"\n  {r.name} row{i}")) ++ s!"\n}  {name};"
   }
+
+-- why do we have to unfold this?
+@[opencl_csimp]
+def vload [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
+    (ptr : Pointer α) (off : UInt64) : OpenCLM (Matrix α m n) := do
+  return Matrix.mk (← Vector.ofFnM fun i =>
+    ArrayType.get (α:=Vector α n) ptr ((off.toUInt32 * m.toUInt32 + i.1.toUInt32).toUInt64))
+
+def vstore [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
+    (ptr : Pointer α) (off : UInt64) (value : Matrix α m n) : OpenCLM Unit := do
+  Fin.foldlM m (init:=()) (fun _ i =>
+    ArrayType.set ptr ((off.toUInt32 * m.toUInt32 + i.1.toUInt32).toUInt64) (value.row i))
+
+-- why do we have to unfold this?
+@[reducible]
+instance [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] : ArrayType (Matrix α m n) α where
+  get := vload
+  set := vstore
 
 -- constructor
 def matrixMk2 (row0 row1 : Vector α n) : Matrix α 2 n := ⟨#v[row0, row1]⟩
@@ -84,6 +103,7 @@ instance : OpenCLFunction (matrixMk16 (α:=α) (n:=n)) where
   kind := .constructor
 
 end
+
 
 /-- Same as `Matrix.col` but `i` is implicit argument thus forced to be compile time evaluated.
 

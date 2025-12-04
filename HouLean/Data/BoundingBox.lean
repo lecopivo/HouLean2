@@ -86,13 +86,13 @@ def surfaceArea (bb : BoundingBox) : Float :=
 def diagonal (bb : BoundingBox) : Float :=
   bb.size.length
 
-/-- Longest side -/
-def maxDimension (bb : BoundingBox) : Float :=
-  Float.max bb.size.x (Float.max bb.size.y bb.size.z)
+-- /-- Longest side -/
+-- def maxDimension (bb : BoundingBox) : Float :=
+--   Float.max bb.size.x (Float.max bb.size.y bb.size.z)
 
-/-- Shortest side -/
-def minDimension (bb : BoundingBox) : Float :=
-  Float.min bb.size.x (Float.min bb.size.y bb.size.z)
+-- /-- Shortest side -/
+-- def minDimension (bb : BoundingBox) : Float :=
+--   Float.min bb.size.x (Float.min bb.size.y bb.size.z)
 
 /-- Index of longest axis (0=x, 1=y, 2=z) -/
 def maxAxis (bb : BoundingBox) : Nat :=

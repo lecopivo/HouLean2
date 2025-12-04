@@ -126,11 +126,11 @@ defun min (a b : Vector4) : Vector4 :=
 defun max (a b : Vector4) : Vector4 :=
   ⟨Max.max a.x b.x, Max.max a.y b.y, Max.max a.z b.z, Max.max a.w b.w⟩
 
-defun sign (v : Vector4) : Vector4 :=
-  ⟨v.x.sign, v.y.sign, v.z.sign, v.w.sign⟩
+-- defun sign (v : Vector4) : Vector4 :=
+--   ⟨v.x.sign, v.y.sign, v.z.sign, v.w.sign⟩
 
-defun clamp (v lo hi : Vector4) : Vector4 :=
-  ⟨v.x.clamp lo.x hi.x, v.y.clamp lo.y hi.y, v.z.clamp lo.z hi.z, v.w.clamp lo.w hi.w⟩
+-- defun clamp (v lo hi : Vector4) : Vector4 :=
+--   ⟨v.x.clamp lo.x hi.x, v.y.clamp lo.y hi.y, v.z.clamp lo.z hi.z, v.w.clamp lo.w hi.w⟩
 
 defun floor (v : Vector4) : Vector4 :=
   ⟨v.x.floor, v.y.floor, v.z.floor, v.w.floor⟩
@@ -141,14 +141,14 @@ defun ceil (v : Vector4) : Vector4 :=
 defun round (v : Vector4) : Vector4 :=
   ⟨v.x.round, v.y.round, v.z.round, v.w.round⟩
 
-defun trunc (v : Vector4) : Vector4 :=
-  ⟨v.x.trunc, v.y.trunc, v.z.trunc, v.w.trunc⟩
+-- defun trunc (v : Vector4) : Vector4 :=
+--   ⟨v.x.trunc, v.y.trunc, v.z.trunc, v.w.trunc⟩
 
-defun fract (v : Vector4) : Vector4 :=
-  ⟨v.x.fract, v.y.fract, v.z.fract, v.w.fract⟩
+-- defun fract (v : Vector4) : Vector4 :=
+--   ⟨v.x.fract, v.y.fract, v.z.fract, v.w.fract⟩
 
-defun mod (v w : Vector4) : Vector4 :=
-  ⟨v.x.mod w.x, v.y.mod w.y, v.z.mod w.z, v.w.mod w.w⟩
+-- defun mod (v w : Vector4) : Vector4 :=
+--   ⟨v.x.mod w.x, v.y.mod w.y, v.z.mod w.z, v.w.mod w.w⟩
 
 -- ============================================================================
 -- Trigonometric Functions (elementwise)
@@ -209,33 +209,33 @@ defun pow (v w : Vector4) : Vector4 :=
 defun sqrt (v : Vector4) : Vector4 :=
   ⟨v.x.sqrt, v.y.sqrt, v.z.sqrt, v.w.sqrt⟩
 
-defun invsqrt (v : Vector4) : Vector4 :=
-  ⟨v.x.invsqrt, v.y.invsqrt, v.z.invsqrt, v.w.invsqrt⟩
+-- defun invsqrt (v : Vector4) : Vector4 :=
+--   ⟨v.x.invsqrt, v.y.invsqrt, v.z.invsqrt, v.w.invsqrt⟩
 
 -- ============================================================================
 -- Interpolation and Smoothing (elementwise)
 -- ============================================================================
 
-defun smoothstep (edge0 edge1 v : Vector4) : Vector4 :=
-  ⟨edge0.x.smoothstep edge1.x v.x,
-   edge0.y.smoothstep edge1.y v.y,
-   edge0.z.smoothstep edge1.z v.z,
-   edge0.w.smoothstep edge1.w v.w⟩
+-- defun smoothstep (edge0 edge1 v : Vector4) : Vector4 :=
+--   ⟨edge0.x.smoothstep edge1.x v.x,
+--    edge0.y.smoothstep edge1.y v.y,
+--    edge0.z.smoothstep edge1.z v.z,
+--    edge0.w.smoothstep edge1.w v.w⟩
 
-defun step (edge v : Vector4) : Vector4 :=
-  ⟨edge.x.step v.x, edge.y.step v.y, edge.z.step v.z, edge.w.step v.w⟩
+-- defun step (edge v : Vector4) : Vector4 :=
+--   ⟨edge.x.step v.x, edge.y.step v.y, edge.z.step v.z, edge.w.step v.w⟩
 
-defun hermite (p0 p1 t0 t1 : Vector4) (t : Float) : Vector4 :=
-  ⟨p0.x.hermite p1.x t0.x t1.x t,
-   p0.y.hermite p1.y t0.y t1.y t,
-   p0.z.hermite p1.z t0.z t1.z t,
-   p0.w.hermite p1.w t0.w t1.w t⟩
+-- defun hermite (p0 p1 t0 t1 : Vector4) (t : Float) : Vector4 :=
+--   ⟨p0.x.hermite p1.x t0.x t1.x t,
+--    p0.y.hermite p1.y t0.y t1.y t,
+--    p0.z.hermite p1.z t0.z t1.z t,
+--    p0.w.hermite p1.w t0.w t1.w t⟩
 
-defun catmullRom (p0 p1 p2 p3 : Vector4) (t : Float) : Vector4 :=
-  ⟨p0.x.catmullRom p1.x p2.x p3.x t,
-   p0.y.catmullRom p1.y p2.y p3.y t,
-   p0.z.catmullRom p1.z p2.z p3.z t,
-   p0.w.catmullRom p1.w p2.w p3.w t⟩
+-- defun catmullRom (p0 p1 p2 p3 : Vector4) (t : Float) : Vector4 :=
+--   ⟨p0.x.catmullRom p1.x p2.x p3.x t,
+--    p0.y.catmullRom p1.y p2.y p3.y t,
+--    p0.z.catmullRom p1.z p2.z p3.z t,
+--    p0.w.catmullRom p1.w p2.w p3.w t⟩
 
 -- ============================================================================
 -- Conversion and Construction
@@ -286,27 +286,27 @@ def quatRotate (q : Vector4) (v : Vector3) : Vector3 :=
    v.y + uv_scaled.y + uuv_scaled.y,
    v.z + uv_scaled.z + uuv_scaled.z⟩
 
-/-- Spherical linear interpolation between quaternions -/
-def quatSlerp (q1 q2 : Vector4) (t : Float) : Vector4 :=
-  let dot := q1.dot q2
-  -- Choose the shortest path
-  let q2' := if dot < 0.0 then q2.neg else q2
-  let dot' := if dot < 0.0 then -dot else dot
-  let dot_clamped := dot'.clamp (-1.0) 1.0
+-- /-- Spherical linear interpolation between quaternions -/
+-- def quatSlerp (q1 q2 : Vector4) (t : Float) : Vector4 :=
+--   let dot := q1.dot q2
+--   -- Choose the shortest path
+--   let q2' := if dot < 0.0 then q2.neg else q2
+--   let dot' := if dot < 0.0 then -dot else dot
+--   let dot_clamped := dot'.clamp (-1.0) 1.0
 
-  let theta := dot_clamped.acos
+--   let theta := dot_clamped.acos
 
-  if theta.abs < 0.001 then
-    -- Use linear interpolation for small angles
-    q1.lerp q2' t |>.normalized
-  else
-    let s := theta.sin
-    let a := ((1.0 - t) * theta).sin / s
-    let b := (t * theta).sin / s
-    ⟨a * q1.x + b * q2'.x,
-     a * q1.y + b * q2'.y,
-     a * q1.z + b * q2'.z,
-     a * q1.w + b * q2'.w⟩  |> Vector4.normalized
+--   if theta.abs < 0.001 then
+--     -- Use linear interpolation for small angles
+--     q1.lerp q2' t |>.normalized
+--   else
+--     let s := theta.sin
+--     let a := ((1.0 - t) * theta).sin / s
+--     let b := (t * theta).sin / s
+--     ⟨a * q1.x + b * q2'.x,
+--      a * q1.y + b * q2'.y,
+--      a * q1.z + b * q2'.z,
+--      a * q1.w + b * q2'.w⟩  |> Vector4.normalized
 
 /-- Convert quaternion to 3x3 rotation matrix -/
 def quatToMatrix3 (q : Vector4) : Matrix3 :=
@@ -409,10 +409,10 @@ def lookRotation (forward : Vector3) (up : Vector3 := ⟨0, 1, 0⟩) : Vector4 :
   let m : Matrix3 := ⟨right, up', fwd⟩
   m.toQuat
 
-/-- Get angle between two quaternions -/
-def quatAngleBetween (q1 q2 : Vector4) : Float :=
-  let dot := (q1.dot q2).abs.clamp 0.0 1.0
-  2.0 * dot.acos
+-- /-- Get angle between two quaternions -/
+-- def quatAngleBetween (q1 q2 : Vector4) : Float :=
+--   let dot := (q1.dot q2).abs.clamp 0.0 1.0
+--   2.0 * dot.acos
 
 /-- Quaternion inverse -/
 def quatInverse (q : Vector4) : Vector4 :=
@@ -432,11 +432,11 @@ defun insideBox (point boxMin boxMax : Vector4) : Bool :=
   point.z >= boxMin.z && point.z <= boxMax.z &&
   point.w >= boxMin.w && point.w <= boxMax.w
 
-defun projectToSegment (point a b : Vector4) : Vector4 :=
-  let ab := b - a
-  let ap := point - a
-  let t := ((ap.dot ab) / (ab.dot ab)).clamp 0.0 1.0
-  ⟨a.x + t * ab.x, a.y + t * ab.y, a.z + t * ab.z, a.w + t * ab.w⟩
+-- defun projectToSegment (point a b : Vector4) : Vector4 :=
+--   let ab := b - a
+--   let ap := point - a
+--   let t := ((ap.dot ab) / (ab.dot ab)).clamp 0.0 1.0
+--   ⟨a.x + t * ab.x, a.y + t * ab.y, a.z + t * ab.z, a.w + t * ab.w⟩
 
 -- ============================================================================
 -- Additional Vector4 Specific Functions

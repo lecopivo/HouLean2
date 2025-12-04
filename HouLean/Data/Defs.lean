@@ -1,6 +1,7 @@
 import Lean
 import HouLean.Meta.ProdLike
 import HouLean.Meta.EnumType
+import HouLean.Data.Float
 
 open Lean Meta
 
@@ -51,8 +52,8 @@ instance : Inhabited Matrix4 := ⟨{}⟩
 -- todo: Use module system to ensure that the implementation of Matrix does not leak to userspace
 --       At some point we might want to use Lean runtime and we might have to completaly change this
 --       implementations
-structure Matrix (α : Type) (m n : Nat) where
-  data : Vector (Vector α n) m
+structure Matrix (R : Type) (m n : Nat) where
+  data : Vector (Vector R n) m
 
 
 /-- Rigid transformation without scaling.
@@ -126,6 +127,13 @@ structure BoundingBox where
 deriving ProdLike
 instance : Inhabited BoundingBox := ⟨{}⟩
 
+/-- Bounding box -/
+structure BoundingBox' (R : Type) [FloatType R] (dim : Nat) where
+  /-- Size of the bounding box -/
+  size : Vector R dim := .replicate dim 1.0
+  /-- Center position of the bounding box -/
+  center : Vector R dim := 0
+instance {R} [FloatType R] : Inhabited (BoundingBox' R dim) := ⟨{}⟩
 
 /-- Bounding sphere -/
 structure BoundingSphere where

@@ -79,12 +79,12 @@ def inverseTransformVector (xform : RigidTransform) (v : Vector3) : Vector3 :=
 -- Interpolation
 -- ============================================================================
 
-defun lerp (a b : RigidTransform) (t : Float) : RigidTransform :=
-  ⟨a.translate.lerp b.translate t,
-   a.orient.quatSlerp b.orient t⟩
+-- defun lerp (a b : RigidTransform) (t : Float) : RigidTransform :=
+--   ⟨a.translate.lerp b.translate t,
+--    a.orient.quatSlerp b.orient t⟩
 
-defun slerp (a b : RigidTransform) (t : Float) : RigidTransform :=
-  lerp a b t -- same as lerp since quaternion already uses slerp
+-- defun slerp (a b : RigidTransform) (t : Float) : RigidTransform :=
+--   lerp a b t -- same as lerp since quaternion already uses slerp
 
 -- ============================================================================
 -- Comparison operations

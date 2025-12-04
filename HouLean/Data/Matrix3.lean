@@ -158,14 +158,14 @@ defun ceil (m : Matrix3) : Matrix3 :=
 defun round (m : Matrix3) : Matrix3 :=
   ⟨m.row0.round, m.row1.round, m.row2.round⟩
 
-defun trunc (m : Matrix3) : Matrix3 :=
-  ⟨m.row0.trunc, m.row1.trunc, m.row2.trunc⟩
+-- defun trunc (m : Matrix3) : Matrix3 :=
+--   ⟨m.row0.trunc, m.row1.trunc, m.row2.trunc⟩
 
-defun fract (m : Matrix3) : Matrix3 :=
-  ⟨m.row0.fract, m.row1.fract, m.row2.fract⟩
+-- defun fract (m : Matrix3) : Matrix3 :=
+--   ⟨m.row0.fract, m.row1.fract, m.row2.fract⟩
 
-defun mod (m n : Matrix3) : Matrix3 :=
-  ⟨m.row0.mod n.row0, m.row1.mod n.row1, m.row2.mod n.row2⟩
+-- defun mod (m n : Matrix3) : Matrix3 :=
+--   ⟨m.row0.mod n.row0, m.row1.mod n.row1, m.row2.mod n.row2⟩
 
 -- ============================================================================
 -- Trigonometric Functions (elementwise)
@@ -226,8 +226,8 @@ defun pow (m n : Matrix3) : Matrix3 :=
 defun sqrt (m : Matrix3) : Matrix3 :=
   ⟨m.row0.sqrt, m.row1.sqrt, m.row2.sqrt⟩
 
-defun invsqrt (m : Matrix3) : Matrix3 :=
-  ⟨m.row0.invsqrt, m.row1.invsqrt, m.row2.invsqrt⟩
+-- defun invsqrt (m : Matrix3) : Matrix3 :=
+--   ⟨m.row0.invsqrt, m.row1.invsqrt, m.row2.invsqrt⟩
 
 -- ============================================================================
 -- Interpolation and Smoothing (elementwise)
@@ -238,31 +238,31 @@ defun smoothstep (edge0 edge1 m : Matrix3) : Matrix3 :=
    edge0.row1.smoothstep edge1.row1 m.row1,
    edge0.row2.smoothstep edge1.row2 m.row2⟩
 
-defun step (edge m : Matrix3) : Matrix3 :=
-  ⟨edge.row0.step m.row0, edge.row1.step m.row1, edge.row2.step m.row2⟩
+-- defun step (edge m : Matrix3) : Matrix3 :=
+--   ⟨edge.row0.step m.row0, edge.row1.step m.row1, edge.row2.step m.row2⟩
 
-defun hermite (p0 p1 t0 t1 : Matrix3) (t : Float) : Matrix3 :=
-  ⟨p0.row0.hermite p1.row0 t0.row0 t1.row0 t,
-   p0.row1.hermite p1.row1 t0.row1 t1.row1 t,
-   p0.row2.hermite p1.row2 t0.row2 t1.row2 t⟩
+-- defun hermite (p0 p1 t0 t1 : Matrix3) (t : Float) : Matrix3 :=
+--   ⟨p0.row0.hermite p1.row0 t0.row0 t1.row0 t,
+--    p0.row1.hermite p1.row1 t0.row1 t1.row1 t,
+--    p0.row2.hermite p1.row2 t0.row2 t1.row2 t⟩
 
-defun catmullRom (p0 p1 p2 p3 : Matrix3) (t : Float) : Matrix3 :=
-  ⟨p0.row0.catmullRom p1.row0 p2.row0 p3.row0 t,
-   p0.row1.catmullRom p1.row1 p2.row1 p3.row1 t,
-   p0.row2.catmullRom p1.row2 p2.row2 p3.row2 t⟩
+-- defun catmullRom (p0 p1 p2 p3 : Matrix3) (t : Float) : Matrix3 :=
+--   ⟨p0.row0.catmullRom p1.row0 p2.row0 p3.row0 t,
+--    p0.row1.catmullRom p1.row1 p2.row1 p3.row1 t,
+--    p0.row2.catmullRom p1.row2 p2.row2 p3.row2 t⟩
 
-defun slerp (m n : Matrix3) (t : Float) : Matrix3 :=
-  let dot := m.normalized.dot n.normalized
-  let dot := dot.clamp (-1.0) 1.0
-  let theta := dot.acos
-  if theta.abs < 0.001 then m.lerp n t
-  else
-    let s := theta.sin
-    let a := ((1.0 - t) * theta).sin / s
-    let b := (t * theta).sin / s
-    ⟨⟨a * m.row0.x + b * n.row0.x, a * m.row0.y + b * n.row0.y, a * m.row0.z + b * n.row0.z⟩,
-     ⟨a * m.row1.x + b * n.row1.x, a * m.row1.y + b * n.row1.y, a * m.row1.z + b * n.row1.z⟩,
-     ⟨a * m.row2.x + b * n.row2.x, a * m.row2.y + b * n.row2.y, a * m.row2.z + b * n.row2.z⟩⟩
+-- defun slerp (m n : Matrix3) (t : Float) : Matrix3 :=
+--   let dot := m.normalized.dot n.normalized
+--   let dot := dot.clamp (-1.0) 1.0
+--   let theta := dot.acos
+--   if theta.abs < 0.001 then m.lerp n t
+--   else
+--     let s := theta.sin
+--     let a := ((1.0 - t) * theta).sin / s
+--     let b := (t * theta).sin / s
+--     ⟨⟨a * m.row0.x + b * n.row0.x, a * m.row0.y + b * n.row0.y, a * m.row0.z + b * n.row0.z⟩,
+--      ⟨a * m.row1.x + b * n.row1.x, a * m.row1.y + b * n.row1.y, a * m.row1.z + b * n.row1.z⟩,
+--      ⟨a * m.row2.x + b * n.row2.x, a * m.row2.y + b * n.row2.y, a * m.row2.z + b * n.row2.z⟩⟩
 
 -- ============================================================================
 -- Conversion and Construction
@@ -283,11 +283,11 @@ defun insideBox (point boxMin boxMax : Matrix3) : Bool :=
   point.row1.insideBox boxMin.row1 boxMax.row1 &&
   point.row2.insideBox boxMin.row2 boxMax.row2
 
-defun projectToSegment (point a b : Matrix3) : Matrix3 :=
-  let ab := b - a
-  let ap := point - a
-  let t := ((ap.dot ab) / (ab.dot ab)).clamp 0.0 1.0
-  ⟨a.row0 + t * ab.row0, a.row1 + t * ab.row1, a.row2 + t * ab.row2⟩
+-- defun projectToSegment (point a b : Matrix3) : Matrix3 :=
+--   let ab := b - a
+--   let ap := point - a
+--   let t := ((ap.dot ab) / (ab.dot ab)).clamp 0.0 1.0
+--   ⟨a.row0 + t * ab.row0, a.row1 + t * ab.row1, a.row2 + t * ab.row2⟩
 
 
 -- ============================================================================
