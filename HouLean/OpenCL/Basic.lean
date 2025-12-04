@@ -100,6 +100,13 @@ class AtomicOpenCLType (α : Type) extends OpenCLType α where
           (α = Float32) ∨ (α = Float64) ∨
           (α = Int) ∨ (α = Nat)
 
+instance [inst : OpenCLType α] : OpenCLType (OpenCLM α) where
+  name := inst.name
+  shortName := inst.shortName
+
+instance : OpenCLType Unit where
+  name := "void"
+  shortName := "v"
 
 instance : AtomicOpenCLType Char where
   name := "char"
@@ -258,19 +265,23 @@ instance [AtomicOpenCLType α] [Neg α] : OpenCLFunction (@Neg.neg α _) where
 
 variable {n}
 
-instance [AtomicOpenCLType α] [AllowedVectorSize n] [Add α] : OpenCLFunction (@HAdd.hAdd (Vector α n) (Vector α n) (Vector α n) _) where
+instance [AtomicOpenCLType α] [AllowedVectorSize n] [Add α] :
+    OpenCLFunction (@HAdd.hAdd (Vector α n) (Vector α n) (Vector α n) _) where
   name := " + "
   kind := .infix
 
-instance [AtomicOpenCLType α] [AllowedVectorSize n] [Sub α] : OpenCLFunction (@HSub.hSub (Vector α n) (Vector α n) (Vector α n) _) where
+instance [AtomicOpenCLType α] [AllowedVectorSize n] [Sub α] :
+    OpenCLFunction (@HSub.hSub (Vector α n) (Vector α n) (Vector α n) _) where
   name := " - "
   kind := .infix
 
-instance [AtomicOpenCLType α] [AllowedVectorSize n] [Mul α] : OpenCLFunction (@HMul.hMul α (Vector α n) (Vector α n) _) where
+instance [AtomicOpenCLType α] [AllowedVectorSize n] [Mul α] :
+    OpenCLFunction (@HMul.hMul α (Vector α n) (Vector α n) _) where
   name := " * "
   kind := .infix
 
-instance [AtomicOpenCLType α] [AllowedVectorSize n] [Neg α] : OpenCLFunction (@Neg.neg (Vector α n) _) where
+instance [AtomicOpenCLType α] [AllowedVectorSize n] [Neg α] :
+    OpenCLFunction (@Neg.neg (Vector α n) _) where
   name := " -"
   kind := .prefix
 
@@ -282,39 +293,30 @@ end ArithmeticOperations
 -- Pointers
 -- =================================================================================================
 
-opaque ArrayRef.nonemptyType (α : Type) : NonemptyType.{0}
-/-- Pointer i.e. something like `float *` on OpenCL level. -/
-def Pointer (α : Type) : Type := (ArrayRef.nonemptyType α).type
-instance {α} [AtomicOpenCLType α] : Nonempty (Pointer α) :=
-  by exact (ArrayRef.nonemptyType α).property
+-- inductive PointerScope where
+--   | default | global | loc | priv
 
-opaque ArrayConstRef.nonemptyType (α : Type) : NonemptyType.{0}
-def ConstPointer (α : Type) : Type := (ArrayConstRef.nonemptyType α).type
-instance : Nonempty (ConstPointer α) :=
-  by exact (ArrayConstRef.nonemptyType α).property
+-- structure PointerType where
+--   scope := PointerScope.default
+--   restrict := false
+--   volatile := false
 
-
-inductive PointerType where
-  | default | global | loc | priv
-
-opaque Pointer'.nonemptyType (α : Type) (const := false) (restrict := false) (type := PointerType.default) : NonemptyType.{0}
+opaque Pointer.nonemptyType (α : Type) : NonemptyType.{0}
 set_option linter.unusedVariables false in
 /-- Pointer i.e. something like `float *` on OpenCL level. -/
-def Pointer' (α : Type) (const := false) (restrict := false) (type := PointerType.default) : Type := (Pointer'.nonemptyType α const restrict type).type
-instance {α}  {const restrict type} [AtomicOpenCLType α] : Nonempty (Pointer' α const restrict type) :=
-  by exact (Pointer'.nonemptyType α const restrict type).property
+def Pointer (α : Type) : Type := (Pointer.nonemptyType α).type
+instance {α} [AtomicOpenCLType α] : Nonempty (Pointer α) :=
+  by exact (Pointer.nonemptyType α).property
 
-
-/-- Cast pointer to a pointer to a constant data. -/
-opaque Pointer.toConst {α} (a : Pointer α) : ConstPointer α := unsafe unsafeCast a
-
-instance : Coe (Pointer α) (ConstPointer α) := ⟨Pointer.toConst⟩
+instance [ty : AtomicOpenCLType α] : OpenCLType (Pointer α) where
+  name := ty.name ++ "*"
+  shortName := "p" ++ ty.shortName
 
 /-- Type `α` can be stored and loaeds from a pointer to type `A`.
 
 For example `α := Vector Float32 3` and `A := Float32` for storing and loading `float3` to/from `float *`  -/
 class ArrayType (α : Type) (A : outParam Type) where
-  get : ConstPointer A → UInt64 → OpenCLM α
+  get : Pointer A → UInt64 → OpenCLM α
   set : Pointer A → UInt64 → α → OpenCLM Unit
 
 attribute [reducible] ArrayType.get ArrayType.set
@@ -323,23 +325,23 @@ section LoadAndStore
 
 variable {α} [Inhabited α]
 
-opaque ConstPointer.get [AtomicOpenCLType α] (a : ConstPointer α) (offset : UInt64) : OpenCLM α
+opaque Pointer.get [AtomicOpenCLType α] (a : Pointer α) (offset : UInt64) : OpenCLM α
 opaque Pointer.set [AtomicOpenCLType α] (a : Pointer α) (offset : UInt64) (val : α) : OpenCLM Unit
 
 -- opaque Pointer'.get [AtomicOpenCLType α] {c r t} (a : Pointer' α c r t) (offset : UInt64) : OpenCLM α
 -- opaque Pointer'.set [AtomicOpenCLType α] {r t} (a : Pointer' α (const:=false) r t) (offset : UInt64) (val : α) : OpenCLM Unit
 
-opaque ConstPointer.vload [AtomicOpenCLType α] [AllowedVectorSize n] (offset : UInt64) (a : ConstPointer α) : OpenCLM (Vector α n)
+opaque Pointer.vload [AtomicOpenCLType α] [AllowedVectorSize n] (offset : UInt64) (a : Pointer α) : OpenCLM (Vector α n)
 opaque Pointer.vstore [AtomicOpenCLType α] [AllowedVectorSize n] (val : Vector α n) (offset : UInt64) (a : Pointer α) : OpenCLM Unit
 
 variable [AtomicOpenCLType α]
 
 @[reducible]
 instance [AtomicOpenCLType α] : ArrayType α α where
-  get := ConstPointer.get
+  get := Pointer.get
   set := Pointer.set
 
-instance : OpenCLFunction (ConstPointer.get (α:=α)) where
+instance : OpenCLFunction (Pointer.get (α:=α)) where
   name := ""
   kind := .elemget
 
@@ -351,13 +353,29 @@ variable [AllowedVectorSize n]
 
 @[reducible]
 instance : ArrayType (Vector α n) α where
-  get ptr off := ConstPointer.vload off ptr
+  get ptr off := Pointer.vload off ptr
   set ptr off val := Pointer.vstore val off ptr
 
-instance : OpenCLFunction (ConstPointer.vload (α:=α) (n:=n)) where
-  name := s!"vload{n}"
+instance : OpenCLFunction (Pointer.vload (α:=α) (n:=n)) where
+  name := ""
+  kind := .elemget
 
 instance : OpenCLFunction (Pointer.vstore (α:=α) (n:=n)) where
-  name := s!"vstore{n}"
+  name := ""
+  kind := .elemset
+
+
+-- =================================================================================================
+-- Array
+-- =================================================================================================
+
+/-- C style array wrapped around in a struct to preserve value semantics -/
+structure CArray (α : Type) (n : Nat) where
+  data : Vector α n
+
+instance [t : OpenCLType α] : OpenCLType (CArray α n) where
+  name := s!"array_{t.name}_{n}"
+  shortName := s!"a{t.shortName}{n}"
+  definition? := s!"struct array_{t.name}_{n} \{ {t.name} data[{n}]; };"
 
 end LoadAndStore

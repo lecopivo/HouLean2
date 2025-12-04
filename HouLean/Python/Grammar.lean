@@ -66,7 +66,7 @@ syntax "[" pyExpr "for" ident "in" pyExpr ("if" pyExpr)? "]" : pyExpr
 syntax:80 pyExpr:80 noWs "[" pyExpr "]" : pyExpr
 
 -- Attribute access
-syntax:80 pyExpr:80 noWs "." ident : pyExpr
+syntax:80 pyExpr:80 noWs "." (ident)? : pyExpr
 
 -- -- Parenthesized expressions and tuple literals
 -- syntax "(" pyExpr ")" : pyExpr

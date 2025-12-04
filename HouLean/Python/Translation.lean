@@ -189,10 +189,12 @@ partial def translatePyExpr (stx : Syntax) : TranslateM Term := do
         let e1' ← translatePyExpr e1
         let e2' ← translatePyExpr e2
         `($e1'[$e2']!)
-    -- -- Attribute access
-    | `(pyExpr| $e.$field:ident) => do
+    -- Attribute access
+    | `(pyExpr| $e.$[$field]?) => do
         let e' ← withRef e (translatePyExpr e)
-        `($e'.$field)
+        match field with
+        | some field => `($e'.$field)
+        | none => `($e'.)
     -- Parenthesized expression
     | `(pyExpr| ( $e )) => translatePyExpr e
     -- Tuple literal

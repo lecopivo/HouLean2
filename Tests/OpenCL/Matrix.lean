@@ -19,9 +19,9 @@ instance [inst : OpenCLType α] : OpenCLType (OpenCLM α) where
   name := inst.name
   shortName := inst.shortName
 
-instance [t : AtomicOpenCLType α] : OpenCLType (Pointer α) where
-  name := t.name ++ "*"
-  shortName := "p" ++ t.shortName
+instance [ty : AtomicOpenCLType α] : OpenCLType (Pointer α) where
+  name := ty.name ++ "*"
+  shortName := "p" ++ ty.shortName
 
 instance : OpenCLType Unit where
   name := "void"
@@ -30,7 +30,7 @@ instance : OpenCLType Unit where
 
 macro "*" ptr:term " := " val:term : doElem => `(doElem| Pointer.set $ptr 0 $val)
 
-def Vector.OpenCL.normalize (u : Vector α n) (norm : Pointer α) : OpenCLM (Vector α n) := do
+def Vector.OpenCL.normalize {r t} (u : Vector α n) (norm : Pointer α (const:=false) r t) : OpenCLM (Vector α n) := do
   let len := u.length
   if len ≈ 0 then
     *norm := 0
@@ -47,7 +47,7 @@ def Vector.OpenCL.normalize'(u : Vector α n) (norm : Pointer α) : OpenCLM (Vec
 
 set_option trace.HouLean.OpenCL.compiler true in
 #opencl_compile (fun (u : Vector Float 4) (norm : Pointer Float) => Vector.OpenCL.normalize u norm)
-opaque withPtr (val : α) (go : Pointer α → OpenCLM β) : OpenCLM β := sorry
+
 
 def asdf (v : Vector Float 3) :=
   let (u,len) := v.normalize
@@ -56,14 +56,16 @@ def asdf (v : Vector Float 3) :=
 instance : Inhabited (Pointer Float) := sorry
 
 def asdf' (v : Vector Float 3) := do
-  let len : Pointer Float := default
+  let len : Pointer Float := oclFunction (type:=Pointer Float) ""
   let u ← Vector.OpenCL.normalize v len
   let len ← len.toConst.get 0
   return u.sum + len
 
 def asdf'' (v : Vector Float 3) := do
-  let len : Pointer Float := default
+  let len : Pointer Float := oclFunction (type:=Pointer Float) ""
   let u ← Vector.OpenCL.normalize v len
   let len ← len.toConst.get 0
-  let (u,len) := (u,len)
   return u.sum + len
+
+set_option trace.HouLean.OpenCL.compiler true in
+#opencl_compile asdf''
