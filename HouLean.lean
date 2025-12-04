@@ -116,6 +116,7 @@ import HouLean.OpenCL.Data.Float
 import HouLean.OpenCL.Data.Init
 import HouLean.OpenCL.Data.Int
 import HouLean.OpenCL.Data.Matrix
+import HouLean.OpenCL.Data.NanoVDB
 import HouLean.OpenCL.Data.Nat
 import HouLean.OpenCL.Data.Unit
 import HouLean.OpenCL.Data.Vector
