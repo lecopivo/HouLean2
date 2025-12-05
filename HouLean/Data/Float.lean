@@ -1,8 +1,17 @@
 import HouLean.Math
+import HouLean.Init
 
 namespace HouLean
 
 open Math
+
+inductive _root_.Float.Precision where
+  -- | quater -- 8 bit
+  -- | half -- 16 bit
+  | single -- 32 bit
+  | double -- 64 bit
+  -- | quadruple -- 128 bit
+  -- | octuple -- 256 bit
 
 /-- Interface for `Float32` and `Float64` -/
 class FloatType (R : Type) extends
@@ -21,6 +30,7 @@ class FloatType (R : Type) extends
 
   decLt : DecidableLT R
   decLe : DecidableLE R
+  prec : Float.Precision
 
 variable {R} [FloatType R]
 
@@ -52,6 +62,7 @@ instance : FloatType Float where
   round := .round
   decLt := by infer_instance
   decLe := by infer_instance
+  prec := .single
 
 instance : FloatType Float32 where
   sin := .sin
@@ -76,10 +87,11 @@ instance : FloatType Float32 where
   round := .round
   decLt := by infer_instance
   decLe := by infer_instance
+  prec := .double
 
 def Math.pi {R : Type} [FloatType R] : R := Math.acos (-1.0)
 
-instance : Mod R  where
+instance : Mod R where
   mod x y :=
     let q := floor (x / y)
     x - q * y
@@ -106,6 +118,7 @@ instance : Clamp R where
 -- Vector Operations (scalar versions)
 -- ============================================================================
 
+-- todo: generalize to `R` [FloatType R]
 defun Float.dot (x y : Float) : Float := x * y
 defun Float.length (x : Float) : Float := x.abs
 defun Float.length2 (x : Float) : Float := x * x
@@ -170,6 +183,7 @@ instance : Slerp R R where
 -- Conversion and Construction
 -- ============================================================================
 
+-- todo: generalize to `R` [FloatType R]
 defun Float.radians (degrees : Float) : Float := degrees * (3.141592653589793 / 180.0)
 defun Float.degrees (radians : Float) : Float := radians * (180.0 / 3.141592653589793)
 
