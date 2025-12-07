@@ -95,66 +95,67 @@ partial def CodeStatement.toString (stmt : CodeStatement)
               {b}\n\
               {indent}}"
   | .funCall v => return s!"{← v.toString};"
-  | .ret v => return s!"return {← v.toString};"
+  | .ret v => return s!"{indent}return {← v.toString};"
 
--- bunch of let bindings, add support for `if then else` and `for(..){ .. }`
-inductive CodeBody where
-  | letE (name : String) (type : OCLType) (val : CodeExpr) (body : CodeBody)
-  | ite (cond : CodeExpr) (t e : CodeBody)
-  | forLoop (index : String) (body : CodeBody) (rest : CodeBody)
-  | ret (val : CodeExpr)
-deriving Inhabited
+-- -- bunch of let bindings, add support for `if then else` and `for(..){ .. }`
+-- inductive CodeBody where
+--   | letE (name : String) (type : OCLType) (val : CodeExpr) (body : CodeBody)
+--   | ite (cond : CodeExpr) (t e : CodeBody)
+--   | forLoop (index : String) (body : CodeBody) (rest : CodeBody)
+--   | ret (val : CodeExpr)
+-- deriving Inhabited
 
-def CodeBody.toString (c : CodeBody) (indent := "") (indentIncr := "    ") : MetaM String := do
-  match c with
-  | .letE _ _ (.app { name := _, kind := .elemset} #[ptr, off, val]) b =>
-    let ptr ← ptr.toString
-    let off ← off.toString
-    let val ← val.toString
-    let body ← b.toString indent
-    return s!"{indent}{ptr}[{off}] = {val};\n{body}"
+-- def CodeBody.toString (c : CodeBody) (indent := "") (indentIncr := "    ") : MetaM String := do
+--   match c with
+--   | .letE _ _ (.app { name := _, kind := .elemset} #[ptr, off, val]) b =>
+--     let ptr ← ptr.toString
+--     let off ← off.toString
+--     let val ← val.toString
+--     let body ← b.toString indent
+--     return s!"{indent}{ptr}[{off}] = {val};\n{body}"
 
-  | .letE n t v b =>
-    let value ← v.toString
-    let body ← b.toString indent
-    return s!"{indent}{t.name} {n} = {value};\n{body}"
-  | .ite c t e =>
-    let c ← c.toString
-    let t ← t.toString (indent ++ indentIncr)
-    let e ← e.toString (indent ++ indentIncr)
-    return s!"{indent}if ({c})\n{indent}\{\n{t}\n{indent}}\n{indent}else\n{indent}\{\n{e}\n{indent}}"
-  | .forLoop idx body rest =>
-    let body ← body.toString (indent ++ indentIncr)
-    let rest ← rest.toString indent
-    return s!"{indent}for ({idx})\n{indent}\{\n{body}\n{indent}}\n{rest}"
-  | ret v =>
-    let value ← v.toString
-    return s!"{indent}return {value};"
+--   | .letE n t v b =>
+--     let value ← v.toString
+--     let body ← b.toString indent
+--     return s!"{indent}{t.name} {n} = {value};\n{body}"
+--   | .ite c t e =>
+--     let c ← c.toString
+--     let t ← t.toString (indent ++ indentIncr)
+--     let e ← e.toString (indent ++ indentIncr)
+--     return s!"{indent}if ({c})\n{indent}\{\n{t}\n{indent}}\n{indent}else\n{indent}\{\n{e}\n{indent}}"
+--   | .forLoop idx body rest =>
+--     let body ← body.toString (indent ++ indentIncr)
+--     let rest ← rest.toString indent
+--     return s!"{indent}for ({idx})\n{indent}\{\n{body}\n{indent}}\n{rest}"
+--   | ret v =>
+--     let value ← v.toString
+--     return s!"{indent}return {value};"
 
+
+-- -- bunch of let bindings, add support for `if then else` and `for(..){ .. }`
+-- structure CodeFunction where
+--   name : String
+--   returnType : OCLType
+--   args : Array (OCLType × String)
+--   body : CodeBody
+-- deriving Inhabited
+
+
+-- def CodeFunction.toString (c : CodeFunction) : MetaM String := do
+--   let body ← c.body.toString "    " "    "
+--   let args := c.args.map (fun (t,n) => s!"{t.name} {n}") |>.joinl (map:=id) (· ++ ", " ++ ·)
+--   return s!"{c.returnType.name} {c.name}({args})\n\{\n{body}\n}"
 
 -- bunch of let bindings, add support for `if then else` and `for(..){ .. }`
 structure CodeFunction where
   name : String
   returnType : OCLType
   args : Array (OCLType × String)
-  body : CodeBody
-deriving Inhabited
-
-
-def CodeFunction.toString (c : CodeFunction) : MetaM String := do
-  let body ← c.body.toString "    " "    "
-  let args := c.args.map (fun (t,n) => s!"{t.name} {n}") |>.joinl (map:=id) (· ++ ", " ++ ·)
-  return s!"{c.returnType.name} {c.name}({args})\n\{\n{body}\n}"
-
--- bunch of let bindings, add support for `if then else` and `for(..){ .. }`
-structure CodeFunction' where
-  name : String
-  returnType : OCLType
-  args : Array (OCLType × String)
   body : Array CodeStatement
 deriving Inhabited
 
-def CodeFunction'.toString (c : CodeFunction') : MetaM String := do
+def CodeFunction.toString (c : CodeFunction) : MetaM String := do
   let body ← c.body.mapM (·.toString "    " "    ")
+  let body := body.joinl (·++"\n"++·) (map:=id)
   let args := c.args.map (fun (t,n) => s!"{t.name} {n}") |>.joinl (map:=id) (· ++ ", " ++ ·)
   return s!"{c.returnType.name} {c.name}({args})\n\{\n{body}\n}"

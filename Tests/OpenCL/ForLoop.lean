@@ -4,7 +4,6 @@ import HouLean.OpenCL.Data.Vector
 
 open HouLean.OpenCL
 
-
 instance [t : OpenCLType α] : OpenCLType (Id α) := t
 instance [t : OpenCLType α] : OpenCLType (ForInStep α) where
   name := t.name
@@ -14,51 +13,62 @@ implemented_by : Nat.toFloat = oclFunction _ "(float)"
 
 attribute [opencl_csimp] pure_bind bind_pure bind_assoc Id.run
 
--- set_option trace.HouLean.OpenCL.compiler true in
--- #opencl_compile (fun x : Float => Id.run do
---   let mut x := x
---   for i in [0:5] do
---     x := x * x * i.toFloat
---   x + x)
-
-
-set_option trace.HouLean.OpenCL.compiler true in
-open Qq Compiler Lean Meta in
-run_meta
-
-  let e := q(Id.run do
-    let mut x : Float := oclFunction _ "asdf"
+/--
+info:
+double3 (anonymous)(double a)
+{
+    double state = a;
+    for (uint i = 0; i < 10; i += 2)
+    {
+        double x = (state * state) * (float)(i);
+        double x1 = x + x;
+        state = x1;
+    }
+    double r = state;
+    return (double3){(r + r), (r * r), (5.0d * r)};
+}
+-/
+#guard_msgs in
+#opencl_compile (fun a : Float =>
+  Id.run do
+    let mut x : Float := a
     for i in [0:10:2] do
       x := x * x * i.toFloat
       x := x+x
     #v[x + x, x*x, 5*x])
 
-  let stmts ← compileExpr'' e
-
-  let cs ← stmts.mapM (·.toString)
-
-  logInfo m!"{cs}"
-
-attribute [opencl_csimp] pure_bind bind_pure bind_assoc bind_map
-
-open Qq Compiler Lean Meta in
-run_meta
-  let e := q(Id.run do
-    let mut x : Float := oclFunction _ "asdf"
+/--
+info:
+double3 (anonymous)(double a)
+{
+    double state = a;
+    for (uint i = 0; i < 10; i += 2)
+    {
+        double state1 = state;
+        for (uint j = 5; j < 20; j += 1)
+        {
+            double x = ((state1 * state1) * (float)(i)) * (float)(j);
+            double x1 = x + x;
+            state1 = x1;
+        }
+        double r = state1;
+        state = r;
+    }
+    double r = state;
+    return (double3){(r + r), (r * r), (5.0d * r)};
+}
+-/
+#guard_msgs in
+#opencl_compile (fun a : Float =>
+  Id.run do
+    let mut x : Float := a
     for i in [0:10:2] do
-      x := 10*x
       for j in [5:20] do
         x := x * x * i.toFloat * j.toFloat
         x := x+x
-      x := x + 42
-    x + x)
+    #v[x + x, x*x, 5*x])
 
-  let stmts ← compileExpr'' e
-
-  let cs ← stmts.mapM (·.toString)
-
-  logInfo m!"{cs}"
-
+#exit
 
 noncomputable
 abbrev foo := Id.run do

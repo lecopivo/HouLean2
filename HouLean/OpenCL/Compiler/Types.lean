@@ -21,10 +21,3 @@ initialize compileFunctionRef : IO.Ref (Expr → CompileM CodeFunction) ←
 
 def compileFunction (f : Expr) : CompileM CodeFunction := do
   (← compileFunctionRef.get) f
-
-
-initialize compileFunctionRef' : IO.Ref (Expr → CompileM CodeFunction') ←
-  IO.mkRef (fun _ => pure default)
-
-def compileFunction' (f : Expr) : CompileM CodeFunction' := do
-  (← compileFunctionRef'.get) f
