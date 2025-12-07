@@ -65,7 +65,8 @@ attribute [opencl_csimp]
   Bool.decide_true_eq
   Bool.decide_false_eq
 
-
+attribute [opencl_csimp]
+  bind_assoc bind_pure pure_bind
 
 -- todo: maybe make a special unsafe simp attribute for these
 @[opencl_csimp] theorem add_zero [Add α] [Zero α] (a : α) : 0 + a = a := sorry_proof

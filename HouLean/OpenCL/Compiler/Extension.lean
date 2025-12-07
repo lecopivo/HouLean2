@@ -119,11 +119,44 @@ initialize registerTraceClass `HouLean.OpenCL.compiler
 --         {es with oclFunctions := es.oclFunctions.insertCore keys oclFunc}
 --   }
 
+private def _root_.Lean.isInstanceProjection (name : Name) : MetaM Bool := do
+  unless ← isProjectionFn name do return false
+  let some info ← getProjectionFnInfo? name | return false
+  unless info.fromClass do return false
+  return true
 
 /-- Weak head normal forma for OpenCL compilation. -/
-def whnfC (e : Expr) : MetaM Expr :=
-  withConfig (fun cfg => {cfg with zeta := false, zetaDelta := false, iota := false}) <|
-    whnfR e
+-- def whnfC (e : Expr) : MetaM Expr :=
+--   withConfig (fun cfg => {cfg with zeta := false, zetaDelta := false, iota := false}) <|
+--     whnfR e
+def doUnfold (e : Expr) : MetaM Bool := do
+  let .const name _ := e.getAppFn | return false
+  if ← isReducible name then return true
+  unless ← isInstanceProjection name do return false
+  -- let s := compilerExt.getState (← getEnv)
+  if name == ``Id then
+    return true
+  -- if s.implementedByName.contains name then
+  --   return false
+  else
+    return true
+
+def betaThroughLet (e : Expr) : MetaM Expr := do
+  let (fn, args) := e.withApp (fun fn args => (fn,args))
+  let e' ← letTelescope fn (preserveNondepLet := false) fun xs b =>
+    mkLambdaFVars xs (b.beta args)
+  return e'
+
+partial def whnfC (e : Expr) : MetaM Expr :=
+  withConfig (fun cfg => {cfg with iota := false, zeta := false, zetaDelta := false}) do
+    let e' := e
+    -- let e' ← letBind e'
+    let e' ← whnfHeadPred e' doUnfold
+    -- let e' ← letBindMatchDiscrs e' true
+    if e.equal e' then
+      return ← betaThroughLet e'
+    else
+      whnfC e'
 
 open Lean Elab Command PrettyPrinter in
 def addOpenCLType (type : Expr) (name : String) (shortName : String) (definition? : Option String) : CommandElabM Unit := do

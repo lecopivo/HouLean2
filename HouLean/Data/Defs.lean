@@ -1,6 +1,7 @@
 import Lean
 import HouLean.Meta.ProdLike
 import HouLean.Meta.EnumType
+import HouLean.Data.Float
 
 open Lean Meta
 
@@ -126,6 +127,13 @@ structure BoundingBox where
 deriving ProdLike
 instance : Inhabited BoundingBox := ⟨{}⟩
 
+/-- Bounding box -/
+structure BoundingBox' (R : Type) [FloatType R] (dim : Nat) where
+  /-- Size of the bounding box -/
+  size : Vector R dim := .replicate dim 1.0
+  /-- Center position of the bounding box -/
+  center : Vector R dim := 0
+instance {R} [FloatType R] : Inhabited (BoundingBox' R dim) := ⟨{}⟩
 
 /-- Bounding sphere -/
 structure BoundingSphere where

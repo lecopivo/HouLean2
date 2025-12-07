@@ -149,10 +149,10 @@ def volume (c : Capsule) : Float :=
   if h == 0 then
     -- Zero length: sphere with larger radius
     let r := max r1 r2
-    (4.0 / 3.0) * Float.pi * r * r * r
+    (4.0 / 3.0) * Math.pi * r * r * r
   else if r1 == r2 then
     -- Uniform capsule: cylinder + sphere (two hemispheres)
-    Float.pi * r1 * r1 * h + (4.0 / 3.0) * Float.pi * r1 * r1 * r1
+    Math.pi * r1 * r1 * h + (4.0 / 3.0) * Math.pi * r1 * r1 * r1
   else
     let (sinA, cosA, hFrust, degenerate) := c.taperGeometry
 
@@ -162,20 +162,20 @@ def volume (c : Capsule) : Float :=
       let d := h  -- distance between centers
       if d >= r1 + r2 then
         -- No overlap (shouldn't happen if degenerate, but handle it)
-        (4.0 / 3.0) * Float.pi * (r1*r1*r1 + r2*r2*r2)
+        (4.0 / 3.0) * Math.pi * (r1*r1*r1 + r2*r2*r2)
       else if d <= Float.abs (r1 - r2) then
         -- One sphere entirely inside the other
         let r := max r1 r2
-        (4.0 / 3.0) * Float.pi * r * r * r
+        (4.0 / 3.0) * Math.pi * r * r * r
       else
         -- Partial overlap: use lens formula
         -- V_lens = π(r1+r2-d)²(d² + 2d(r1+r2) - 3(r1-r2)²) / (12d)
         let sum := r1 + r2
         let diff := r1 - r2
-        let vLens := Float.pi * (sum - d) * (sum - d) *
+        let vLens := Math.pi * (sum - d) * (sum - d) *
                      (d*d + 2*d*sum - 3*diff*diff) / (12 * d)
-        let v1 := (4.0 / 3.0) * Float.pi * r1 * r1 * r1
-        let v2 := (4.0 / 3.0) * Float.pi * r2 * r2 * r2
+        let v1 := (4.0 / 3.0) * Math.pi * r1 * r1 * r1
+        let v2 := (4.0 / 3.0) * Math.pi * r2 * r2 * r2
         v1 + v2 - vLens
     else
       -- Non-degenerate tapered capsule
@@ -184,15 +184,15 @@ def volume (c : Capsule) : Float :=
       let rt2 := r2 * cosA
 
       -- Frustum volume (between tangent circles)
-      let vFrust := (Float.pi * hFrust / 3.0) * (rt1*rt1 + rt1*rt2 + rt2*rt2)
+      let vFrust := (Math.pi * hFrust / 3.0) * (rt1*rt1 + rt1*rt2 + rt2*rt2)
 
       -- Spherical cap heights
       let hCap1 := r1 * (1.0 - sinA)
       let hCap2 := r2 * (1.0 - sinA)
 
       -- Cap volumes: V = π h² (3R - h) / 3
-      let vCap1 := Float.pi * hCap1 * hCap1 * (3.0 * r1 - hCap1) / 3.0
-      let vCap2 := Float.pi * hCap2 * hCap2 * (3.0 * r2 - hCap2) / 3.0
+      let vCap1 := Math.pi * hCap1 * hCap1 * (3.0 * r1 - hCap1) / 3.0
+      let vCap2 := Math.pi * hCap2 * hCap2 * (3.0 * r2 - hCap2) / 3.0
 
       vFrust + vCap1 + vCap2
 
@@ -262,8 +262,8 @@ def pointOnAxis (c : Capsule) (t : Float) : Vector3 :=
   c.start.lerp c.finish t
 
 /-- Closest point on the capsule axis to a given point -/
-def closestPointOnAxis (c : Capsule) (p : Vector3) : Vector3 :=
-  p.projectToSegment c.start c.finish
+def closestPointOnAxis (c : Capsule) (p : Vector3) : Vector3 := sorry
+  -- projectToSegment p c.start c.finish
 
 /-- Parametric position (0 to 1) of closest point on axis -/
 def closestT (c : Capsule) (p : Vector3) : Float :=
@@ -271,7 +271,7 @@ def closestT (c : Capsule) (p : Vector3) : Float :=
   let ap := p - c.start
   let len2 := ab.length2
   if len2 == 0 then 0
-  else (ap.dot ab / len2).clamp 0.0 1.0
+  else clamp (ap.dot ab / len2) 0.0 1.0
 
 /-- Closest point on capsule surface to a given point -/
 def closestPoint (c : Capsule) (p : Vector3) : Vector3 :=

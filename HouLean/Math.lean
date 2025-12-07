@@ -1,5 +1,5 @@
 import HouLean.Meta.OverloadedFunction
-import HouLean.Data.Defs
+-- import HouLean.Data.Defs
 
 namespace HouLean.Math
 
@@ -280,13 +280,13 @@ declfun lerp {α} {β} (x y : α) (t : β) : α
 Returns smooth interpolation between 0 and 1 when `x` goes from `edge0` to `edge1`.
 `smoothstep edge0 edge1 x` is 0 when `x ≤ edge0`, 1 when `x ≥ edge1`,
 and smoothly interpolates between using Hermite polynomial when `edge0 < x < edge1`. -/
-declfun smoothstep {α} (edge0 edge1 x : α) : α
+declfun smoothstep {α} (x edge0 edge1 : α) : α
 
 /-- Step function.
 
 Returns 0 if `x < edge`, otherwise 1.
 Applied elementwise for vectors and matrices. -/
-declfun step {α} (edge x : α) : α
+declfun step {α} (x edge : α) : α
 
 /-- Cubic Hermite spline interpolation.
 

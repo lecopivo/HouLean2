@@ -3,3 +3,13 @@ import HouLean.OpenCL.Compiler.Main
 namespace HouLean.OpenCL
 
 open Compiler Qq
+
+
+implemented_by : Nat.toUInt32    = oclFunction _ "(uint)"
+implemented_by : UInt64.toUInt32 = oclFunction _ "(uint)"
+
+implemented_by : Nat.toUInt64    = oclFunction _ "(ulong)"
+implemented_by : UInt32.toUInt64 = oclFunction _ "(ulong)"
+
+implemented_by : Int32.toFloat32    = oclFunction _ "(float)"
+implemented_by : Int32.toFloat    = oclFunction _ "(double)"

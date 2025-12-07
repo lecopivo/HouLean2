@@ -318,7 +318,14 @@ def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM 
   return mangledName
 
 
+instance : MonadRecDepth CompileM where
+  withRecDepth n x := fun ctx s => MonadRecDepth.withRecDepth n (x ctx s)
+  getRecDepth := liftM (m:=SimpM) <| MonadRecDepth.getRecDepth
+  getMaxRecDepth := liftM (m:=SimpM) <| MonadRecDepth.getMaxRecDepth
+
+
 def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
+  withIncRecDepth do
   withTraceNode `HouLean.OpenCL.compiler
     (fun r => do
       match r with
@@ -340,7 +347,7 @@ def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
 
     -- Unfold definition and reduce instances
     let body := (← unfold body funName).expr
-    let body ← withConfig (fun cfg => {cfg with zeta := false, iota:=false, zetaDelta:=false}) do whnfI body
+    let body ← whnfC body
     trace[HouLean.OpenCL.compiler] "After unfolding:\n{body}"
 
     let returnType ← getOpenCLType returnType

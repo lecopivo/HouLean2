@@ -192,12 +192,12 @@ def applyToVector (vel : RigidScaleVelocity) (v : Vector3) : Vector3 :=
 -- Clamping and limiting
 -- ============================================================================
 
-/-- Clamp velocity components to maximum values -/
-def clamp (vel : RigidScaleVelocity)
-          (maxLinear maxAngular maxScale : Float) : RigidScaleVelocity :=
-  let rigidClamped := vel.toRigidVelocity.clamp maxLinear maxAngular
-  let scaleClamped := vel.scaleVelocity.clamp (-maxScale) maxScale
-  ⟨rigidClamped, scaleClamped⟩
+-- /-- Clamp velocity components to maximum values -/
+-- def clamp (vel : RigidScaleVelocity)
+--           (maxLinear maxAngular maxScale : Float) : RigidScaleVelocity :=
+--   let rigidClamped := vel.toRigidVelocity.clamp maxLinear maxAngular
+--   let scaleClamped := vel.scaleVelocity.clamp (-maxScale) maxScale
+--   ⟨rigidClamped, scaleClamped⟩
 
 /-- Clamp total magnitude while preserving direction -/
 def clampMagnitude (vel : RigidScaleVelocity) (maxMag : Float) : RigidScaleVelocity :=

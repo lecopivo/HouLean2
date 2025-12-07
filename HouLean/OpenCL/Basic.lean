@@ -251,7 +251,7 @@ deriving BEq, Inhabited
 
 -- todo: replace `Inhabited type` with `spec : type`. The issue is that the compile time simp
 --       get's into infinite recursion as it keeps on simplifying `spec`
-/--  -/
+noncomputable
 opaque oclFunction (type : Type) [Inhabited type] (name : String) (kind : OpenCLFunction.FunKind := .normal) : type
 
 
@@ -356,7 +356,7 @@ opaque Pointer.set [AtomicOpenCLType α] (a : Pointer α) (offset : UInt64) (val
 opaque Pointer.vload [AtomicOpenCLType α] [AllowedVectorSize n] (offset : UInt64) (a : Pointer α) : OpenCLM (Vector α n)
 opaque Pointer.vstore [AtomicOpenCLType α] [AllowedVectorSize n] (val : Vector α n) (offset : UInt64) (a : Pointer α) : OpenCLM Unit
 
-variable [AtomicOpenCLType α]
+variable [t : AtomicOpenCLType α]
 
 @[reducible]
 instance [AtomicOpenCLType α] : ArrayType α α where
@@ -379,19 +379,24 @@ instance : ArrayType (Vector α n) α where
   set ptr off val := Pointer.vstore val off ptr
 
 instance : OpenCLFunction (Pointer.vload (α:=α) (n:=n)) where
-  name := ""
-  kind := .elemget
+  name := s!"vload{n}"
 
 instance : OpenCLFunction (Pointer.vstore (α:=α) (n:=n)) where
-  name := ""
-  kind := .elemset
+  name := s!"vstore{n}"
+
+
+structure ArrayPointer (α : Type) {A} [ArrayType α A] where
+  ptr : Pointer A
+
+instance{α A} [ArrayType α A] : GetElem (ArrayPointer α) UInt64 (OpenCLM α) (fun _ _ => True) where
+  getElem x i _ := ArrayType.get x.ptr i
 
 
 -- =================================================================================================
--- Array
+-- C-style Array
 -- =================================================================================================
 
-/-- C style array wrapped around in a struct to preserve value semantics -/
+/-- C style array wrapped around in a struct to preserve value semantics. -/
 structure CArray (α : Type) (n : Nat) where
   data : Vector α n
 

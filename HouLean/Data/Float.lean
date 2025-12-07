@@ -1,69 +1,94 @@
 import HouLean.Math
 
-namespace HouLean.Math
+namespace HouLean
 
--- ============================================================================
--- Trigonometric Functions
--- ============================================================================
+open Math
 
--- Built-in Float methods
-defun sin (x : Float) := x.sin
-defun cos (x : Float) := x.cos
-defun tan (x : Float) := x.tan
-defun asin (x : Float) := x.asin
-defun acos (x : Float) := x.acos
-defun atan (x : Float) := x.atan
-defun atan2 (y x : Float) := y.atan2 x
-defun sinh (x : Float) := x.sinh
-defun cosh (x : Float) := x.cosh
-defun tanh (x : Float) := x.tanh
+/-- Interface for `Float32` and `Float64` -/
+class FloatType (R : Type) extends
+    Add R, Sub R, Neg R, Mul R, Div R, One R, Zero R, Pow R R,
+    -- comparison
+    LT R, LE R, BEq R,
+    -- trigonometric
+    Sin R, Cos R, Tan R, Asin R, Acos R, Atan R, Atan2 R, Sinh R, Cosh R, Tanh R,
+    -- exponential and log
+    Exp R, Exp2 R, Log R, Log2 R, Log10 R, Sqrt R,
+    -- rounding
+    Abs R, Floor R, Ceil R, Round R,
+    -- scientific notation
+    OfScientific R
+  where
 
-defun sin (x : Float32) := x.sin
-defun cos (x : Float32) := x.cos
-defun tan (x : Float32) := x.tan
-defun asin (x : Float32) := x.asin
-defun acos (x : Float32) := x.acos
-defun atan (x : Float32) := x.atan
-defun atan2 (y x : Float32) := y.atan2 x
-defun sinh (x : Float32) := x.sinh
-defun cosh (x : Float32) := x.cosh
-defun tanh (x : Float32) := x.tanh
+  decLt : DecidableLT R
+  decLe : DecidableLE R
 
-def _root_.Float.pi := Float.acos (-1.0)
-def _root_.Float32.pi := Float32.acos (-1.0)
+variable {R} [FloatType R]
 
+instance : DecidableLT R := FloatType.decLt
+instance : DecidableLE R := FloatType.decLe
+instance : Min R := minOfLe
+instance : Max R := maxOfLe
 
--- ============================================================================
--- Exponential and Logarithmic Functions
--- ============================================================================
+instance : FloatType Float where
+  sin := .sin
+  cos := .cos
+  tan := .tan
+  asin := .asin
+  acos := .acos
+  atan := .atan
+  atan2 := .atan2
+  sinh := .sinh
+  cosh := .cosh
+  tanh := .tanh
+  exp := .exp
+  exp2 := .exp2
+  log := .log
+  log2 := .log2
+  log10 := .log10
+  sqrt := .sqrt
+  abs := .abs
+  floor := .floor
+  ceil := .ceil
+  round := .round
+  decLt := by infer_instance
+  decLe := by infer_instance
 
--- Built-in Float methods
-defun exp (x : Float) := x.exp
-defun exp2 (x : Float) := x.exp2
-defun log (x : Float) := x.log
-defun log2 (x : Float) := x.log2
-defun log10 (x : Float) := x.log10
-defun pow (x y : Float) := x.pow y
-defun sqrt (x : Float) := x.sqrt
-defun Float.invsqrt (x : Float) : Float := 1.0 / x.sqrt
+instance : FloatType Float32 where
+  sin := .sin
+  cos := .cos
+  tan := .tan
+  asin := .asin
+  acos := .acos
+  atan := .atan
+  atan2 := .atan2
+  sinh := .sinh
+  cosh := .cosh
+  tanh := .tanh
+  exp := .exp
+  exp2 := .exp2
+  log := .log
+  log2 := .log2
+  log10 := .log10
+  sqrt := .sqrt
+  abs := .abs
+  floor := .floor
+  ceil := .ceil
+  round := .round
+  decLt := by infer_instance
+  decLe := by infer_instance
 
-defun exp (x : Float32) := x.exp
-defun exp2 (x : Float32) := x.exp2
-defun log (x : Float32) := x.log
-defun log2 (x : Float32) := x.log2
-defun log10 (x : Float32) := x.log10
-defun pow (x y : Float32) := x.pow y
-defun sqrt (x : Float32) := x.sqrt
-defun Float32.invsqrt (x : Float32) : Float32 := 1.0 / x.sqrt
+def Math.pi {R : Type} [FloatType R] : R := Math.acos (-1.0)
 
+instance : Mod R  where
+  mod x y :=
+    let q := floor (x / y)
+    x - q * y
 
--- ============================================================================
--- Comparison operations
--- ============================================================================
-
-defun beq (x y : Float) : Bool := x.beq y
-defun Float.blt (x y : Float) : Bool := (x < y : Bool)
-defun Float.ble (x y : Float) : Bool := (x <= y : Bool)
+instance : Sign R where
+  sign x :=
+    if x < 0.0 then -1.0
+    else if x > 0.0 then 1.0
+    else 0.0
 
 -- ============================================================================
 -- Approximatelly equal
@@ -169,33 +194,39 @@ defun Float.compDiv (x y : Float) : Float := x / y
 -- Interpolation and Smoothing
 -- ============================================================================
 
-defun Float.lerp (x y : Float) (t : Float) : Float := x + (y - x) * t
+instance : Lerp R R where
+  lerp x y t := x + (y - x) * t
 
-defun Float.smoothstep (edge0 edge1 x : Float) : Float :=
-  let t := x.clamp edge0 edge1
-  let t := (t - edge0) / (edge1 - edge0)
-  t * t * (3.0 - 2.0 * t)
+instance : Smoothstep R where
+  smoothstep x edge0 edge1 :=
+    let t := clamp x edge0 edge1
+    let t := (t - edge0) / (edge1 - edge0)
+    t * t * (3.0 - 2.0 * t)
 
-defun Float.step (edge x : Float) : Float := if x < edge then 0.0 else 1.0
+instance : Step R where
+  step x edge := if x < edge then 0.0 else 1.0
 
-defun Float.hermite (p0 p1 t0 t1 : Float) (t : Float) : Float :=
-  let t2 := t * t
-  let t3 := t2 * t
-  let h00 := 2.0 * t3 - 3.0 * t2 + 1.0
-  let h10 := t3 - 2.0 * t2 + t
-  let h01 := -2.0 * t3 + 3.0 * t2
-  let h11 := t3 - t2
-  h00 * p0 + h10 * t0 + h01 * p1 + h11 * t1
+instance : Hermite R R where
+  hermite p0 p1 t0 t1 t :=
+    let t2 := t * t
+    let t3 := t2 * t
+    let h00 := 2.0 * t3 - 3.0 * t2 + 1.0
+    let h10 := t3 - 2.0 * t2 + t
+    let h01 := -2.0 * t3 + 3.0 * t2
+    let h11 := t3 - t2
+    h00 * p0 + h10 * t0 + h01 * p1 + h11 * t1
 
-defun Float.catmullRom (p0 p1 p2 p3 : Float) (t : Float) : Float :=
-  let t2 := t * t
-  let t3 := t2 * t
-  0.5 * ((2.0 * p1) +
-         (-p0 + p2) * t +
-         (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
-         (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3)
+instance : CatmullRom R R where
+  catmullRom p0 p1 p2 p3 t :=
+    let t2 := t * t
+    let t3 := t2 * t
+    0.5 * ((2.0 * p1) +
+           (-p0 + p2) * t +
+           (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
+           (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3)
 
-defun Float.slerp (x y : Float) (t : Float) : Float := x.lerp y t
+instance : Slerp R R where
+  slerp x y t := lerp x y t
 
 
 -- ============================================================================
@@ -203,20 +234,17 @@ defun Float.slerp (x y : Float) (t : Float) : Float := x.lerp y t
 -- ============================================================================
 
 defun Float.radians (degrees : Float) : Float := degrees * (3.141592653589793 / 180.0)
-
 defun Float.degrees (radians : Float) : Float := radians * (180.0 / 3.141592653589793)
+
 
 -- ============================================================================
 -- Geometric Queries (scalar versions)
 -- ============================================================================
 
-defun Float.insideBox (point boxMin boxMax : Float) : Bool :=
-  point >= boxMin && point <= boxMax
+instance : InsideBox R where
+  insideBox point boxMin boxMax :=
+    boxMin <= point && point <= boxMax
 
-defun Float.projectToSegment (point a b : Float) : Float :=
-  let ab := b - a
-  let ap := point - a
-  let t := ((ap * ab) / (ab * ab)).clamp 0.0 1.0
-  a + t * ab
-
-end HouLean.Math
+instance : ProjectToSegment R where
+  projectToSegment point a b :=
+    clamp point (min a b) (max a b)

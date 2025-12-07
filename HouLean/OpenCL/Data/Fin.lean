@@ -5,6 +5,8 @@ namespace HouLean.OpenCL
 
 attribute [opencl_csimp] sum
 
+variable {m} [Monad m]
+
 implemented_by (f : α → Fin 0 → α) (init : α) : Fin.foldl 0 f init = init
 implemented_by (f : α → Fin 1 → α) (init : α) : Fin.foldl 1 f init = f init 0
 implemented_by (f : α → Fin 2 → α) (init : α) : Fin.foldl 2 f init = f (f init 0) 1
@@ -17,6 +19,17 @@ implemented_by (f : α → Fin 8 → α) (init : α) : Fin.foldl 8 f init = f (f
 implemented_by (f : α → Fin 9 → α) (init : α) : Fin.foldl 9 f init = f (f (f (f (f (f (f (f (f init 0) 1) 2) 3) 4) 5) 6) 7) 8
 implemented_by (f : α → Fin 10 → α) (init : α) : Fin.foldl 10 f init = f (f (f (f (f (f (f (f (f (f init 0) 1) 2) 3) 4) 5) 6) 7) 8) 9
 
+implemented_by (f : α → Fin 0 → m α) (init : α) : Fin.foldlM 0 f init = pure init
+implemented_by (f : α → Fin 1 → m α) (init : α) : Fin.foldlM 1 f init = do pure (← f init 0)
+implemented_by (f : α → Fin 2 → m α) (init : α) : Fin.foldlM 2 f init = do pure (← f (← f init 0) 1)
+implemented_by (f : α → Fin 3 → m α) (init : α) : Fin.foldlM 3 f init = do pure (← f (← f (← f init 0) 1) 2)
+implemented_by (f : α → Fin 4 → m α) (init : α) : Fin.foldlM 4 f init = do pure (← f (← f (← f (← f init 0) 1) 2) 3)
+implemented_by (f : α → Fin 5 → m α) (init : α) : Fin.foldlM 5 f init = do pure (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4)
+implemented_by (f : α → Fin 6 → m α) (init : α) : Fin.foldlM 6 f init = do pure (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5)
+implemented_by (f : α → Fin 7 → m α) (init : α) : Fin.foldlM 7 f init = do pure (← f (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5) 6)
+implemented_by (f : α → Fin 8 → m α) (init : α) : Fin.foldlM 8 f init = do pure (← f (← f (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5) 6) 7)
+implemented_by (f : α → Fin 9 → m α) (init : α) : Fin.foldlM 9 f init = do pure (← f (← f (← f (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5) 6) 7) 8)
+implemented_by (f : α → Fin 10 → m α) (init : α) : Fin.foldlM 10 f init = do pure (← f (← f (← f (← f (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5) 6) 7) 8) 9)
 
 implemented_by (f : Fin 0 → α → α) (init : α) : Fin.foldr 0 f init = init
 implemented_by (f : Fin 1 → α → α) (init : α) : Fin.foldr 1 f init = f 0 init

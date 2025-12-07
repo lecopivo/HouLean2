@@ -85,13 +85,13 @@ def ritterSphere (points : Array Vector3) : BoundingSphere :=
 -- Queries
 -- ============================================================================
 
-/-- Volume of the sphere -/
-def volume (bs : BoundingSphere) : Float :=
-  (4.0 / 3.0) * Float.pi * bs.radius * bs.radius * bs.radius
+-- /-- Volume of the sphere -/
+-- def volume (bs : BoundingSphere) : Float :=
+--   (4.0 / 3.0) * Float.pi * bs.radius * bs.radius * bs.radius
 
-/-- Surface area -/
-def surfaceArea (bs : BoundingSphere) : Float :=
-  4.0 * Float.pi * bs.radius * bs.radius
+-- /-- Surface area -/
+-- def surfaceArea (bs : BoundingSphere) : Float :=
+  -- 4.0 * Float.pi * bs.radius * bs.radius
 
 /-- Diameter -/
 def diameter (bs : BoundingSphere) : Float :=

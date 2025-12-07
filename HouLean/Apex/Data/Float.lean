@@ -96,18 +96,18 @@ def Float.round.impl (x : Float) : Float := Round x 0
 -- noncomputable
 -- def Float.frac.impl (x : Float) : Float := Frac x
 
-@[apex_implements Float.min]
-noncomputable
-def Float.min.impl (x y : Float) : Float := MinFloat x #a[y]
+-- @[apex_implements Float.min]
+-- noncomputable
+-- def Float.min.impl (x y : Float) : Float := MinFloat x #a[y]
 
-@[apex_implements Float.max]
-noncomputable
-def Float.max.impl (x y : Float) : Float := MaxFloat x #a[y]
+-- @[apex_implements Float.max]
+-- noncomputable
+-- def Float.max.impl (x y : Float) : Float := MaxFloat x #a[y]
 
-@[apex_implements Float.clamp]
-noncomputable
-def Float.clamp.impl (x min max : Float) : Float := ClampFloat x min max
+-- @[apex_implements Float.clamp]
+-- noncomputable
+-- def Float.clamp.impl (x min max : Float) : Float := ClampFloat x min max
 
-@[apex_implements Float.lerp]
-noncomputable
-def Float.lerp.impl (a b t : Float) : Float := LerpFloat a b t
+-- @[apex_implements Float.lerp]
+-- noncomputable
+-- def Float.lerp.impl (a b t : Float) : Float := LerpFloat a b t
