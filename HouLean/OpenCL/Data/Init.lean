@@ -3,7 +3,6 @@ import HouLean.Math
 
 namespace HouLean.OpenCL
 
-
 attribute [opencl_csimp]
   Math.transformNormal
   Math.transformVector

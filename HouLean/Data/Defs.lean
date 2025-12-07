@@ -53,7 +53,7 @@ instance : Inhabited Matrix4 := ⟨{}⟩
 --       implementations
 structure Matrix (α : Type) (m n : Nat) where
   data : Vector (Vector α n) m
-
+deriving Inhabited
 
 /-- Rigid transformation without scaling.
 -/

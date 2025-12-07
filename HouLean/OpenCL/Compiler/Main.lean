@@ -133,6 +133,15 @@ def runInterpreter (e : Expr) : MetaM (Option String) := do
 
   return none
 
+def simplifyExpr (e : Expr) : CompileM Expr := do
+  let e_orig := e
+  let e := (← Simp.simp e).expr
+  let e ← Meta.liftLets e
+
+  if e != e_orig then
+    trace[HouLean.OpenCL.compiler] "Simplified expression:\n  Before: {e_orig}\n  After:  {e}"
+
+  return e
 
 partial def compileExpr (e : Expr) : CompileM CodeExpr := do
   withTraceNode `HouLean.OpenCL.compiler
@@ -149,11 +158,7 @@ partial def compileExpr (e : Expr) : CompileM CodeExpr := do
   if let some valueStr ← runInterpreter e then
     return .lit valueStr
 
-  let e_orig := e
-  let e := (← Simp.simp e).expr
-
-  if e != e_orig then
-    trace[HouLean.OpenCL.compiler] "Simplified expression:\n  Before: {e_orig}\n  After:  {e}"
+  let e ← simplifyExpr e
 
   match e with
   | .app .. =>
@@ -194,7 +199,7 @@ partial def compileFunBody (e : Expr) : CompileM CodeBody := do
     trace[HouLean.OpenCL.compiler] "Let binding: {name} : {type}"
 
     -- Simplify the value and check if it introduces nested lets
-    let val := (← Simp.simp val).expr
+    let val ← simplifyExpr val
     if val.isLet then
       trace[HouLean.OpenCL.compiler] "Flattening nested let bindings in {name}"
       return ← letTelescope val fun xs valbody => do
@@ -214,11 +219,8 @@ partial def compileFunBody (e : Expr) : CompileM CodeBody := do
         return .letE names[0]! oclType valueCode bodyCode
 
   | .app .. =>
-    let e_orig := e
-    let e := (← Simp.simp e).expr
 
-    if e != e_orig then
-      trace[HouLean.OpenCL.compiler] "Body simplified:\n  Before: {e_orig}\n  After:  {e}"
+    let e ← simplifyExpr e
 
     if e.isLet then
       return ← compileFunBody e

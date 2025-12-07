@@ -32,6 +32,7 @@ defun tanh (x : Float32) := x.tanh
 def _root_.Float.pi := Float.acos (-1.0)
 def _root_.Float32.pi := Float32.acos (-1.0)
 
+
 -- ============================================================================
 -- Exponential and Logarithmic Functions
 -- ============================================================================
@@ -63,6 +64,18 @@ defun Float32.invsqrt (x : Float32) : Float32 := 1.0 / x.sqrt
 defun beq (x y : Float) : Bool := x.beq y
 defun Float.blt (x y : Float) : Bool := (x < y : Bool)
 defun Float.ble (x y : Float) : Bool := (x <= y : Bool)
+
+-- ============================================================================
+-- Approximatelly equal
+-- ============================================================================
+
+instance : ApproxEqual Float where
+  defaultTol := 1e-9
+  approxEqual x y tol := (x - y).abs ≤ tol
+
+instance : ApproxEqual Float32 where
+  defaultTol := 1e-6
+  approxEqual x y tol := (x - y).abs ≤ tol
 
 
 -- ============================================================================
@@ -97,7 +110,6 @@ defun Float.fract (x : Float) : Float := x - x.floor
 defun Float.mod (x y : Float) : Float :=
   let q := (x / y).floor
   x - q * y
-
 
 defun abs (x : Float32) : Float32 := x.abs
 

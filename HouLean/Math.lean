@@ -116,7 +116,7 @@ declfun sign {α} (x : α) : α
 
 `clamp x lo hi` returns `x` clamped to the range `[lo, hi]`.
 Applied elementwise for vectors and matrices. -/
-declfun clamp {α} (x lo hi : α) : α
+declfun clamp {α β} (x : α) (lo hi : β) : α
 
 /-- Floor function. Returns largest integer ≤ x.
 
@@ -222,7 +222,7 @@ declfun distance2 {α} {β : outParam Type} (x y : α) : β
 /-- Normalize a vector and return both the normalized vector and its original length.
 
 `normalize x = (normalized x, length x)` -/
-declfun normalize {α} {β : outParam Type} (x : α) : α × β
+declfun normalize {α : Type} {β : outParam Type} (x : α) : α × β
 
 /-- Normalize a vector to unit length.
 
@@ -358,7 +358,5 @@ declfun transformVector {T} {V} (transform : T) (vector : V) : V
 
 /-- Transform normal. -/
 declfun transformNormal {T} {N} (transform : T) (normal : N) : N
-
-
 
 end HouLean.Math

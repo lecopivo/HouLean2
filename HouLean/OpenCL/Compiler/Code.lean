@@ -22,12 +22,12 @@ partial def CodeExpr.toString (c : CodeExpr) (maybeBracket := false) : CoreM Str
       let args ← args.mapM (·.toString)
       let args := args.joinl (map:=id) (·++", "++·)
       return s!"{fn.name}({args})"
-    | .infix =>
+    | .infix prio =>
       -- todo: here we should use operator precendence to determine how to set `maybeBracket`
       --       on the recurives call.
       let args ← args.mapM (fun arg => arg.toString true)
       let e := args.joinl (map:=id) (·++ fn.name ++·)
-      if maybeBracket then
+      if maybeBracket && prio != 0 then -- todo: handle priority properly!
         return s!"({e})"
       else
         return e

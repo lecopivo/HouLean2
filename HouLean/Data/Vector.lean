@@ -29,45 +29,43 @@ open Math
 -- Trigonometric Functions
 -- ============================================================================
 
--- todo: make defun work for these
-
-def sin [Sin α] (x : Vector α n) : Vector α n := x.map Math.sin
-def cos [Cos α] (x : Vector α n) : Vector α n := x.map Math.cos
-def tan [Tan α] (x : Vector α n) : Vector α n := x.map Math.tan
-def asin [Asin α] (x : Vector α n) : Vector α n := x.map Math.asin
-def acos [Acos α] (x : Vector α n) : Vector α n := x.map Math.acos
-def atan [Atan α] (x : Vector α n) : Vector α n := x.map Math.atan
-def atan2 [Atan2 α] (y x : Vector α n) : Vector α n := (y.zip x).map Math.atan2.uncurry
-def sinh [Sinh α] (x : Vector α n) : Vector α n := x.map Math.sinh
-def cosh [Cosh α] (x : Vector α n) : Vector α n := x.map Math.cosh
-def tanh [Tanh α] (x : Vector α n) : Vector α n := x.map Math.tanh
+defun sin [Sin α] (x : Vector α n) : Vector α n := x.map Math.sin
+defun cos [Cos α] (x : Vector α n) : Vector α n := x.map Math.cos
+defun tan [Tan α] (x : Vector α n) : Vector α n := x.map Math.tan
+defun asin [Asin α] (x : Vector α n) : Vector α n := x.map Math.asin
+defun acos [Acos α] (x : Vector α n) : Vector α n := x.map Math.acos
+defun atan [Atan α] (x : Vector α n) : Vector α n := x.map Math.atan
+defun atan2 [Atan2 α] (y x : Vector α n) : Vector α n := (y.zip x).map Math.atan2.uncurry
+defun sinh [Sinh α] (x : Vector α n) : Vector α n := x.map Math.sinh
+defun cosh [Cosh α] (x : Vector α n) : Vector α n := x.map Math.cosh
+defun tanh [Tanh α] (x : Vector α n) : Vector α n := x.map Math.tanh
 
 
 -- ============================================================================
 -- Exponential and Logarithmic Functions
 -- ============================================================================
 
-def exp [Exp α] (x : Vector α n) : Vector α n := x.map Math.exp
-def exp2 [Exp2 α] (x : Vector α n) : Vector α n := x.map Math.exp2
-def log [Log α] (x : Vector α n) : Vector α n := x.map Math.log
-def log2 [Log2 α] (x : Vector α n) : Vector α n := x.map Math.log2
-def log10 [Log10 α] (x : Vector α n) : Vector α n := x.map Math.log10
-def sqrt [Sqrt α] (x : Vector α n) : Vector α n := x.map Math.sqrt
-def invsqrt [Invsqrt α] (x : Vector α n) : Vector α n := x.map Math.invsqrt
+defun exp [Exp α] (x : Vector α n) : Vector α n := x.map Math.exp
+defun exp2 [Exp2 α] (x : Vector α n) : Vector α n := x.map Math.exp2
+defun log [Log α] (x : Vector α n) : Vector α n := x.map Math.log
+defun log2 [Log2 α] (x : Vector α n) : Vector α n := x.map Math.log2
+defun log10 [Log10 α] (x : Vector α n) : Vector α n := x.map Math.log10
+defun sqrt [Sqrt α] (x : Vector α n) : Vector α n := x.map Math.sqrt
+defun invsqrt [Invsqrt α] (x : Vector α n) : Vector α n := x.map Math.invsqrt
 
 
 -- ============================================================================
 -- Basic Arithmetic and Comparison
 -- ============================================================================
 
-def abs [Abs α] (x : Vector α n) : Vector α n := x.map Math.abs
-def sign [Sign α] (x : Vector α n) : Vector α n := x.map Math.sign
-def clamp [Clamp α] (x : Vector α n) (lo hi : α) : Vector α n := x.map (Math.clamp · lo hi)
-def floor [Floor α] (x : Vector α n) : Vector α n := x.map Math.floor
-def ceil [Ceil α] (x : Vector α n) : Vector α n := x.map Math.ceil
-def round [Round α] (x : Vector α n) : Vector α n := x.map Math.round
-def trunc [Trunc α] (x : Vector α n) : Vector α n := x.map Math.trunc
-def fract [Fract α] (x : Vector α n) : Vector α n := x.map Math.fract
+defun abs [Abs α] (x : Vector α n) : Vector α n := x.map Math.abs
+defun sign [Sign α] (x : Vector α n) : Vector α n := x.map Math.sign
+defun clamp [Clamp α α] (x : Vector α n) (lo hi : α) : Vector α n := x.map (Math.clamp · lo hi)
+defun floor [Floor α] (x : Vector α n) : Vector α n := x.map Math.floor
+defun ceil [Ceil α] (x : Vector α n) : Vector α n := x.map Math.ceil
+defun round [Round α] (x : Vector α n) : Vector α n := x.map Math.round
+defun trunc [Trunc α] (x : Vector α n) : Vector α n := x.map Math.trunc
+defun fract [Fract α] (x : Vector α n) : Vector α n := x.map Math.fract
 
 
 -- ============================================================================
@@ -91,7 +89,7 @@ def approxEqual [Abs α] [Sub α] [Inhabited α] [Max α] [LE α] [DecidableLE �
 
 variable [Add α] [Sub α] [Mul α] [Div α] [Zero α]
 
-def dot (u v : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*v[i])
+defun dot (u v : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*v[i])
 -- todo: unify the to `cross` once defun works for these
 def cross2 (u v : Vector α 2) : α := u.x * v.y - u.y * v.x
 def cross3 (u v : Vector α 3) : Vector α 3 :=
@@ -99,24 +97,24 @@ def cross3 (u v : Vector α 3) : Vector α 3 :=
      u.z * v.x - u.x * v.z,
      u.x * v.y - u.y * v.x]
 -- def cross4 (u v : Vector α 3) : Vector α 8 := sorry
-def length2 (u : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*u[i])
-def length [Sqrt α] (u : Vector α n) : α := Math.sqrt u.length2
-def distance2 (u v : Vector α n) : α := (u-v).length2
-def distance [Sqrt α] (u v : Vector α n) : α := Math.sqrt (u.distance2 v)
-def normalize [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n × α :=
+defun length2 (u : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*u[i])
+defun length [Sqrt α] (u : Vector α n) : α := Math.sqrt u.length2
+defun distance2 (u v : Vector α n) : α := (u-v).length2
+defun distance [Sqrt α] (u v : Vector α n) : α := Math.sqrt (u.distance2 v)
+defun normalize [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n × α :=
   let len := u.length
   if len ≈ 0 then
     (u, 0)
   else
     (u / len, len)
-def normalized [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n :=
+defun normalized [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n :=
   u.normalize.1
 
-def reflect [OfNat α 2] (v normal : Vector α n) : Vector α n :=
+defun reflect [OfNat α 2] (v normal : Vector α n) : Vector α n :=
   let d := v.dot normal
   v - 2 * d * normal
 
-def refract [One α] [Sqrt α] [LT α] [DecidableLT α] (v normal : Vector α n) (eta : α) : Vector α n :=
+defun refract [One α] [Sqrt α] [LT α] [DecidableLT α] (v normal : Vector α n) (eta : α) : Vector α n :=
   let dt := v.dot normal
   let k := 1 - eta * eta * (1 - dt * dt)
   if k < 0 then 0
@@ -124,10 +122,10 @@ def refract [One α] [Sqrt α] [LT α] [DecidableLT α] (v normal : Vector α n)
     let s := eta * dt + Math.sqrt k
     eta * v - s * normal
 
-def compMul (x y : Vector α n) : Vector α n :=
+defun compMul (x y : Vector α n) : Vector α n :=
   x.mapFinIdx (fun i xi _ => xi * y[i])
 
-def compDiv (x y : Vector α n) : Vector α n :=
+defun compDiv (x y : Vector α n) : Vector α n :=
   x.mapFinIdx (fun i xi _ => xi / y[i])
 
 
@@ -135,23 +133,23 @@ def compDiv (x y : Vector α n) : Vector α n :=
 -- Interpolation and Smoothing (elementwise)
 -- ============================================================================
 
-def smoothstep [Smoothstep α] (edge0 edge1 v : Vector α n) : Vector α n :=
+defun smoothstep [Smoothstep α] (edge0 edge1 v : Vector α n) : Vector α n :=
   v.mapFinIdx (fun i vi _ => Math.smoothstep edge0[i] edge1[i] vi)
 
-def step [Step α] (edge v : Vector α n) : Vector α n :=
+defun step [Step α] (edge v : Vector α n) : Vector α n :=
   v.mapFinIdx (fun i vi _ => Math.step edge[i] vi)
 
-def hermite [Hermite α α] (p0 p1 t0 t1 : Vector α n) (t : α) : Vector α n :=
+defun hermite [Hermite α α] (p0 p1 t0 t1 : Vector α n) (t : α) : Vector α n :=
   .ofFn fun i => Math.hermite p0[i] p1[i] t0[i] t1[i] t
 
-def catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Vector α n) (t : α) : Vector α n :=
+defun catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Vector α n) (t : α) : Vector α n :=
   .ofFn fun i => Math.catmullRom p0[i] p1[i] t0[i] t1[i] t
 
-def slerp [Add α] [Zero α] [Mul α] [Sqrt α] [ApproxEqual α] [Clamp α] [One α] [Neg α] [Acos α] [Abs α]
+defun slerp [Add α] [Zero α] [Mul α] [Sqrt α] [ApproxEqual α] [Clamp α α] [One α] [Neg α] [Acos α] [Abs α]
     [Sin α] [Sub α] [Lerp (Vector α n) α]
     (v w : Vector α n) (t : α) : Vector α n :=
   let d := v.normalized.dot w.normalized
-  let d := Math.clamp d (-1) 1
+  let d := Math.clamp d (-1:α) (1:α)
   let theta := Math.acos d
   if theta ≈ 0 then
     Math.lerp v w t
@@ -173,13 +171,13 @@ instance : Lerp (Vector Float n) Float where
 -- Geometric Queries
 -- ============================================================================
 
-def insideBox [LE α] [DecidableLE α] (point boxMin boxMax : Vector α n) : Bool :=
-  ∀ i : Fin n, boxMin[i] ≤ point[i] ∧ point[i] ≤ boxMax[i]
+defun insideBox [LE α] [DecidableLE α] (point boxMin boxMax : Vector α n) : Bool :=
+  decide (∀ i : Fin n, boxMin[i] ≤ point[i] ∧ point[i] ≤ boxMax[i])
 
-def projectToSegment [Clamp α] [One α] (point a b : Vector α n) : Vector α n :=
+defun projectToSegment [Clamp α α] [Zero α] [One α] (point a b : Vector α n) : Vector α n :=
   let ab := b - a
   let ap := point - a
-  let t := Math.clamp ((ap.dot ab) / ab.length2) 0 1
+  let t := Math.clamp ((ap.dot ab) / ab.length2) (0:α) (1:α)
   a + t * ab
 
 

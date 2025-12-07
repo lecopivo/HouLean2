@@ -101,24 +101,26 @@ declfun solveQR {α β} (A : α) (b : β) : β
 -- LU Decomposition
 -- ============================================================================
 
+variable {α : Type}
+
 /-- LU decomposition: A = P * L * U.
 
 Returns (L, U, P) where:
 - L is lower triangular with 1s on diagonal
 - U is upper triangular
 - P is permutation matrix -/
-declfun luDecomposition {α} (m : α) : α × α × α
+declfun luDecomposition (m : α) : α × α × α
 
 /-- LU decomposition without pivoting: A = L * U.
 
 Returns (L, U). May be unstable for certain matrices. -/
-declfun luDecompositionNoPivot {α} (m : α) : α × α
+declfun luDecompositionNoPivot (m : α) : α × α
 
 /-- Extract L matrix from LU decomposition. -/
-declfun luLowerMatrix {α} (m : α) : α
+declfun luLowerMatrix (m : α) : α
 
 /-- Extract U matrix from LU decomposition. -/
-declfun luUpperMatrix {α} (m : α) : α
+declfun luUpperMatrix (m : α) : α
 
 -- ============================================================================
 -- Cholesky Decomposition (LLT)
@@ -128,12 +130,12 @@ declfun luUpperMatrix {α} (m : α) : α
 
 For symmetric positive definite matrices.
 Returns lower triangular matrix L. -/
-declfun choleskyDecomposition {α} (m : α) : α
+declfun choleskyDecomposition (m : α) : α
 
 /-- Modified Cholesky decomposition that works for symmetric matrices.
 
 Returns L such that A ≈ L * Lᵀ even if A is not positive definite. -/
-declfun choleskyModified {α} (m : α) : α
+declfun choleskyModified (m : α) : α
 
 -- ============================================================================
 -- LDLT Decomposition
@@ -145,13 +147,13 @@ For symmetric matrices. More numerically stable than Cholesky.
 Returns (L, D) where:
 - L is lower triangular with 1s on diagonal
 - D is diagonal matrix -/
-declfun ldltDecomposition {α} (m : α) : α × α
+declfun ldltDecomposition (m : α) : α × α
 
 /-- Extract L matrix from LDLT decomposition. -/
-declfun ldltLowerMatrix {α} (m : α) : α
+declfun ldltLowerMatrix (m : α) : α
 
 /-- Extract D matrix from LDLT decomposition. -/
-declfun ldltDiagonalMatrix {α} (m : α) : α
+declfun ldltDiagonalMatrix (m : α) : α
 
 -- ============================================================================
 -- QR Decomposition
@@ -162,19 +164,19 @@ declfun ldltDiagonalMatrix {α} (m : α) : α
 Returns (Q, R) where:
 - Q is orthogonal matrix
 - R is upper triangular matrix -/
-declfun qrDecomposition {α} (m : α) : α × α
+declfun qrDecomposition (m : α) : α × α
 
 /-- QR decomposition using Gram-Schmidt process. -/
-declfun qrGramSchmidt {α} (m : α) : α × α
+declfun qrGramSchmidt (m : α) : α × α
 
 /-- QR decomposition using Householder reflections (more stable). -/
-declfun qrHouseholder {α} (m : α) : α × α
+declfun qrHouseholder (m : α) : α × α
 
 /-- Extract Q matrix from QR decomposition. -/
-declfun qrOrthogonalMatrix {α} (m : α) : α
+declfun qrOrthogonalMatrix (m : α) : α
 
 /-- Extract R matrix from QR decomposition. -/
-declfun qrUpperMatrix {α} (m : α) : α
+declfun qrUpperMatrix (m : α) : α
 
 -- ============================================================================
 -- Singular Value Decomposition (SVD)
@@ -186,26 +188,28 @@ Returns (U, Σ, V) where:
 - U is orthogonal matrix (left singular vectors)
 - Σ is diagonal matrix of singular values (in descending order)
 - V is orthogonal matrix (right singular vectors) -/
-declfun svdDecomposition {α} (m : α) : α × α × α
+declfun svdDecomposition (m : α) : α × α × α
+
+variable {β : Type}
 
 /-- Extract singular values as a vector. -/
-declfun singularValues {α β} (m : α) : β
+declfun singularValues (m : α) : β
 
 /-- Extract largest singular value. -/
-declfun largestSingularValue {α} (m : α) : Float
+declfun largestSingularValue (m : α) : Float
 
 /-- Extract smallest singular value. -/
-declfun smallestSingularValue {α} (m : α) : Float
+declfun smallestSingularValue (m : α) : Float
 
 /-- Moore-Penrose pseudoinverse using SVD.
 
 Works for non-square and singular matrices. -/
-declfun pseudoInverse {α} (m : α) : α
+declfun pseudoInverse (m : α) : α
 
 /-- Low-rank approximation using SVD.
 
 `svdApprox m k` returns best rank-k approximation of m. -/
-declfun svdApprox {α} (m : α) (k : Int) : α
+declfun svdApprox (m : α) (k : Int) : α
 
 -- ============================================================================
 -- Eigenvalue Decomposition
@@ -217,27 +221,27 @@ For diagonalizable matrices.
 Returns (V, D) where:
 - V is matrix of eigenvectors (columns)
 - D is diagonal matrix of eigenvalues -/
-declfun eigenDecomposition {α} (m : α) : α × α
+declfun eigenDecomposition (m : α) : α × α
 
 /-- Extract eigenvalues as a vector (may be complex for real matrices). -/
-declfun eigenvalues {α β} (m : α) : β
+declfun eigenvalues (m : α) : β
 
 /-- Extract eigenvectors as columns of a matrix. -/
-declfun eigenvectors {α} (m : α) : α
+declfun eigenvectors (m : α) : α
 
 /-- Extract largest eigenvalue by magnitude. -/
-declfun largestEigenvalue {α} (m : α) : Float
+declfun largestEigenvalue (m : α) : Float
 
 /-- Extract smallest eigenvalue by magnitude. -/
-declfun smallestEigenvalue {α} (m : α) : Float
+declfun smallestEigenvalue (m : α) : Float
 
 /-- Compute dominant eigenvector using power iteration.
 
 Returns (eigenvector, eigenvalue) pair. -/
-declfun powerIteration {α β} (m : α) (maxIter : Int := 100) : β × Float
+declfun powerIteration (m : α) (maxIter : Int := 100) : β × Float
 
 /-- Spectral radius (maximum absolute eigenvalue). -/
-declfun spectralRadius {α} (m : α) : Float
+declfun spectralRadius (m : α) : Float
 
 -- ============================================================================
 -- Symmetric Eigenvalue Decomposition
@@ -249,10 +253,10 @@ More efficient and numerically stable than general eigenvalue decomposition.
 Returns (Q, Λ) where:
 - Q is orthogonal matrix of eigenvectors
 - Λ is diagonal matrix of real eigenvalues -/
-declfun symmetricEigenDecomposition {α} (m : α) : α × α
+declfun symmetricEigenDecomposition (m : α) : α × α
 
 /-- Compute eigenvalues for symmetric matrix (guaranteed to be real). -/
-declfun symmetricEigenvalues {α β} (m : α) : β
+declfun symmetricEigenvalues (m : α) : β
 
 -- ============================================================================
 -- Matrix Factorizations
@@ -263,14 +267,14 @@ declfun symmetricEigenvalues {α β} (m : α) : β
 Returns (U, P) where:
 - U is orthogonal matrix
 - P is symmetric positive semi-definite matrix -/
-declfun polarDecomposition {α} (m : α) : α × α
+declfun polarDecomposition (m : α) : α × α
 
 /-- Schur decomposition: A = Q * T * Qᵀ.
 
 Returns (Q, T) where:
 - Q is orthogonal matrix
 - T is upper triangular (real Schur form) or block upper triangular -/
-declfun schurDecomposition {α} (m : α) : α × α
+declfun schurDecomposition (m : α) : α × α
 
 -- ============================================================================
 -- Gaussian Elimination
@@ -279,16 +283,16 @@ declfun schurDecomposition {α} (m : α) : α × α
 /-- Gaussian elimination with partial pivoting.
 
 Returns row echelon form of the matrix. -/
-declfun gaussianElimination {α} (m : α) : α
+declfun gaussianElimination (m : α) : α
 
 /-- Gaussian elimination to reduced row echelon form (RREF). -/
-declfun reducedRowEchelon {α} (m : α) : α
+declfun reducedRowEchelon (m : α) : α
 
 /-- Back substitution for upper triangular system. -/
-declfun backSubstitution {α β} (U : α) (b : β) : β
+declfun backSubstitution (U : α) (b : β) : β
 
 /-- Forward substitution for lower triangular system. -/
-declfun forwardSubstitution {α β} (L : α) (b : β) : β
+declfun forwardSubstitution (L : α) (b : β) : β
 
 -- ============================================================================
 -- Matrix Functions
@@ -297,25 +301,25 @@ declfun forwardSubstitution {α β} (L : α) (b : β) : β
 /-- Matrix exponential: exp(A) = I + A + A²/2! + A³/3! + ...
 
 Computed using Padé approximation or scaling and squaring. -/
-declfun matrixExp {α} (m : α) : α
+declfun matrixExp (m : α) : α
 
 /-- Matrix logarithm: log(A) such that exp(log(A)) = A.
 
 Only defined for matrices with no eigenvalues on negative real axis. -/
-declfun matrixLog {α} (m : α) : α
+declfun matrixLog (m : α) : α
 
 /-- Matrix power: A^k for integer k.
 
 Uses repeated squaring for efficiency. -/
-declfun matrixPower {α} (m : α) (k : Int) : α
+declfun matrixPower (m : α) (k : Int) : α
 
 /-- Matrix square root: B such that B * B = A.
 
 Uses principal square root. -/
-declfun matrixSqrt {α} (m : α) : α
+declfun matrixSqrt (m : α) : α
 
 /-- Matrix sign function: sign(A) computed via Newton iteration. -/
-declfun matrixSign {α} (m : α) : α
+declfun matrixSign (m : α) : α
 
 -- ============================================================================
 -- Gram Matrix and Related
@@ -324,13 +328,13 @@ declfun matrixSign {α} (m : α) : α
 /-- Gram matrix: Gᵢⱼ = ⟨vᵢ, vⱼ⟩ where vᵢ are columns of A.
 
 Returns G = Aᵀ * A. -/
-declfun gramMatrix {α} (m : α) : α
+declfun gramMatrix (m : α) : α
 
 /-- Orthogonalize matrix columns using Gram-Schmidt process. -/
-declfun gramSchmidt {α} (m : α) : α
+declfun gramSchmidt (m : α) : α
 
 /-- Orthonormalize matrix columns (Gram-Schmidt with normalization). -/
-declfun orthonormalize {α} (m : α) : α
+declfun orthonormalize (m : α) : α
 
 -- ============================================================================
 -- Least Squares
@@ -339,38 +343,38 @@ declfun orthonormalize {α} (m : α) : α
 /-- Solve least squares problem: minimize ‖Ax - b‖².
 
 Returns x that minimizes the residual. -/
-declfun leastSquares {α β} (A : α) (b : β) : β
+declfun leastSquares (A : α) (b : β) : β
 
 /-- Solve weighted least squares: minimize ‖W(Ax - b)‖². -/
-declfun weightedLeastSquares {α β} (A : α) (b : β) (W : α) : β
+declfun weightedLeastSquares (A : α) (b : β) (W : α) : β
 
 /-- QR-based least squares solution. -/
-declfun leastSquaresQR {α β} (A : α) (b : β) : β
+declfun leastSquaresQR (A : α) (b : β) : β
 
 /-- SVD-based least squares solution (more stable for rank-deficient problems). -/
-declfun leastSquaresSVD {α β} (A : α) (b : β) : β
+declfun leastSquaresSVD (A : α) (b : β) : β
 
 -- ============================================================================
 -- Matrix Construction Utilities
 -- ============================================================================
 
 /-- Create identity matrix. -/
-declfun identity {α} : α
+declfun identity {α : Type} : α
 
 /-- Create zero matrix. -/
-declfun zeros {α} : α
+declfun zeros {α : Type} : α
 
 /-- Create matrix with all ones. -/
-declfun ones {α} : α
+declfun ones {α : Type} : α
 
 /-- Create diagonal matrix from vector. -/
-declfun diag {α β} (v : β) : α
+declfun diag (v : β) : α
 
 /-- Extract diagonal of matrix as vector. -/
-declfun getDiag {α β} (m : α) : β
+declfun getDiag (m : α) : β
 
 /-- Create matrix from outer product: A = u * vᵀ. -/
-declfun outerProduct {α β} (u v : β) : α
+declfun outerProduct (u v : β) : α
 
 -- ============================================================================
 -- Block Matrix Operations

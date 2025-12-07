@@ -1,6 +1,7 @@
 import Lean
 import HouLean.Init
 import HouLean.Meta.SimpTheoremName
+import HouLean.Meta.RewriteBy
 
 namespace HouLean
 
@@ -19,6 +20,27 @@ abbrev OpenCLM := StateM OpenCL.RealWorld
 namespace OpenCL
 
 
+def inlinedLoopM {m} [Monad m] (n : Nat) (f : Fin n → α → m α) (init : α) : m α :=
+  go n ⟨0, sorry_proof⟩ init
+where
+  go (fuel : Nat) (i : Fin n) (x : α) : m α := do
+    match fuel with
+    | 0 => return x
+    | fuel+1 =>
+      let a ← f i x
+      go fuel ⟨i.1+1, sorry_proof⟩ a
+
+def inlinedLoop (n : Nat) (f : Fin n → α → α) (init : α) : α :=
+  go n ⟨0, sorry_proof⟩ init
+where
+  go (fuel : Nat) (i : Fin n) (x : α) : α :=
+    match fuel with
+    | 0 => x
+    | fuel+1 =>
+      let a := f i x
+      go fuel ⟨i.1+1, sorry_proof⟩ a
+
+
 -- =================================================================================================
 -- Implemented By
 -- =================================================================================================
@@ -26,9 +48,9 @@ namespace OpenCL
 
 register_simp_attr opencl_csimp
 
-/-- OpenCL compiler will replace `original` with `replacement` -/
-class ImplementedBy {α} (original : α) (replacement : outParam α) where
-  valid : original = replacement
+-- /-- OpenCL compiler will replace `original` with `replacement` -/
+-- class ImplementedBy {α} (original : α) (replacement : outParam α) where
+--   valid : original = replacement
 
 /-- OpenCL compiler rewrite rule,
 `implemented_by ... : lhs = rhs` will rewrite `rhs` with `lhs` at compile time.
@@ -205,7 +227,7 @@ namespace OpenCLFunction
 
 inductive FunKind where
   | normal
-  | infix
+  | infix (priority : Nat := 100)
   | prefix
   | postfix
   | constructor

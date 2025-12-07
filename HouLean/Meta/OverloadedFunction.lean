@@ -57,118 +57,102 @@ instance : Sin Float where
 -/
 syntax (docComment)? "defun" declId bracketedBinder* (":" term)? ":=" term : command
 
-open Lean.Parser.Term in
-/-- Extract leading implicit and instance implicit binders from a binder array. -/
-def extractImplicitBinders (binders : TSyntaxArray ``bracketedBinder) :
-    Array (TSyntax ``bracketedBinder) × Array (TSyntax ``bracketedBinder) :=
-  let implicit := binders.takeWhile fun b : TSyntax ``bracketedBinder =>
-    match b with
-    | `(bracketedBinder| { $_* $[: $_]?})
-    | `(bracketedBinder| [ $_ ])
-    | `(bracketedBinder| [ $_ : $_ ]) => true
-    | _ =>
-      false
-  (implicit, binders[implicit.size:])
-
-open Lean.Parser.Term in
-/-- Convert implicit binders `{x}` to explicit binders `(x)`. -/
-def implicitBindersToExplicit (binders : TSyntaxArray ``bracketedBinder) :
-    MacroM (TSyntaxArray ``bracketedBinder) :=
-  binders.mapM fun b : TSyntax ``bracketedBinder =>
-    match b with
-    | `(bracketedBinder| { $x* }) => `(bracketedBinder| ( $x* ))
-    | `(bracketedBinder| { $x* : $t }) => `(bracketedBinder| ( $x* : $t ))
-    | b => pure b
-
-open Lean Elab Command in
+open Lean Meta Elab Parser Term Command PrettyPrinter in
 elab_rules : command
 | `($[$doc:docComment]? declfun $id:ident $bs:bracketedBinder* : $ty:term) => do
-  let className := mkIdent <| id.getId.capitalize
-  let (classBinders, funBinders) := extractImplicitBinders bs
-  let classBinders ← liftMacroM <| implicitBindersToExplicit classBinders
 
-  elabCommand (← `(class $className:ident $classBinders* where
+  let (clsBinders, funBinders) ←
+    runTermElabM fun ctx => do
+    Term.elabBinders bs fun xs => do
+    let r ← elabType ty
+
+    let ts ← liftM <| xs.mapM inferType
+    let ts := ts.push r
+    let ctx' := ctx.filter (fun c => ts.any (fun x => x.containsFVar c.fvarId!))
+
+    let mut clsBinders : Array (TSyntax ``bracketedBinder) := #[]
+    let mut funBinders : Array (TSyntax ``bracketedBinder) := #[]
+
+    for x in ctx' ++ xs do
+      let t ← inferType x >>= Lean.Elab.Term.levelMVarToParam
+      let n ← x.fvarId!.getUserName
+      let ty ← delab t
+      let id := mkIdent n
+      match ← x.fvarId!.getBinderInfo with
+      | .default =>
+        funBinders := funBinders.push (← `(bracketedBinder| ($id : $ty)))
+      | .implicit =>
+        clsBinders := clsBinders.push (← `(bracketedBinder| ($id : $ty)))
+      | .instImplicit =>
+        clsBinders := clsBinders.push (← `(bracketedBinder| [$ty]))
+      | .strictImplicit =>
+        clsBinders := clsBinders.push (← `(bracketedBinder| {$id : $ty}))
+    return (clsBinders, funBinders)
+  let className := mkIdent <| id.getId.capitalize
+  let cmd ← `(class $className:ident $clsBinders* where
       $[$doc:docComment]?
-      $id:ident $funBinders:bracketedBinder* : $ty))
+      $id:ident $funBinders:bracketedBinder* : $ty)
+  elabCommand cmd
 
   elabCommand (← `(export $className ($id)))
 
-open Meta Elab Command Term in
+open Lean Meta Elab Command Term in
 elab_rules : command
 | `($[$doc:docComment]? defun $id:ident $bs:bracketedBinder* $[: $ty:term]? := $body) => do
-  liftTermElabM do
-    unless id.getId.isStr do
-      throwError "invalid function name {id}"
 
-    let funName := id.getId.getString!
-    let className := funName.capitalize
-    let funId ← resolveGlobalConstNoOverload (mkIdent <| Name.mkSimple className |>.append (.mkSimple funName))
-    let classId ← resolveGlobalConstNoOverload (mkIdent <| Name.mkSimple className)
+  runTermElabM fun _ctx => do
+  Term.elabBinders bs fun xs => do
 
-    -- Elaborate function definition
-    let f ← Term.elabBinders bs fun xs => do
-      let t? ← ty.mapM (elabTerm · none)
-      let b ← elabTermAndSynthesize body t?
-      mkLambdaFVars xs b
-    let F ← inferType f >>= instantiateMVars
+  let type? ← ty.mapM elabType
+  let body ← elabTermAndSynthesize body type?
 
-    if F.hasLevelMVar then
-      throwError "Universe polymorphic functions are not supported yet!"
+  let xs' ← xs.filterM (fun x => (·.isExplicit) <$> x.fvarId!.getBinderInfo)
+  let f ← mkLambdaFVars xs' body
 
-    -- Prepare function declaration with mvars
-    let funExpr ← mkConstWithFreshMVarLevels funId
-    let classExpr ← mkConstWithFreshMVarLevels classId
-    let (ys, _, _) ← forallMetaTelescope (← inferType classExpr)
-    let classExpr := classExpr.beta ys
-    let inst ← mkFreshExprMVar classExpr
-    let funExpr := funExpr.beta (ys.push inst)
-    let funType ← inferType funExpr
+  let className := id.getId.getString!.capitalize
+  let className ← resolveGlobalConstNoOverload (mkIdent (.mkSimple className))
+  let inst ← mkAppM (className.append `mk) #[f]
+  let ys := (← inst.collectFVars.run {}).2.fvarIds.map Expr.fvar
+  let inst ← mkLambdaFVars ys inst >>= instantiateMVars
+  let f ← mkLambdaFVars ys f >>= instantiateMVars
 
-    -- Overload should have the same type, which fills type mvars
-    if ← isDefEq funType F then
-      let classExpr ← instantiateMVars classExpr
-      let mut inst ← mkAppM (classId.append `mk) #[f] >>= instantiateMVars
-
-      let ns ← getCurrNamespace
-      let strName :=
-        if id.getId.getNumParts > 1 then
-          id.getId.getPrefix
-        else
-          ns
-
-      -- Handle member function case
-      if (← getEnv).contains strName then
-        -- Resolve namespace properly
-        let funName := id.getId.getString!
-        let strId ← resolveGlobalConstNoOverload (mkIdent strName)
-        let declId := strId.append (.mkSimple funName)
-        let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) f + 1)
-        let decl ← Lean.mkDefinitionValInferringUnsafe declId [] F f hints
-        addDeclarationRangesFromSyntax declId id
-
-
-        -- Add documentation if provided
-        match doc with
-        | some doc =>
-          addDecl (Declaration.defnDecl decl)
-          addDocString declId (mkNullNode bs) doc
-          compileDecl (Declaration.defnDecl decl)
-        | none =>
-          addAndCompile (Declaration.defnDecl decl)
-
-        inst ← mkAppM (classId.append `mk) #[(.const declId [])]
-
-      -- Generate and add instance
-      let instName := (← getCurrNamespace) ++ (← NameGen.mkBaseNameWithSuffix "inst" classExpr)
-      if (←getEnv).contains instName then
-        throwError "Enviroment already contains {instName}"
-      let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) inst + 1)
-      let decl ← Lean.mkDefinitionValInferringUnsafe instName [] classExpr inst hints
-      addAndCompile (Declaration.defnDecl decl)
-      addInstance instName AttributeKind.global (eval_prio default)
-      addDeclarationRangesFromSyntax instName id
+  let ns ← getCurrNamespace
+  let strName :=
+    if id.getId.getNumParts > 1 then
+      id.getId.getPrefix
     else
-      throwError m!"Invalid function type {F}, expected {funType}!"
+      ns
+
+  -- Handle member function case
+  if (← getEnv).contains strName then
+    -- Resolve namespace properly
+    let F ← inferType f
+    let funName := id.getId.getString!
+    let strId ← resolveGlobalConstNoOverload (mkIdent strName)
+    let declId := strId.append (.mkSimple funName)
+    let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) f + 1)
+    let decl ← Lean.mkDefinitionValInferringUnsafe declId [] F f hints
+    addDeclarationRangesFromSyntax declId id
+
+    -- Add documentation if provided
+    match doc with
+    | some doc =>
+      addDecl (Declaration.defnDecl decl)
+      addDocString declId (mkNullNode bs) doc
+      compileDecl (Declaration.defnDecl decl)
+    | none =>
+      addAndCompile (Declaration.defnDecl decl)
+
+  -- Generate and add instance
+  let classExpr ← inferType inst
+  let instName := (← getCurrNamespace) ++ (← NameGen.mkBaseNameWithSuffix "inst" classExpr)
+  if (←getEnv).contains instName then
+    throwError "Enviroment already contains {instName}"
+  let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) inst + 1)
+  let decl ← Lean.mkDefinitionValInferringUnsafe instName [] classExpr inst hints
+  addAndCompile (Declaration.defnDecl decl)
+  addInstance instName AttributeKind.global (eval_prio default)
+  addDeclarationRangesFromSyntax instName id
 
 
 end HouLean.Meta
