@@ -195,39 +195,34 @@ defun Float.compDiv (x y : Float) : Float := x / y
 -- Interpolation and Smoothing
 -- ============================================================================
 
-instance : Lerp R R where
-  lerp x y t := x + (y - x) * t
+defun lerp (x y t : R) := x + (y - x) * t
 
-instance : Smoothstep R where
-  smoothstep x edge0 edge1 :=
-    let t := clamp x edge0 edge1
-    let t := (t - edge0) / (edge1 - edge0)
-    t * t * (3.0 - 2.0 * t)
+defun smoothstep (x edge0 edge1 : R) :=
+  let t := clamp x edge0 edge1
+  let t := (t - edge0) / (edge1 - edge0)
+  t * t * (3.0 - 2.0 * t)
 
-instance : Step R where
-  step x edge := if x < edge then 0.0 else 1.0
+defun step (x edge : R) : R :=
+  if x < edge then 0.0 else 1.0
 
-instance : Hermite R R where
-  hermite p0 p1 t0 t1 t :=
-    let t2 := t * t
-    let t3 := t2 * t
-    let h00 := 2.0 * t3 - 3.0 * t2 + 1.0
-    let h10 := t3 - 2.0 * t2 + t
-    let h01 := -2.0 * t3 + 3.0 * t2
-    let h11 := t3 - t2
-    h00 * p0 + h10 * t0 + h01 * p1 + h11 * t1
+defun hermite (p0 p1 t0 t1 t : R) :=
+  let t2 := t * t
+  let t3 := t2 * t
+  let h00 := 2.0 * t3 - 3.0 * t2 + 1.0
+  let h10 := t3 - 2.0 * t2 + t
+  let h01 := -2.0 * t3 + 3.0 * t2
+  let h11 := t3 - t2
+  h00 * p0 + h10 * t0 + h01 * p1 + h11 * t1
 
-instance : CatmullRom R R where
-  catmullRom p0 p1 p2 p3 t :=
-    let t2 := t * t
-    let t3 := t2 * t
-    0.5 * ((2.0 * p1) +
-           (-p0 + p2) * t +
-           (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
-           (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3)
+defun catmullRom (p0 p1 p2 p3 t : R) :=
+  let t2 := t * t
+  let t3 := t2 * t
+  0.5 * ((2.0 * p1) +
+         (-p0 + p2) * t +
+         (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
+         (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3)
 
-instance : Slerp R R where
-  slerp x y t := lerp x y t
+defun slerp (x y t : R) := lerp x y t
 
 
 -- ============================================================================
@@ -242,10 +237,8 @@ defun Float.degrees (radians : Float) : Float := radians * (180.0 / 3.1415926535
 -- Geometric Queries (scalar versions)
 -- ============================================================================
 
-instance : InsideBox R where
-  insideBox point boxMin boxMax :=
-    boxMin <= point && point <= boxMax
+defun insideBox (point boxMin boxMax : R) :=
+  boxMin <= point && point <= boxMax
 
-instance : ProjectToSegment R where
-  projectToSegment point a b :=
-    clamp point (min a b) (max a b)
+defun projectToSegment (point a b : R) :=
+  clamp point (min a b) (max a b)
