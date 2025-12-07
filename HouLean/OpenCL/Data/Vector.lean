@@ -3,7 +3,7 @@ import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Data.Float
 import HouLean.OpenCL.Data.Fin
 import HouLean.OpenCL.Data.ArgList
-
+import HouLean.OpenCL.Data.InlinedLoop
 
 namespace HouLean.OpenCL
 
@@ -24,8 +24,6 @@ implemented_by [t : AtomicOpenCLType α] [Inhabited α] (n) (f : (Fin n) → α)
   =
   (oclFunction (ArgList α → Vector α n) s!"({t.name}{n})" .constructor)
   (ArgList.ofFn f)
-
-attribute [opencl_csimp] inlinedLoop inlinedLoop.go
 
 def componentProjection (i : Nat) : String :=
      (if i = 0 then
