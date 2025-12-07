@@ -320,18 +320,18 @@ declfun degrees {α} (radians : α) : α
 -- Color and HSV Operations
 -- ============================================================================
 
-/-- Convert RGB color to HSV.
+-- /-- Convert RGB color to HSV.
 
-Input/output ranges: R,G,B in [0,1], H in [0,360], S,V in [0,1]. -/
-declfun rgbToHsv (rgb : Vector3) : Vector3
+-- Input/output ranges: R,G,B in [0,1], H in [0,360], S,V in [0,1]. -/
+-- declfun rgbToHsv (rgb : Vector3) : Vector3
 
-/-- Convert HSV color to RGB.
+-- /-- Convert HSV color to RGB.
 
-Input/output ranges: H in [0,360], S,V in [0,1], R,G,B in [0,1]. -/
-declfun hsvToRgb (hsv : Vector3) : Vector3
+-- Input/output ranges: H in [0,360], S,V in [0,1], R,G,B in [0,1]. -/
+-- declfun hsvToRgb (hsv : Vector3) : Vector3
 
-/-- Luminance of RGB color using perceptual weights. -/
-declfun luminance (rgb : Vector3) : Float
+-- /-- Luminance of RGB color using perceptual weights. -/
+-- declfun luminance (rgb : Vector3) : Float
 
 -- ============================================================================
 -- Geometric Queries

@@ -90,6 +90,10 @@ instance : Sign R where
     else if x > 0.0 then 1.0
     else 0.0
 
+defun clamp (x lo hi : R) : R :=
+  if x < lo then lo else if x > hi then hi else x
+
+
 -- ============================================================================
 -- Approximatelly equal
 -- ============================================================================
@@ -106,9 +110,6 @@ instance : ApproxEqual Float32 where
 -- ============================================================================
 -- Basic Arithmetic and Comparison
 -- ============================================================================
-
--- Custom implementations
-defun abs (x : Float) : Float := x.abs
 
 defun Float.sign (x : Float) : Float :=
   if x < 0.0 then -1.0 else if x > 0.0 then 1.0 else 0.0

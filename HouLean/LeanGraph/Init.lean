@@ -110,9 +110,6 @@ attribute [lean_graph_node "Math_catmullRom"] catmullRom
 attribute [lean_graph_node "Math_slerp"] slerp
 attribute [lean_graph_node "Math_radians"] radians
 attribute [lean_graph_node "Math_degrees"] degrees
-attribute [lean_graph_node "Math_rgbToHsv"] rgbToHsv
-attribute [lean_graph_node "Math_hsvToRgb"] hsvToRgb
-attribute [lean_graph_node "Math_luminance"] luminance
 attribute [lean_graph_node "Math_insideBox"] insideBox
 attribute [lean_graph_node "Math_projectToSegment"] projectToSegment
 

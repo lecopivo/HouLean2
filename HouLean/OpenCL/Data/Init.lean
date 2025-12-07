@@ -9,9 +9,6 @@ attribute [opencl_csimp]
   Math.transformPoint
   Math.projectToSegment
   Math.insideBox
-  Math.luminance
-  Math.hsvToRgb
-  Math.rgbToHsv
   Math.degrees
   Math.radians
   Math.slerp
