@@ -44,65 +44,19 @@ instance [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] : 
   set := vstore
 
 -- constructor
-def matrixMk2 (row0 row1 : Vector α n) : Matrix α 2 n := ⟨#v[row0, row1]⟩
-def matrixMk3 (row0 row1 row2 : Vector α n) : Matrix α 3 n := ⟨#v[row0, row1,row2]⟩
-def matrixMk4 (row0 row1 row2 row3 : Vector α n) : Matrix α 4 n := ⟨#v[row0, row1,row2,row3]⟩
-def matrixMk8 (row0 row1 row2 row3 row4 row5 row6 row7 : Vector α n) : Matrix α 8 n :=
-  ⟨#v[row0,row1,row2,row3,row4,row5,row6,row7]⟩
-def matrixMk16 (row0 row1 row2 row3 row4 row5 row6 row7
-                row8 row9 row10 row11 row12 row13 row14 row15 : Vector α n) : Matrix α 16 n :=
-  ⟨#v[row0,row1,row2,row3,row4,row5,row6,row7,
-      row8,row9,row10,row11,row12,row13,row14,row15]⟩
+implemented_by [t : AtomicOpenCLType α] [Inhabited α] (n) (xs : List (Vector α n)) (h) :
+  Matrix.mk (m:=m) (n:=n) (Vector.mk xs.toArray h)
+  =
+  (oclFunction (ArgList (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
+  (ArgList.ofList xs)
 
-section
-variable (row0 row1 row2 row3 : Vector α n)
-implemented_by : #m[row0,row1] = matrixMk2 row0 row1 := by rfl
-implemented_by : #m[row0,row1,row2] = matrixMk3 row0 row1 row2 := by rfl
-implemented_by : #m[row0,row1,row2,row3] = matrixMk4 row0 row1 row2 row3 := by rfl
-
-implemented_by : Matrix.mk (vectorMk2 row0 row1) = matrixMk2 row0 row1 := by rfl
-implemented_by : Matrix.mk (vectorMk3 row0 row1 row2) = matrixMk3 row0 row1 row2 := by rfl
-implemented_by : Matrix.mk (vectorMk4 row0 row1 row2 row3) = matrixMk4 row0 row1 row2 row3 := by rfl
-
-implemented_by (f : Fin 2 → Vector α n) : Matrix.mk (.ofFn f) = matrixMk2 (f 0) (f 1) := by rfl
-implemented_by (f : Fin 3 → Vector α n) : Matrix.mk (.ofFn f) = matrixMk3 (f 0) (f 1) (f 2) := by rfl
-implemented_by (f : Fin 4 → Vector α n) : Matrix.mk (.ofFn f) = matrixMk4 (f 0) (f 1) (f 2) (f 3) := by rfl
-end
-
-section
-variable [AtomicOpenCLType α] [AllowedVectorSize n]
-
-instance : OpenCLFunction (matrixMk2 (α:=α) (n:=n)) where
-  name :=
-    let t : OpenCLType (Matrix α 2 n) := by infer_instance
-    s!"({t.name})"
-  kind := .constructor
-
-instance : OpenCLFunction (matrixMk3 (α:=α) (n:=n)) where
-  name :=
-    let t : OpenCLType (Matrix α 3 n) := by infer_instance
-    s!"({t.name})"
-  kind := .constructor
-
-instance : OpenCLFunction (matrixMk4 (α:=α) (n:=n)) where
-  name :=
-    let t : OpenCLType (Matrix α 4 n) := by infer_instance
-    s!"({t.name})"
-  kind := .constructor
-
-instance : OpenCLFunction (matrixMk8 (α:=α) (n:=n)) where
-  name :=
-    let t : OpenCLType (Matrix α 8 n) := by infer_instance
-    s!"({t.name})"
-  kind := .constructor
-
-instance : OpenCLFunction (matrixMk16 (α:=α) (n:=n)) where
-  name :=
-    let t : OpenCLType (Matrix α 16 n) := by infer_instance
-    s!"({t.name})"
-  kind := .constructor
-
-end
+-- ofFn
+attribute [opencl_csimp] Matrix.ofFn
+implemented_by [t : AtomicOpenCLType α] [Inhabited α] (f : Fin m → Vector α n) :
+  Matrix.mk (m:=m) (n:=n) (.ofFn f)
+  =
+  (oclFunction (ArgList (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
+  (ArgList.ofFn f)
 
 
 /-- Same as `Matrix.col` but `i` is implicit argument thus forced to be compile time evaluated.
@@ -115,7 +69,8 @@ def _root_.HouLean.Matrix.colI {j : Nat} (a : Matrix α m n) (h : j < n := by ge
 theorem opencl_rewrite_matrix_row [Inhabited α] (a : Matrix α m n) (i : Nat) (h) :
     a.row i h
     =
-    (a |> oclFunction (type := Matrix α m n → Vector α n) s!".row{i}" (kind := .postfix)) := sorry_proof
+    (oclFunction (type := Matrix α m n → Vector α n) s!".row{i}" (kind := .postfix))
+    a := sorry_proof
 
 @[opencl_csimp]
 theorem opencl_rewrite_matrix_col (a : Matrix α m n) (j : Nat) (h) :
@@ -129,43 +84,13 @@ theorem opencl_rewrite_matrix_getElem (a : Matrix α m n) (ij : Nat×Nat) (h) :
     =
     (a.row ij.1)[ij.2] := by rfl
 
-
-attribute [opencl_csimp] Matrix.ofFn
-
--- ofFn
-implemented_by (f : (i j : Nat) → (h : i < 2 ∧ j < n) → α) :
-  Matrix.ofFn f = #m[.ofFn (fun j => f 0 j (by grind)),
-                     .ofFn (fun j => f 1 j (by grind))]
-implemented_by (f : (i j : Nat) → (h : i < 3 ∧ j < n) → α) :
-  Matrix.ofFn f = #m[.ofFn (fun j => f 0 j (by grind)),
-                     .ofFn (fun j => f 1 j (by grind)),
-                     .ofFn (fun j => f 2 j (by grind))]
-implemented_by (f : (i j : Nat) → (h : i < 4 ∧ j < n) → α) :
-  Matrix.ofFn f = #m[.ofFn (fun j => f 0 j (by grind)),
-                     .ofFn (fun j => f 1 j (by grind)),
-                     .ofFn (fun j => f 2 j (by grind)),
-                     .ofFn (fun j => f 3 j (by grind))]
-
 -- map
-implemented_by (a : Matrix α m n) (f : α → β) :
-    a.map f = a.mapRows (fun row => row.map f)
+implemented_by (a : Matrix α m n) (f : (i : Nat) → Vector α n → (i < m)→ Vector β n) :
+    a.mapRowsFinIdx f = let a := a; .mk (.ofFn fun i => f i (a.row i) (by grind))
 
--- mapRows
-implemented_by (a : Matrix α 2 n) (f : Vector α n → Vector β n) :
-    a.mapRows f = #m[f (a.row 0), f (a.row 1)]
-implemented_by (a : Matrix α 3 n) (f : Vector α n → Vector β n) :
-    a.mapRows f = #m[f (a.row 0), f (a.row 1), f (a.row 2)]
-implemented_by (a : Matrix α 4 n) (f : Vector α n → Vector β n) :
-    a.mapRows f = #m[f (a.row 0), f (a.row 1), f (a.row 2), f (a.row 3)]
-
--- mapRows₂
-implemented_by (a : Matrix α 2 n) (b : Matrix β 2 n) (f : Vector α n → Vector β n → Vector γ n) :
-    a.mapRows₂ f b = #m[f (a.row 0) (b.row 0), f (a.row 1) (b.row 1)]
-implemented_by (a : Matrix α 3 n) (b : Matrix β 3 n) (f : Vector α n → Vector β n → Vector γ n) :
-    a.mapRows₂ f b = #m[f (a.row 0) (b.row 0), f (a.row 1) (b.row 1), f (a.row 2) (b.row 2)]
-implemented_by (a : Matrix α 4 n) (b : Matrix β 4 n) (f : Vector α n → Vector β n → Vector γ n) :
-    a.mapRows₂ f b = #m[f (a.row 0) (b.row 0), f (a.row 1) (b.row 1), f (a.row 2) (b.row 2), f (a.row 3) (b.row 3)]
-
+attribute [opencl_csimp]
+  Matrix.mapRowsIdx Matrix.mapRows Matrix.mapRows₂
+  Matrix.mapFinIdx Matrix.mapIdx Matrix.map
 
 -- identity
 def _root_.HouLean.Matrix.identityN {α} [Zero α] [One α] {n : Nat} : Matrix α n n :=
@@ -176,7 +101,7 @@ implemented_by {α} [Zero α] [One α] : (1 : Matrix α n n) = Matrix.identityN 
 
 -- zero
 def _root_.HouLean.Matrix.zeroN {α} [Zero α] {m n : Nat} : Matrix α m n :=
-  .ofFn (fun _ _ _ => 0)
+  .mk (.ofFn fun _ => 0)
 
 implemented_by {α} [Zero α] : Matrix.zero α m n = Matrix.zeroN (α := α) (m:=m) (n:=n) := by rfl
 implemented_by {α} [Zero α] : (0 : Matrix α m n) = Matrix.zeroN (α := α) (m:=m) (n:=n) := by rfl

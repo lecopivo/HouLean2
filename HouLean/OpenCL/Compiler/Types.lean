@@ -11,6 +11,7 @@ structure Context where
 
 structure State where
   compiledFunctions : Array CodeFunction := #[]
+  statements : Array CodeStatement := #[]
   -- all functions that has been compiled in this run
 
 abbrev CompileM := ReaderT Compiler.Context <| StateT State <| SimpM

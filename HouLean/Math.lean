@@ -116,7 +116,7 @@ declfun sign {α} (x : α) : α
 
 `clamp x lo hi` returns `x` clamped to the range `[lo, hi]`.
 Applied elementwise for vectors and matrices. -/
-declfun clamp {α} (x lo hi : α) : α
+declfun clamp {α β} (x : α) (lo hi : β) : α
 
 /-- Floor function. Returns largest integer ≤ x.
 
@@ -222,7 +222,7 @@ declfun distance2 {α} {β : outParam Type} (x y : α) : β
 /-- Normalize a vector and return both the normalized vector and its original length.
 
 `normalize x = (normalized x, length x)` -/
-declfun normalize {α} {β : outParam Type} (x : α) : α × β
+declfun normalize {α : Type} {β : outParam Type} (x : α) : α × β
 
 /-- Normalize a vector to unit length.
 
@@ -320,18 +320,18 @@ declfun degrees {α} (radians : α) : α
 -- Color and HSV Operations
 -- ============================================================================
 
-/-- Convert RGB color to HSV.
+-- /-- Convert RGB color to HSV.
 
-Input/output ranges: R,G,B in [0,1], H in [0,360], S,V in [0,1]. -/
-declfun rgbToHsv (rgb : Vector3) : Vector3
+-- Input/output ranges: R,G,B in [0,1], H in [0,360], S,V in [0,1]. -/
+-- declfun rgbToHsv (rgb : Vector3) : Vector3
 
-/-- Convert HSV color to RGB.
+-- /-- Convert HSV color to RGB.
 
-Input/output ranges: H in [0,360], S,V in [0,1], R,G,B in [0,1]. -/
-declfun hsvToRgb (hsv : Vector3) : Vector3
+-- Input/output ranges: H in [0,360], S,V in [0,1], R,G,B in [0,1]. -/
+-- declfun hsvToRgb (hsv : Vector3) : Vector3
 
-/-- Luminance of RGB color using perceptual weights. -/
-declfun luminance (rgb : Vector3) : Float
+-- /-- Luminance of RGB color using perceptual weights. -/
+-- declfun luminance (rgb : Vector3) : Float
 
 -- ============================================================================
 -- Geometric Queries
@@ -359,9 +359,4 @@ declfun transformVector {T} {V} (transform : T) (vector : V) : V
 /-- Transform normal. -/
 declfun transformNormal {T} {N} (transform : T) (normal : N) : N
 
-
-
-end Math
-
-
-end HouLean
+end HouLean.Math

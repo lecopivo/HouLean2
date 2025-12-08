@@ -15,20 +15,13 @@ instance OpenCL.RealWorld.instNonempty : Nonempty OpenCL.RealWorld :=
 /-- OpenCL Context/Monad. This is the context in which kernels are executed, -/
 abbrev OpenCLM := StateM OpenCL.RealWorld
 
-
 namespace OpenCL
-
 
 -- =================================================================================================
 -- Implemented By
 -- =================================================================================================
 
-
 register_simp_attr opencl_csimp
-
-/-- OpenCL compiler will replace `original` with `replacement` -/
-class ImplementedBy {α} (original : α) (replacement : outParam α) where
-  valid : original = replacement
 
 /-- OpenCL compiler rewrite rule,
 `implemented_by ... : lhs = rhs` will rewrite `rhs` with `lhs` at compile time.
@@ -205,7 +198,7 @@ namespace OpenCLFunction
 
 inductive FunKind where
   | normal
-  | infix
+  | infix (priority : Nat := 100)
   | prefix
   | postfix
   | constructor

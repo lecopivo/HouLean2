@@ -52,9 +52,9 @@ instance : Inhabited Matrix4 := ⟨{}⟩
 -- todo: Use module system to ensure that the implementation of Matrix does not leak to userspace
 --       At some point we might want to use Lean runtime and we might have to completaly change this
 --       implementations
-structure Matrix (R : Type) (m n : Nat) where
-  data : Vector (Vector R n) m
-
+structure Matrix (α : Type) (m n : Nat) where
+  data : Vector (Vector α n) m
+deriving Inhabited
 
 /-- Rigid transformation without scaling.
 -/

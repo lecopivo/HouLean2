@@ -1,5 +1,6 @@
 import HouLean.Math
 import HouLean.Data.Defs
+import HouLean.Data.Float
 import HouLean.Data.Vector
 
 open HouLean Math
@@ -63,40 +64,39 @@ macro "#m[" rows:term,* "]" : term => `(Matrix.mk #v[ $rows,* ])
 def ofFn (f : (i j : Nat) → (h : i < m ∧ j < n) → α) : Matrix α m n :=
   ⟨.ofFn (fun i => .ofFn fun j => f i j (by grind))⟩
 
-def map (f : α → β) (a : Matrix α m n) : Matrix β m n :=
-  { data := a.data.map (·.map f) }
-
-def mapIdx (f : Nat → Nat → α → β) (a : Matrix α m n) : Matrix β m n :=
-  { data := a.data.mapIdx (fun i row => (row.mapIdx (f i))) }
-
-def mapFinIdx (f : (i j : Nat) → α → (h : i < m ∧ j < n) → β) (a : Matrix α m n) : Matrix β m n :=
-  { data := a.data.mapFinIdx (fun i row _ => (row.mapFinIdx (fun j aij _ => f i j aij (by grind)))) }
-
-def mapRows (f : Vector α n → Vector β n) (a : Matrix α m n) : Matrix β m n :=
-  { data := a.data.map f }
-
-def mapRowsIdx (f : Nat →  Vector α n → Vector β n) (a : Matrix α m n) : Matrix β m n :=
-  { data := a.data.mapIdx f }
-
 def mapRowsFinIdx (f : (i : Nat) →  Vector α n → (h : i < m) → Vector β n) (a : Matrix α m n) : Matrix β m n :=
   { data := a.data.mapFinIdx f }
 
+def mapRowsIdx (f : Nat →  Vector α n → Vector β n) (a : Matrix α m n) : Matrix β m n :=
+  a.mapRowsFinIdx (fun i v _ => f i v)
+
+def mapRows (f : Vector α n → Vector β n) (a : Matrix α m n) : Matrix β m n :=
+  a.mapRowsFinIdx (fun _ v _ => f v)
+
+
+def mapFinIdx (f : (i j : Nat) → α → (h : i < m ∧ j < n) → β) (a : Matrix α m n) : Matrix β m n :=
+  a.mapRowsFinIdx (fun i v _ => v.mapFinIdx (fun j x _ => f i j x (by grind)))
+
+def mapIdx (f : Nat → Nat → α → β) (a : Matrix α m n) : Matrix β m n :=
+  a.mapRowsFinIdx (fun i v _ => v.mapFinIdx (fun j x _ => f i j x))
+
+def map (f : α → β) (a : Matrix α m n) : Matrix β m n :=
+  a.mapRowsFinIdx (fun _ v _ => v.mapFinIdx (fun _ x _ => f x))
+
 def mapRows₂ (f : Vector α n → Vector β n → Vector γ n)
     (a : Matrix α m n) (b : Matrix β m n) : Matrix γ m n :=
-  { data := (a.data.zip b.data).map f.uncurry }
+  a.mapRowsFinIdx (fun i v _ => f v (b.row i))
 
 def transpose (a : Matrix α m n) : Matrix α n m :=
   ofFn (fun j i _ => a[i,j])
 
 -- Identity matrix
 def identity (α : Type) [Zero α] [One α] (n : Nat) : Matrix α n n :=
-  { data := Vector.ofFn fun i =>
-      Vector.ofFn fun j =>
-        if i.val = j.val then 1 else 0 }
+  ofFn (fun i j _ => if i = j then 1 else 0)
 
 -- Zero matrix
 def zero (α : Type) [Zero α] (m n : Nat) : Matrix α m n :=
-  { data := Vector.ofFn fun _ => Vector.ofFn fun _ => 0 }
+  .mk (.ofFn (fun i => 0))
 
 def add [Add α] (a b : Matrix α m n) : Matrix α m n :=
   mapRows₂ (· + ·) a b
@@ -157,43 +157,45 @@ instance [ToString α] : ToString (Matrix α m n) where
 
 -- todo: make defun work for these
 
-def sin [Sin α] (x : Matrix α m n) : Matrix α m n := x.map Math.sin
-def cos [Cos α] (x : Matrix α m n) : Matrix α m n := x.map Math.cos
-def tan [Tan α] (x : Matrix α m n) : Matrix α m n := x.map Math.tan
-def asin [Asin α] (x : Matrix α m n) : Matrix α m n := x.map Math.asin
-def acos [Acos α] (x : Matrix α m n) : Matrix α m n := x.map Math.acos
-def atan [Atan α] (x : Matrix α m n) : Matrix α m n := x.map Math.atan
-def atan2 [Atan2 α] (y x : Matrix α m n) : Matrix α m n := y.mapRowsFinIdx (fun i yi _ => yi.atan2 (x.row i))
-def sinh [Sinh α] (x : Matrix α m n) : Matrix α m n := x.map Math.sinh
-def cosh [Cosh α] (x : Matrix α m n) : Matrix α m n := x.map Math.cosh
-def tanh [Tanh α] (x : Matrix α m n) : Matrix α m n := x.map Math.tanh
+variable {α : Type} {m n : Nat}
+
+defun sin [Sin α] (x : Matrix α m n) : Matrix α m n := x.map Math.sin
+defun cos [Cos α] (x : Matrix α m n) : Matrix α m n := x.map Math.cos
+defun tan [Tan α] (x : Matrix α m n) : Matrix α m n := x.map Math.tan
+defun asin [Asin α] (x : Matrix α m n) : Matrix α m n := x.map Math.asin
+defun acos [Acos α] (x : Matrix α m n) : Matrix α m n := x.map Math.acos
+defun atan [Atan α] (x : Matrix α m n) : Matrix α m n := x.map Math.atan
+defun atan2 [Atan2 α] (y x : Matrix α m n) : Matrix α m n := y.mapRowsFinIdx (fun i yi _ => yi.atan2 (x.row i))
+defun sinh [Sinh α] (x : Matrix α m n) : Matrix α m n := x.map Math.sinh
+defun cosh [Cosh α] (x : Matrix α m n) : Matrix α m n := x.map Math.cosh
+defun tanh [Tanh α] (x : Matrix α m n) : Matrix α m n := x.map Math.tanh
 
 
 -- ============================================================================
 -- Exponential and Logarithmic Functions
 -- ============================================================================
 
-def exp [Exp α] (x : Matrix α m n) : Matrix α m n := x.map Math.exp
-def exp2 [Exp2 α] (x : Matrix α m n) : Matrix α m n := x.map Math.exp2
-def log [Log α] (x : Matrix α m n) : Matrix α m n := x.map Math.log
-def log2 [Log2 α] (x : Matrix α m n) : Matrix α m n := x.map Math.log2
-def log10 [Log10 α] (x : Matrix α m n) : Matrix α m n := x.map Math.log10
-def sqrt [Sqrt α] (x : Matrix α m n) : Matrix α m n := x.map Math.sqrt
-def invsqrt [Invsqrt α] (x : Matrix α m n) : Matrix α m n := x.map Math.invsqrt
+defun exp [Exp α] (x : Matrix α m n) : Matrix α m n := x.map Math.exp
+defun exp2 [Exp2 α] (x : Matrix α m n) : Matrix α m n := x.map Math.exp2
+defun log [Log α] (x : Matrix α m n) : Matrix α m n := x.map Math.log
+defun log2 [Log2 α] (x : Matrix α m n) : Matrix α m n := x.map Math.log2
+defun log10 [Log10 α] (x : Matrix α m n) : Matrix α m n := x.map Math.log10
+defun sqrt [Sqrt α] (x : Matrix α m n) : Matrix α m n := x.map Math.sqrt
+defun invsqrt [Invsqrt α] (x : Matrix α m n) : Matrix α m n := x.map Math.invsqrt
 
 
 -- ============================================================================
 -- Basic Arithmetic and Comparison
 -- ============================================================================
 
-def abs [Abs α] (x : Matrix α m n) : Matrix α m n := x.map Math.abs
-def sign [Sign α] (x : Matrix α m n) : Matrix α m n := x.map Math.sign
-def clamp [Clamp α] (x : Matrix α m n) (lo hi : α) : Matrix α m n := x.map (Math.clamp · lo hi)
-def floor [Floor α] (x : Matrix α m n) : Matrix α m n := x.map Math.floor
-def ceil [Ceil α] (x : Matrix α m n) : Matrix α m n := x.map Math.ceil
-def round [Round α] (x : Matrix α m n) : Matrix α m n := x.map Math.round
-def trunc [Trunc α] (x : Matrix α m n) : Matrix α m n := x.map Math.trunc
-def fract [Fract α] (x : Matrix α m n) : Matrix α m n := x.map Math.fract
+defun abs [Abs α] (x : Matrix α m n) : Matrix α m n := x.map Math.abs
+defun sign [Sign α] (x : Matrix α m n) : Matrix α m n := x.map Math.sign
+defun clamp [Clamp α α] (x : Matrix α m n) (lo hi : α) : Matrix α m n := x.map (Math.clamp · lo hi)
+defun floor [Floor α] (x : Matrix α m n) : Matrix α m n := x.map Math.floor
+defun ceil [Ceil α] (x : Matrix α m n) : Matrix α m n := x.map Math.ceil
+defun round [Round α] (x : Matrix α m n) : Matrix α m n := x.map Math.round
+defun trunc [Trunc α] (x : Matrix α m n) : Matrix α m n := x.map Math.trunc
+defun fract [Fract α] (x : Matrix α m n) : Matrix α m n := x.map Math.fract
 
 
 -- ============================================================================
@@ -217,13 +219,13 @@ def fract [Fract α] (x : Matrix α m n) : Matrix α m n := x.map Math.fract
 
 variable [Add α] [Sub α] [Mul α] [Div α] [Zero α]
 
-def dot (u v : Matrix α m n) : α := HouLean.sum (fun i : Fin m => (u.row i).dot (v.row i))
+defun dot (u v : Matrix α m n) : α := HouLean.sum (fun i : Fin m => (u.row i).dot (v.row i))
 
-def reflect [OfNat α 2] (v normal : Matrix α m n) : Matrix α m n :=
+defun reflect [OfNat α 2] (v normal : Matrix α m n) : Matrix α m n :=
   let d := v.dot normal
   v - 2 * d * normal
 
-def refract [One α] [Sqrt α] [LT α] [DecidableLT α] (v normal : Matrix α m n) (eta : α) : Matrix α m n :=
+defun refract [One α] [Sqrt α] [LT α] [DecidableLT α] (v normal : Matrix α m n) (eta : α) : Matrix α m n :=
   let dt := v.dot normal
   let k := 1 - eta * eta * (1 - dt * dt)
   if k < 0 then 0
@@ -231,10 +233,10 @@ def refract [One α] [Sqrt α] [LT α] [DecidableLT α] (v normal : Matrix α m 
     let s := eta * dt + Math.sqrt k
     eta * v - s * normal
 
-def compMul (x y : Matrix α m n) : Matrix α m n :=
+defun compMul (x y : Matrix α m n) : Matrix α m n :=
   x.mapRowsFinIdx (fun i xi _ => xi.compMul (y.row i))
 
-def compDiv (x y : Matrix α m n) : Matrix α m n :=
+defun compDiv (x y : Matrix α m n) : Matrix α m n :=
   x.mapRowsFinIdx (fun i xi _ => xi.compDiv (y.row i))
 
 
@@ -242,16 +244,16 @@ def compDiv (x y : Matrix α m n) : Matrix α m n :=
 -- Interpolation and Smoothing (elementwise)
 -- ============================================================================
 
-def smoothstep [Smoothstep α] (edge0 edge1 v : Matrix α m n) : Matrix α m n :=
+defun smoothstep [Smoothstep α] (edge0 edge1 v : Matrix α m n) : Matrix α m n :=
   v.mapRowsFinIdx (fun i vi _ => Vector.smoothstep (edge0.row i) (edge1.row i) vi)
 
-def step [Step α] (edge v : Matrix α m n) : Matrix α m n :=
+defun step [Step α] (edge v : Matrix α m n) : Matrix α m n :=
   v.mapRowsFinIdx (fun i vi _ => Vector.step (edge.row i) vi)
 
-def hermite [Hermite α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Matrix α m n :=
+defun hermite [Hermite α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Matrix α m n :=
   .ofFn fun i j _ => Math.hermite p0[i,j] p1[i,j] t0[i,j] t1[i,j] t
 
-def catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Matrix α m n :=
+defun catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Matrix α m n :=
   .ofFn fun i j _ => Math.catmullRom p0[i,j] p1[i,j] t0[i,j] t1[i,j] t
 
 
