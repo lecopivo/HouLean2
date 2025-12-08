@@ -8,24 +8,25 @@ open HoudiniMatrixVecMul
 
 /--
 info:
-float3 hdiv_hdiv_f3ff3(float3 a, float a1)
+float inv_f(float a)
 {
-    return (float3){a.x / a1, a.y / a1, a.z / a1};
+    return 1.0f / a;
 }
 
 matrix33f houlean_matrix_sdiv_f33(matrix33f a, float s)
 {
-    return (matrix33f){hdiv_hdiv_f3ff3(a.row0, s), hdiv_hdiv_f3ff3(a.row1, s), hdiv_hdiv_f3ff3(a.row2, s)};
+    float is = inv_f(s);
+    return (matrix33f){is * a.row0, is * a.row1, is * a.row2};
 }
 
-matrix33f hdiv_hdiv_f33ff33(matrix33f a, float a1)
+matrix33f hdiv_f33ff33(matrix33f a, float a1)
 {
     return houlean_matrix_sdiv_f33(a, a1);
 }
 
 matrix33f (anonymous)(float s, matrix33f A)
 {
-    return hdiv_hdiv_f33ff33(A, s);
+    return hdiv_f33ff33(A, s);
 }
 -/
 #guard_msgs in
@@ -34,14 +35,14 @@ matrix33f (anonymous)(float s, matrix33f A)
 
 /--
 info:
-float houlean_math_sin_sin_f(float x)
+float houlean_math_sin_f(float x)
 {
     return sin(x);
 }
 
 float3 vector_sin_f3(float3 x)
 {
-    return (float3){houlean_math_sin_sin_f(x.x), houlean_math_sin_sin_f(x.y), houlean_math_sin_sin_f(x.z)};
+    return (float3){houlean_math_sin_f(x.x), houlean_math_sin_f(x.y), houlean_math_sin_f(x.z)};
 }
 
 float vector_dot_f3(float3 u, float3 v)
@@ -64,14 +65,14 @@ float3 (anonymous)(float3 v)
 
 /--
 info:
-float3 houlean_math_sin_sin_f3(float3 x)
+float3 houlean_math_sin_f3(float3 x)
 {
-    return (float3){houlean_math_sin_sin_f(x.x), houlean_math_sin_sin_f(x.y), houlean_math_sin_sin_f(x.z)};
+    return vector_sin_f3(x);
 }
 
 float3 (anonymous)(float3 x)
 {
-    return houlean_math_sin_sin_f3(x);
+    return houlean_math_sin_f3(x);
 }
 -/
 #guard_msgs in
@@ -89,7 +90,7 @@ float3 houlean_matrix_vecmul_sum_rows_f33(float3 v, matrix33f a)
     return ((vector_zero_f3() + (v.x * a.row0)) + (v.y * a.row1)) + (v.z * a.row2);
 }
 
-float3 hmul_hmul_f3f33f3(float3 a, matrix33f a1)
+float3 hmul_f3f33f3(float3 a, matrix33f a1)
 {
     return houlean_matrix_vecmul_sum_rows_f33(a, a1);
 }
@@ -114,14 +115,14 @@ matrix33f houlean_matrix_matmul_f333(matrix33f a, matrix33f b)
     return (matrix33f){(float3){vector_dot_f3(a.row0, houlean_matrix_coli_f330(b)), vector_dot_f3(a.row0, houlean_matrix_coli_f331(b)), vector_dot_f3(a.row0, houlean_matrix_coli_f332(b))}, (float3){vector_dot_f3(a.row1, houlean_matrix_coli_f330(b)), vector_dot_f3(a.row1, houlean_matrix_coli_f331(b)), vector_dot_f3(a.row1, houlean_matrix_coli_f332(b))}, (float3){vector_dot_f3(a.row2, houlean_matrix_coli_f330(b)), vector_dot_f3(a.row2, houlean_matrix_coli_f331(b)), vector_dot_f3(a.row2, houlean_matrix_coli_f332(b))}};
 }
 
-matrix33f hmul_hmul_f33f33f33(matrix33f a, matrix33f a1)
+matrix33f hmul_f33f33f33(matrix33f a, matrix33f a1)
 {
     return houlean_matrix_matmul_f333(a, a1);
 }
 
 float3 (anonymous)(float3 v, matrix33f A, matrix33f B)
 {
-    return hmul_hmul_f3f33f3(v, hmul_hmul_f33f33f33(A, B));
+    return hmul_f3f33f3(v, hmul_f33f33f33(A, B));
 }
 -/
 #guard_msgs in

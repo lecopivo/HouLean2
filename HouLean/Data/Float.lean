@@ -15,7 +15,7 @@ inductive _root_.Float.Precision where
 
 /-- Interface for `Float32` and `Float64` -/
 class FloatType (R : Type) extends
-    Add R, Sub R, Neg R, Mul R, Div R, One R, Zero R, Pow R R,
+    Add R, Sub R, Neg R, Mul R, Div R, One R, Zero R, Inv R, Pow R R,
     -- comparison
     LT R, LE R, BEq R,
     -- trigonometric
@@ -40,6 +40,7 @@ instance : Min R := minOfLe
 instance : Max R := maxOfLe
 
 instance : FloatType Float where
+  inv x := 1.0/x
   sin := .sin
   cos := .cos
   tan := .tan
@@ -65,6 +66,7 @@ instance : FloatType Float where
   prec := .single
 
 instance : FloatType Float32 where
+  inv x := 1.0/x
   sin := .sin
   cos := .cos
   tan := .tan

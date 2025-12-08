@@ -113,7 +113,7 @@ elab_rules : command
   let className ← resolveGlobalConstNoOverload (mkIdent (.mkSimple className))
   let inst ← mkAppM (className.append `mk) #[f]
   let ys := (← inst.collectFVars.run {}).2.fvarIds.map Expr.fvar
-  let inst ← mkLambdaFVars ys inst >>= instantiateMVars
+  let mut inst ← mkLambdaFVars ys inst >>= instantiateMVars
   let f ← mkLambdaFVars ys f >>= instantiateMVars
 
   let ns ← getCurrNamespace
@@ -133,7 +133,6 @@ elab_rules : command
     let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) f + 1)
     let decl ← Lean.mkDefinitionValInferringUnsafe declId [] F f hints
     addDeclarationRangesFromSyntax declId id
-    -- todo: modify `inst` to use the newly defined function
 
     -- Add documentation if provided
     match doc with
@@ -143,6 +142,10 @@ elab_rules : command
       compileDecl (Declaration.defnDecl decl)
     | none =>
       addAndCompile (Declaration.defnDecl decl)
+
+    inst ← mkLambdaFVars ys (← mkAppM (className.append `mk) #[← mkAppOptM declId (ys.map some)])
+           >>= instantiateMVars
+
 
   -- Generate and add instance
   let classExpr ← inferType inst

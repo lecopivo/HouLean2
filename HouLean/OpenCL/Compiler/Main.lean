@@ -452,11 +452,7 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
             -- cont (r.fn.beta vals) (.app r.oclFun oclVals)
             cont e (.app r.oclFun oclVals)
           else
-            let e' ← whnfC e
-            if e != e' then
-              compile e cont
-            else
-              throwError "No OpenCL function for {e}"
+            throwError "No OpenCL function for {e}"
 
     | .value val =>
       compile val fun val' oclVal => do
@@ -573,14 +569,12 @@ partial def compileScope (e : Expr) (finish : Expr → CodeExpr → CompileM Uni
 end
 
 
-/--
-Function name overrides for better readability in generated code.
-Currently empty but can be populated with mappings like:
-- `HMul.hMul` → `mul`
-- `HAdd.hAdd` → `add`
--/
-def funNameOverrideMap : NameMap Name :=
-  ({} : NameMap Name)
+private def removeRepeatedSuffix (s : String) : String :=
+  let rep := s.takeRightWhile (·!='_')
+  if (rep ++ "_" ++ rep) == s.takeRight (2*rep.length+1) then
+    s.dropRight (rep.length+1)
+  else
+    s
 
 /--
 Generate a mangled function name incorporating type information.
@@ -635,14 +629,25 @@ def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM 
       throwError "Cannot mangle function with implicit argument of type: {argType}\nArgument: {arg}"
 
   let funName := funName.eraseMacroScopes
-  let funName := funNameOverrideMap.get? funName |>.getD funName
-
   let mut mangledName := toString funName.eraseMacroScopes |>.replace "." "_" |>.toLower
+  mangledName := removeRepeatedSuffix mangledName
   if typeSuffix != "" then
     mangledName := mangledName ++ "_" ++ typeSuffix
 
   return mangledName
 
+
+
+
+open Lean Meta Qq in
+def unfold' (e : Expr) (declName : Name) : MetaM Expr := do
+  let e := (← unfold e declName).expr
+  if ← isProjectionFn declName then
+    e.withApp fun fn args => do
+      let fn := (← reduceProj? fn).getD fn
+      return fn.beta args
+  else
+    return e
 
 /--
 Core function compilation routine. Compiles a Lean function to OpenCL code.
@@ -685,9 +690,7 @@ def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
     let mangledName ← mangleFunName funName funInfo args
 
     -- Unfold definition and reduce instances
-    let body := (← unfold body funName).expr
-    let body ← whnfC body
-
+    let body ← unfold' body funName
 
     if body == body' then
       throwError m!"Failed to unfold function body {funName}"

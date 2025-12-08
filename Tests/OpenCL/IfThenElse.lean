@@ -9,11 +9,16 @@ namespace Tests.OpenCL.IfThenElse
 
 /--
 info:
+double houlean_math_log_d(double x)
+{
+    return log(x);
+}
+
 double (anonymous)(double x)
 {
     if (0.0d < x)
     {
-        double x1 = log(x);
+        double x1 = houlean_math_log_d(x);
         return x1;
     }
     else
@@ -36,14 +41,14 @@ double (anonymous)(double x)
 {
     if (0.0d < x)
     {
-        double x1 = log(x);
+        double x1 = houlean_math_log_d(x);
         return x1;
     }
     else
     {
         if (x < 0.0d)
         {
-            double x1 = log( -x);
+            double x1 = houlean_math_log_d( -x);
             return x1;
         }
         else
@@ -73,10 +78,10 @@ double (anonymous)(double x)
     {
         if (0.0d < state)
         {
-            double x1 = log(state) + (double)(i);
+            double x1 = houlean_math_log_d(state) + (double)(i);
             if (x1 < 0.0d)
             {
-                double x2 = log( -x1) - (double)(i);
+                double x2 = houlean_math_log_d( -x1) - (double)(i);
                 state = x2;
             }
             else
@@ -88,7 +93,7 @@ double (anonymous)(double x)
         {
             if (state < 0.0d)
             {
-                double x1 = log( -state) - (double)(i);
+                double x1 = houlean_math_log_d( -state) - (double)(i);
                 state = x1;
             }
             else

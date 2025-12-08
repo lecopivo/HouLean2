@@ -107,8 +107,9 @@ def sub [Sub α] (a b : Matrix α m n) : Matrix α m n :=
 def smul [Mul α] (s : α) (a : Matrix α m n) : Matrix α m n :=
   mapRows (s*·) a
 
-def sdiv [Div α] (a : Matrix α m n) (s : α) : Matrix α m n :=
-  mapRows (·/s) a
+def sdiv [Mul α] [Inv α] (a : Matrix α m n) (s : α) : Matrix α m n :=
+  let is := s⁻¹
+  mapRows (is*·) a
 
 def matMul [Add α] [Mul α] [Zero α] (a : Matrix α m k) (b : Matrix α k n) : Matrix α m n :=
   ofFn (fun i j _ => (a.row i).dot (b.col j))
@@ -123,7 +124,7 @@ def mulVec [Add α] [Mul α] [Zero α] (a : Matrix α m n) (v : Vector α n) : V
 instance [Add α] : Add (Matrix α m n) := ⟨add⟩
 instance [Sub α] : Sub (Matrix α m n) := ⟨sub⟩
 instance [Mul α] : HMul α (Matrix α m n) (Matrix α m n) := ⟨smul⟩
-instance [Div α] : HDiv (Matrix α m n) α (Matrix α m n) := ⟨sdiv⟩
+instance [Mul α] [Inv α] : HDiv (Matrix α m n) α (Matrix α m n) := ⟨sdiv⟩
 
 instance [Add α] [Zero α] [Mul α] : HMul (Vector α m) (Matrix α m n) (Vector α n) := ⟨vecMul⟩
 instance [Add α] [Zero α] [Mul α] : HMul (Matrix α m k) (Matrix α k n) (Matrix α m n) := ⟨matMul⟩
@@ -263,7 +264,7 @@ defun catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Mat
 -- Geometric Queries
 -- ============================================================================
 
-variable [One α] [Div α]
+variable [One α] [Div α] [Inv α]
 
 /-- Transform point. Computes `(point 1) * transform`.  -/
 def transformPointLeft (transform : Matrix α (n+1) (n+1)) (point : Vector α n) : Vector α n :=

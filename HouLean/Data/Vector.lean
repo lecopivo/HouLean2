@@ -13,9 +13,9 @@ def _root_.Vector.z (a : Vector α n) (h : 2 < n := by grind) : α := a[2]
 def _root_.Vector.w (a : Vector α n) (h : 3 < n := by grind) : α := a[3]
 
 
--- instance [Mul α] : Mul (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui * v[i])⟩
+instance [Mul α] : Mul (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui * v[i])⟩
 -- instance [Mul α] : HMul (Vector α n) α (Vector α n) := ⟨fun v s => v.map (fun vi => vi * s)⟩
-instance [Div α] : HDiv (Vector α n) α (Vector α n) := ⟨fun v s => v.map (fun vi => vi / s)⟩
+instance [Inv α] [Mul α] : HDiv (Vector α n) α (Vector α n) := ⟨fun v s => let is := s⁻¹; v.map (fun vi => is * vi)⟩
 instance [Div α] : Div (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui / v[i])⟩
 
 namespace Vector
@@ -87,7 +87,7 @@ def approxEqual [Abs α] [Sub α] [Inhabited α] [Max α] [LE α] [DecidableLE �
 -- Vector Operations
 -- ============================================================================
 
-variable [Add α] [Sub α] [Mul α] [Div α] [Zero α]
+variable [Add α] [Sub α] [Mul α] [Div α] [Zero α] [Inv α]
 
 defun dot (u v : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*v[i])
 -- todo: unify the to `cross` once defun works for these
