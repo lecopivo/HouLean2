@@ -1,4 +1,5 @@
 import Lean
+
 -- import Mathlib
 
 namespace HouLean
@@ -46,20 +47,17 @@ elab_rules : term
   return x'
 
 
+syntax:1 term "rewrite_by?"  (" assuming" bracketedBinder*)?  convSeq : term
 
-/--
-Rewrites type of a term term by conv tactic.
-
-Example: `(_ : 5 + 0 = 5) rewrite_type_by simp` returns proof of `5 = 5`
--/
-syntax term:max "rewrite_type_by" convSeq : term
-
-
+open Meta.Tactic.TryThis in
 elab_rules : term
-  | `($x rewrite_type_by $rw:convSeq) => do
+| `($x:term rewrite_by?%$tk $[assuming $as*]? $rw:convSeq) => do
+  let x ← elabTerm x none
+  let as := as.getD #[]
+  synthesizeSyntheticMVarsNoPostponing
+  let (x', _eq) ← elabConvRewrite x as (← `(conv| ($rw)))
 
-    let x ← Term.elabTermAndSynthesize x none
-    let X ← inferType x
-    let (_, prf) ← elabConvRewrite X #[] (← `(conv| ($rw)))
+  let stx ← PrettyPrinter.delab x'
+  addSuggestion tk stx (origSpan? := ← getRef)
 
-    mkAppM ``Eq.mp #[prf,x]
+  return x'

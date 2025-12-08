@@ -103,6 +103,10 @@ double (anonymous)(double x)
 }
 -/
 #guard_msgs in
+#check Nat
+
+
+set_option trace.HouLean.OpenCL.compiler true in
 #opencl_compile (fun x : Float => Id.run do
   let mut x := x
   for i in [0:10] do

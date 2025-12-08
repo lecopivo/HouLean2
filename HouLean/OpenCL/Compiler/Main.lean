@@ -182,14 +182,6 @@ Traces the simplification if the expression changes.
 - Simplified expression
 -/
 def simplifyExpr (e : Expr) : CompileM Expr := do
-  -- withTraceNode `HouLean.OpenCL.compiler
-  --   (fun r => do
-  --     match r with
-  --     | .ok e' => if e != e' then
-  --         return m!"Simplified: {e} ~> {e'}"
-  --       else
-  --         return m!"No simplification needed"
-  --     | .error _ => return m!"Simplification failed") do
   let e' := e
   let e := (← Simp.simp e).expr
   -- let e ← Meta.liftLets e
@@ -388,21 +380,19 @@ Main compilation function that converts a Lean expression to OpenCL code.
 @[specialize]
 partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
     (runSimp := true) : CompileM Unit := do
-  withTraceNode `HouLean.OpenCL.compiler
-    (fun _ => return m!"Compiling: {e}") do
 
   if let some val ← runInterpreter e then
     return ← cont e (.lit val)
 
-  trace[HouLean.OpenCL.compiler] m!"case: {e.ctorName}`"
   match e with
   | .letE name type val body _ =>
 
-    trace[HouLean.OpenCL.compiler] m!"let binding `let {name} : {type} := {val}`\nfvar value: {val.isFVar}\nfunction: {type.isForall}"
+
     if val.isFVar || type.isForall then
-      trace[HouLean.OpenCL.compiler] m!"inlining let binding `let {name} : {type} := {val}`"
+      trace[HouLean.OpenCL.compiler] m!"inlining let binding `{name}`"
       compile (body.instantiate1 val) cont
     else
+      trace[HouLean.OpenCL.compiler] m!"compiling let binding `{name}`"
       compile val fun val' codeVal => do
         withLetVar name val' codeVal fun var => do
         compile (body.instantiate1 var) cont
@@ -414,11 +404,13 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
         let e ← simplifyExpr e
         compile e cont (runSimp := false)
       else
-        if let some r ← getOpenCLAppOrCompile? e then
-          compileMany r.args fun vals oclVals => do
-          cont (r.fn.beta vals) (.app r.oclFun oclVals)
-        else
-          throwError "No OpenCL function for {e}"
+        withTraceNode `HouLean.OpenCL.compiler
+          (fun r => return m!"[{exceptEmoji r}]Compiling: {e}") do
+          if let some r ← getOpenCLAppOrCompile? e then
+            compileMany r.args fun vals oclVals => do
+            cont (r.fn.beta vals) (.app r.oclFun oclVals)
+          else
+            throwError "No OpenCL function for {e}"
 
     | .value val =>
       compile val fun val' oclVal => do
