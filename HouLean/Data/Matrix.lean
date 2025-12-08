@@ -96,7 +96,7 @@ def identity (α : Type) [Zero α] [One α] (n : Nat) : Matrix α n n :=
 
 -- Zero matrix
 def zero (α : Type) [Zero α] (m n : Nat) : Matrix α m n :=
-  .mk (.ofFn (fun i => 0))
+  .mk (.ofFn (fun _ => 0))
 
 def add [Add α] (a b : Matrix α m n) : Matrix α m n :=
   mapRows₂ (· + ·) a b
@@ -243,6 +243,8 @@ defun compDiv (x y : Matrix α m n) : Matrix α m n :=
 -- ============================================================================
 -- Interpolation and Smoothing (elementwise)
 -- ============================================================================
+
+defun lerp [Lerp α α] (a b : Matrix α m n) (t : α) := a + t * (b - a)
 
 defun smoothstep [Smoothstep α] (edge0 edge1 v : Matrix α m n) : Matrix α m n :=
   v.mapRowsFinIdx (fun i vi _ => Vector.smoothstep (edge0.row i) (edge1.row i) vi)

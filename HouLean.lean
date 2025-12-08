@@ -62,6 +62,7 @@ import HouLean.Data.BoundingCapsule
 import HouLean.Data.BoundingSphere
 import HouLean.Data.Defs
 import HouLean.Data.Float
+import HouLean.Data.FloatP
 import HouLean.Data.Geometry
 import HouLean.Data.Matrix
 import HouLean.Data.Matrix2

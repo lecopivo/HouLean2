@@ -1,9 +1,13 @@
 name = "HouLean"
 version = "0.1.0"
 defaultTargets = ["houlean"]
+testDriver = "Tests"
 
 [[lean_lib]]
 name = "HouLean"
+
+[[lean_lib]]
+name = "Tests"
 
 [[lean_exe]]
 name = "houlean"

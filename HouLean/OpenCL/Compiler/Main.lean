@@ -386,8 +386,8 @@ Main compilation function that converts a Lean expression to OpenCL code.
 **Throws:** Error if expression cannot be compiled
 -/
 @[specialize]
-partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM α)
-    (runSimp := true) : CompileM α := do
+partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
+    (runSimp := true) : CompileM Unit := do
   withTraceNode `HouLean.OpenCL.compiler
     (fun _ => return m!"Compiling: {e}") do
 
@@ -395,7 +395,7 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM α)
     return ← cont e (.lit val)
 
   match e with
-  | .letE name type val body _ =>
+  | .letE name _type val body _ =>
     compile val fun val' codeVal => do
     if val'.isFVar then
       compile (body.instantiate1 val') cont
@@ -443,24 +443,17 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM α)
 
       withMutVar `state initOclType initCode fun stateName => do
 
-      -- Stash outer scope statements
-      let stmts := (← get).statements
-      modify (fun s => {s with statements := #[]})
-
-      let loop ←
+      let (idxName,loopBody) ← do
         forallTelescope (← inferType f) fun xs _ => do
         withFVars #[xs[0]!] fun varNames => do
         withReader (fun ctx => {ctx with fvarMap := ctx.fvarMap.insert xs[1]! stateName}) do
         let idxName := varNames[0]!
         let body := f.beta xs
-        compile body fun _ retValueCode => do
-        addStatement (.assignment stateName retValueCode)
-        let loopBody := (← get).statements
-        return .forLoop idxName startCode stopCode stepCode loopBody
+        let loopBody ← compileScope body (fun _ r =>
+          addStatement (.assignment stateName r))
+        pure (idxName, loopBody)
 
-      -- Recover previous statements
-      modify (fun s => {s with statements := stmts})
-      addStatement loop
+      addStatement (.forLoop idxName startCode stopCode stepCode loopBody)
 
       withLocalDeclD `loop (← inferType e) fun loopVar => do
       withReader (fun ctx => { ctx with fvarMap := ctx.fvarMap.insert loopVar stateName}) do
@@ -496,16 +489,14 @@ Compile multiple expressions in sequence.
 **Behavior:** Compiles expressions left-to-right, accumulating results.
 -/
 partial def compileMany (es : Array Expr)
-    (cont : Array Expr → Array CodeExpr → CompileM α) : CompileM α := do
+    (cont : Array Expr → Array CodeExpr → CompileM Unit) : CompileM Unit := do
   go es.toList cont (.emptyWithCapacity es.size) (.emptyWithCapacity es.size)
 where
-  go (es : List Expr) (cont : Array Expr → Array CodeExpr → CompileM α)
+  go (es : List Expr) (cont : Array Expr → Array CodeExpr → CompileM Unit)
      (vs : Array Expr := #[]) (cs : Array CodeExpr := #[]) := do
     match es with
     | [] => cont vs cs
     | e :: es => compile e fun v c => go es cont (vs.push v) (cs.push c)
-
-end
 
 /--
 Compile an expression into a code scope (sequence of statements).
@@ -517,11 +508,20 @@ Automatically adds a return statement at the end.
 **Returns:**
 - Array of code statements representing the compiled scope
 -/
-def compileScope (e : Expr) : CompileM (Array CodeStatement) := do
-  let stmts ← compile e fun _ c => do
-    addStatement (.ret c)
-    return (← get).statements
+partial def compileScope (e : Expr) (finish : Expr → CodeExpr → CompileM Unit := fun _ c => addStatement (.ret c)) :
+    CompileM (Array CodeStatement) := do
+  -- stash statements
+  let oldStmts := (← get).statements
+  modify (fun s => {s with statements := #[]})
+  compile e finish
+  let stmts := (← get).statements
+  -- recover statements
+  modify (fun s => {s with statements := oldStmts})
   return stmts
+
+
+end
+
 
 /--
 Function name overrides for better readability in generated code.

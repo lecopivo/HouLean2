@@ -1,8 +1,11 @@
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Data.Int
 import HouLean.OpenCL.Data.Vector
+import HouLean.OpenCL.Data.MProd
 
 open HouLean.OpenCL
+
+namespace Tests.OpenCL.ForLoop
 
 instance [t : OpenCLType α] : OpenCLType (Id α) := t
 instance [t : OpenCLType α] : OpenCLType (ForInStep α) where
@@ -37,6 +40,7 @@ double3 (anonymous)(double a)
       x := x+x
     #v[x + x, x*x, 5*x])
 
+
 /--
 info:
 double3 (anonymous)(double a)
@@ -68,61 +72,16 @@ double3 (anonymous)(double a)
         x := x+x
     #v[x + x, x*x, 5*x])
 
-#exit
-
-noncomputable
-abbrev foo := Id.run do
-    let mut x : Float := oclFunction _ "xx"
-    let mut y : Float := oclFunction _ "yy"
-    for _ in [0:10] do
-      let tmp := y
-      y := x + y
-      x := tmp
-    y
-
-attribute [opencl_csimp] foo
-
-instance [a : OpenCLType α] [b : OpenCLType β] : OpenCLType (MProd α β) where
-  name := s!"prod{a.shortName}{b.shortName}"
-  shortName := s!"p{a.shortName}{b.shortName}"
-  definition? :=
-    s!"struct prod{a.shortName}{b.shortName}\n\
-       \{\n\
-         {a.name} fst;\n\
-         {b.name} snd;\n\
-       };"
 
 
-implemented_by [Inhabited α] [Inhabited β] [t : OpenCLType (MProd α β)] :
-  MProd.mk (α:=α) (β:=β)
-  =
-  oclFunction _ s!"({t.name})" .constructor
+def fib {α} [Add α] [One α] [Zero α] (n : Nat) := Id.run do
+  let mut a := (0 : α)
+  let mut b := (1 : α)
+  for _ in [0:n] do
+    let tmp := b
+    b := a + b
+    a := tmp
+  return b
 
-implemented_by [Inhabited α] :
-  MProd.fst (α:=α) (β:=β)
-  =
-  oclFunction _ ".fst" .postfix
 
-implemented_by [Inhabited α] (x : MProd α β) :
-  x.1
-  =
-  (oclFunction (MProd α β → α) ".fst" .postfix) x
-
-implemented_by [Inhabited β] (x : MProd α β) :
-  x.2
-  =
-  (oclFunction (MProd α β → β) ".snd" .postfix) x
-
-implemented_by [Inhabited β] :
-  MProd.snd (α:=α) (β:=β)
-  =
-  oclFunction _ s!".snd" .postfix
-
-set_option trace.HouLean.OpenCL.compiler true in
-open Qq Compiler Lean Meta in
-run_meta
-  let info ← getConstInfo ``foo
-  let e := info.value!
-  let stmts ← compileExpr'' e
-  let cs ← stmts.mapM (·.toString)
-  logInfo m!"{cs}"
+-- #opencl_compile fib (α:=Float)

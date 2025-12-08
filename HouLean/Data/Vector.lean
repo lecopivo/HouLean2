@@ -133,6 +133,8 @@ defun compDiv (x y : Vector α n) : Vector α n :=
 -- Interpolation and Smoothing (elementwise)
 -- ============================================================================
 
+defun lerp [Lerp α α] (x y : Vector α n) (t : α) := x + t * (y - x)
+
 defun smoothstep [Smoothstep α] (edge0 edge1 v : Vector α n) : Vector α n :=
   v.mapFinIdx (fun i vi _ => Math.smoothstep edge0[i] edge1[i] vi)
 
@@ -159,12 +161,6 @@ defun slerp [Add α] [Zero α] [Mul α] [Sqrt α] [ApproxEqual α] [Clamp α α]
     let b := (Math.sin (t * theta)) / s
     a * v + b * w
 
-instance : ApproxEqual Float where
-  defaultTol := 1e-12
-  approxEqual x y tol := (x - y).abs ≤ tol
-
-instance : Lerp (Vector Float n) Float where
-  lerp x y w := (1-w)*x + w*y
 
 
 -- ============================================================================

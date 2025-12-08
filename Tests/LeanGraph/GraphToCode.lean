@@ -489,8 +489,3 @@ info: [input HouLean.input
 -/
 #guard_msgs in
 run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_19.json"
-
-
-set_option trace.HouLean.LeanGraph.typecheck true
-
-run_elab typeCheckGraph "Tests/LeanGraph/graph_to_code_unit_test_14.json"

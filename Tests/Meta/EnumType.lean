@@ -3,12 +3,14 @@ import Lean.Elab.GuardMsgs
 
 open HouLean
 
+namespace Tests.Meta.EnumType
+
 inductive A where
   | a | b | c
 deriving EnumType
 
 /--
-info: def instEnumTypeA : EnumType A :=
+info: def Tests.Meta.EnumType.instEnumTypeA : EnumType A :=
 { n := 3,
   toFin := fun x =>
     match x with

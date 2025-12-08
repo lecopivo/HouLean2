@@ -3,6 +3,7 @@ import Lean.Elab.GuardMsgs
 
 open HouLean
 
+namespace Tests.Meta.ProdLike
 
 structure Foo (α : Type u) where
   a : Float

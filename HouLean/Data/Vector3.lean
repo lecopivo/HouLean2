@@ -363,11 +363,11 @@ defun insideBox (point boxMin boxMax : Vector3) : Bool :=
   point.y >= boxMin.y && point.y <= boxMax.y &&
   point.z >= boxMin.z && point.z <= boxMax.z
 
--- defun projectToSegment (point a b : Vector3) : Vector3 :=
---   let ab := b - a
---   let ap := point - a
---   let t := ((dot ap ab) / (dot ab ab)).clamp 0.0 1.0
---   ⟨a.x + t * ab.x, a.y + t * ab.y, a.z + t * ab.z⟩
+defun projectToSegment (point a b : Vector3) : Vector3 :=
+  let ab := b - a
+  let ap := point - a
+  let t := ((dot ap ab) / (dot ab ab)).clamp 0.0 1.0
+  ⟨a.x + t * ab.x, a.y + t * ab.y, a.z + t * ab.z⟩
 
 -- ============================================================================
 -- Additional Vector3 Specific Functions

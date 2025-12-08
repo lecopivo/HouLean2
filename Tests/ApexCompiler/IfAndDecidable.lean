@@ -936,22 +936,3 @@ Literals:
     geo := geo.subdivide
 
   return geo
-
-
-
-
-#apex_graph fun (geo : Geometry) (x : Int) => Id.run do
-  let oldGeo := geo
-  let mut geo := geo
-
-  if x = 0 then
-    geo := geo.fractal
-  else
-    geo := geo.subdivide
-
-  if x = 1 then
-    geo := geo.merge oldGeo
-  else
-    geo := geo.merge oldGeo
-
-  return geo

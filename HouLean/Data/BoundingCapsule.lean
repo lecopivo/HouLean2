@@ -262,8 +262,8 @@ def pointOnAxis (c : Capsule) (t : Float) : Vector3 :=
   c.start.lerp c.finish t
 
 /-- Closest point on the capsule axis to a given point -/
-def closestPointOnAxis (c : Capsule) (p : Vector3) : Vector3 := sorry
-  -- projectToSegment p c.start c.finish
+def closestPointOnAxis (c : Capsule) (p : Vector3) : Vector3 :=
+  projectToSegment p c.start c.finish
 
 /-- Parametric position (0 to 1) of closest point on axis -/
 def closestT (c : Capsule) (p : Vector3) : Float :=

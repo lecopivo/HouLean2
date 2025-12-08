@@ -47,7 +47,7 @@ Wires:
 
 Literals:
 -/
-#guard_msgs in 
+#guard_msgs in
 #apex_graph fun (x : Array Float) (y : Float) => x.push y
 
 
@@ -98,76 +98,14 @@ Literals:
 #apex_graph fun (x : Array Float) => x * x
 
 
+-- todo: fix this
 /--
-info: Nodes:
-  0: ConvertIntFloat : Convert<Int,Float>
-  1: array_GetFloat : array::Get<Float>
-  2: array_LengthFloat : array::Length<Float>
-  3: MaxInt : Max<Int>
-  4: value : Value<Int>
-  5: LessThanInt : LessThan<Int>
-  6: TwoWaySwitchBool : TwoWaySwitch<Bool>
-  7: TwoWaySwitchFloat : TwoWaySwitch<Float>
-  8: TwoWaySwitchBool1 : TwoWaySwitch<Bool>
+error: Failed to apply implemented_by override Decidable.decide -> decide.apex_impl
+failed to synthesize
+  ApexDecidable ((fun xs i => i < xs.size) x 0)
 
-Ports:
-  0: /ConvertIntFloat/a[in]
-  1: /ConvertIntFloat/[anonymous][out]
-  2: /array_GetFloat/array[in]
-  3: /array_GetFloat/index[in]
-  4: /array_GetFloat/default[in]
-  5: /array_GetFloat/fst[out]
-  6: /array_GetFloat/snd[out]
-  7: /array_LengthFloat/array[in]
-  8: /array_LengthFloat/[anonymous][out]
-  9: /MaxInt/a[in]
-  10: /MaxInt/b[in]
-  11: /MaxInt/[anonymous][out]
-  12: /value/parm[in]
-  13: /value/value[out]
-  14: /LessThanInt/a[in]
-  15: /LessThanInt/b[in]
-  16: /LessThanInt/[anonymous][out]
-  17: /TwoWaySwitchBool/a[in]
-  18: /TwoWaySwitchBool/b[in]
-  19: /TwoWaySwitchBool/index[in]
-  20: /TwoWaySwitchBool/[anonymous][out]
-  21: /TwoWaySwitchFloat/a[in]
-  22: /TwoWaySwitchFloat/b[in]
-  23: /TwoWaySwitchFloat/index[in]
-  24: /TwoWaySwitchFloat/[anonymous][out]
-  25: /TwoWaySwitchBool1/a[in]
-  26: /TwoWaySwitchBool1/b[in]
-  27: /TwoWaySwitchBool1/index[in]
-  28: /TwoWaySwitchBool1/[anonymous][out]
-
-Inputs:
-  x[in] -> #[/array_GetFloat/array[in], /array_LengthFloat/array[in]]
-
-Outputs:
-  /TwoWaySwitchFloat/[anonymous][out] -> fst[out]
-  /TwoWaySwitchBool1/[anonymous][out] -> snd[out]
-
-Wires:
-  0: /ConvertIntFloat/[anonymous][out] -> /array_GetFloat/default[in]
-  1: /array_LengthFloat/[anonymous][out] -> /MaxInt/a[in]
-  2: /value/value[out] -> /MaxInt/b[in]
-  3: /MaxInt/[anonymous][out] -> /LessThanInt/b[in]
-  4: /LessThanInt/[anonymous][out] -> /TwoWaySwitchBool/index[in]
-  5: /ConvertIntFloat/[anonymous][out] -> /TwoWaySwitchFloat/a[in]
-  6: /array_GetFloat/fst[out] -> /TwoWaySwitchFloat/b[in]
-  7: /TwoWaySwitchBool/[anonymous][out] -> /TwoWaySwitchFloat/index[in]
-  8: /TwoWaySwitchBool/[anonymous][out] -> /TwoWaySwitchBool1/index[in]
-
-Literals:
-  0: int 0 -> 0 ⏎
-  1: int 0 -> 3 ⏎
-  2: int 0 -> 12 ⏎
-  3: int 0 -> 14 ⏎
-  4: bool "false" -> 17 ⏎
-  5: bool "true" -> 18 ⏎
-  6: bool "false" -> 25 ⏎
-  7: bool "true" -> 26
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+, unfolded: dite.apex_impl
 -/
 #guard_msgs in
 #apex_graph fun (x : Array Float) => x[0]?
@@ -285,5 +223,3 @@ Literals:
 -/
 #guard_msgs in
 #apex_graph fun (x : Array (Float × Float × Int)) (a : Float) (i : Int) => (x + x).push (a,a,i)
-
-

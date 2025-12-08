@@ -183,37 +183,50 @@ Literals:
 /--
 info: Nodes:
   0: DivideFloat : Divide<Float>
-  1: LerpFloat : Lerp<Float>
+  1: SubtractFloat : Subtract<Float>
   2: MultiplyFloat : Multiply<Float>
+  3: value : Value<Float>
+  4: AddFloat : Add<Float>
+  5: MultiplyFloat1 : Multiply<Float>
 
 Ports:
   0: /DivideFloat/a[in]
   1: /DivideFloat/b[⋯][in]
   2: /DivideFloat/[anonymous][out]
-  3: /LerpFloat/a[in]
-  4: /LerpFloat/b[in]
-  5: /LerpFloat/bias[in]
-  6: /LerpFloat/[anonymous][out]
-  7: /MultiplyFloat/a[in]
-  8: /MultiplyFloat/b[⋯][in]
-  9: /MultiplyFloat/[anonymous][out]
+  3: /SubtractFloat/a[in]
+  4: /SubtractFloat/b[⋯][in]
+  5: /SubtractFloat/[anonymous][out]
+  6: /MultiplyFloat/a[in]
+  7: /MultiplyFloat/b[⋯][in]
+  8: /MultiplyFloat/[anonymous][out]
+  9: /value/parm[in]
+  10: /value/value[out]
+  11: /AddFloat/a[in]
+  12: /AddFloat/b[⋯][in]
+  13: /AddFloat/[anonymous][out]
+  14: /MultiplyFloat1/a[in]
+  15: /MultiplyFloat1/b[⋯][in]
+  16: /MultiplyFloat1/[anonymous][out]
 
 Inputs:
-  x[in] -> #[/DivideFloat/a[in], /DivideFloat/b[0][in], /LerpFloat/a[in]]
+  x[in] -> #[/DivideFloat/a[in], /DivideFloat/b[0][in], /SubtractFloat/b[0][in], /AddFloat/a[in]]
 
 Outputs:
-  /MultiplyFloat/[anonymous][out] -> [anonymous][out]
+  /MultiplyFloat1/[anonymous][out] -> [anonymous][out]
 
 Wires:
-  0: /DivideFloat/[anonymous][out] -> /LerpFloat/b[in]
-  1: /DivideFloat/[anonymous][out] -> /MultiplyFloat/a[in]
-  2: /LerpFloat/[anonymous][out] -> /MultiplyFloat/b[0][in]
+  0: /DivideFloat/[anonymous][out] -> /SubtractFloat/a[in]
+  1: /SubtractFloat/[anonymous][out] -> /MultiplyFloat/a[in]
+  2: /value/value[out] -> /MultiplyFloat/b[0][in]
+  3: /MultiplyFloat/[anonymous][out] -> /AddFloat/b[0][in]
+  4: /DivideFloat/[anonymous][out] -> /MultiplyFloat1/a[in]
+  5: /AddFloat/[anonymous][out] -> /MultiplyFloat1/b[0][in]
 
 Literals:
-  0: float 0.300000 -> /LerpFloat/bias[in]
+  0: float 0.300000 -> /value/parm[in]
 -/
 #guard_msgs in
-#apex_graph fun x : Float => let y := x/x; y*x.lerp y 0.3
+#apex_graph fun x : Float => let y := x/x; y* Math.lerp x y 0.3
 
 
 /--
@@ -447,7 +460,7 @@ Literals:
 @[apex]
 def getBBoxSize (geo : Geometry) : Vector3 :=
   let r := geo.boundingBox
-  let size := r.2.1
+  let size := r.size
   size
 
 
@@ -561,7 +574,7 @@ Literals:
   2: float 3.141590 -> /snd.snd.fst/parm[in] ⏎
   3: bool "true" -> /snd.snd.snd/parm[in]
 -/
-#guard_msgs in 
+#guard_msgs in
 #apex_graph ((0:Nat), "hello", 3.14159, true)
 
 
@@ -602,7 +615,7 @@ Literals:
   2: float 3.141590 -> /snd.snd.fst/parm[in] ⏎
   3: bool "true" -> /snd.snd.snd/parm[in]
 -/
-#guard_msgs in 
+#guard_msgs in
 #apex_graph (fun _x : Int => ((0:Nat), "hello", 3.14159, true))
 
 
@@ -747,6 +760,3 @@ Literals:
 -/
 #guard_msgs in
 #apex_graph fun _x : Float => "a" ++ "b"
-
-
-

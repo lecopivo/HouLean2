@@ -133,6 +133,7 @@ elab_rules : command
     let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) f + 1)
     let decl ← Lean.mkDefinitionValInferringUnsafe declId [] F f hints
     addDeclarationRangesFromSyntax declId id
+    -- todo: modify `inst` to use the newly defined function
 
     -- Add documentation if provided
     match doc with

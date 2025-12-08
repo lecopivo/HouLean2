@@ -1,11 +1,11 @@
-import HouLean.Vex.Compiler.Elab
+import HouLean.Vex.Compiler.Grammar
 
 /-
 VEX Grammar Tests
 -/
 
 
-open Lean 
+open Lean
 open Lean Elab Term
 
 -- Test 1: Simple function
@@ -16,11 +16,11 @@ info: float square(float x) {
   }
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   float square(float x) {
     return x * x;
-  }  
+  }
 }
 
 /--
@@ -29,7 +29,7 @@ info: vector addVectors(vector a; vector b) {
   }
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   vector addVectors(vector a; vector b) {
     return a + b;
@@ -57,7 +57,7 @@ info: float myclamp(float val; float min; float max) {
   }
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   float myclamp(float val; float min; float max) {
     if (val < min)
@@ -81,7 +81,7 @@ info: float sum_array(float arr[]) {
   }
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   float sum_array(float arr[]) {
     float total = 0;
@@ -99,7 +99,7 @@ info: void computeColor(vector pos; export vector Cd) {
   }
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   void computeColor(vector pos; export vector Cd) {
     Cd = abs(pos);
@@ -134,7 +134,7 @@ info: vector displace(vector P; float amount) {
   }
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   vector displace(vector P; float amount) {
     vector N = normalize(P);
@@ -281,7 +281,7 @@ info: float foo(int a; int b) {
 -- Snippet Test 2: Color from Bounding Box
 /-- info: @Cd = relbbox(0, @P); -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   @Cd = relbbox(0, @P);
 }
@@ -291,7 +291,7 @@ info: float seed = 0.12345;
   @Cd = rand(seed + @ptnum);
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   float seed = 0.12345;
   @Cd = rand(seed + @ptnum);
@@ -302,7 +302,7 @@ info: int condition = (@P.x > 0) ? 1 : 0;
   @Cd = set(condition, 0, 0);
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   int condition = (@P.x > 0) ? 1 : 0;
   @Cd = set(condition, 0, 0);
@@ -316,7 +316,7 @@ info: string group = "mygroup";
   @Cd = set(condition, 0, 0);
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   string group = "mygroup";
   int condition = (@P.x > 0) ? 1 : 0;
@@ -327,7 +327,7 @@ vex% {
 -- Snippet Test 6: Fetch Second Input Cd Attribute
 /-- info: @Cd = point(1, "Cd", @ptnum); -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   @Cd = point(1, "Cd", @ptnum);
 }
@@ -338,7 +338,7 @@ info: int match_pt = findattribval(1, "point", "id", @id);
   @P = point(1, "P", match_pt);
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   int match_pt = findattribval(1, "point", "id", @id);
   @P = point(1, "P", match_pt);
@@ -352,7 +352,7 @@ info: int closept = nearpoint(1, @P);
   @Cd = set(@dist, 0, 0);
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   int closept = nearpoint(1, @P);
   vector value = point(1, "P", closept);
@@ -384,7 +384,7 @@ info: vector dir = {0, 1, 0};
   }
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   vector dir = {0, 1, 0};
   float len = 1.0;
@@ -410,7 +410,7 @@ vex% {
 -- Snippet Test 10: Get Neighbouring Points into Attribute
 /-- info: i[]@neighbours = neighbours(0, @ptnum); -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   i[]@neighbours = neighbours(0, @ptnum);
 }
@@ -428,7 +428,7 @@ info: int n[] = neighbours(0, @ptnum);
   @P = avgP;
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   int n[] = neighbours(0, @ptnum);
   vector avgP = @P;
@@ -471,10 +471,9 @@ info: int vtx_count = primvertexcount(0, @primnum) - 1;
   removepoint(0, ptnum);
 -/
 #guard_msgs in
-#eval IO.println <| 
+#eval IO.println <|
 vex% {
   int vtx_count = primvertexcount(0, @primnum) - 1;
   int ptnum = primvertex(0, @primnum, vtx_count);
   removepoint(0, ptnum);
 }
-
