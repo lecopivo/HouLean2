@@ -37,6 +37,29 @@ def withFVars (xs : Array Expr) (go : Array String → CompileM α) : CompileM �
   trace[HouLean.OpenCL.compiler] "Introduced variables: {names}"
   go names ctx
 
+
+partial def splitList (list : Expr) : MetaM (Array Expr) :=
+  go list #[]
+where
+  go (l : Expr) (xs : Array Expr) : MetaM (Array Expr) := do
+    if l.isAppOf ``List.nil then
+      return xs
+    else if l.isAppOfArity ``List.cons 3 then
+      let head := l.getArg! 1
+      let tail := l.getArg! 2
+      go tail (xs.push head)
+    else if l.isAppOfArity ``List.ofFn 3 then
+      let n ← unsafe evalExpr Nat q(Nat) (l.getArg! 1)
+      let f := l.getArg! 2
+      Array.ofFnM (n:=n) fun i =>
+        let n : Q(Nat) := mkNatLit n
+        let i : Q(Nat) := mkNatLit i.1
+        pure (f.beta #[q(⟨$i, sorry_proof⟩ : Fin $n)])
+    else
+      throwError m!"Can't split argument list {list}!"
+
+
+
 /--
 Look up or compile an OpenCL function from an expression.
 Returns the OCLFunction info along with the function and its arguments.
@@ -74,10 +97,21 @@ def getOpenCLAppOrCompile? (e : Expr) (doWhnf := false) :
       let name ← unsafe evalExpr String q(String) args[2]!
       let kind ← unsafe evalExpr OpenCLFunction.FunKind q(OpenCLFunction.FunKind) args[3]!
 
+      let args : Array Expr := args[4:]
+
+      if 0 < args.size then
+        if args[0]!.isAppOf ``argList then
+          let args ← splitList args[0]!.appArg!
+          return some {
+            oclFun := { name, kind }
+            fn := e.stripArgsN 1
+            args := args
+          }
+
       return some {
         oclFun := { name, kind }
-        fn := e.stripArgsN (args.size - 4)
-        args := args[4:]
+        fn := e.stripArgsN args.size
+        args := args
       }
     catch _ =>
       throwError "Can't get compiletime value of oclFunction {e}"
@@ -685,6 +719,12 @@ def getOpenCLTheorems : MetaM SimpTheorems := do
   | none => throwError "Simp attribute `opencl_csimp` not found"
   | some ext => ext.getTheorems
 
+def getOpenCLSimprocs : MetaM Simprocs := do
+  let ext ← Simp.getSimprocExtension? `opencl_csimp
+  match ext with
+  | none => throwError "Simp attribute `opencl_csimp` not found"
+  | some ext => ext.getSimprocs
+
 /--
 Compile a lambda expression to OpenCL code.
 
@@ -736,7 +776,7 @@ elab_rules : command
     logErrorAt tk "Can't compile: expression has metavariables"
     return
 
-  let simpMthds := Simp.mkDefaultMethodsCore #[]
+  let simpMthds := Simp.mkDefaultMethodsCore #[← getOpenCLSimprocs]
   let simpCtx : Simp.Context ← Simp.mkContext
     (config := {zetaDelta := false, zeta := false, iota := false})
     (simpTheorems := #[← getOpenCLTheorems])

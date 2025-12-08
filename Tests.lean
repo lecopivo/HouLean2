@@ -16,6 +16,7 @@ import Tests.Meta.OverloadedFunction
 import Tests.Meta.ProdLike
 import Tests.OpenCL.Basic
 import Tests.OpenCL.ForLoop
+import Tests.OpenCL.Grammar
 import Tests.OpenCL.IfThenElse
 import Tests.OpenCL.Matrix
 -- import Tests.OpenCL.P2G

@@ -19,7 +19,7 @@ double3 (anonymous)(double a)
         state = x1;
     }
     double r = state;
-    return (double3){(r + r), (r * r), (5.0d * r)};
+    return (double3){r + r, r * r, 5.0d * r};
 }
 -/
 #guard_msgs in
@@ -50,7 +50,7 @@ double3 (anonymous)(double a)
         state = r;
     }
     double r = state;
-    return (double3){(r + r), (r * r), (5.0d * r)};
+    return (double3){r + r, r * r, 5.0d * r};
 }
 -/
 #guard_msgs in

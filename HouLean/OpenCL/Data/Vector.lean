@@ -2,7 +2,6 @@ import HouLean.Data.Vector
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Data.Float
 import HouLean.OpenCL.Data.Fin
-import HouLean.OpenCL.Data.ArgList
 import HouLean.OpenCL.Data.InlinedLoop
 
 namespace HouLean.OpenCL
@@ -15,15 +14,17 @@ variable {α : Type} {n : Nat}
 implemented_by [t : AtomicOpenCLType α] [Inhabited α] (n) (xs : List α) (h) :
   Vector.mk (n:=n) xs.toArray h
   =
-  (oclFunction (ArgList α → Vector α n) s!"({t.name}{n})" .constructor)
-  (ArgList.ofList xs)
+  (oclFunction (List α → Vector α n) s!"({t.name}{n})" .constructor)
+  (argList xs)
 
 -- ofFn
 implemented_by [t : AtomicOpenCLType α] [Inhabited α] (n) (f : (Fin n) → α) :
   Vector.ofFn f
   =
-  (oclFunction (ArgList α → Vector α n) s!"({t.name}{n})" .constructor)
-  (ArgList.ofFn f)
+  (oclFunction (List α → Vector α n) s!"({t.name}{n})" .constructor)
+  (argList (List.ofFn f))
+
+
 
 def componentProjection (i : Nat) : String :=
      (if i = 0 then

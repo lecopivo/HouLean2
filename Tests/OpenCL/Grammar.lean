@@ -1,0 +1,51 @@
+import HouLean.OpenCL.Data.Vector
+import HouLean.OpenCL.Data.Matrix
+import HouLean.OpenCL.Compiler.Grammar
+
+
+namespace Test.OpenCL.Grammar
+
+open HouLean OpenCL
+
+implemented_by {α} [Inhabited α] [AtomicOpenCLType α] [Add α] (x y : α) : x + y = ocl%( x + y )
+implemented_by {α} [Inhabited α] [AtomicOpenCLType α] [Sub α] (x y : α) : x - y = ocl%( x - y )
+implemented_by {α} [Inhabited α] [AtomicOpenCLType α] [Mul α] (x y : α) : x * y = ocl%( x * y )
+implemented_by {α} [Inhabited α] [AtomicOpenCLType α] [Div α] (x y : α) : x / y = ocl%( x / y )
+implemented_by {α} [Inhabited α] [AtomicOpenCLType α] [Neg α] (x : α) : -x = ocl%( - x )
+
+
+variable (x y : Float)
+
+
+/--
+info: fun x y =>
+  have a := ocl%(x + y * x / y - x);
+  ocl%(a + x) : Float → Float → Float
+-/
+#guard_msgs in
+#check (fun x y : Float => let a := (x + y * x) / y - x; a + x)
+  rewrite_by
+    simp -zeta only [opencl_csimp]
+
+
+/-- info: fun x y => ocl%((double3){x, y, x}) : Float → Float → Vector Float 3 -/
+#guard_msgs in
+#check (fun x y : Float => #v[x,y,x])
+  rewrite_by
+    simp -zeta only [opencl_csimp]
+
+
+/-- info: fun x y => ocl%((double3){x, y, x}.y) : Float → Float → Float -/
+#guard_msgs in
+#check (fun x y : Float => #v[x,y,x][1])
+  rewrite_by
+    simp -zeta only [opencl_csimp]
+
+
+/--
+info: fun x y => ocl%((matrix22d){(double2){x, y}, (double2){y, x}}.row0.x) : Float → Float → Float
+-/
+#guard_msgs in
+#check (fun x y : Float => #m[#v[x,y],#v[y,x]][(0,0)])
+  rewrite_by
+    simp -zeta only [opencl_csimp]

@@ -5,11 +5,12 @@ open HouLean OpenCL Math
 
 open HoudiniMatrixVecMul
 
+
 /--
 info:
 float3 hdiv_hdiv_f3ff3(float3 a, float a1)
 {
-    return (float3){(a.x / a1), (a.y / a1), (a.y / a1)};
+    return (float3){a.x / a1, a.y / a1, a.y / a1};
 }
 
 matrix33f houlean_matrix_sdiv_f33(matrix33f a, float s)
@@ -29,6 +30,7 @@ matrix33f (anonymous)(float s, matrix33f A)
 -/
 #guard_msgs in
 #opencl_compile (fun (s : Float32) (A : Matrix Float32 3 3) => A / s)
+
 
 /--
 info:

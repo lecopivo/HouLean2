@@ -56,7 +56,7 @@ bool houlean_math_approxequal_approxequal_d(double x, double y, double tol)
 
 double3 hdiv_hdiv_d3dd3(double3 a, double a1)
 {
-    return (double3){(a.x / a1), (a.y / a1), (a.y / a1)};
+    return (double3){a.x / a1, a.y / a1, a.y / a1};
 }
 
 prodd3d vector_normalize_d3(double3 u)

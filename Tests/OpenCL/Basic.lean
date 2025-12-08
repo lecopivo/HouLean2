@@ -43,7 +43,7 @@ double3 (anonymous)(double3 x, double3 y)
 info:
 matrix33f houlean_matrix_add_f33(matrix33f a, matrix33f b)
 {
-    return (matrix33f){(a.row0 + b.row0), (a.row1 + b.row1), (a.row2 + b.row2)};
+    return (matrix33f){a.row0 + b.row0, a.row1 + b.row1, a.row2 + b.row2};
 }
 
 matrix33f hadd_hadd_f33f33f33(matrix33f a, matrix33f a1)
@@ -53,7 +53,7 @@ matrix33f hadd_hadd_f33f33f33(matrix33f a, matrix33f a1)
 
 matrix33f houlean_matrix_smul_f33(float s, matrix33f a)
 {
-    return (matrix33f){(s * a.row0), (s * a.row1), (s * a.row2)};
+    return (matrix33f){s * a.row0, s * a.row1, s * a.row2};
 }
 
 matrix33f hmul_hmul_ff33f33(float a, matrix33f a1)
@@ -63,7 +63,7 @@ matrix33f hmul_hmul_ff33f33(float a, matrix33f a1)
 
 matrix33f houlean_matrix_sub_f33(matrix33f a, matrix33f b)
 {
-    return (matrix33f){(a.row0 - b.row0), (a.row1 - b.row1), (a.row2 - b.row2)};
+    return (matrix33f){a.row0 - b.row0, a.row1 - b.row1, a.row2 - b.row2};
 }
 
 matrix33f hsub_hsub_f33f33f33(matrix33f a, matrix33f a1)

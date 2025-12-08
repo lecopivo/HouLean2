@@ -32,6 +32,8 @@ This ia jsut a macro for:
 ``` -/
 scoped syntax "implemented_by" bracketedBinder* " : " term:55 " = " term (" := " term)? : command
 
+/-- Compilers gadget that turns `f (argList [xs,*])` to `f xs.*` -/
+def argList {α} (args : List α) : List α := args
 
 open Lean Elab Term Command in
 elab_rules : command
@@ -224,6 +226,7 @@ deriving BEq, Inhabited
 --       get's into infinite recursion as it keeps on simplifying `spec`
 noncomputable
 opaque oclFunction (type : Type) [Inhabited type] (name : String) (kind : OpenCLFunction.FunKind := .normal) : type
+
 
 
 -- =========================

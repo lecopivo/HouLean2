@@ -47,16 +47,16 @@ instance [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] : 
 implemented_by [t : AtomicOpenCLType α] [Inhabited α] (n) (xs : List (Vector α n)) (h) :
   Matrix.mk (m:=m) (n:=n) (Vector.mk xs.toArray h)
   =
-  (oclFunction (ArgList (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
-  (ArgList.ofList xs)
+  (oclFunction (List (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
+  (argList xs)
 
 -- ofFn
 attribute [opencl_csimp] Matrix.ofFn
 implemented_by [t : AtomicOpenCLType α] [Inhabited α] (f : Fin m → Vector α n) :
   Matrix.mk (m:=m) (n:=n) (.ofFn f)
   =
-  (oclFunction (ArgList (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
-  (ArgList.ofFn f)
+  (oclFunction (List (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
+  (argList (List.ofFn f))
 
 
 /-- Same as `Matrix.col` but `i` is implicit argument thus forced to be compile time evaluated.
