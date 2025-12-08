@@ -15,10 +15,10 @@ namespace Test.OpenCL.MPM
 
 noncomputable
 def clearSurfaces
-  (tilestartsxyx : ArrayPointer (Vector Int32 3)) -- missing global, const, restric
-  (surface_grid : NanoVDB Float32)       -- missing global, restric
-  (surface_grid_out : NanoVDB Float32)   -- missing global, restric
-  : OpenCLM Unit := do
+    (tilestartsxyx : ArrayPointer (Vector Int32 3)) -- missing global, const, restric
+    (surface_grid : NanoVDB Float32)       -- missing global, restric
+    (surface_grid_out : NanoVDB Float32)   -- missing global, restric
+    : OpenCLM Unit := do
 
   let surface_grid_acc ← surface_grid.getReadAccessor
   let surface_grid_out_acc ← surface_grid_out.getReadAccessor
@@ -48,11 +48,10 @@ def clearSurfaces
 
 noncomputable
 def clearGrids
-  (tilestartsxyx : ArrayPointer (Vector Int32 3))  -- missing global, const, restric
-  (mass_grid : NanoVDB Float32)                    -- missing global, restric
-  (vel_grid : NanoVDB (NanoVDB.Vec3 Float32))      -- missing global, restric
-  : OpenCLM Unit := do
-
+    (tilestartsxyx : ArrayPointer (Vector Int32 3))  -- missing global, const, restric
+    (mass_grid : NanoVDB Float32)                    -- missing global, restric
+    (vel_grid : NanoVDB (NanoVDB.Vec3 Float32))      -- missing global, restric
+    : OpenCLM Unit := do
 
   let mass_grid_acc ← mass_grid.getReadAccessor
   let vel_grid_acc ← vel_grid.getReadAccessor
