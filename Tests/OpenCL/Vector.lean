@@ -37,39 +37,45 @@ double (anonymous)(double3 x, double3 y)
 #opencl_compile (fun x y : Vector Float 3 => dot x y)
 
 
+/--
+info:
+double vector_length2_d3(double3 u)
+{
+    return ((u.x * u.x) + (u.y * u.y)) + (u.y * u.y);
+}
 
-set_option trace.HouLean.OpenCL.compiler true in
+double vector_length_d3(double3 u)
+{
+    return sqrt(vector_length2_d3(u));
+}
+
+bool houlean_math_approxequal_approxequal_d(double x, double y, double tol)
+{
+    return fabs(x - y) <= tol;
+}
+
+double3 hdiv_hdiv_d3dd3(double3 a, double a1)
+{
+    return (double3){(a.x / a1), (a.y / a1), (a.y / a1)};
+}
+
+prodd3d vector_normalize_d3(double3 u)
+{
+    double len = vector_length_d3(u);
+    if (houlean_math_approxequal_approxequal_d(len, 0.0d, 1e-9d))
+    {
+        return (prodd3d){u, 0.0d};
+    }
+    else
+    {
+        return (prodd3d){hdiv_hdiv_d3dd3(u, len), len};
+    }
+}
+
+prodd3d (anonymous)(double3 x)
+{
+    return vector_normalize_d3(x);
+}
+-/
+#guard_msgs in
 #opencl_compile (fun x : Vector Float 3 => x.normalize)
-
-#check (fun x : Vector Float 3 => x.normalize)
-
-
-attribute [opencl_csimp] Math.dot
-
-#check Vector.dot
-
-set_option trace.Meta.Tactic.simp true in
-#check  (fun x y : Vector Float 3 => dot x y)
-  rewrite_by
-    unfold dot Vector.instDotOfAddOfZeroOfMul
-    simp only []
-    simp only []
-
-
-
-declfun foo {α} (x : α) : α
-
-defun foo (x : Nat) := 10 * x
-defun foo (x : Float) := 10 * x
-
-
-#check foo (42 : Nat)
-#check foo (42 : Float)
-
-
-instance [Add α] [Mul α] : Foo α where
-  foo x := x * x + x
-
-#check foo (42 : Int)
-
-Add α → Mul α → Foo α

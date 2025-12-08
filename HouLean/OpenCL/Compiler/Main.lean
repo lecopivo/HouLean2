@@ -192,7 +192,7 @@ def simplifyExpr (e : Expr) : CompileM Expr := do
   --     | .error _ => return m!"Simplification failed") do
   let e' := e
   let e := (← Simp.simp e).expr
-  let e ← Meta.liftLets e
+  -- let e ← Meta.liftLets e
   if e != e' then
     trace[HouLean.OpenCL.compiler] m!"simplified\n{e'}\n==>\n{e}"
   return e
@@ -376,7 +376,7 @@ Main compilation function that converts a Lean expression to OpenCL code.
 - `.app`:
   - `.bind`: Monadic bind - compile mx, introduce binding variable, compile continuation
   - `.forLoop`: Generate OpenCL for-loop with mutable state variable
-  - `.ite`: Conditional expression (not yet implemented in shown code)
+  - `.ite`: Conditional expression
   - `.app`: Look up/compile OpenCL function and compile arguments
   - `.value`: Extract and compile the wrapped value
 - `.fvar`: Look up variable name in context
@@ -394,14 +394,18 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
   if let some val ← runInterpreter e then
     return ← cont e (.lit val)
 
+  trace[HouLean.OpenCL.compiler] m!"case: {e.ctorName}`"
   match e with
-  | .letE name _type val body _ =>
-    compile val fun val' codeVal => do
-    if val'.isFVar then
-      compile (body.instantiate1 val') cont
+  | .letE name type val body _ =>
+
+    trace[HouLean.OpenCL.compiler] m!"let binding `let {name} : {type} := {val}`\nfvar value: {val.isFVar}\nfunction: {type.isForall}"
+    if val.isFVar || type.isForall then
+      trace[HouLean.OpenCL.compiler] m!"inlining let binding `let {name} : {type} := {val}`"
+      compile (body.instantiate1 val) cont
     else
-      withLetVar name val' codeVal fun var => do
-      compile (body.instantiate1 var) cont
+      compile val fun val' codeVal => do
+        withLetVar name val' codeVal fun var => do
+        compile (body.instantiate1 var) cont
 
   | .app .. =>
     match ← appCase e with
@@ -459,8 +463,12 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
       withReader (fun ctx => { ctx with fvarMap := ctx.fvarMap.insert loopVar stateName}) do
       cont loopVar (.fvar stateName)
 
-    | .ite _ _ _ =>
-      throwError "If-then-else not yet implemented"
+    | .ite cond thn els =>
+      let decCond ← mkAppOptM ``decide #[cond, none]
+      compile decCond fun _ condCode => do
+      let thnBody ← compileScope thn cont
+      let elseBody ← compileScope els cont
+      addStatement (.ite condCode thnBody elseBody)
 
   | .fvar .. =>
     let some varName := (← read).fvarMap[e]?

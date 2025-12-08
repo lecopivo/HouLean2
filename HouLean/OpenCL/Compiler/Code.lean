@@ -82,14 +82,25 @@ partial def CodeStatement.toString (stmt : CodeStatement)
   match stmt with
   | .letE n t v => return s!"{indent}{t.name} {n} = {← v.toString};"
   | .assignment n v => return s!"{indent}{n} = {← v.toString};"
-  | .ite .. => return s!"{indent}if todo:"
+  | .ite c t e =>
+    let t ← t.mapM (·.toString (indent ++ indentInc) indentInc)
+    let t := t.joinl (·++"\n"++·) (map:=id)
+    let e ← e.mapM (·.toString (indent ++ indentInc) indentInc)
+    let e := e.joinl (·++"\n"++·) (map:=id)
+    return s!"{indent}if ({← c.toString})\n\
+              {indent}\{\n\
+              {t}\n\
+              {indent}}\n\
+              {indent}else\n\
+              {indent}\{\n\
+              {e}\n\
+              {indent}}"
   | .forLoop i s e st b =>
     let s ← s.toString
     let e ← e.toString
     let st ← st.toString
-    let b ← b.joinlM
-      (op  := fun a b => pure (a++"\n"++b))
-      (map := fun x => do pure s!"{← x.toString (indent ++ indentInc)}")
+    let b ← b.mapM (·.toString (indent ++ indentInc) indentInc)
+    let b := b.joinl (·++"\n"++·) (map:=id)
     return s!"{indent}for (uint {i} = {s}; {i} < {e}; {i} += {st})\n\
               {indent}\{\n\
               {b}\n\

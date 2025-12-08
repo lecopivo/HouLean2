@@ -7,15 +7,6 @@ open HouLean.OpenCL
 
 namespace Tests.OpenCL.ForLoop
 
-instance [t : OpenCLType α] : OpenCLType (Id α) := t
-instance [t : OpenCLType α] : OpenCLType (ForInStep α) where
-  name := t.name
-  shortName := t.shortName
-
-implemented_by : Nat.toFloat = oclFunction _ "(float)"
-
-attribute [opencl_csimp] pure_bind bind_pure bind_assoc Id.run
-
 /--
 info:
 double3 (anonymous)(double a)
@@ -23,7 +14,7 @@ double3 (anonymous)(double a)
     double state = a;
     for (uint i = 0; i < 10; i += 2)
     {
-        double x = (state * state) * (float)(i);
+        double x = (state * state) * (double)(i);
         double x1 = x + x;
         state = x1;
     }
@@ -51,7 +42,7 @@ double3 (anonymous)(double a)
         double state1 = state;
         for (uint j = 5; j < 20; j += 1)
         {
-            double x = ((state1 * state1) * (float)(i)) * (float)(j);
+            double x = ((state1 * state1) * (double)(i)) * (double)(j);
             double x1 = x + x;
             state1 = x1;
         }

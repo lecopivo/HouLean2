@@ -16,8 +16,10 @@ import Tests.Meta.OverloadedFunction
 import Tests.Meta.ProdLike
 import Tests.OpenCL.Basic
 import Tests.OpenCL.ForLoop
+import Tests.OpenCL.IfThenElse
 import Tests.OpenCL.Matrix
 -- import Tests.OpenCL.P2G
+import Tests.OpenCL.Vector
 import Tests.Python.Basic
 import Tests.Python.Block
 import Tests.Python.Expr
