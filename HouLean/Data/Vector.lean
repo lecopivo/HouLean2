@@ -12,6 +12,8 @@ def _root_.Vector.y (a : Vector α n) (h : 1 < n := by grind) : α := a[1]
 def _root_.Vector.z (a : Vector α n) (h : 2 < n := by grind) : α := a[2]
 def _root_.Vector.w (a : Vector α n) (h : 3 < n := by grind) : α := a[3]
 
+instance : SetElem (Vector α n) Nat α (fun _ i => i < n) where
+  setElem xs i x h := xs.set i x
 
 instance [Mul α] : Mul (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui * v[i])⟩
 -- instance [Mul α] : HMul (Vector α n) α (Vector α n) := ⟨fun v s => v.map (fun vi => vi * s)⟩
