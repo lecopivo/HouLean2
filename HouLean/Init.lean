@@ -73,3 +73,6 @@ def _root_.Array.joinr [Inhabited β] (xs : Array α) (map : α → β) (op : β
 
 
 def sum {α} [Add α] [Zero α] (f : Fin n → α) : α := Fin.foldl n (init := 0) (· + f ·)
+
+open Lean.Parser.Term in
+macro "∑" binder:funBinder ", " body:term : term => `(sum fun $binder => $body)

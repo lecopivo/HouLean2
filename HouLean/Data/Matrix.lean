@@ -12,6 +12,21 @@ instance {α} {m n : Nat} : GetElem? (Matrix α m n) (Nat×Nat) α (fun _ ij => 
   getElem? A ij := A.data[ij.1]? |>.map (fun row => row[ij.2]?) |>.join
   getElem! A ij := A.data[ij.1]![ij.2]!
 
+instance {α} {m n : Nat} : GetElem? (Matrix α m n) (Fin m'×Nat) α (fun _ ij => m' ≤ m ∧ ij.2 < n) where
+  getElem A ij h := A[ij.1.1,ij.2]
+  getElem? A ij := A[(ij.1.1,ij.2)]?
+  getElem! A ij := A[(ij.1.1,ij.2)]!
+
+instance {α} {m n : Nat} : GetElem? (Matrix α m n) (Nat×Fin n') α (fun _ ij => ij.1 < m ∧ n' ≤ n) where
+  getElem A ij h := A[ij.1,ij.2.1]
+  getElem? A ij := A[(ij.1,ij.2.1)]?
+  getElem! A ij := A[(ij.1,ij.2.1)]!
+
+instance {α} {m n : Nat} : GetElem? (Matrix α m n) (Fin m'×Fin n') α (fun _ _ => m' ≤ m ∧ n' ≤ n) where
+  getElem A ij h := A[ij.1.1,ij.2.1]
+  getElem? A ij := A[(ij.1.1,ij.2.1)]?
+  getElem! A ij := A[(ij.1.1,ij.2.1)]!
+
 instance {α} {m n : Nat} : SetElem? (Matrix α m n) (Nat×Nat) α (fun _ ij => ij.1 < m ∧ ij.2 < n) where
   setElem A ij x h :=
     let (i,j) := ij
@@ -27,6 +42,14 @@ instance {α} {m n : Nat} : SetElem? (Matrix α m n) (Nat×Nat) α (fun _ ij => 
     ⟨A.data.set! i (A.data[i]!.set! j x)⟩
 
 namespace Matrix
+
+@[simp]
+theorem getElem_fin_nat_normalize (A : Matrix α m n) (ij : Fin m × Nat) (h : ij.2 < n) : A[ij] = A[ij.1.1,ij.2] := by rfl
+@[simp]
+theorem getElem_nat_fin_normalize (A : Matrix α m n) (ij : Nat × Fin n) (h : ij.1 < m) : A[ij] = A[ij.1,ij.2.1] := by rfl
+@[simp]
+theorem getElem_fin_fin_normalize (A : Matrix α m n) (ij : Fin m × Fin n) : A[ij] = A[ij.1.1,ij.2.1] := by rfl
+
 
 -- Row and column extraction
 def row (a : Matrix α m n) (i : Nat) (h : i < m := by get_elem_tactic) :
@@ -57,8 +80,21 @@ def wz (a : Matrix α m n) (h : m > 3 ∧ n > 2 := by get_elem_tactic) : α := a
 def ww (a : Matrix α m n) (h : m > 3 ∧ n > 3 := by get_elem_tactic) : α := a[3,3]
 
 
--- todo: add support for `;` to separate row `#m[xx,xy; yx,yy]`
-macro "#m[" rows:term,* "]" : term => `(Matrix.mk #v[ $rows,* ])
+-- todo: merge the two syntaxex together and remove the hack with priority
+macro (priority:=high) "#m[" rows:term,* "]" : term => `(Matrix.mk #v[ $rows,* ])
+
+syntax matrixEntries := sepBy1(sepBy(term,","),";")
+syntax "#m[" matrixEntries  "]" : term
+
+open Lean Meta Syntax in
+macro_rules
+| `( #m[ $xs:matrixEntries ]) => do
+   let entries : Array (Array Term):= xs.raw.getArgs[0]!.getSepArgs.map (fun x => x.getSepArgs.map (fun x => ⟨x⟩))
+   let rows ← entries.mapM (fun row =>
+     let row := ⟨mkSepArray row (.mkStrLit ",")⟩
+     `(#v[$row:term,*]))
+   let rows : TSepArray `term "," := ⟨mkSepArray rows (.mkStrLit ",")⟩
+   `(#m[$rows,*])
 
 -- Matrix operations
 def ofFn (f : (i j : Nat) → (h : i < m ∧ j < n) → α) : Matrix α m n :=
@@ -270,8 +306,8 @@ variable [One α] [Div α] [Inv α]
 def transformPointLeft (transform : Matrix α (n+1) (n+1)) (point : Vector α n) : Vector α n :=
 
   let point' := Vector.ofFn fun j : Fin n =>
-    transform[n,j.1] + HouLean.sum (fun k : Fin n => point[k] * transform[k.1,j.1])
-  let w := transform[n,n] + HouLean.sum (fun k : Fin n => point[k] * transform[k.1,n])
+    transform[n,j.1] + ∑ (k : Fin n), point[k] * transform[k,j]
+  let w := transform[n,n] + ∑ (k : Fin n), point[k] * transform[k.1,n]
 
   point' / w
 
@@ -279,17 +315,19 @@ def transformPointLeft (transform : Matrix α (n+1) (n+1)) (point : Vector α n)
 def transformPointRight (transform : Matrix α (n+1) (n+1)) (point : Vector α n) : Vector α n :=
 
   let point' := Vector.ofFn fun i : Fin n =>
-    transform[i.1,n] + HouLean.sum (fun k : Fin n => transform[i.1,k.1] * point[k])
-  let w := transform[n,n] + HouLean.sum (fun k : Fin n => point[k] * transform[k.1,n])
+    transform[i.1,n] + ∑ (k : Fin n), transform[i,k] * point[k]
+  let w := transform[n,n] + ∑ (k : Fin n), point[k] * transform[k,n]
 
   point' / w
 
 /-- Transform vector. Computes `(vector 0) * transform` -/
 def transformVectorLeft (transform : Matrix α (n+1) (n+1)) (vector : Vector α n) : Vector α n :=
   Vector.ofFn fun j : Fin n =>
-    HouLean.sum (fun k : Fin n => vector[k] * transform[k.1,j.1])
+    ∑ (k : Fin n), vector[k] * transform[k,j]
+    -- HouLean.sum (fun k : Fin n => vector[k] * transform[k.1,j.1])
 
 /-- Transform vector. Computes `transform * (vector 0)` -/
 def transformVectorRight (transform : Matrix α (n+1) (n+1)) (vector : Vector α n) : Vector α n :=
   Vector.ofFn fun i : Fin n =>
-    HouLean.sum (fun k : Fin n => transform[i.1, k.1] * vector[k])
+    ∑ (k : Fin n), transform[i,k] * vector[k]
+    -- HouLean.sum (fun k : Fin n => transform[i.1, k.1] * vector[k])

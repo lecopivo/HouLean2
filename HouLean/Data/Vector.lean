@@ -61,6 +61,8 @@ defun invsqrt [Invsqrt α] (x : Vector α n) : Vector α n := x.map Math.invsqrt
 defun abs [Abs α] (x : Vector α n) : Vector α n := x.map Math.abs
 defun sign [Sign α] (x : Vector α n) : Vector α n := x.map Math.sign
 defun clamp [Clamp α α] (x : Vector α n) (lo hi : α) : Vector α n := x.map (Math.clamp · lo hi)
+defun clamp [Clamp α α] (x : Vector α n) (lo hi : Vector α n) : Vector α n :=
+  x.mapFinIdx (fun i xi _ => Math.clamp xi lo[i] hi[i])
 defun floor [Floor α] (x : Vector α n) : Vector α n := x.map Math.floor
 defun ceil [Ceil α] (x : Vector α n) : Vector α n := x.map Math.ceil
 defun round [Round α] (x : Vector α n) : Vector α n := x.map Math.round
@@ -78,9 +80,12 @@ protected def compMin [Min α] [Inhabited α] (x : Vector α n) : α :=
 protected def compMax [Max α] [Inhabited α] (x : Vector α n) : α :=
   x.toArray.joinl (map:=fun a => a) (fun a b => max a b)
 
-def approxEqual [Abs α] [Sub α] [Inhabited α] [Max α] [LE α] [DecidableLE α]
-    (x y : Vector α n) (tol : α) : Bool :=
+def approxEqual {R} [FloatType R] (x y : Vector R n) (tol : R) : Bool :=
   (x - y).abs.compMax ≤ tol
+
+instance {R} [FloatType R] : ApproxEqual (Vector R n) R where
+  defaultTol := ApproxEqual.defaultTol R
+  approxEqual x y tol := approxEqual x y tol
 
 
 -- ============================================================================
@@ -101,13 +106,13 @@ defun length2 (u : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*u[i])
 defun length [Sqrt α] (u : Vector α n) : α := Math.sqrt u.length2
 defun distance2 (u v : Vector α n) : α := (u-v).length2
 defun distance [Sqrt α] (u v : Vector α n) : α := Math.sqrt (u.distance2 v)
-defun normalize [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n × α :=
+defun normalize [Sqrt α] [ApproxEqual α α] (u : Vector α n) : Vector α n × α :=
   let len := u.length
   if len ≈ 0 then
     (u, 0)
   else
     (u / len, len)
-defun normalized [Sqrt α] [ApproxEqual α] (u : Vector α n) : Vector α n :=
+defun normalized [Sqrt α] [ApproxEqual α α] (u : Vector α n) : Vector α n :=
   u.normalize.1
 
 defun reflect [OfNat α 2] (v normal : Vector α n) : Vector α n :=
@@ -147,11 +152,10 @@ defun hermite [Hermite α α] (p0 p1 t0 t1 : Vector α n) (t : α) : Vector α n
 defun catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Vector α n) (t : α) : Vector α n :=
   .ofFn fun i => Math.catmullRom p0[i] p1[i] t0[i] t1[i] t
 
-defun slerp [Add α] [Zero α] [Mul α] [Sqrt α] [ApproxEqual α] [Clamp α α] [One α] [Neg α] [Acos α] [Abs α]
-    [Sin α] [Sub α] [Lerp (Vector α n) α]
-    (v w : Vector α n) (t : α) : Vector α n :=
+defun slerp {R : Type} [FloatType R]
+    (v w : Vector R n) (t : R) : Vector R n :=
   let d := v.normalized.dot w.normalized
-  let d := Math.clamp d (-1:α) (1:α)
+  let d := Math.clamp d (-1:R) (1:R)
   let theta := Math.acos d
   if theta ≈ 0 then
     Math.lerp v w t

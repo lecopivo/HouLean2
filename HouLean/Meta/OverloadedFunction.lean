@@ -96,6 +96,16 @@ elab_rules : command
 
   elabCommand (← `(export $className ($id)))
 
+def mkUniqueDeclName (name : Name) : CoreM Name := do
+  if !(←getEnv).contains name then
+    return name
+  else
+    let mut i := 1
+    while (←getEnv).contains (name.appendAfter (toString i)) do
+      i := i + 1
+    return (name.appendAfter (toString i))
+
+
 open Lean Meta Elab Command Term in
 elab_rules : command
 | `($[$doc:docComment]? defun $id:ident $bs:bracketedBinder* $[: $ty:term]? := $body) => do
@@ -134,24 +144,24 @@ elab_rules : command
     let decl ← Lean.mkDefinitionValInferringUnsafe declId [] F f hints
     addDeclarationRangesFromSyntax declId id
 
-    -- Add documentation if provided
-    match doc with
-    | some doc =>
-      addDecl (Declaration.defnDecl decl)
-      addDocString declId (mkNullNode bs) doc
-      compileDecl (Declaration.defnDecl decl)
-    | none =>
-      addAndCompile (Declaration.defnDecl decl)
+    if !((← getEnv).contains declId) then
+      -- Add documentation if provided
+      match doc with
+      | some doc =>
+        addDecl (Declaration.defnDecl decl)
+        addDocString declId (mkNullNode bs) doc
+        compileDecl (Declaration.defnDecl decl)
+      | none =>
+        addAndCompile (Declaration.defnDecl decl)
 
-    inst ← mkLambdaFVars ys (← mkAppM (className.append `mk) #[← mkAppOptM declId (ys.map some)])
-           >>= instantiateMVars
+      inst ← mkLambdaFVars ys (← mkAppM (className.append `mk) #[← mkAppOptM declId (ys.map some)])
+             >>= instantiateMVars
 
 
   -- Generate and add instance
   let classExpr ← inferType inst
-  let instName := (← getCurrNamespace) ++ (← NameGen.mkBaseNameWithSuffix "inst" classExpr)
-  if (←getEnv).contains instName then
-    throwError "Enviroment already contains {instName}"
+  let instName ← mkUniqueDeclName <|
+    (← getCurrNamespace) ++ (← NameGen.mkBaseNameWithSuffix "inst" classExpr)
   let hints := ReducibilityHints.regular (getMaxHeight (← getEnv) inst + 1)
   let decl ← Lean.mkDefinitionValInferringUnsafe instName [] classExpr inst hints
   addAndCompile (Declaration.defnDecl decl)

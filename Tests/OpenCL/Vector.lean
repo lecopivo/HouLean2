@@ -57,9 +57,14 @@ double vector_length_d3(double3 u)
     return houlean_math_sqrt_d(vector_length2_d3(u));
 }
 
-bool houlean_math_approxequal_d(double x, double y, double tol)
+double houlean_math_abs_d(double x)
 {
-    return fabs(x - y) <= tol;
+    return fabs(x);
+}
+
+bool houlean_math_approxequal_dd(double x, double y, double tol)
+{
+    return houlean_math_abs_d(x - y) <= tol;
 }
 
 double inv_d(double a)
@@ -76,7 +81,7 @@ double3 hdiv_d3dd3(double3 a, double a1)
 prodd3d vector_normalize_d3(double3 u)
 {
     double len = vector_length_d3(u);
-    if (houlean_math_approxequal_d(len, 0.0d, 1e-9d))
+    if (houlean_math_approxequal_dd(len, 0.0d, 1e-6d))
     {
         return (prodd3d){u, 0.0d};
     }
@@ -93,3 +98,93 @@ prodd3d (anonymous)(double3 x)
 -/
 #guard_msgs in
 #opencl_compile (fun x : Vector Float 3 => x.normalize)
+
+
+/--
+info:
+double3 vector_normalized_d3(double3 u)
+{
+    return vector_normalize_d3(u).fst;
+}
+
+double houlean_math_clamp_dd(double x, double lo, double hi)
+{
+    if (x < lo)
+    {
+        return lo;
+    }
+    else
+    {
+        if (hi < x)
+        {
+            return hi;
+        }
+        else
+        {
+            return x;
+        }
+    }
+}
+
+double houlean_math_acos_d(double x)
+{
+    return acos(x);
+}
+
+double3 vector_lerp_d3(double3 x, double3 y, double t)
+{
+    return x + (t * (y - x));
+}
+
+double3 houlean_math_lerp_d3d(double3 x, double3 y, double t)
+{
+    return vector_lerp_d3(x, y, t);
+}
+
+double houlean_math_sin_d(double x)
+{
+    return sin(x);
+}
+
+double3 vector_slerp_d3(double3 v, double3 w, double t)
+{
+    double d = vector_dot_d3(vector_normalized_d3(v), vector_normalized_d3(w));
+    double d1 = houlean_math_clamp_dd(d, -1.0d, 1.0d);
+    double theta = houlean_math_acos_d(d1);
+    if (houlean_math_approxequal_dd(theta, 0.0d, 1e-6d))
+    {
+        return houlean_math_lerp_d3d(v, w, t);
+    }
+    else
+    {
+        double s = houlean_math_sin_d(theta);
+        double a = houlean_math_sin_d((1.0d - t) * theta) / s;
+        double b = houlean_math_sin_d(t * theta) / s;
+        return (a * v) + (b * w);
+    }
+}
+
+double3 (anonymous)(double3 x, double3 y, double t)
+{
+    return vector_slerp_d3(x, y, t);
+}
+-/
+#guard_msgs in
+#opencl_compile (fun (x y : Vector Float 3) (t : Float) => x.slerp y t)
+
+
+
+/--
+info:
+double3 houlean_math_clamp_d3d3(double3 x, double3 lo, double3 hi)
+{
+    return (double3){houlean_math_clamp_dd(x.x, lo.x, hi.x), houlean_math_clamp_dd(x.y, lo.y, hi.y), houlean_math_clamp_dd(x.z, lo.z, hi.z)};
+}
+
+double3 (anonymous)(double3 x, double3 bbmin, double3 bbmax)
+{
+    return houlean_math_clamp_d3d3(x, bbmin, bbmax);
+}
+-/
+#guard_msgs in
+#opencl_compile (fun x bbmin bbmax : Vector Float 3 => clamp x bbmin bbmax)

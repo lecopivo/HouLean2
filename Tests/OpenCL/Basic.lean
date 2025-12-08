@@ -10,47 +10,47 @@ namespace Tests.OpenCL.Basic
 
 /--
 info:
-double houlean_math_lerp_dd(double x, double y, double t)
+float houlean_math_lerp_ff(float x, float y, float t)
 {
     return x + ((y - x) * t);
 }
 
-double (anonymous)(double x, double y)
+float (anonymous)(float x, float y)
 {
-    double a = x * y;
-    double b = houlean_math_lerp_dd(x, y, 0.3d);
+    float a = x * y;
+    float b = houlean_math_lerp_ff(x, y, 0.300000011920929f);
     return a + b;
 }
 -/
 #guard_msgs in
-#opencl_compile (fun x y : Float =>
+#opencl_compile (fun x y : Float32 =>
   let a := x * y
-  let b := Math.lerp x y 0.3
+  let b := Math.lerp x y (0.3:Float32)
   a + b)
 
 /--
 info:
-double3 vector_lerp_d3(double3 x, double3 y, double t)
+float3 vector_lerp_f3(float3 x, float3 y, float t)
 {
     return x + (t * (y - x));
 }
 
-double3 houlean_math_lerp_d3d(double3 x, double3 y, double t)
+float3 houlean_math_lerp_f3f(float3 x, float3 y, float t)
 {
-    return vector_lerp_d3(x, y, t);
+    return vector_lerp_f3(x, y, t);
 }
 
-double3 (anonymous)(double3 x, double3 y)
+float3 (anonymous)(float3 x, float3 y)
 {
-    double3 a = x + y;
-    double3 b = houlean_math_lerp_d3d(x, y, 0.3d);
+    float3 a = x + y;
+    float3 b = houlean_math_lerp_f3f(x, y, 0.300000011920929f);
     return a + b;
 }
 -/
 #guard_msgs in
-#opencl_compile (fun x y : Vector Float 3 =>
+#opencl_compile (fun x y : Vector Float32 3 =>
   let a := x + y
-  let b := Math.lerp x y 0.3
+  let b := Math.lerp x y (0.3:Float32)
   a + b)
 
 

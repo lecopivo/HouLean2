@@ -64,6 +64,8 @@ import HouLean.Data.Defs
 import HouLean.Data.Float
 import HouLean.Data.FloatP
 import HouLean.Data.Geometry
+import HouLean.Data.LinearAlgebra.Basic
+import HouLean.Data.LinearAlgebra.LUDecomposition
 import HouLean.Data.Matrix
 import HouLean.Data.Matrix2
 import HouLean.Data.Matrix2LinearAlgebra
@@ -106,6 +108,7 @@ import HouLean.Meta.ProdLike
 import HouLean.Meta.RewriteBy
 import HouLean.Meta.SimpTheoremName
 import HouLean.Meta.Structure
+import HouLean.Meta.TypeOf
 import HouLean.OpenCL.Basic
 import HouLean.OpenCL.Compiler.Code
 import HouLean.OpenCL.Compiler.Extension

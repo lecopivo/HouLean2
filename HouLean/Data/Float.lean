@@ -25,7 +25,9 @@ class FloatType (R : Type) extends
     -- rounding
     Abs R, Floor R, Ceil R, Round R,
     -- scientific notation
-    OfScientific R
+    OfScientific R,
+    -- other typeclasses
+    Inhabited R
   where
 
   decLt : DecidableLT R
@@ -112,13 +114,12 @@ defun clamp (x lo hi : R) : R :=
 -- Approximatelly equal
 -- ============================================================================
 
-instance : ApproxEqual Float where
-  defaultTol := 1e-9
-  approxEqual x y tol := (x - y).abs ≤ tol
-
-instance : ApproxEqual Float32 where
-  defaultTol := 1e-6
-  approxEqual x y tol := (x - y).abs ≤ tol
+instance : ApproxEqual R R where
+  defaultTol :=
+    match FloatType.prec R with
+    | .single => 1e-6
+    | .double => 1e-9
+  approxEqual x y tol := abs (x - y) ≤ tol
 
 
 -- ============================================================================

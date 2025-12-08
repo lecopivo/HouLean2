@@ -1,4 +1,5 @@
 import HouLean.Meta.OverloadedFunction
+import HouLean.Meta.TypeOf
 -- import HouLean.Data.Defs
 
 namespace HouLean.Math
@@ -152,20 +153,20 @@ Applied elementwise for vectors and matrices. -/
 -- Approximatelly equal
 -- ============================================================================
 
-class ApproxEqual (α : Type) where
-  defaultTol : α
+class ApproxEqual (α : Type) (β : outParam Type) where
+  defaultTol : β
   /-- Checks if `x` is approximatelly equal to `y` at tollerance `tol`.
 
   For scalars values this is: `approxEqual x y tol == |x - y| ≤ tol`
 
   For vector values like vectors or matrices this is: `approxEqual x y tol == ∀ i, |x[i] - y[i]| ≤ tol` -/
-  approxEqual (x y : α) (tol : α) : Bool
+  approxEqual (x y : α) (tol : β) : Bool
 
 export ApproxEqual (approxEqual)
 
   /-- Checks if `x` is approximatelly equal to `y` at default tollerance.
   For `Float32` this is `1e-6` for `Float64` it is `1e-12`. -/
-macro x:term " ≈ " y:term : term => `(ApproxEqual.approxEqual $x $y ApproxEqual.defaultTol)
+macro x:term " ≈ " y:term : term => `(ApproxEqual.approxEqual $x $y (ApproxEqual.defaultTol (typeof% $x)))
 @[inherit_doc approxEqual]
 macro x:term " ≈[" tol:term "] " y:term : term => `(ApproxEqual.approxEqual $x $y $tol)
 

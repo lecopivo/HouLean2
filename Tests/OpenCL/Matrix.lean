@@ -1,5 +1,7 @@
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Data.Init
+import HouLean.OpenCL.Data.MProd
+import HouLean.Data.LinearAlgebra.LUDecomposition
 
 open HouLean OpenCL Math
 
@@ -127,3 +129,37 @@ float3 (anonymous)(float3 v, matrix33f A, matrix33f B)
 -/
 #guard_msgs in
 #opencl_compile (fun (v : Vector Float32 3) (A B : Matrix Float32 3 3) => v * (A * B))
+
+
+/--
+info:
+mprodf44f44 houlean_matrix_lu4_f(matrix44f a)
+{
+    float u00 = a.row0.x;
+    float u01 = a.row0.y;
+    float u02 = a.row0.z;
+    float u03 = a.row0.w;
+    float l10 = a.row1.x / u00;
+    float l20 = a.row2.x / u00;
+    float l30 = a.row3.x / u00;
+    float u11 = a.row1.y - (l10 * u01);
+    float u12 = a.row1.z - (l10 * u02);
+    float u13 = a.row1.w - (l10 * u03);
+    float l21 = (a.row2.y - (l20 * u01)) / u11;
+    float l31 = (a.row3.y - (l30 * u01)) / u11;
+    float u22 = (a.row2.z - (l20 * u02)) - (l21 * u12);
+    float u23 = (a.row2.w - (l20 * u03)) - (l21 * u13);
+    float l32 = ((a.row3.z - (l30 * u02)) - (l31 * u12)) / u22;
+    float u33 = ((a.row3.w - (l30 * u03)) - (l31 * u13)) - (l32 * u23);
+    matrix44f L = (matrix44f){(float4){1.0f, 0.0f, 0.0f, 0.0f}, (float4){l10, 1.0f, 0.0f, 0.0f}, (float4){l20, l21, 1.0f, 0.0f}, (float4){l30, l31, l32, 1.0f}};
+    matrix44f U = (matrix44f){(float4){u00, u01, u02, u03}, (float4){0.0f, u11, u12, u13}, (float4){0.0f, 0.0f, u22, u23}, (float4){0.0f, 0.0f, 0.0f, u33}};
+    return (mprodf44f44){L, U};
+}
+
+mprodf44f44 (anonymous)(matrix44f A)
+{
+    return houlean_matrix_lu4_f(A);
+}
+-/
+#guard_msgs in
+#opencl_compile (fun (A : Matrix Float32 4 4) => A.lu4)
