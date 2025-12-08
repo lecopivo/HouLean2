@@ -18,6 +18,7 @@ import Tests.OpenCL.Basic
 import Tests.OpenCL.ForLoop
 import Tests.OpenCL.Grammar
 import Tests.OpenCL.IfThenElse
+import Tests.OpenCL.MPM
 import Tests.OpenCL.Matrix
 -- import Tests.OpenCL.P2G
 import Tests.OpenCL.Vector

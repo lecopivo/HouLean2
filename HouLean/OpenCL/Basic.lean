@@ -258,6 +258,14 @@ instance [AtomicOpenCLType α] [Neg α] : OpenCLFunction (@Neg.neg α _) where
   name := " -"
   kind := .prefix
 
+instance [AtomicOpenCLType α] [HAnd α α α] : OpenCLFunction (HAnd.hAnd : α → α → α) where
+  name := " & "
+  kind := .infix
+
+instance [AtomicOpenCLType α] [HShiftRight α α α] : OpenCLFunction (HShiftRight.hShiftRight : α → α → α) where
+  name := " >> "
+  kind := .infix
+
 
 variable {n}
 
@@ -303,6 +311,10 @@ set_option linter.unusedVariables false in
 def Pointer (α : Type) : Type := (Pointer.nonemptyType α).type
 instance {α} [AtomicOpenCLType α] : Nonempty (Pointer α) :=
   by exact (Pointer.nonemptyType α).property
+
+noncomputable
+instance {α} [AtomicOpenCLType α] : Inhabited (Pointer α) :=
+  Classical.inhabited_of_nonempty (by infer_instance)
 
 instance [ty : AtomicOpenCLType α] : OpenCLType (Pointer α) where
   name := ty.name ++ "*"
@@ -359,11 +371,6 @@ instance : OpenCLFunction (Pointer.vstore (α:=α) (n:=n)) where
   name := s!"vstore{n}"
 
 
-structure ArrayPointer (α : Type) {A} [ArrayType α A] where
-  ptr : Pointer A
-
-instance{α A} [ArrayType α A] : GetElem (ArrayPointer α) UInt64 (OpenCLM α) (fun _ _ => True) where
-  getElem x i _ := ArrayType.get x.ptr i
 
 
 -- =================================================================================================

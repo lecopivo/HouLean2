@@ -32,7 +32,7 @@ def componentProjection (i : Nat) : String :=
       else if i = 1 then
         ".y"
       else if i = 2 then
-        ".y"
+        ".z"
       else if i = 3 then
         ".w"
       else if i < 10 then

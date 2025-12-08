@@ -13,7 +13,7 @@ namespace Tests.OpenCL.Vector
 info:
 double vector_dot_d3(double3 u, double3 v)
 {
-    return ((u.x * v.x) + (u.y * v.y)) + (u.y * v.y);
+    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
 }
 
 double (anonymous)(double3 x, double3 y)
@@ -30,7 +30,7 @@ double (anonymous)(double3 x, double3 y)
 info:
 double (anonymous)(double3 x, double3 y)
 {
-    return ((x.x * y.x) + (x.y * y.y)) + (x.y * y.y);
+    return ((x.x * y.x) + (x.y * y.y)) + (x.z * y.z);
 }
 -/
 #guard_msgs in
@@ -41,7 +41,7 @@ double (anonymous)(double3 x, double3 y)
 info:
 double vector_length2_d3(double3 u)
 {
-    return ((u.x * u.x) + (u.y * u.y)) + (u.y * u.y);
+    return ((u.x * u.x) + (u.y * u.y)) + (u.z * u.z);
 }
 
 double vector_length_d3(double3 u)
@@ -56,7 +56,7 @@ bool houlean_math_approxequal_approxequal_d(double x, double y, double tol)
 
 double3 hdiv_hdiv_d3dd3(double3 a, double a1)
 {
-    return (double3){a.x / a1, a.y / a1, a.y / a1};
+    return (double3){a.x / a1, a.y / a1, a.z / a1};
 }
 
 prodd3d vector_normalize_d3(double3 u)

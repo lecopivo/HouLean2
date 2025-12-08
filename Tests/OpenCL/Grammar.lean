@@ -27,6 +27,8 @@ info: fun x y =>
   rewrite_by
     simp -zeta only [opencl_csimp]
 
+attribute [opencl_csimp] normalize_ocl_fun_name
+
 
 /-- info: fun x y => ocl%((double3){x, y, x}) : Float → Float → Vector Float 3 -/
 #guard_msgs in

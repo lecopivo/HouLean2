@@ -17,3 +17,7 @@ instance : OpenCLFunction Bool.and where
 instance : OpenCLFunction Bool.or where
   name := " || "
   kind := .infix
+
+instance : OpenCLFunction Bool.not where
+  name := "!"
+  kind := .prefix

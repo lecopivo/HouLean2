@@ -64,7 +64,6 @@ double (anonymous)(double x)
   return x)
 
 
-
 /--
 info:
 double (anonymous)(double x)

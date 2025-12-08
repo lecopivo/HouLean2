@@ -5,6 +5,12 @@ open Lean Meta Qq HouLean
 
 namespace HouLean.OpenCL.Compiler
 
+instance : MonadRecDepth CompileM where
+  withRecDepth n x := fun ctx s => MonadRecDepth.withRecDepth n (x ctx s)
+  getRecDepth := liftM (m := SimpM) <| MonadRecDepth.getRecDepth
+  getMaxRecDepth := liftM (m := SimpM) <| MonadRecDepth.getMaxRecDepth
+
+
 /--
 Introduce free variables into the compilation context with unique names.
 Ensures name uniqueness by appending counters for duplicates.
@@ -414,7 +420,7 @@ Main compilation function that converts a Lean expression to OpenCL code.
 @[specialize]
 partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
     (runSimp := true) : CompileM Unit := do
-
+  withIncRecDepth do
   if let some val ← runInterpreter e then
     return ← cont e (.lit val)
 
@@ -441,10 +447,16 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
         withTraceNode `HouLean.OpenCL.compiler
           (fun r => return m!"[{exceptEmoji r}]Compiling: {e}") do
           if let some r ← getOpenCLAppOrCompile? e then
-            compileMany r.args fun vals oclVals => do
-            cont (r.fn.beta vals) (.app r.oclFun oclVals)
+            compileMany r.args fun _vals oclVals => do
+            -- this break if we have `argList` then the arity of fn does not match args
+            -- cont (r.fn.beta vals) (.app r.oclFun oclVals)
+            cont e (.app r.oclFun oclVals)
           else
-            throwError "No OpenCL function for {e}"
+            let e' ← whnfC e
+            if e != e' then
+              compile e cont
+            else
+              throwError "No OpenCL function for {e}"
 
     | .value val =>
       compile val fun val' oclVal => do
@@ -506,6 +518,10 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
 
   | .lit (.strVal val) =>
     cont e (.lit val)
+
+
+  | .const ``PUnit.unit _ =>
+    cont e CodeExpr.errased
 
   | .const .. =>
     throwError "Unexpected constant: {e}"
@@ -627,10 +643,6 @@ def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM 
 
   return mangledName
 
-instance : MonadRecDepth CompileM where
-  withRecDepth n x := fun ctx s => MonadRecDepth.withRecDepth n (x ctx s)
-  getRecDepth := liftM (m := SimpM) <| MonadRecDepth.getRecDepth
-  getMaxRecDepth := liftM (m := SimpM) <| MonadRecDepth.getMaxRecDepth
 
 /--
 Core function compilation routine. Compiles a Lean function to OpenCL code.
@@ -675,6 +687,10 @@ def compileFunctionCore (f : Expr) : CompileM CodeFunction := do
     -- Unfold definition and reduce instances
     let body := (← unfold body funName).expr
     let body ← whnfC body
+
+
+    if body == body' then
+      throwError m!"Failed to unfold function body {funName}"
 
     trace[HouLean.OpenCL.compiler] m!"unfolded function body:\n{body'}\n==>\n{body}"
 

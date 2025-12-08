@@ -10,7 +10,7 @@ open HoudiniMatrixVecMul
 info:
 float3 hdiv_hdiv_f3ff3(float3 a, float a1)
 {
-    return (float3){a.x / a1, a.y / a1, a.y / a1};
+    return (float3){a.x / a1, a.y / a1, a.z / a1};
 }
 
 matrix33f houlean_matrix_sdiv_f33(matrix33f a, float s)
@@ -41,12 +41,12 @@ float houlean_math_sin_sin_f(float x)
 
 float3 vector_sin_f3(float3 x)
 {
-    return (float3){houlean_math_sin_sin_f(x.x), houlean_math_sin_sin_f(x.y), houlean_math_sin_sin_f(x.y)};
+    return (float3){houlean_math_sin_sin_f(x.x), houlean_math_sin_sin_f(x.y), houlean_math_sin_sin_f(x.z)};
 }
 
 float vector_dot_f3(float3 u, float3 v)
 {
-    return ((u.x * v.x) + (u.y * v.y)) + (u.y * v.y);
+    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
 }
 
 float3 (anonymous)(float3 v)
@@ -66,7 +66,7 @@ float3 (anonymous)(float3 v)
 info:
 float3 houlean_math_sin_sin_f3(float3 x)
 {
-    return (float3){houlean_math_sin_sin_f(x.x), houlean_math_sin_sin_f(x.y), houlean_math_sin_sin_f(x.y)};
+    return (float3){houlean_math_sin_sin_f(x.x), houlean_math_sin_sin_f(x.y), houlean_math_sin_sin_f(x.z)};
 }
 
 float3 (anonymous)(float3 x)
@@ -86,7 +86,7 @@ float3 vector_zero_f3()
 
 float3 houlean_matrix_vecmul_sum_rows_f33(float3 v, matrix33f a)
 {
-    return ((vector_zero_f3() + (v.x * a.row0)) + (v.y * a.row1)) + (v.y * a.row2);
+    return ((vector_zero_f3() + (v.x * a.row0)) + (v.y * a.row1)) + (v.z * a.row2);
 }
 
 float3 hmul_hmul_f3f33f3(float3 a, matrix33f a1)
@@ -106,7 +106,7 @@ float3 houlean_matrix_coli_f331(matrix33f a)
 
 float3 houlean_matrix_coli_f332(matrix33f a)
 {
-    return (float3){a.row0.y, a.row1.y, a.row2.y};
+    return (float3){a.row0.z, a.row1.z, a.row2.z};
 }
 
 matrix33f houlean_matrix_matmul_f333(matrix33f a, matrix33f b)

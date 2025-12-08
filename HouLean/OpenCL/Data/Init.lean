@@ -93,4 +93,4 @@ simproc_decl normalize_ocl_fun_name (oclFunction _ _ _) := fun e => do
 
   return .continue
 
-attribute [opencl_csimp] normalize_ocl_fun_name
+-- attribute [opencl_csimp] normalize_ocl_fun_name

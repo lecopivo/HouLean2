@@ -8,6 +8,8 @@ namespace HouLean.OpenCL
 
 def NanoVDB.Vec3 (T : Type) : Type := CArray T 3
 abbrev NanoVDB.Coord := Vec3 Int32
+abbrev NanoVDB.Vec3F := Vec3 Float32
+abbrev NanoVDB.Vec3D := Vec3 Float64
 
 class NanoVDB.ValueType (T : Type) where
   suffix : String
@@ -20,6 +22,10 @@ class NanoVDB.ValueType (T : Type) where
 opaque NanoVDB (T : Type) [NanoVDB.ValueType T] : Type
 
 namespace NanoVDB
+
+instance [t : ValueType α] : OpenCLType (NanoVDB α) where
+  name := "void *"
+  shortName := s!"vdb{t.suffix}"
 
 instance [Inhabited T] : Inhabited (Vec3 T) := ⟨⟨default⟩⟩
 
