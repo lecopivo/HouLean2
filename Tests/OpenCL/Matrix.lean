@@ -1,7 +1,7 @@
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Data.Init
 import HouLean.OpenCL.Data.MProd
-import HouLean.Data.LinearAlgebra.LUDecomposition
+import HouLean.Data.LinearAlgebra.Basic
 
 open HouLean OpenCL Math
 
@@ -131,35 +131,79 @@ float3 (anonymous)(float3 v, matrix33f A, matrix33f B)
 #opencl_compile (fun (v : Vector Float32 3) (A B : Matrix Float32 3 3) => v * (A * B))
 
 
+
 /--
 info:
-mprodf44f44 houlean_matrix_lu4_f(matrix44f a)
+float houlean_matrix_det2_f(matrix22f a)
 {
-    float u00 = a.row0.x;
-    float u01 = a.row0.y;
-    float u02 = a.row0.z;
-    float u03 = a.row0.w;
-    float l10 = a.row1.x / u00;
-    float l20 = a.row2.x / u00;
-    float l30 = a.row3.x / u00;
-    float u11 = a.row1.y - (l10 * u01);
-    float u12 = a.row1.z - (l10 * u02);
-    float u13 = a.row1.w - (l10 * u03);
-    float l21 = (a.row2.y - (l20 * u01)) / u11;
-    float l31 = (a.row3.y - (l30 * u01)) / u11;
-    float u22 = (a.row2.z - (l20 * u02)) - (l21 * u12);
-    float u23 = (a.row2.w - (l20 * u03)) - (l21 * u13);
-    float l32 = ((a.row3.z - (l30 * u02)) - (l31 * u12)) / u22;
-    float u33 = ((a.row3.w - (l30 * u03)) - (l31 * u13)) - (l32 * u23);
-    matrix44f L = (matrix44f){(float4){1.0f, 0.0f, 0.0f, 0.0f}, (float4){l10, 1.0f, 0.0f, 0.0f}, (float4){l20, l21, 1.0f, 0.0f}, (float4){l30, l31, l32, 1.0f}};
-    matrix44f U = (matrix44f){(float4){u00, u01, u02, u03}, (float4){0.0f, u11, u12, u13}, (float4){0.0f, 0.0f, u22, u23}, (float4){0.0f, 0.0f, 0.0f, u33}};
-    return (mprodf44f44){L, U};
+    return (a.row0.x * a.row1.y) - (a.row0.y * a.row1.x);
 }
 
-mprodf44f44 (anonymous)(matrix44f A)
+matrix22f houlean_matrix_inv2_f(matrix22f a)
 {
-    return houlean_matrix_lu4_f(A);
+    float d = houlean_matrix_det2_f(a);
+    float id = inv_f(d);
+    return (matrix22f){(float2){a.row1.y * id, ( -a.row0.y) * id}, (float2){( -a.row1.x) * id, a.row0.x * id}};
+}
+
+matrix22f (anonymous)(matrix22f A)
+{
+    return houlean_matrix_inv2_f(A);
 }
 -/
 #guard_msgs in
-#opencl_compile (fun (A : Matrix Float32 4 4) => A.lu4)
+#opencl_compile (fun (A : Matrix Float32 2 2) => A.inv2)
+
+
+/--
+info:
+float houlean_matrix_det3_f(matrix33f a)
+{
+    return ((a.row0.x * ((a.row1.y * a.row2.z) - (a.row1.z * a.row2.y))) - (a.row0.y * ((a.row1.x * a.row2.z) - (a.row1.z * a.row2.x)))) + (a.row0.z * ((a.row1.x * a.row2.y) - (a.row1.y * a.row2.x)));
+}
+
+matrix33f houlean_matrix_inv3_f(matrix33f a)
+{
+    float d = houlean_matrix_det3_f(a);
+    float id = inv_f(d);
+    return (matrix33f){(float3){((a.row1.y * a.row2.z) - (a.row1.z * a.row2.y)) * id, ((a.row0.z * a.row2.y) - (a.row0.y * a.row2.z)) * id, ((a.row0.y * a.row1.z) - (a.row0.z * a.row1.y)) * id}, (float3){((a.row1.z * a.row2.x) - (a.row1.x * a.row2.z)) * id, ((a.row0.x * a.row2.z) - (a.row0.z * a.row2.x)) * id, ((a.row0.z * a.row1.x) - (a.row0.x * a.row1.z)) * id}, (float3){((a.row1.x * a.row2.y) - (a.row1.y * a.row2.x)) * id, ((a.row0.y * a.row2.x) - (a.row0.x * a.row2.y)) * id, ((a.row0.x * a.row1.y) - (a.row0.y * a.row1.x)) * id}};
+}
+
+matrix33f (anonymous)(matrix33f A)
+{
+    return houlean_matrix_inv3_f(A);
+}
+-/
+#guard_msgs in
+#opencl_compile (fun (A : Matrix Float32 3 3) => A.inv3)
+
+
+/--
+info:
+matrix44f houlean_matrix_inv4_f(matrix44f a)
+{
+    float s0 = (a.row0.x * a.row1.y) - (a.row1.x * a.row0.y);
+    float s1 = (a.row0.x * a.row1.z) - (a.row1.x * a.row0.z);
+    float s2 = (a.row0.x * a.row1.w) - (a.row1.x * a.row0.w);
+    float s3 = (a.row0.y * a.row1.z) - (a.row1.y * a.row0.z);
+    float s4 = (a.row0.y * a.row1.w) - (a.row1.y * a.row0.w);
+    float s5 = (a.row0.z * a.row1.w) - (a.row1.z * a.row0.w);
+    float c5 = (a.row2.z * a.row3.w) - (a.row3.z * a.row2.w);
+    float c4 = (a.row2.y * a.row3.w) - (a.row3.y * a.row2.w);
+    float c3 = (a.row2.y * a.row3.z) - (a.row3.y * a.row2.z);
+    float c2 = (a.row2.x * a.row3.w) - (a.row3.x * a.row2.w);
+    float c1 = (a.row2.x * a.row3.z) - (a.row3.x * a.row2.z);
+    float c0 = (a.row2.x * a.row3.y) - (a.row3.x * a.row2.y);
+    float d = (((((s0 * c5) - (s1 * c4)) + (s2 * c3)) + (s3 * c2)) - (s4 * c1)) + (s5 * c0);
+    float id = inv_f(d);
+    return (matrix44f){(float4){(((a.row1.y * c5) - (a.row1.z * c4)) + (a.row1.w * c3)) * id, (((( -a.row0.y) * c5) + (a.row0.z * c4)) - (a.row0.w * c3)) * id, (((a.row3.y * s5) - (a.row3.z * s4)) + (a.row3.w * s3)) * id, (((( -a.row2.y) * s5) + (a.row2.z * s4)) - (a.row2.w * s3)) * id}, (float4){(((( -a.row1.x) * c5) + (a.row1.z * c2)) - (a.row1.w * c1)) * id, (((a.row0.x * c5) - (a.row0.z * c2)) + (a.row0.w * c1)) * id, (((( -a.row3.x) * s5) + (a.row3.z * s2)) - (a.row3.w * s1)) * id, (((a.row2.x * s5) - (a.row2.z * s2)) + (a.row2.w * s1)) * id}, (float4){(((a.row1.x * c4) - (a.row1.y * c2)) + (a.row1.w * c0)) * id, (((( -a.row0.x) * c4) + (a.row0.y * c2)) - (a.row0.w * c0)) * id, (((a.row3.x * s4) - (a.row3.y * s2)) + (a.row3.w * s0)) * id, (((( -a.row2.x) * s4) + (a.row2.y * s2)) - (a.row2.w * s0)) * id}, (float4){(((( -a.row1.x) * c3) + (a.row1.y * c1)) - (a.row1.z * c0)) * id, (((a.row0.x * c3) - (a.row0.y * c1)) + (a.row0.z * c0)) * id, (((( -a.row3.x) * s3) + (a.row3.y * s1)) - (a.row3.z * s0)) * id, (((a.row2.x * s3) - (a.row2.y * s1)) + (a.row2.z * s0)) * id}};
+}
+
+matrix44f (anonymous)(matrix44f A)
+{
+    return houlean_matrix_inv4_f(A);
+}
+-/
+#guard_msgs in
+set_option maxRecDepth 1000 in
+#opencl_compile (fun (A : Matrix Float32 4 4) => A.inv4)

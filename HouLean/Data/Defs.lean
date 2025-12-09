@@ -127,13 +127,6 @@ structure BoundingBox where
 deriving ProdLike
 instance : Inhabited BoundingBox := ⟨{}⟩
 
-/-- Bounding box -/
-structure BoundingBox' (R : Type) [FloatType R] (dim : Nat) where
-  /-- Size of the bounding box -/
-  size : Vector R dim := .replicate dim 1.0
-  /-- Center position of the bounding box -/
-  center : Vector R dim := 0
-instance {R} [FloatType R] : Inhabited (BoundingBox' R dim) := ⟨{}⟩
 
 /-- Bounding sphere -/
 structure BoundingSphere where
@@ -162,13 +155,57 @@ deriving ProdLike
 instance : Inhabited Capsule := ⟨{}⟩
 
 
+
+-- Elementary shapes
+
+/-- Box -/
+structure Box (R : Type) (dim : Nat) where
+  /-- Side lengths of the box -/
+  size : Vector R dim
+  /-- Center of the box -/
+  center : Vector R dim
+
+instance {R} [FloatType R] : Inhabited (Box R dim) := ⟨{
+  size := .replicate dim 1
+  center := 0
+}⟩
+
+/-- Box -/
+structure Ball (R : Type) (dim : Nat) where
+  /-- Center of the ball -/
+  center : Vector R dim
+  /-- Raidus of the ball -/
+  radius : R
+
+instance {R} [One R] [Zero R] : Inhabited (Ball R dim) := ⟨{
+  center := 0
+  radius := 1
+}⟩
+
 /-- Plane specification -/
-structure Plane where
-  /-- Origin point on the plane -/
-  origin : Vector3 := ⟨0, 0, 0⟩
+structure Plane (R : Type) (dim : Nat) where
+  /-- Origin point on the plane-/
+  origin : Vector R dim
   /-- Normal direction of the plane -/
-  normal : Vector3 := ⟨0, 1, 0⟩
+  normal : Vector R dim
   /-- Distance along normal from origin -/
-  dist : Float := 0
-deriving ProdLike
-instance : Inhabited Plane := ⟨{}⟩
+  dist : R
+
+instance {R} [One R] [Zero R] : Inhabited (Plane R dim) := ⟨{
+  origin := 0
+  normal := .ofFn (fun i => if i.1 = 0 then 1 else 0)
+  dist := 0
+}⟩
+
+/-- Union and intersection of elementary shapes. -/
+inductive CompoundShape (R : Type) [FloatType R] (dim : Nat) where
+  -- elementary shapes
+  | box (b : Box R dim)
+  | ball (b : Ball R dim)
+  | plane (p : Plane R dim)
+
+  -- operations
+  | complement (s : CompoundShape R dim)
+  | union (s t : CompoundShape R dim)
+  | intersect (s t : CompoundShape R dim)
+  | subtract (s t : CompoundShape R dim)

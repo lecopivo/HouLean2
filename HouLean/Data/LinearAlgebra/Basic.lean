@@ -21,24 +21,24 @@ variable {α : Type} {n m k : Nat}
 def det2 [Sub α] [Mul α] (a : Matrix α 2 2) : α :=
   a[0,0] * a[1,1] - a[0,1] * a[1,0]
 
-def det3 [Inhabited α] [Add α] [Sub α] [Mul α] (a : Matrix α 3 3) : α :=
-  a[(0,0)]! * (a[(1,1)]! * a[(2,2)]! - a[(1,2)]! * a[(2,1)]!) -
-  a[(0,1)]! * (a[(1,0)]! * a[(2,2)]! - a[(1,2)]! * a[(2,0)]!) +
-  a[(0,2)]! * (a[(1,0)]! * a[(2,1)]! - a[(1,1)]! * a[(2,0)]!)
+def det3 [Add α] [Sub α] [Mul α] (a : Matrix α 3 3) : α :=
+  a[0,0] * (a[1,1] * a[2,2] - a[1,2] * a[2,1]) -
+  a[0,1] * (a[1,0] * a[2,2] - a[1,2] * a[2,0]) +
+  a[0,2] * (a[1,0] * a[2,1] - a[1,1] * a[2,0])
 
-def det4 [Inhabited α] [Add α] [Sub α] [Mul α] (a : Matrix α 4 4) : α :=
-  let s0 := a[(0,0)]! * a[(1,1)]! - a[(1,0)]! * a[(0,1)]!
-  let s1 := a[(0,0)]! * a[(1,2)]! - a[(1,0)]! * a[(0,2)]!
-  let s2 := a[(0,0)]! * a[(1,3)]! - a[(1,0)]! * a[(0,3)]!
-  let s3 := a[(0,1)]! * a[(1,2)]! - a[(1,1)]! * a[(0,2)]!
-  let s4 := a[(0,1)]! * a[(1,3)]! - a[(1,1)]! * a[(0,3)]!
-  let s5 := a[(0,2)]! * a[(1,3)]! - a[(1,2)]! * a[(0,3)]!
-  let c5 := a[(2,2)]! * a[(3,3)]! - a[(3,2)]! * a[(2,3)]!
-  let c4 := a[(2,1)]! * a[(3,3)]! - a[(3,1)]! * a[(2,3)]!
-  let c3 := a[(2,1)]! * a[(3,2)]! - a[(3,1)]! * a[(2,2)]!
-  let c2 := a[(2,0)]! * a[(3,3)]! - a[(3,0)]! * a[(2,3)]!
-  let c1 := a[(2,0)]! * a[(3,2)]! - a[(3,0)]! * a[(2,2)]!
-  let c0 := a[(2,0)]! * a[(3,1)]! - a[(3,0)]! * a[(2,1)]!
+def det4 [Add α] [Sub α] [Mul α] (a : Matrix α 4 4) : α :=
+  let s0 := a[0,0] * a[1,1] - a[1,0] * a[0,1]
+  let s1 := a[0,0] * a[1,2] - a[1,0] * a[0,2]
+  let s2 := a[0,0] * a[1,3] - a[1,0] * a[0,3]
+  let s3 := a[0,1] * a[1,2] - a[1,1] * a[0,2]
+  let s4 := a[0,1] * a[1,3] - a[1,1] * a[0,3]
+  let s5 := a[0,2] * a[1,3] - a[1,2] * a[0,3]
+  let c5 := a[2,2] * a[3,3] - a[3,2] * a[2,3]
+  let c4 := a[2,1] * a[3,3] - a[3,1] * a[2,3]
+  let c3 := a[2,1] * a[3,2] - a[3,1] * a[2,2]
+  let c2 := a[2,0] * a[3,3] - a[3,0] * a[2,3]
+  let c1 := a[2,0] * a[3,2] - a[3,0] * a[2,2]
+  let c0 := a[2,0] * a[3,1] - a[3,0] * a[2,1]
   s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0
 
 def determinant [Inhabited α] [Add α] [Sub α] [Mul α] [One α] [Zero α] (a : Matrix α n n) : α :=
@@ -52,63 +52,68 @@ def determinant [Inhabited α] [Add α] [Sub α] [Mul α] [One α] [Zero α] (a 
 
 
 -- -- Inverse for small matrices
--- def inv2 [Sub α] [Mul α] [Div α] [Neg α] (a : Matrix α 2 2) : Matrix α 2 2 :=
---   let d := det2 a
---   #m[ a[1,1] / d, -a[0,1] / d;
---      -a[1,0] / d,  a[0,0] / d]
+def inv2 [Sub α] [Mul α] [Inv α] [Neg α] (a : Matrix α 2 2) : Matrix α 2 2 :=
+  let d := det2 a
+  let id := d⁻¹
+  #m[ a[1,1] * id, -a[0,1] * id;
+     -a[1,0] * id,  a[0,0] * id]
 
--- def inv3 [Inhabited α] [Add α] [Sub α] [Mul α] [Div α] [Neg α] (a : Matrix α 3 3) : Matrix α 3 3 :=
---   let d := det3 a
---   #m[ (a[1,1] * a[2,2] - a[1,2] * a[2,1]) / d,
---       (a[0,2] * a[2,1] - a[0,1] * a[2,2]) / d,
---       (a[0,1] * a[1,2] - a[0,2] * a[1,1]) / d;
---       (a[1,2] * a[2,0] - a[1,0] * a[2,2]) / d,
---       (a[0,0] * a[2,2] - a[0,2] * a[2,0]) / d,
---       (a[0,2] * a[1,0] - a[0,0] * a[1,2]) / d;
---       (a[1,0] * a[2,1] - a[1,1] * a[2,0]) / d,
---       (a[0,1] * a[2,0] - a[0,0] * a[2,1]) / d,
---       (a[0,0] * a[1,1] - a[0,1] * a[1,0]) / d]
+def inv3 [Add α] [Sub α] [Mul α] [Inv α] [Neg α] (a : Matrix α 3 3) : Matrix α 3 3 :=
+  let d := det3 a
+  let id := d⁻¹
+  #m[ (a[1,1] * a[2,2] - a[1,2] * a[2,1]) * id,
+      (a[0,2] * a[2,1] - a[0,1] * a[2,2]) * id,
+      (a[0,1] * a[1,2] - a[0,2] * a[1,1]) * id;
+      (a[1,2] * a[2,0] - a[1,0] * a[2,2]) * id,
+      (a[0,0] * a[2,2] - a[0,2] * a[2,0]) * id,
+      (a[0,2] * a[1,0] - a[0,0] * a[1,2]) * id;
+      (a[1,0] * a[2,1] - a[1,1] * a[2,0]) * id,
+      (a[0,1] * a[2,0] - a[0,0] * a[2,1]) * id,
+      (a[0,0] * a[1,1] - a[0,1] * a[1,0]) * id]
 
--- def inv4 [Add α] [Sub α] [Mul α] [Div α] [Neg α] (a : Matrix α 4 4) : Matrix α 4 4 :=
---   let s0 := a[0,0] * a[1,1] - a[1,0] * a[0,1]
---   let s1 := a[0,0] * a[1,2] - a[1,0] * a[0,2]
---   let s2 := a[0,0] * a[1,3] - a[1,0] * a[0,3]
---   let s3 := a[0,1] * a[1,2] - a[1,1] * a[0,2]
---   let s4 := a[0,1] * a[1,3] - a[1,1] * a[0,3]
---   let s5 := a[0,2] * a[1,3] - a[1,2] * a[0,3]
---   let c5 := a[2,2] * a[3,3] - a[3,2] * a[2,3]
---   let c4 := a[2,1] * a[3,3] - a[3,1] * a[2,3]
---   let c3 := a[2,1] * a[3,2] - a[3,1] * a[2,2]
---   let c2 := a[2,0] * a[3,3] - a[3,0] * a[2,3]
---   let c1 := a[2,0] * a[3,2] - a[3,0] * a[2,2]
---   let c0 := a[2,0] * a[3,1] - a[3,0] * a[2,1]
---   let d := s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0
---   #m[ ( a[1,1] * c5 - a[1,2] * c4 + a[1,3] * c3) / d,
---       (-a[0,1] * c5 + a[0,2] * c4 - a[0,3] * c3) / d,
---       ( a[3,1] * s5 - a[3,2] * s4 + a[3,3] * s3) / d,
---       (-a[2,1] * s5 + a[2,2] * s4 - a[2,3] * s3) / d;
---       (-a[1,0] * c5 + a[1,2] * c2 - a[1,3] * c1) / d,
---       ( a[0,0] * c5 - a[0,2] * c2 + a[0,3] * c1) / d,
---       (-a[3,0] * s5 + a[3,2] * s2 - a[3,3] * s1) / d,
---       ( a[2,0] * s5 - a[2,2] * s2 + a[2,3] * s1) / d;
---       ( a[1,0] * c4 - a[1,1] * c2 + a[1,3] * c0) / d,
---       (-a[0,0] * c4 + a[0,1] * c2 - a[0,3] * c0) / d,
---       ( a[3,0] * s4 - a[3,1] * s2 + a[3,3] * s0) / d,
---       (-a[2,0] * s4 + a[2,1] * s2 - a[2,3] * s0) / d;
---       (-a[1,0] * c3 + a[1,1] * c1 - a[1,2] * c0) / d,
---       ( a[0,0] * c3 - a[0,1] * c1 + a[0,2] * c0) / d,
---       (-a[3,0] * s3 + a[3,1] * s1 - a[3,2] * s0) / d,
---       ( a[2,0] * s3 - a[2,1] * s1 + a[2,2] * s0) / d]
+def inv4 [Add α] [Sub α] [Mul α] [Inv α] [Neg α] (a : Matrix α 4 4) : Matrix α 4 4 :=
+  let s0 := a[0,0] * a[1,1] - a[1,0] * a[0,1]
+  let s1 := a[0,0] * a[1,2] - a[1,0] * a[0,2]
+  let s2 := a[0,0] * a[1,3] - a[1,0] * a[0,3]
+  let s3 := a[0,1] * a[1,2] - a[1,1] * a[0,2]
+  let s4 := a[0,1] * a[1,3] - a[1,1] * a[0,3]
+  let s5 := a[0,2] * a[1,3] - a[1,2] * a[0,3]
+  let c5 := a[2,2] * a[3,3] - a[3,2] * a[2,3]
+  let c4 := a[2,1] * a[3,3] - a[3,1] * a[2,3]
+  let c3 := a[2,1] * a[3,2] - a[3,1] * a[2,2]
+  let c2 := a[2,0] * a[3,3] - a[3,0] * a[2,3]
+  let c1 := a[2,0] * a[3,2] - a[3,0] * a[2,2]
+  let c0 := a[2,0] * a[3,1] - a[3,0] * a[2,1]
+  let d := s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0
+  let id := d⁻¹
+  #m[ ( a[1,1] * c5 - a[1,2] * c4 + a[1,3] * c3) * id,
+      (-a[0,1] * c5 + a[0,2] * c4 - a[0,3] * c3) * id,
+      ( a[3,1] * s5 - a[3,2] * s4 + a[3,3] * s3) * id,
+      (-a[2,1] * s5 + a[2,2] * s4 - a[2,3] * s3) * id;
+      (-a[1,0] * c5 + a[1,2] * c2 - a[1,3] * c1) * id,
+      ( a[0,0] * c5 - a[0,2] * c2 + a[0,3] * c1) * id,
+      (-a[3,0] * s5 + a[3,2] * s2 - a[3,3] * s1) * id,
+      ( a[2,0] * s5 - a[2,2] * s2 + a[2,3] * s1) * id;
+      ( a[1,0] * c4 - a[1,1] * c2 + a[1,3] * c0) * id,
+      (-a[0,0] * c4 + a[0,1] * c2 - a[0,3] * c0) * id,
+      ( a[3,0] * s4 - a[3,1] * s2 + a[3,3] * s0) * id,
+      (-a[2,0] * s4 + a[2,1] * s2 - a[2,3] * s0) * id;
+      (-a[1,0] * c3 + a[1,1] * c1 - a[1,2] * c0) * id,
+      ( a[0,0] * c3 - a[0,1] * c1 + a[0,2] * c0) * id,
+      (-a[3,0] * s3 + a[3,1] * s1 - a[3,2] * s0) * id,
+      ( a[2,0] * s3 - a[2,1] * s1 + a[2,2] * s0) * id]
 
--- defun inverse [Add α] [Sub α] [Mul α] [Div α] [Neg α] [One α] [Zero α]
---     (a : Matrix α n n) : Matrix α n n :=
---   match n with
---   | 0 => a
---   | 1 => #m[1 / a[0,0]]
---   | 2 => inv2 (α := α) (by rw [‹n = 2›]; exact a)
---   | 3 => inv3 (α := α) (by rw [‹n = 3›]; exact a)
---   | 4 => inv4 (α := α) (by rw [‹n = 4›]; exact a)
---   | _ + 5 => Matrix.identity α _ -- TODO: general case
+defun inverse [Add α] [Sub α] [Mul α] [Inv α] [Neg α] [One α] [Zero α]
+    (a : Matrix α n n) : Matrix α n n :=
+  match n with
+  | 0 => a
+  | 1 => #m[#v[a[0,0]⁻¹]]
+  | 2 => inv2 a
+  | 3 => inv3 a
+  | 4 => inv4 a
+  | n + 5 =>
+    have : Inhabited (Matrix α (n+5) (n+5)) := ⟨0⟩
+    panic! "Inverse is currently supported only for smalle matrices, n≤4"
 
 -- defun isSingular [Add α] [Sub α] [Mul α] [One α] [Zero α] [BEq α]
 --     (a : Matrix α n n) : Bool :=
@@ -121,6 +126,60 @@ def determinant [Inhabited α] [Add α] [Sub α] [Mul α] [One α] [Zero α] (a 
 -- -- rank, conditionNumber - commented out (require SVD/more complex algorithms)
 -- -- defun rank (a : Matrix α m n) : Int := sorry
 -- -- defun conditionNumber (a : Matrix α n n) : α := sorry
+
+
+-- ============================================================================
+-- Low rank updates
+-- ============================================================================
+
+section
+variable {R} [FloatType R]
+
+open NormalMatrixVecMul in
+/-- Computes the inverse of a "rank-1 update" to a matrix whose inverse we already know `iA`.
+
+```
+(A + u*vᵀ)⁻¹ = inverseRangOneUpdate A⁻¹ u v
+```
+
+This is known as Sherman–Morrison formula https://en.wikipedia.org/wiki/Sherman%E2%80%93Morrison_formula. -/
+def inverseRankOneUpdate (iA : Matrix R n n) (u v : Vector R n) : Matrix R n n :=
+  let u' := iA * u
+  let v' := v * iA
+  let ialpha := (1 + v.dot u')⁻¹
+  iA.mapFinIdx (fun i j aij _ => aij - u'[i] * v'[j] * ialpha)
+
+/-- Computes the inverse of a "row update" to a matrix whose inverse we already know `iA`.
+
+```
+(A + eᵢ*vᵀ)⁻¹ = inverseRangOneUpdate A⁻¹ u v
+```
+where `eᵢ` is the `i`-basis vector.
+
+This is known as Sherman–Morrison formula https://en.wikipedia.org/wiki/Sherman%E2%80%93Morrison_formula. -/
+def inverseRowUpdate (iA : Matrix R n n) (i : Nat) (v : Vector R n) (h : i < n := by get_elem_tactic) :
+    Matrix R n n :=
+  let u' := iA.col i
+  let v' := v * iA
+  let ialpha := (1 + v.dot u')⁻¹
+  iA.mapFinIdx (fun i j aij _ => aij - u'[i] * v'[j] * ialpha)
+
+/-- Computes the inverse of a "col update" to a matrix whose inverse we already know `iA`.
+
+```
+(A + u*eⱼᵀ)⁻¹ = inverseRangOneUpdate A⁻¹ u v
+```
+where `eⱼ` is the `j`-basis vector.
+
+This is known as Sherman–Morrison formula https://en.wikipedia.org/wiki/Sherman%E2%80%93Morrison_formula. -/
+def inverseColUpdate (iA : Matrix R n n) (j : Nat) (u : Vector R n) (h : j < n := by get_elem_tactic) :
+    Matrix R n n :=
+  let u' := u * iA
+  let v' := iA.row j
+  let ialpha := (1 + v'.dot u)⁻¹
+  iA.mapFinIdx (fun i j aij _ => aij - u'[i] * v'[j] * ialpha)
+
+end
 
 -- -- ============================================================================
 -- -- Matrix Properties
