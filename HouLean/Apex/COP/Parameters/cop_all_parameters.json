@@ -1,2524 +1,77 @@
 {
-  "autostereogram": {
-    "node_name": "autostereogram1",
-    "node_type": "autostereogram",
-    "node_path": "/obj/copnet_dump/autostereogram1",
+  "opencl": {
+    "node_name": "opencl1",
+    "node_type": "opencl",
+    "node_path": "/obj/copnet_dump/opencl1",
     "parameter_templates": [
       {
-        "name": "scale",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          8.0,
-          8.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "depthrange",
-        "label": "Depth Range",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.4,
-          0.8
-        ],
-        "min_value": 0.1,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "mirror",
-          "wrap"
-        ],
-        "menu_labels": [
-          "Mirror",
-          "Wrap"
-        ]
-      },
-      {
-        "name": "recenter",
-        "label": "Re-Center",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      }
-    ],
-    "parameter_values": {
-      "scalex": 8.0,
-      "scaley": 8.0,
-      "depthrangex": 0.4,
-      "depthrangey": 0.8,
-      "border": 0,
-      "recenter": 1
-    }
-  },
-  "blend": {
-    "node_name": "blend1",
-    "node_type": "blend",
-    "node_path": "/obj/copnet_dump/blend1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "auto",
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap",
-          "clip"
-        ],
-        "menu_labels": [
-          "Auto",
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap",
-          "Clip"
-        ]
-      },
-      {
-        "name": "filter",
-        "label": "Filter",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "point",
-          "bilinear",
-          "box",
-          "triangle",
-          "cubic",
-          "mitchell",
-          "bspline"
-        ],
-        "menu_labels": [
-          "Point",
-          "Bilinear",
-          "Box",
-          "Bartlett",
-          "Catmull-Rom",
-          "Mitchell",
-          "B-spline"
-        ]
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scopergba",
-        "label": "Channel Scope",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          15
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "mode",
-        "label": "Mode",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "blend",
-          "over",
-          "under",
-          "add",
-          "subtract",
-          "multiply",
-          "divide",
-          "screen",
-          "hypot",
-          "diff",
-          "exclusion",
-          "sharpen",
-          "max",
-          "min",
-          "overlay",
-          "softlight",
-          "hardlight",
-          "dodge",
-          "burn",
-          "hue",
-          "sat",
-          "lum",
-          "color"
-        ],
-        "menu_labels": [
-          "![BUTTONS_blendmode_blend]Blend",
-          "![BUTTONS_blendmode_over]Over",
-          "![BUTTONS_blendmode_under]Under",
-          "![BUTTONS_blendmode_add]Add",
-          "![BUTTONS_blendmode_subtract]Subtract",
-          "![BUTTONS_blendmode_multiply]Multiply",
-          "![BUTTONS_blendmode_divide]Divide",
-          "![BUTTONS_blendmode_screen]Screen",
-          "![BUTTONS_blendmode_hypot]Hypot",
-          "![BUTTONS_blendmode_difference]Difference",
-          "![BUTTONS_blendmode_exclusion]Exclusion",
-          "![BUTTONS_blendmode_sharpen]Sharpen",
-          "![BUTTONS_blendmode_maximum]Maximum",
-          "![BUTTONS_blendmode_minimum]Minimum",
-          "![BUTTONS_blendmode_overlay]Overlay",
-          "![BUTTONS_blendmode_softlight]SoftLight",
-          "![BUTTONS_blendmode_hardlight]HardLight",
-          "![BUTTONS_blendmode_dodge]Dodge",
-          "![BUTTONS_blendmode_burn]Burn",
-          "![BUTTONS_blendmode_hue]Hue",
-          "![BUTTONS_blendmode_saturation]Saturation",
-          "![BUTTONS_blendmode_luminosity]Luminosity",
-          "![BUTTONS_blendmode_color]Color"
-        ]
-      },
-      {
-        "name": "alpha",
-        "label": "Alpha Compositing",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "swap",
-        "label": "Swap FG and BG",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "uselength",
-        "label": "Compare Lengths",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "border": 0,
-      "filter": 2,
-      "mask": 1.0,
-      "scopergba": 15,
-      "mode": 0,
-      "alpha": 0,
-      "swap": 0,
-      "uselength": 0
-    }
-  },
-  "blocktogeo": {
-    "node_name": "blocktogeo1",
-    "node_type": "blocktogeo",
-    "node_path": "/obj/copnet_dump/blocktogeo1",
-    "parameter_templates": [
-      {
-        "name": "blockpath",
-        "label": "Block End Node",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          ""
-        ],
-        "string_type": "NodeReference"
-      },
-      {
-        "name": "bindstates",
-        "label": "Input States",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "allbound",
-          "network"
-        ],
-        "menu_labels": [
-          "All Connected",
-          "Network"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "blockpath": "",
-      "bindstates": 0
-    }
-  },
-  "blur": {
-    "node_name": "blur1",
-    "node_type": "blur",
-    "node_path": "/obj/copnet_dump/blur1",
-    "parameter_templates": [
-      {
-        "name": "filter",
-        "label": "Filter",
-        "type": "Menu",
-        "help": "",
-        "default_value": 1,
-        "menu_items": [
-          "box",
-          "gaussian"
-        ],
-        "menu_labels": [
-          "Box",
-          "Gaussian"
-        ]
-      },
-      {
-        "name": "readoutside",
-        "label": "Read Pixels outside Image",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "units",
-        "label": "Units",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "image",
-          "pixels"
-        ],
-        "menu_labels": [
-          "Image",
-          "Pixels"
-        ]
-      },
-      {
-        "name": "size_pixel",
-        "label": "Size",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          3.0
-        ],
-        "min_value": 0.0,
-        "max_value": 25.0,
-        "num_components": 1
-      },
-      {
-        "name": "size",
-        "label": "Size",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.005
-        ],
-        "min_value": 0.0,
-        "max_value": 0.05,
-        "num_components": 1
-      },
-      {
-        "name": "scales",
-        "label": "Scale Size",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "scalebytimeinc",
-        "label": "Scale by Timestep",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      }
-    ],
-    "parameter_values": {
-      "filter": 1,
-      "readoutside": 1,
-      "units": 0,
-      "size_pixel": 3.0,
-      "size": 0.005,
-      "scalesx": 1.0,
-      "scalesy": 1.0,
-      "scalebytimeinc": 0
-    }
-  },
-  "bright": {
-    "node_name": "bright1",
-    "node_type": "bright",
-    "node_path": "/obj/copnet_dump/bright1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scopergba",
-        "label": "Channel Scope",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          7
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "bright",
-        "label": "Brightness",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "brighttint",
-        "label": "Tint Brightness",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 3
-      },
-      {
-        "name": "shift",
-        "label": "Shift",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "shifttint",
-        "label": "Tint Shift",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 3
-      },
-      {
-        "name": "scalebytimeinc",
-        "label": "Scale by Timestep",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "mask": 1.0,
-      "scopergba": 7,
-      "bright": 1.0,
-      "brighttintr": 1.0,
-      "brighttintg": 1.0,
-      "brighttintb": 1.0,
-      "shift": 0.0,
-      "shifttintr": 1.0,
-      "shifttintg": 1.0,
-      "shifttintb": 1.0,
-      "scalebytimeinc": 0
-    }
-  },
-  "cameraimport": {
-    "node_name": "cameraimport1",
-    "node_type": "cameraimport",
-    "node_path": "/obj/copnet_dump/cameraimport1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "f1"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "camera",
-        "label": "Camera",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          ""
-        ],
-        "string_type": "NodeReference"
-      },
-      {
-        "name": "setclipping",
-        "label": "Set Clipping",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "near",
-        "label": "Near",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.01
-        ],
-        "min_value": 0.001,
-        "max_value": 1000.0,
-        "num_components": 1
-      },
-      {
-        "name": "far",
-        "label": "Far",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          10000.0
-        ],
-        "min_value": 0.001,
-        "max_value": 1000.0,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "signature": "f1",
-      "camera": "",
-      "setclipping": 0,
-      "near": 0.01,
-      "far": 10000.0
-    }
-  },
-  "cameraproperties": {
-    "node_name": "cameraproperties1",
-    "node_type": "cameraproperties",
-    "node_path": "/obj/copnet_dump/cameraproperties1",
-    "parameter_templates": [
-      {
-        "name": "setprojection",
-        "label": "Set Projection",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "projection",
-        "label": "Projection",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "perspective",
-          "orthographic"
-        ],
-        "menu_labels": [
-          "Perspective",
-          "Orthographic"
-        ]
-      },
-      {
-        "name": "imaging",
-        "label": "Imaging Distance",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "setimaging",
-        "label": "Set Imaging Distance",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "off",
-          "on",
-          "add",
-          "point"
-        ],
-        "menu_labels": [
-          "Unchanged",
-          "Set",
-          "Add",
-          "Point"
-        ]
-      },
-      {
-        "name": "imagingpoint",
-        "label": "Imaging Point",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 3
-      },
-      {
-        "name": "setclipping",
-        "label": "Set Clipping",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "clipping",
-        "label": "Near/Far",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.01,
-          10000.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10000000000.0,
-        "num_components": 2
-      },
-      {
-        "name": "setfocal",
-        "label": "Set Focal Length",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "focal",
-        "label": "Focal Length",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          50.0
-        ],
-        "min_value": 1.0,
-        "max_value": 1000.0,
-        "num_components": 1
-      },
-      {
-        "name": "setaperture",
-        "label": "Set Aperture",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "aperture",
-        "label": "Aperture (mm)",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          20.955
-        ],
-        "min_value": 1.0,
-        "max_value": 100.0,
-        "num_components": 1
-      },
-      {
-        "name": "setoffset",
-        "label": "Set Aspect Offset",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "offset",
-        "label": "Aperture Offset",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "setshutter",
-        "label": "Set Shutter",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "shutter",
-        "label": "Shutter Open/Close",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          -0.25,
-          0.25
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "setfocus",
-        "label": "Set Focus Distance",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "focus",
-        "label": "Focus Distance",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10000.0,
-        "num_components": 1
-      },
-      {
-        "name": "setfstop",
-        "label": "Set F-Stop",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "fstop",
-        "label": "F-Stop",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "setprojection": 1,
-      "projection": 0,
-      "imaging": 1.0,
-      "setimaging": 0,
-      "imagingpointx": 0.0,
-      "imagingpointy": 0.0,
-      "imagingpointz": 0.0,
-      "setclipping": 0,
-      "clippingx": 0.01,
-      "clippingy": 10000.0,
-      "setfocal": 0,
-      "focal": 50.0,
-      "setaperture": 0,
-      "aperture": 20.955,
-      "setoffset": 0,
-      "offsetx": 0.0,
-      "offsety": 0.0,
-      "setshutter": 0,
-      "shutterx": -0.25,
-      "shuttery": 0.25,
-      "setfocus": 0,
-      "focus": 0.0,
-      "setfstop": 0,
-      "fstop": 0.0
-    }
-  },
-  "channelextract": {
-    "node_name": "channelextract1",
-    "node_type": "channelextract",
-    "node_path": "/obj/copnet_dump/channelextract1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "channel",
-        "label": "Channel to Extract",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          0
-        ],
-        "min_value": 0,
-        "max_value": 3,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "channel": 0
-    }
-  },
-  "channeljoin": {
-    "node_name": "channeljoin1",
-    "node_type": "channeljoin",
-    "node_path": "/obj/copnet_dump/channeljoin1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "f4"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "color",
-        "label": "Default Color",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 4
-      }
-    ],
-    "parameter_values": {
-      "signature": "f4",
-      "colorr": 0.0,
-      "colorg": 0.0,
-      "colorb": 0.0,
-      "colora": 1.0
-    }
-  },
-  "channelsplit": {
-    "node_name": "channelsplit1",
-    "node_type": "channelsplit",
-    "node_path": "/obj/copnet_dump/channelsplit1",
-    "parameter_templates": [],
-    "parameter_values": {}
-  },
-  "channelswap": {
-    "node_name": "channelswap1",
-    "node_type": "channelswap",
-    "node_path": "/obj/copnet_dump/channelswap1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "srcred",
-        "label": "Source for Red",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "red",
-          "green",
-          "blue",
-          "alpha",
-          "zero",
-          "one"
-        ],
-        "menu_labels": [
-          "Red\t(x)",
-          "Green\t(y)",
-          "Blue\t(z)",
-          "Alpha\t(w)",
-          "Zero",
-          "One"
-        ]
-      },
-      {
-        "name": "srcgreen",
-        "label": "Source for Green",
-        "type": "Menu",
-        "help": "",
-        "default_value": 1,
-        "menu_items": [
-          "red",
-          "green",
-          "blue",
-          "alpha",
-          "zero",
-          "one"
-        ],
-        "menu_labels": [
-          "Red\t(x)",
-          "Green\t(y)",
-          "Blue\t(z)",
-          "Alpha\t(w)",
-          "Zero",
-          "One"
-        ]
-      },
-      {
-        "name": "srcblue",
-        "label": "Source for Blue",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "red",
-          "green",
-          "blue",
-          "alpha",
-          "zero",
-          "one"
-        ],
-        "menu_labels": [
-          "Red\t(x)",
-          "Green\t(y)",
-          "Blue\t(z)",
-          "Alpha\t(w)",
-          "Zero",
-          "One"
-        ]
-      },
-      {
-        "name": "srcalpha",
-        "label": "Source for Alpha",
-        "type": "Menu",
-        "help": "",
-        "default_value": 3,
-        "menu_items": [
-          "red",
-          "green",
-          "blue",
-          "alpha",
-          "zero",
-          "one"
-        ],
-        "menu_labels": [
-          "Red\t(x)",
-          "Green\t(y)",
-          "Blue\t(z)",
-          "Alpha\t(w)",
-          "Zero",
-          "One"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "mask": 1.0,
-      "srcred": 0,
-      "srcgreen": 1,
-      "srcblue": 2,
-      "srcalpha": 3
-    }
-  },
-  "checkerboard": {
-    "node_name": "checkerboard1",
-    "node_type": "checkerboard",
-    "node_path": "/obj/copnet_dump/checkerboard1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "f3"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "rows",
-        "label": "Rows",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          8
-        ],
-        "min_value": 0,
-        "max_value": 50,
-        "num_components": 1
-      },
-      {
-        "name": "cols",
-        "label": "Columns",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          8
-        ],
-        "min_value": 0,
-        "max_value": 50,
-        "num_components": 1
-      },
-      {
-        "name": "even",
-        "label": "Even Color",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 4
-      },
-      {
-        "name": "odd",
-        "label": "Odd Color",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 4
-      },
-      {
-        "name": "t",
-        "label": "Offset",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "bias",
-        "label": "Bias",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "tilesize",
-        "label": "Tile Size",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          2.0,
-          2.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      }
-    ],
-    "parameter_values": {
-      "signature": "f3",
-      "rows": 8,
-      "cols": 8,
-      "evenr": 1.0,
-      "eveng": 1.0,
-      "evenb": 1.0,
-      "evena": 1.0,
-      "oddr": 0.0,
-      "oddg": 0.0,
-      "oddb": 0.0,
-      "odda": 0.0,
-      "tx": 0.0,
-      "ty": 0.0,
-      "biasx": 0.0,
-      "biasy": 0.0,
-      "tilesizex": 2.0,
-      "tilesizey": 2.0
-    }
-  },
-  "clamp": {
-    "node_name": "clamp1",
-    "node_type": "clamp",
-    "node_path": "/obj/copnet_dump/clamp1",
-    "parameter_templates": [
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scopergba",
-        "label": "Channel Scope",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          15
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "dolowerlimit",
-        "label": "Lower Limit",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "lowerlimit",
-        "label": "Lower Limit",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "doupperlimit",
-        "label": "Upper Limit",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "upperlimit",
-        "label": "Upper Limit",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "method",
-        "label": "Clamped Values",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "clamp",
-          "black"
-        ],
-        "menu_labels": [
-          "Replace with Limit Value",
-          "Replace with Black"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "mask": 1.0,
-      "scopergba": 15,
-      "dolowerlimit": 1,
-      "lowerlimit": 0.0,
-      "doupperlimit": 1,
-      "upperlimit": 1.0,
-      "method": 0
-    }
-  },
-  "constant": {
-    "node_name": "constant1",
-    "node_type": "constant",
-    "node_path": "/obj/copnet_dump/constant1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scopergba",
-        "label": "Channel Scope",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          15
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "f1",
-        "label": "Value",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "f2",
-        "label": "Value",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "f3",
-        "label": "Color",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 3
-      },
-      {
-        "name": "f4",
-        "label": "Color",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 4
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "mask": 1.0,
-      "scopergba": 15,
-      "f1": 1.0,
-      "f21": 1.0,
-      "f22": 1.0,
-      "f3r": 1.0,
-      "f3g": 1.0,
-      "f3b": 1.0,
-      "f4r": 1.0,
-      "f4g": 1.0,
-      "f4b": 1.0,
-      "f4a": 1.0
-    }
-  },
-  "crop": {
-    "node_name": "crop1",
-    "node_type": "crop",
-    "node_path": "/obj/copnet_dump/crop1",
-    "parameter_templates": [
-      {
-        "name": "mode",
-        "label": "Mode",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "data",
-          "both",
-          "display"
-        ],
-        "menu_labels": [
-          "Discard Cropped",
-          "Discard and Reframe to Crop",
-          "Reframe to Crop"
-        ]
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "unchanged",
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap"
-        ],
-        "menu_labels": [
-          "Unchanged",
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap"
-        ]
-      },
-      {
-        "name": "units",
-        "label": "Units",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "image",
-          "texture",
-          "pixels"
-        ],
-        "menu_labels": [
-          "Image",
-          "Texture",
-          "Pixels"
-        ]
-      },
-      {
-        "name": "geounits",
-        "label": "Geometry Units",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "image",
-          "texture",
-          "pixels",
-          "world"
-        ],
-        "menu_labels": [
-          "Image",
-          "Texture",
-          "Pixels",
-          "World"
-        ]
-      },
-      {
-        "name": "xy",
-        "label": "Lower Left",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          -1.0,
-          -1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "rt",
-        "label": "Upper Right",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "xy_texture",
-        "label": "Lower Left",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "rt_texture",
-        "label": "Upper Right",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "xy_pixel",
-        "label": "Lower Left",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "rt_pixel",
-        "label": "Upper Right",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          256.0,
-          256.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "setaspect",
-        "label": "Force Aspect",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "aspect",
-        "label": "Aspect Ratio",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "aspectmenu",
-        "label": "Aspect Menu",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "none",
-          "1:1",
-          "3:2",
-          "4:3",
-          "16:9"
-        ],
-        "menu_labels": [
-          "Aspect Ratios",
-          "1:1",
-          "3:2",
-          "4:3",
-          "16:9"
-        ]
-      },
-      {
-        "name": "extracttile",
-        "label": "Extract Tile",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "tilecount",
-        "label": "Tile Counts",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          2,
-          2
-        ],
-        "min_value": 1,
-        "max_value": 10,
-        "num_components": 2
-      },
-      {
-        "name": "tilenum",
-        "label": "Tile Number",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          0
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "minres",
-        "label": "Minimum Resolution",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          1,
-          1
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 2
-      },
-      {
-        "name": "usemaxres",
-        "label": "Limit Resolution",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "maxres",
-        "label": "Maximum Resolution",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          8092,
-          8092
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 2
-      },
-      {
-        "name": "folder0",
-        "label": "Pixel Padding",
+        "name": "stdswitcher",
+        "label": "Kernel",
         "type": "Folder",
         "help": "",
-        "folder_type": "Simple",
+        "folder_type": "Tabs",
         "children": [
           {
-            "name": "pixelpad_h",
-            "label": "Left/Right",
-            "type": "Int",
-            "help": "",
-            "default_value": [
-              0,
-              0
-            ],
-            "min_value": 0,
-            "max_value": 10,
-            "num_components": 2
-          },
-          {
-            "name": "pixelpad_v",
-            "label": "Top/Bottom",
-            "type": "Int",
-            "help": "",
-            "default_value": [
-              0,
-              0
-            ],
-            "min_value": 0,
-            "max_value": 10,
-            "num_components": 2
-          }
-        ]
-      }
-    ],
-    "parameter_values": {
-      "mode": 0,
-      "border": 0,
-      "units": 0,
-      "geounits": 0,
-      "xyx": -1.0,
-      "xyy": -1.0,
-      "rtx": 1.0,
-      "rty": 1.0,
-      "xy_texturex": 0.0,
-      "xy_texturey": 0.0,
-      "rt_texturex": 1.0,
-      "rt_texturey": 1.0,
-      "xy_pixelx": 0.0,
-      "xy_pixely": 0.0,
-      "rt_pixelx": 256.0,
-      "rt_pixely": 256.0,
-      "setaspect": 0,
-      "aspect1": 1.0,
-      "aspect2": 1.0,
-      "aspectmenu": 0,
-      "extracttile": 0,
-      "tilecountx": 2,
-      "tilecounty": 2,
-      "tilenum": 0,
-      "minresx": 1,
-      "minresy": 1,
-      "usemaxres": 1,
-      "maxresx": 8092,
-      "maxresy": 8092,
-      "folder0": 0,
-      "pixelpad_h1": 0,
-      "pixelpad_h2": 0,
-      "pixelpad_v1": 0,
-      "pixelpad_v2": 0
-    }
-  },
-  "denoiseai": {
-    "node_name": "denoiseai1",
-    "node_type": "denoiseai",
-    "node_path": "/obj/copnet_dump/denoiseai1",
-    "parameter_templates": [
-      {
-        "name": "denoiser",
-        "label": "Denoiser",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "oidn"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "auxareclean",
-        "label": "Auxiliary Planes Are Clean",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "prefilteraux",
-        "label": "Prefilter Auxiliary Planes",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "onlycpu",
-        "label": "Use CPU Only",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      }
-    ],
-    "parameter_values": {
-      "denoiser": "oidn",
-      "auxareclean": 0,
-      "prefilteraux": 0,
-      "onlycpu": 0
-    }
-  },
-  "derivative": {
-    "node_name": "derivative1",
-    "node_type": "derivative",
-    "node_path": "/obj/copnet_dump/derivative1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "angle",
-        "label": "Angle",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -180.0,
-        "max_value": 180.0,
-        "num_components": 1
-      },
-      {
-        "name": "scale",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "offset",
-        "label": "Offset",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "readoutside",
-        "label": "Read Pixels outside Image",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "kernel",
-        "label": "Kernel Size",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          1
-        ],
-        "min_value": 1,
-        "max_value": 64,
-        "num_components": 1
-      },
-      {
-        "name": "differencemode",
-        "label": "Difference Mode",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "central",
-          "forward",
-          "diagonal"
-        ],
-        "menu_labels": [
-          "Central",
-          "Forward",
-          "Diagonal"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "angle": 0.0,
-      "scale": 1.0,
-      "offset": 0.0,
-      "readoutside": 1,
-      "kernel": 1,
-      "differencemode": 0
-    }
-  },
-  "distort": {
-    "node_name": "distort1",
-    "node_type": "distort",
-    "node_path": "/obj/copnet_dump/distort1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "auto",
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap"
-        ],
-        "menu_labels": [
-          "Auto",
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap"
-        ]
-      },
-      {
-        "name": "filter",
-        "label": "Filter",
-        "type": "Menu",
-        "help": "",
-        "default_value": 1,
-        "menu_items": [
-          "point",
-          "bilinear",
-          "box",
-          "triangle",
-          "cubic",
-          "mitchell",
-          "bspline"
-        ],
-        "menu_labels": [
-          "Point",
-          "Bilinear",
-          "Box",
-          "Bartlett",
-          "Catmull-Rom",
-          "Mitchell",
-          "B-spline"
-        ]
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "dirtype",
-        "label": "Direction Type",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "angle",
-          "coord"
-        ],
-        "menu_labels": [
-          "Angle",
-          "Coordinates"
-        ]
-      },
-      {
-        "name": "dir",
-        "label": "Direction",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "normalizedir",
-        "label": "Normalize Direction",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "angle",
-        "label": "Angle",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -180.0,
-        "max_value": 180.0,
-        "num_components": 1
-      },
-      {
-        "name": "scale",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.005
-        ],
-        "min_value": -0.05,
-        "max_value": 0.05,
-        "num_components": 1
-      },
-      {
-        "name": "scalebytimeinc",
-        "label": "Scale by Timestep",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "streak",
-        "label": "Streak",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "off",
-          "on",
-          "min",
-          "max"
-        ],
-        "menu_labels": [
-          "Off",
-          "Blur",
-          "Min",
-          "Max"
-        ]
-      },
-      {
-        "name": "usestreakweight",
-        "label": "Use Streak Weight Ramp",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "streakweight",
-        "label": "Streak Weight",
-        "type": "Ramp",
-        "help": ""
-      },
-      {
-        "name": "usecfl",
-        "label": "Use Pixels per Step",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "cfl",
-        "label": "Pixels per Step",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.1,
-        "max_value": 1000.0,
-        "num_components": 1
-      },
-      {
-        "name": "maxsteps",
-        "label": "Maximum Steps",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          100
-        ],
-        "min_value": 1,
-        "max_value": 1000,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "border": 0,
-      "filter": 1,
-      "mask": 1.0,
-      "dirtype": 0,
-      "dirx": 1.0,
-      "diry": 0.0,
-      "normalizedir": 0,
-      "angle": 0.0,
-      "scale": 0.005,
-      "scalebytimeinc": 0,
-      "streak": 0,
-      "usestreakweight": 0,
-      "streakweight": "<hou.Ramp is_color=False num_keys=2 data=((t=0, 0), (t=1, 1))>",
-      "usecfl": 1,
-      "cfl": 1.0,
-      "maxsteps": 100,
-      "streakweight1pos": 0.0,
-      "streakweight1value": 0.0,
-      "streakweight1interp": 1,
-      "streakweight2pos": 1.0,
-      "streakweight2value": 1.0,
-      "streakweight2interp": 1
-    }
-  },
-  "dot": {
-    "node_name": "dot1",
-    "node_type": "dot",
-    "node_path": "/obj/copnet_dump/dot1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto"
-    }
-  },
-  "eikonal": {
-    "node_name": "eikonal1",
-    "node_type": "eikonal",
-    "node_path": "/obj/copnet_dump/eikonal1",
-    "parameter_templates": [
-      {
-        "name": "speed",
-        "label": "Speed",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 2.0,
-        "num_components": 1
-      },
-      {
-        "name": "niter",
-        "label": "Iterations",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          1
-        ],
-        "min_value": 1,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "tilesize",
-        "label": "Tile Size",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          4
-        ],
-        "min_value": 1,
-        "max_value": 1000,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "speed": 1.0,
-      "niter": 1,
-      "tilesize": 4
-    }
-  },
-  "error": {
-    "node_name": "error1",
-    "node_type": "error",
-    "node_path": "/obj/copnet_dump/error1",
-    "parameter_templates": [
-      {
-        "name": "numerror",
-        "label": "Number of Errors",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "MultiparmBlock",
-        "children": [
-          {
-            "name": "errormsg#",
-            "label": "Error Message",
+            "name": "kernelcode",
+            "label": "Kernel Code",
             "type": "String",
             "help": "",
             "default_value": [
               ""
             ],
             "string_type": "Regular"
-          },
+          }
+        ]
+      },
+      {
+        "name": "stdswitcher_1",
+        "label": "Options",
+        "type": "Folder",
+        "help": "",
+        "folder_type": "Tabs",
+        "children": [
           {
-            "name": "severity#",
-            "label": "Severity",
+            "name": "options_runover",
+            "label": "Run Over",
             "type": "Menu",
             "help": "",
             "default_value": 0,
             "menu_items": [
-              "message",
-              "warning",
-              "error"
+              "layer",
+              "attribute",
+              "volume",
+              "vdb"
             ],
             "menu_labels": [
-              "Message",
-              "Warning",
-              "Error"
+              "First Writeable Layer",
+              "First Writeable Attribute",
+              "First Writeable Volume",
+              "First Writeable VDB"
             ]
           },
           {
-            "name": "enable#",
-            "label": "Report This Error",
-            "type": "Int",
+            "name": "kernelname",
+            "label": "Kernel Name",
+            "type": "String",
             "help": "",
             "default_value": [
-              0
+              "generickernel"
             ],
-            "min_value": 0,
-            "max_value": 1,
-            "num_components": 1
-          }
-        ]
-      }
-    ],
-    "parameter_values": {
-      "numerror": 1,
-      "errormsg1": "",
-      "severity1": 0,
-      "enable1": 0
-    }
-  },
-  "flip": {
-    "node_name": "flip1",
-    "node_type": "flip",
-    "node_path": "/obj/copnet_dump/flip1",
-    "parameter_templates": [
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "xflip",
-        "label": "Flip Horizontally",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "yflip",
-        "label": "Flip Vertically",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "flop",
-        "label": "Flip Diagonally",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      }
-    ],
-    "parameter_values": {
-      "mask": 1.0,
-      "xflip": 0,
-      "yflip": 1,
-      "flop": 0
-    }
-  },
-  "function": {
-    "node_name": "function1",
-    "node_type": "function",
-    "node_path": "/obj/copnet_dump/function1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scale",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "shift",
-        "label": "Shift",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "func",
-        "label": "Function Class",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "math",
-          "pow",
-          "trig"
-        ],
-        "menu_labels": [
-          "Arithmetic",
-          "Powers",
-          "Trigonometry"
-        ]
-      },
-      {
-        "name": "func_math",
-        "label": "Arithmetic",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "abs",
-          "sign",
-          "normalize",
-          "negate",
-          "invert",
-          "floor",
-          "round",
-          "ceil",
-          "modulus"
-        ],
-        "menu_labels": [
-          "Absolute",
-          "Sign",
-          "Normalize",
-          "Negate",
-          "Reciprocal",
-          "Floor",
-          "Round",
-          "Ceil",
-          "Modulus"
-        ]
-      },
-      {
-        "name": "func_pow",
-        "label": "Power",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "sqrt",
-          "powx",
-          "powb",
-          "ex",
-          "log",
-          "ln"
-        ],
-        "menu_labels": [
-          "Square Root",
-          "pow(x, E)",
-          "pow(b, x)",
-          "exp(x)",
-          "Base-Log",
-          "Natural Log"
-        ]
-      },
-      {
-        "name": "func_trig",
-        "label": "Trigonometry",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "sin",
-          "cos",
-          "tan",
-          "asin",
-          "acos",
-          "atan",
-          "sinh",
-          "cosh",
-          "tanh"
-        ],
-        "menu_labels": [
-          "Sin",
-          "Cos",
-          "Tan",
-          "Arc Sin",
-          "Arc Cos",
-          "Arc Tan",
-          "Hyperbolic Sin",
-          "Hyperbolic Cos",
-          "Hyperbolic Tan"
-        ]
-      },
-      {
-        "name": "angleunit",
-        "label": "Angle Units",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "rad",
-          "deg",
-          "tau"
-        ],
-        "menu_labels": [
-          "Radians",
-          "Degrees",
-          "Circles (2pi)"
-        ]
-      },
-      {
-        "name": "base",
-        "label": "Base",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          2.0
-        ],
-        "min_value": 1.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "exponent",
-        "label": "Exponent",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          2.0
-        ],
-        "min_value": 1.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "modbase",
-        "label": "Base",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "mask": 1.0,
-      "scale": 1.0,
-      "shift": 0.0,
-      "func": 0,
-      "func_math": 0,
-      "func_pow": 0,
-      "func_trig": 0,
-      "angleunit": 2,
-      "base": 2.0,
-      "exponent": 2.0,
-      "modbase": 1.0
-    }
-  },
-  "geotolayer": {
-    "node_name": "geotolayer1",
-    "node_type": "geotolayer::2.0",
-    "node_path": "/obj/copnet_dump/geotolayer1",
-    "parameter_templates": [
-      {
-        "name": "setprecision",
-        "label": "Set Precision",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "precision",
-        "label": "Precision",
-        "type": "Menu",
-        "help": "",
-        "default_value": 1,
-        "menu_items": [
-          "b8",
-          "b16",
-          "b32"
-        ],
-        "menu_labels": [
-          "8",
-          "16",
-          "32"
-        ]
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "auto",
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap"
-        ],
-        "menu_labels": [
-          "Auto",
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap"
-        ]
-      },
-      {
-        "name": "slice",
-        "label": "Slice",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "xy",
-          "yz",
-          "zx"
-        ],
-        "menu_labels": [
-          "XY Plane",
-          "YZ Plane",
-          "ZX Plane"
-        ]
-      },
-      {
-        "name": "densifyvdb",
-        "label": "Densify VDBs",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "addprims",
-        "label": "Set Imports from Geometry",
-        "type": "Button",
-        "help": ""
-      },
-      {
-        "name": "numprims",
-        "label": "Outputs",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "MultiparmBlock",
-        "children": [
+            "string_type": "Regular"
+          },
           {
-            "name": "primitive#",
-            "label": "Primitive Name",
+            "name": "writebackkernelname",
+            "label": "Write Back Kernel Name",
+            "type": "String",
+            "help": "",
+            "default_value": [
+              "writebackkernel"
+            ],
+            "string_type": "Regular"
+          },
+          {
+            "name": "kerneloptions",
+            "label": "Compiler Options",
             "type": "String",
             "help": "",
             "default_value": [
@@ -2527,1255 +80,42 @@
             "string_type": "Regular"
           },
           {
-            "name": "outtype#",
-            "label": "outputtype",
-            "type": "Menu",
+            "name": "options_tile",
+            "label": "Layer Tile Size",
+            "type": "Int",
             "help": "",
-            "default_value": 1,
-            "menu_items": [
-              "int",
-              "float",
-              "vector2",
-              "vector3",
-              "vector4",
-              "intvdb",
-              "floatvdb",
-              "vectorvdb"
+            "default_value": [
+              1,
+              1
             ],
-            "menu_labels": [
-              "ID",
-              "Mono",
-              "UV",
-              "RGB",
-              "RGBA",
-              "Integer VDB",
-              "Float VDB",
-              "Vector VDB"
-            ]
+            "min_value": 0,
+            "max_value": 10,
+            "num_components": 2
           },
           {
-            "name": "optional#",
-            "label": "Optional",
+            "name": "options_usevdbtile",
+            "label": "Use VDB Tile Size",
             "type": "Toggle",
             "help": "",
             "default_value": false
           },
           {
-            "name": "f1_def#",
-            "label": "Default Value",
-            "type": "Float",
+            "name": "options_vdbtile",
+            "label": "VDB Tile Size",
+            "type": "Int",
             "help": "",
             "default_value": [
-              1.0
+              1,
+              1,
+              1
             ],
-            "min_value": 0.0,
-            "max_value": 10.0,
-            "num_components": 1
-          },
-          {
-            "name": "f2_def#",
-            "label": "Default Value",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              1.0,
-              1.0
-            ],
-            "min_value": 0.0,
-            "max_value": 10.0,
-            "num_components": 2
-          },
-          {
-            "name": "f3_def#",
-            "label": "Default Value",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              1.0,
-              1.0,
-              1.0
-            ],
-            "min_value": 0.0,
-            "max_value": 10.0,
+            "min_value": 0,
+            "max_value": 10,
             "num_components": 3
           },
           {
-            "name": "f4_def#",
-            "label": "Default Value",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              1.0,
-              1.0,
-              1.0,
-              1.0
-            ],
-            "min_value": 0.0,
-            "max_value": 10.0,
-            "num_components": 4
-          },
-          {
-            "name": "i_def#",
-            "label": "Default Value",
-            "type": "Int",
-            "help": "",
-            "default_value": [
-              0
-            ],
-            "min_value": 0,
-            "max_value": 10,
-            "num_components": 1
-          }
-        ]
-      }
-    ],
-    "parameter_values": {
-      "setprecision": 0,
-      "precision": 1,
-      "border": 0,
-      "slice": 0,
-      "densifyvdb": 0,
-      "addprims": "0",
-      "numprims": 1,
-      "primitive1": "",
-      "outtype1": 1,
-      "optional1": 0,
-      "f1_def1": 1.0,
-      "f2_def11": 1.0,
-      "f2_def12": 1.0,
-      "f3_def1r": 1.0,
-      "f3_def1g": 1.0,
-      "f3_def1b": 1.0,
-      "f4_def1r": 1.0,
-      "f4_def1g": 1.0,
-      "f4_def1b": 1.0,
-      "f4_def1a": 1.0,
-      "i_def1": 0
-    }
-  },
-  "hextile": {
-    "node_name": "hextile1",
-    "node_type": "hextile",
-    "node_path": "/obj/copnet_dump/hextile1",
-    "parameter_templates": [
-      {
-        "name": "size",
-        "label": "Size",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 2.0,
-        "num_components": 2
-      },
-      {
-        "name": "scale",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scalerand",
-        "label": "Scale Random",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "rot",
-        "label": "Rotate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -90.0,
-        "max_value": 90.0,
-        "num_components": 1
-      },
-      {
-        "name": "rotrand",
-        "label": "Rotate Random",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "seed",
-        "label": "Random Seed",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "contrast",
-        "label": "Contrast",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.5
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "contrast_falloff",
-        "label": "Falloff",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.6
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "weightexp",
-        "label": "Weight Exp",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          7.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "sizex": 1.0,
-      "sizey": 1.0,
-      "scale": 1.0,
-      "scalerand": 0.0,
-      "rot": 0.0,
-      "rotrand": 0.0,
-      "seed": 0.0,
-      "contrast": 0.5,
-      "contrast_falloff": 0.6,
-      "weightexp": 7.0
-    }
-  },
-  "idtorgb": {
-    "node_name": "idtorgb1",
-    "node_type": "idtorgb",
-    "node_path": "/obj/copnet_dump/idtorgb1",
-    "parameter_templates": [
-      {
-        "name": "seed",
-        "label": "Seed",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          0
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "seed": 0
-    }
-  },
-  "illpixel": {
-    "node_name": "illpixel1",
-    "node_type": "illpixel",
-    "node_path": "/obj/copnet_dump/illpixel1",
-    "parameter_templates": [
-      {
-        "name": "method",
-        "label": "Illegal Pixels",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "fixblend",
-          "fixzero",
-          "highlight",
-          "isolate"
-        ],
-        "menu_labels": [
-          "Fix by Blending Surrounding Pixels",
-          "Fix by Zeroing",
-          "Show with Highlight",
-          "Show by Isolating"
-        ]
-      },
-      {
-        "name": "highlightcolor",
-        "label": "Highlight Color",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 4
-      },
-      {
-        "name": "detect",
-        "label": "Detect",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "d_nan",
-          "d_inf",
-          "both",
-          "custom"
-        ],
-        "menu_labels": [
-          "NaN Values",
-          "Infinite Values",
-          "NaN and Infinite Values",
-          "Custom"
-        ]
-      },
-      {
-        "name": "rule",
-        "label": "Rule",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "less",
-          "lessequal",
-          "greater",
-          "greaterequal",
-          "equal"
-        ],
-        "menu_labels": [
-          "Less Than",
-          "Less Than or Equal",
-          "Greater Than",
-          "Greater Than or Equal",
-          "Equal"
-        ]
-      },
-      {
-        "name": "compval",
-        "label": "Value",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "method": 0,
-      "highlightcolorr": 1.0,
-      "highlightcolorg": 0.0,
-      "highlightcolorb": 0.0,
-      "highlightcolora": 1.0,
-      "detect": 2,
-      "rule": 0,
-      "compval": 0.0
-    }
-  },
-  "invert": {
-    "node_name": "invert1",
-    "node_type": "invert",
-    "node_path": "/obj/copnet_dump/invert1",
-    "parameter_templates": [
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scopergba",
-        "label": "Channel Scope",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          15
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "method",
-        "label": "Invert By",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "complement",
-          "negate",
-          "reciprocal"
-        ],
-        "menu_labels": [
-          "Complement",
-          "Negate",
-          "Reciprocal"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "mask": 1.0,
-      "scopergba": 15,
-      "method": 0
-    }
-  },
-  "julia": {
-    "node_name": "julia1",
-    "node_type": "julia",
-    "node_path": "/obj/copnet_dump/julia1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "f1"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "scale",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.626,
-          0.626
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "real",
-        "label": "Real Coefficient",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.25
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "imag",
-        "label": "Imaginary Coefficient",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          -0.55
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "escaperad",
-        "label": "Escape Radius",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          2.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "maxiter",
-        "label": "Maximum Iterations",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          50
-        ],
-        "min_value": 1,
-        "max_value": 100,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "signature": "f1",
-      "scalex": 0.626,
-      "scaley": 0.626,
-      "real": 0.25,
-      "imag": -0.55,
-      "escaperad": 2.0,
-      "maxiter": 50
-    }
-  },
-  "layer": {
-    "node_name": "layer1",
-    "node_type": "layer",
-    "node_path": "/obj/copnet_dump/layer1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "f1"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "f1",
-        "label": "Value",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "f2",
-        "label": "Value",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "f3",
-        "label": "Color",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 3
-      },
-      {
-        "name": "f4",
-        "label": "Color",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 4
-      },
-      {
-        "name": "i",
-        "label": "Value",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          0
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "setres",
-        "label": "Set Resolution",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "res",
-        "label": "Resolution",
-        "type": "Float",
-        "help": "Total size of the image, if overscan not set. If not an integer, this sets the Display Window and rounded up to the next pixel for Data Window.",
-        "default_value": [
-          1920.0,
-          1080.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 2
-      },
-      {
-        "name": "resmenu",
-        "label": "Resolution Menu",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [],
-        "menu_labels": []
-      },
-      {
-        "name": "setpixelaspectratio",
-        "label": "Set Pixel Aspect Ratio",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "pixelaspectratio",
-        "label": "Pixel Aspect Ratio",
-        "type": "Float",
-        "help": "Width/height of the pixels. Anamorphic is often 2, some old video formats used .9",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.1,
-        "max_value": 2.0,
-        "num_components": 1
-      },
-      {
-        "name": "folder0",
-        "label": "Pixel Padding",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "Collapsible",
-        "children": [
-          {
-            "name": "setpixelpad",
-            "label": "Pixel Padding",
-            "type": "Toggle",
-            "help": "",
-            "default_value": false
-          },
-          {
-            "name": "pixelpad_h",
-            "label": "Left/Right",
-            "type": "Int",
-            "help": "",
-            "default_value": [
-              0,
-              0
-            ],
-            "min_value": 0,
-            "max_value": 10,
-            "num_components": 2
-          },
-          {
-            "name": "pixelpad_v",
-            "label": "Top/Bottom",
-            "type": "Int",
-            "help": "",
-            "default_value": [
-              0,
-              0
-            ],
-            "min_value": 0,
-            "max_value": 10,
-            "num_components": 2
-          }
-        ]
-      },
-      {
-        "name": "setprecision",
-        "label": "Set Precision",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "precision",
-        "label": "Precision",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "b8",
-          "b16",
-          "b32"
-        ],
-        "menu_labels": [
-          "8-bit",
-          "16-bit",
-          "32-bit"
-        ]
-      },
-      {
-        "name": "usefixedpoint",
-        "label": "Use Fixed Point Storage",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "setborder",
-        "label": "Set Border",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 3,
-        "menu_items": [
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap"
-        ],
-        "menu_labels": [
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap"
-        ]
-      },
-      {
-        "name": "settypeinfo",
-        "label": "Set Type Info",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "typeinfo",
-        "label": "Type Info",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "none",
-          "color",
-          "position",
-          "vector",
-          "normal",
-          "offsetnormal",
-          "texturecoord",
-          "id",
-          "mask",
-          "sdf",
-          "height"
-        ],
-        "menu_labels": [
-          "None",
-          "Color",
-          "Position",
-          "Vector",
-          "Signed Normal",
-          "Offset Normal",
-          "Texture Coordinate",
-          "ID",
-          "Mask",
-          "SDF",
-          "Height"
-        ]
-      },
-      {
-        "name": "setpixelscale",
-        "label": "Set Pixel Scale",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "pixelscale",
-        "label": "Pixel Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 1.0,
-        "max_value": 16.0,
-        "num_components": 1
-      }
-    ],
-    "parameter_values": {
-      "signature": "f1",
-      "f1": 1.0,
-      "f21": 1.0,
-      "f22": 1.0,
-      "f3r": 1.0,
-      "f3g": 1.0,
-      "f3b": 1.0,
-      "f4r": 1.0,
-      "f4g": 1.0,
-      "f4b": 1.0,
-      "f4a": 1.0,
-      "i": 0,
-      "setres": 0,
-      "resx": 1920.0,
-      "resy": 1080.0,
-      "resmenu": 0,
-      "setpixelaspectratio": 0,
-      "pixelaspectratio": 1.0,
-      "folder0": 0,
-      "setpixelpad": 0,
-      "pixelpad_h1": 0,
-      "pixelpad_h2": 0,
-      "pixelpad_v1": 0,
-      "pixelpad_v2": 0,
-      "setprecision": 0,
-      "precision": 2,
-      "usefixedpoint": 0,
-      "setborder": 0,
-      "border": 3,
-      "settypeinfo": 0,
-      "typeinfo": 0,
-      "setpixelscale": 0,
-      "pixelscale": 1.0
-    }
-  },
-  "layerattribcreate": {
-    "node_name": "layerattribcreate1",
-    "node_type": "layerattribcreate",
-    "node_path": "/obj/copnet_dump/layerattribcreate1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "numattrib",
-        "label": "Number of Attributes",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "MultiparmBlock",
-        "children": [
-          {
-            "name": "name#",
-            "label": "Name #",
-            "type": "String",
-            "help": "",
-            "default_value": [
-              ""
-            ],
-            "string_type": "Regular"
-          },
-          {
-            "name": "type#",
-            "label": "Type",
-            "type": "Menu",
-            "help": "",
-            "default_value": 0,
-            "menu_items": [
-              "string",
-              "float",
-              "int"
-            ],
-            "menu_labels": [
-              "String",
-              "Float",
-              "Integer"
-            ]
-          },
-          {
-            "name": "valf#",
-            "label": "Value #",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              0.0
-            ],
-            "min_value": 0.0,
-            "max_value": 10.0,
-            "num_components": 1
-          },
-          {
-            "name": "vali#",
-            "label": "Value #",
-            "type": "Int",
-            "help": "",
-            "default_value": [
-              0
-            ],
-            "min_value": 0,
-            "max_value": 10,
-            "num_components": 1
-          },
-          {
-            "name": "vals#",
-            "label": "Value #",
-            "type": "String",
-            "help": "",
-            "default_value": [
-              ""
-            ],
-            "string_type": "Regular"
-          }
-        ]
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "numattrib": 1,
-      "name1": "",
-      "type1": 0,
-      "valf1": 0.0,
-      "vali1": 0,
-      "vals1": ""
-    }
-  },
-  "layerattribdelete": {
-    "node_name": "layerattribdelete1",
-    "node_type": "layerattribdelete",
-    "node_path": "/obj/copnet_dump/layerattribdelete1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "delete",
-        "label": "Delete Attributes",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          ""
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "keep",
-        "label": "Keep Attributes",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "*"
-        ],
-        "string_type": "Regular"
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "delete": "",
-      "keep": "*"
-    }
-  },
-  "layerproperties": {
-    "node_name": "layerproperties1",
-    "node_type": "layerproperties",
-    "node_path": "/obj/copnet_dump/layerproperties1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "setprecision",
-        "label": "Set Precision",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "precision",
-        "label": "Precision",
-        "type": "Menu",
-        "help": "",
-        "default_value": 1,
-        "menu_items": [
-          "b8",
-          "b16",
-          "b32"
-        ],
-        "menu_labels": [
-          "8",
-          "16",
-          "32"
-        ]
-      },
-      {
-        "name": "usefixedpoint",
-        "label": "Use Fixed Point Storage",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "setborder",
-        "label": "Set Border",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 3,
-        "menu_items": [
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap"
-        ],
-        "menu_labels": [
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap"
-        ]
-      },
-      {
-        "name": "settypeinfo",
-        "label": "Set Type Info",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "typeinfo",
-        "label": "Type Info",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "none",
-          "color",
-          "position",
-          "vector",
-          "normal",
-          "offsetnormal",
-          "texturecoord",
-          "id",
-          "mask",
-          "sdf",
-          "height"
-        ],
-        "menu_labels": [
-          "None",
-          "Color",
-          "Position",
-          "Vector",
-          "Signed Normal",
-          "Offset Normal",
-          "Texture Coordinate",
-          "ID",
-          "Mask",
-          "SDF",
-          "Height"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "setprecision": 0,
-      "precision": 1,
-      "usefixedpoint": 0,
-      "setborder": 0,
-      "border": 3,
-      "settypeinfo": 0,
-      "typeinfo": 0
-    }
-  },
-  "layertogeo": {
-    "node_name": "layertogeo1",
-    "node_type": "layertogeo",
-    "node_path": "/obj/copnet_dump/layertogeo1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "optional",
-        "label": "Empty Geometry If Unwired",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "optional": 0
-    }
-  },
-  "layertopoints": {
-    "node_name": "layertopoints1",
-    "node_type": "layertopoints",
-    "node_path": "/obj/copnet_dump/layertopoints1",
-    "parameter_templates": [
-      {
-        "name": "method",
-        "label": "Method",
-        "type": "Menu",
-        "help": "",
-        "default_value": 1,
-        "menu_items": [
-          "all",
-          "nonzero",
-          "pixel",
-          "unique",
-          "first",
-          "last"
-        ],
-        "menu_labels": [
-          "All Pixel",
-          "Non-Zero Pixels",
-          "Count per Pixel",
-          "Unique Values",
-          "Count from First Pixel",
-          "Count from Last Pixel"
-        ]
-      },
-      {
-        "name": "layerattrib",
-        "label": "Layer Attrib",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "value"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "indexattrib",
-        "label": "Index Attrib",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "index"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "setpos",
-        "label": "Set Positions",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "ignoreminusone",
-        "label": "Ignore Minus One",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "attribs",
-        "label": "Point Attributes",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "MultiparmBlock",
-        "children": [
-          {
-            "name": "attrib#_name",
-            "label": "Name",
-            "type": "String",
-            "help": "",
-            "default_value": [
-              ""
-            ],
-            "string_type": "Regular"
-          },
-          {
-            "name": "attrib#_class",
-            "label": "Class",
-            "type": "Menu",
-            "help": "",
-            "default_value": 2,
-            "menu_items": [
-              "detail",
-              "primitive",
-              "point",
-              "vertex"
-            ],
-            "menu_labels": [
-              "Detail",
-              "Primitive",
-              "Point",
-              "Vertex"
-            ]
-          },
-          {
-            "name": "attrib#_type",
-            "label": "Type",
-            "type": "Menu",
-            "help": "",
-            "default_value": 1,
-            "menu_items": [
-              "int",
-              "float"
-            ],
-            "menu_labels": [
-              "Integer",
-              "Float"
-            ]
-          },
-          {
-            "name": "attrib#_size",
-            "label": "Tuple Size",
+            "name": "options_iterations",
+            "label": "Iterations",
             "type": "Int",
             "help": "",
             "default_value": [
@@ -3784,1064 +124,86 @@
             "min_value": 0,
             "max_value": 10,
             "num_components": 1
-          }
-        ]
-      }
-    ],
-    "parameter_values": {
-      "method": 1,
-      "layerattrib": "value",
-      "indexattrib": "index",
-      "setpos": 1,
-      "ignoreminusone": 0,
-      "attribs": 0
-    }
-  },
-  "matchcamera": {
-    "node_name": "matchcamera1",
-    "node_type": "matchcamera",
-    "node_path": "/obj/copnet_dump/matchcamera1",
-    "parameter_templates": [],
-    "parameter_values": {}
-  },
-  "matchudim": {
-    "node_name": "matchudim1",
-    "node_type": "matchudim",
-    "node_path": "/obj/copnet_dump/matchudim1",
-    "parameter_templates": [
-      {
-        "name": "setudim",
-        "label": "UDIM",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "udim",
-        "label": "UDIM",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          1001
-        ],
-        "min_value": 1001,
-        "max_value": 1051,
-        "num_components": 1
-      },
-      {
-        "name": "invertxform",
-        "label": "Invert Transformation",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "method",
-        "label": "Method",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "eye",
-          "data"
-        ],
-        "menu_labels": [
-          "Move Camera",
-          "Adjust Data Window"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "setudim": 0,
-      "udim": 1001,
-      "invertxform": 0,
-      "method": 0
-    }
-  },
-  "median": {
-    "node_name": "median1",
-    "node_type": "median",
-    "node_path": "/obj/copnet_dump/median1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "fsize",
-        "label": "Filter Size",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "three",
-          "five"
-        ],
-        "menu_labels": [
-          "3x3",
-          "5x5"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "mask": 1.0,
-      "fsize": 0
-    }
-  },
-  "mono": {
-    "node_name": "mono1",
-    "node_type": "mono",
-    "node_path": "/obj/copnet_dump/mono1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "op",
-        "label": "Operation",
-        "type": "Menu",
-        "help": "",
-        "default_value": 1,
-        "menu_items": [
-          "lum",
-          "ntsclum",
-          "hdtvlum",
-          "average",
-          "max",
-          "min",
-          "magnitude",
-          "hue",
-          "saturation",
-          "value",
-          "red",
-          "green",
-          "blue",
-          "comp4",
-          "custom"
-        ],
-        "menu_labels": [
-          "SGI Luminance",
-          "NTSC Luminance",
-          "HDTV Luminance",
-          "Average",
-          "Maximum Channel",
-          "Minimum Channel",
-          "Magnitude / Length",
-          "Hue",
-          "Saturation",
-          "Value",
-          "Red",
-          "Green",
-          "Blue",
-          "Alpha",
-          "Custom"
-        ]
-      },
-      {
-        "name": "weight",
-        "label": "Weights",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 4
-      },
-      {
-        "name": "normalizeweight",
-        "label": "Normalize Weights",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "op": 1,
-      "weightr": 1.0,
-      "weightg": 1.0,
-      "weightb": 1.0,
-      "weighta": 0.0,
-      "normalizeweight": 1
-    }
-  },
-  "monotorgb": {
-    "node_name": "monotorgb1",
-    "node_type": "monotorgb",
-    "node_path": "/obj/copnet_dump/monotorgb1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "inputmin",
-        "label": "Input Min",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "inputmax",
-        "label": "Input Max",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "outputmin",
-        "label": "Output Min",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "outputmax",
-        "label": "Output Max",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scalebyvalue",
-        "label": "Scale by Value",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "method",
-        "label": "Outside Range",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "clamp",
-          "repeat"
-        ],
-        "menu_labels": [
-          "Clamp at End",
-          "Repeat"
-        ]
-      },
-      {
-        "name": "ramp",
-        "label": "Ramp",
-        "type": "Ramp",
-        "help": ""
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "inputmin": 0.0,
-      "inputmax": 1.0,
-      "outputmin": 0.0,
-      "outputmax": 1.0,
-      "scalebyvalue": 0,
-      "method": 0,
-      "ramp": "<hou.Ramp is_color=True num_keys=2 data=((t=0, rgb=(0, 0, 0)), (t=1, rgb=(1, 1, 1)))>",
-      "ramp1pos": 0.0,
-      "ramp1cr": 0.0,
-      "ramp1cg": 0.0,
-      "ramp1cb": 0.0,
-      "ramp1interp": 1,
-      "ramp2pos": 1.0,
-      "ramp2cr": 1.0,
-      "ramp2cg": 1.0,
-      "ramp2cb": 1.0,
-      "ramp2interp": 1
-    }
-  },
-  "premult": {
-    "node_name": "premult1",
-    "node_type": "premult",
-    "node_path": "/obj/copnet_dump/premult1",
-    "parameter_templates": [
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "op",
-        "label": "Operation",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "mult",
-          "divide"
-        ],
-        "menu_labels": [
-          "Premultiply by Alpha",
-          "Un-Premultiply by Alpha"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "mask": 1.0,
-      "op": 0
-    }
-  },
-  "projectonlayer": {
-    "node_name": "projectonlayer1",
-    "node_type": "projectonlayer",
-    "node_path": "/obj/copnet_dump/projectonlayer1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "invertxform",
-        "label": "Invert Transformation",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "auto",
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap",
-          "clip"
-        ],
-        "menu_labels": [
-          "Auto",
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap",
-          "Clip"
-        ]
-      },
-      {
-        "name": "filter",
-        "label": "Filter",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "point",
-          "bilinear",
-          "box",
-          "triangle",
-          "cubic",
-          "mitchell",
-          "bspline"
-        ],
-        "menu_labels": [
-          "Point",
-          "Bilinear",
-          "Box",
-          "Bartlett",
-          "Catmull-Rom",
-          "Mitchell",
-          "B-spline"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "invertxform": 0,
-      "border": 0,
-      "filter": 2
-    }
-  },
-  "ramp": {
-    "node_name": "ramp1",
-    "node_type": "ramp",
-    "node_path": "/obj/copnet_dump/ramp1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "f3"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "rampType",
-        "label": "Type",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "horizontal",
-          "vertical",
-          "radial",
-          "concentric"
-        ],
-        "menu_labels": [
-          "Horizontal",
-          "Vertical",
-          "Radial",
-          "Concentric"
-        ]
-      },
-      {
-        "name": "cycles",
-        "label": "Number of Cycles",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "phase",
-        "label": "Phase",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "method",
-        "label": "Outside Range",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "clamp",
-          "repeat",
-          "mirror"
-        ],
-        "menu_labels": [
-          "Clamp at End",
-          "Repeat",
-          "Mirror"
-        ]
-      },
-      {
-        "name": "center",
-        "label": "Center",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "rotation",
-        "label": "Rotation",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 360.0,
-        "num_components": 1
-      },
-      {
-        "name": "ramp",
-        "label": "Ramp",
-        "type": "Ramp",
-        "help": ""
-      },
-      {
-        "name": "rampmono",
-        "label": "Ramp",
-        "type": "Ramp",
-        "help": ""
-      }
-    ],
-    "parameter_values": {
-      "signature": "f3",
-      "rampType": 0,
-      "cycles": 1.0,
-      "phase": 0.0,
-      "method": 0,
-      "centerx": 0.0,
-      "centery": 0.0,
-      "rotation": 0.0,
-      "ramp": "<hou.Ramp is_color=True num_keys=2 data=((t=0, rgb=(0, 0, 0)), (t=1, rgb=(1, 1, 1)))>",
-      "rampmono": "<hou.Ramp is_color=False num_keys=2 data=((t=0, 0), (t=1, 1))>",
-      "ramp1pos": 0.0,
-      "ramp1cr": 0.0,
-      "ramp1cg": 0.0,
-      "ramp1cb": 0.0,
-      "ramp1interp": 1,
-      "ramp2pos": 1.0,
-      "ramp2cr": 1.0,
-      "ramp2cg": 1.0,
-      "ramp2cb": 1.0,
-      "ramp2interp": 1,
-      "rampmono1pos": 0.0,
-      "rampmono1value": 0.0,
-      "rampmono1interp": 1,
-      "rampmono2pos": 1.0,
-      "rampmono2value": 1.0,
-      "rampmono2interp": 1
-    }
-  },
-  "rasterizelayer": {
-    "node_name": "rasterizelayer1",
-    "node_type": "rasterizelayer",
-    "node_path": "/obj/copnet_dump/rasterizelayer1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "resetorig",
-        "label": "Move to Origin",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "invertxform",
-        "label": "Invert Transformation",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "auto",
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap",
-          "clip"
-        ],
-        "menu_labels": [
-          "Auto",
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap",
-          "Clip"
-        ]
-      },
-      {
-        "name": "filter",
-        "label": "Filter",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "point",
-          "bilinear",
-          "box",
-          "triangle",
-          "cubic",
-          "mitchell",
-          "bspline"
-        ],
-        "menu_labels": [
-          "Point",
-          "Bilinear",
-          "Box",
-          "Bartlett",
-          "Catmull-Rom",
-          "Mitchell",
-          "B-spline"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "resetorig": 0,
-      "invertxform": 0,
-      "border": 0,
-      "filter": 2
-    }
-  },
-  "remap": {
-    "node_name": "remap1",
-    "node_type": "remap",
-    "node_path": "/obj/copnet_dump/remap1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scopergba",
-        "label": "Channel Scope",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          15
-        ],
-        "min_value": 0,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "op",
-        "label": "Operation",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "remap",
-          "threshold"
-        ],
-        "menu_labels": [
-          "Remap",
-          "Threshold"
-        ]
-      },
-      {
-        "name": "side",
-        "label": "Threshold When",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "greater",
-          "greaterequal",
-          "less",
-          "lessequal"
-        ],
-        "menu_labels": [
-          "Greater",
-          "Greater or Equal",
-          "Less",
-          "Less or Equal"
-        ]
-      },
-      {
-        "name": "threshold",
-        "label": "Threshold",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.5
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "width",
-        "label": "Width",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "inputmin",
-        "label": "Input Min",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "inputmax",
-        "label": "Input Max",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "outputmin",
-        "label": "Output Min",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "outputmax",
-        "label": "Output Max",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "method",
-        "label": "Outside Range",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "clamp",
-          "repeat",
-          "extend"
-        ],
-        "menu_labels": [
-          "Clamp at End",
-          "Repeat",
-          "Extend"
-        ]
-      },
-      {
-        "name": "ramp",
-        "label": "Ramp",
-        "type": "Ramp",
-        "help": ""
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "mask": 1.0,
-      "scopergba": 15,
-      "op": 0,
-      "side": 0,
-      "threshold": 0.5,
-      "width": 0.0,
-      "inputmin": 0.0,
-      "inputmax": 1.0,
-      "outputmin": 0.0,
-      "outputmax": 1.0,
-      "method": 0,
-      "ramp": "<hou.Ramp is_color=False num_keys=2 data=((t=0, 0), (t=1, 1))>",
-      "ramp1pos": 0.0,
-      "ramp1value": 0.0,
-      "ramp1interp": 1,
-      "ramp2pos": 1.0,
-      "ramp2value": 1.0,
-      "ramp2interp": 1
-    }
-  },
-  "resample": {
-    "node_name": "resample1",
-    "node_type": "resample",
-    "node_path": "/obj/copnet_dump/resample1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "folder0",
-        "label": "Canvas",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "Simple",
-        "children": [
-          {
-            "name": "sizecontrol",
-            "label": "Size Control",
-            "type": "Menu",
-            "help": "",
-            "default_value": 0,
-            "menu_items": [
-              "res",
-              "aspect",
-              "pixel"
-            ],
-            "menu_labels": [
-              "Resolution",
-              "Aspect Ratio",
-              "Pixel Size"
-            ]
           },
           {
-            "name": "basesize",
-            "label": "Base Size",
-            "type": "Menu",
-            "help": "",
-            "default_value": 1,
-            "menu_items": [
-              "parm",
-              "input"
-            ],
-            "menu_labels": [
-              "Parameter",
-              "Size Input"
-            ]
-          },
-          {
-            "name": "resolution",
-            "label": "Base Resolution",
-            "type": "Int",
-            "help": "",
-            "default_value": [
-              1920,
-              1080
-            ],
-            "min_value": 0,
-            "max_value": 10,
-            "num_components": 2
-          },
-          {
-            "name": "resmenu",
-            "label": "Resolution Menu",
-            "type": "Menu",
-            "help": "",
-            "default_value": 0,
-            "menu_items": [],
-            "menu_labels": []
-          },
-          {
-            "name": "aspect",
-            "label": "Base Aspect Ratio",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              1.0,
-              1.0
-            ],
-            "min_value": 0.0,
-            "max_value": 2.0,
-            "num_components": 2
-          },
-          {
-            "name": "aspectmenu",
-            "label": "Aspect Menu",
-            "type": "Menu",
-            "help": "",
-            "default_value": 0,
-            "menu_items": [
-              "none",
-              "1:1",
-              "3:2",
-              "4:3",
-              "16:9"
-            ],
-            "menu_labels": [
-              "Aspect Ratios",
-              "1:1",
-              "3:2",
-              "4:3",
-              "16:9"
-            ]
-          },
-          {
-            "name": "pixelsize",
-            "label": "Pixel Size",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              0.001
-            ],
-            "min_value": 0.0,
-            "max_value": 0.1,
-            "num_components": 1
-          },
-          {
-            "name": "scale",
-            "label": "Uniform Scale",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              1.0
-            ],
-            "min_value": 0.0,
-            "max_value": 5.0,
-            "num_components": 1
-          },
-          {
-            "name": "resscale",
-            "label": "Resolution Scale",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              1.0,
-              1.0
-            ],
-            "min_value": 0.0,
-            "max_value": 2.0,
-            "num_components": 2
-          },
-          {
-            "name": "fixedside",
-            "label": "Fixed Dimension",
-            "type": "Menu",
-            "help": "",
-            "default_value": 0,
-            "menu_items": [
-              "width",
-              "height",
-              "smaller",
-              "larger"
-            ],
-            "menu_labels": [
-              "Width",
-              "Height",
-              "Smaller Dimension",
-              "Larger Dimension"
-            ]
-          },
-          {
-            "name": "pixelsizescale",
-            "label": "Size Scale",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              1.0,
-              1.0
-            ],
-            "min_value": 0.0,
-            "max_value": 2.0,
-            "num_components": 2
-          },
-          {
-            "name": "reframe",
-            "label": "Reframe to Destination",
+            "name": "options_iteration",
+            "label": "Include Iteration",
             "type": "Toggle",
             "help": "",
             "default_value": false
-          }
-        ]
-      },
-      {
-        "name": "folder1",
-        "label": "Sampling",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "Simple",
-        "children": [
+          },
+          {
+            "name": "usewritebackkernel",
+            "label": "Use Write Back Kernel",
+            "type": "Toggle",
+            "help": "",
+            "default_value": false
+          },
+          {
+            "name": "options_time",
+            "label": "Include Time",
+            "type": "Toggle",
+            "help": "",
+            "default_value": false
+          },
+          {
+            "name": "options_timeinccontext",
+            "label": "Use Context's Timestep",
+            "type": "Toggle",
+            "help": "",
+            "default_value": true
+          },
+          {
+            "name": "options_timeinc",
+            "label": "Include Timestep",
+            "type": "Toggle",
+            "help": "",
+            "default_value": false
+          },
+          {
+            "name": "options_timescale",
+            "label": "Time Scale",
+            "type": "Float",
+            "help": "",
+            "default_value": [
+              1.0
+            ],
+            "min_value": 0.0,
+            "max_value": 10.0,
+            "num_components": 1
+          },
+          {
+            "name": "options_timemethod",
+            "label": "Time Method",
+            "type": "Menu",
+            "help": "",
+            "default_value": 0,
+            "menu_items": [
+              "invert",
+              "pow"
+            ],
+            "menu_labels": [
+              "Timestep",
+              "e ^ Timestep"
+            ]
+          },
+          {
+            "name": "options_importprequel",
+            "label": "Use #import for Prequel Code",
+            "type": "Toggle",
+            "help": "",
+            "default_value": true
+          },
+          {
+            "name": "options_timing",
+            "label": "Timing Messages",
+            "type": "Toggle",
+            "help": "",
+            "default_value": false
+          },
           {
             "name": "filter",
-            "label": "Filter",
+            "label": "Area Sampling Filter",
             "type": "Menu",
             "help": "",
             "default_value": 2,
@@ -4865,1367 +227,717 @@
             ]
           },
           {
-            "name": "stretch",
-            "label": "Stretch Behavior",
+            "name": "options_precision",
+            "label": "Precision",
             "type": "Menu",
             "help": "",
-            "default_value": 0,
+            "default_value": 2,
             "menu_items": [
-              "stretch",
-              "horz",
-              "vert",
-              "max",
-              "min"
+              "auto",
+              "16",
+              "32",
+              "64"
             ],
             "menu_labels": [
-              "Stretch to Fit",
-              "Fit Horizontally",
-              "Fit Vertically",
-              "Fit Maximally",
-              "Fit Minimally"
+              "Auto",
+              "16-bit",
+              "32-bit",
+              "64-bit"
             ]
           }
         ]
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "folder0": 0,
-      "sizecontrol": 0,
-      "basesize": 1,
-      "resolution1": 1920,
-      "resolution2": 1080,
-      "resmenu": 0,
-      "aspectx": 1.0,
-      "aspecty": 1.0,
-      "aspectmenu": 0,
-      "pixelsize": 0.001,
-      "scale": 1.0,
-      "resscalex": 1.0,
-      "resscaley": 1.0,
-      "fixedside": 0,
-      "pixelsizescalex": 1.0,
-      "pixelsizescaley": 1.0,
-      "reframe": 0,
-      "folder1": 0,
-      "filter": 2,
-      "stretch": 0
-    }
-  },
-  "rgbatorgb": {
-    "node_name": "rgbatorgb1",
-    "node_type": "rgbatorgb",
-    "node_path": "/obj/copnet_dump/rgbatorgb1",
-    "parameter_templates": [
-      {
-        "name": "unpremult",
-        "label": "Remove Premultiplied Alpha",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      }
-    ],
-    "parameter_values": {
-      "unpremult": 1
-    }
-  },
-  "rgbtorgba": {
-    "node_name": "rgbtorgba1",
-    "node_type": "rgbtorgba",
-    "node_path": "/obj/copnet_dump/rgbtorgba1",
-    "parameter_templates": [
-      {
-        "name": "premult",
-        "label": "Premultiply Alpha",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      }
-    ],
-    "parameter_values": {
-      "premult": 1
-    }
-  },
-  "solvepoissonmultigrid": {
-    "node_name": "solvepoissonmultigrid1",
-    "node_type": "solvepoissonmultigrid",
-    "node_path": "/obj/copnet_dump/solvepoissonmultigrid1",
-    "parameter_templates": [
-      {
-        "name": "iterations",
-        "label": "Iterations",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          2
-        ],
-        "min_value": 1,
-        "max_value": 10,
-        "num_components": 1
       },
       {
-        "name": "smoothingmethod",
-        "label": "Smoothing Method",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "gs",
-          "jacobi"
-        ],
-        "menu_labels": [
-          "Gauss-Seidel",
-          "Jacobi"
-        ]
-      },
-      {
-        "name": "upsmooth",
-        "label": "Up Smoothing Iterations",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          2
-        ],
-        "min_value": 1,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "downsmooth",
-        "label": "Down Smoothing Iterations",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          2
-        ],
-        "min_value": 1,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "coarseiter",
-        "label": "Coarsest Smoothing Iterations",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          50
-        ],
-        "min_value": 1,
-        "max_value": 100,
-        "num_components": 1
-      },
-      {
-        "name": "targetdim",
-        "label": "Target Coarse Dimensions",
-        "type": "Int",
-        "help": "",
-        "default_value": [
-          5
-        ],
-        "min_value": 3,
-        "max_value": 10,
-        "num_components": 1
-      },
-      {
-        "name": "borderxneg",
-        "label": "X Borders",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "open",
-          "closed",
-          "periodic"
-        ],
-        "menu_labels": [
-          "Open",
-          "Closed",
-          "Periodic"
-        ]
-      },
-      {
-        "name": "borderxpos",
-        "label": "X Borders",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "open",
-          "closed"
-        ],
-        "menu_labels": [
-          "Open",
-          "Closed"
-        ]
-      },
-      {
-        "name": "borderyneg",
-        "label": "Y Borders",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "open",
-          "closed",
-          "periodic"
-        ],
-        "menu_labels": [
-          "Open",
-          "Closed",
-          "Periodic"
-        ]
-      },
-      {
-        "name": "borderypos",
-        "label": "Y Borders",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "open",
-          "closed"
-        ],
-        "menu_labels": [
-          "Open",
-          "Closed"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "iterations": 2,
-      "smoothingmethod": 0,
-      "upsmooth": 2,
-      "downsmooth": 2,
-      "coarseiter": 50,
-      "targetdim": 5,
-      "borderxneg": 0,
-      "borderxpos": 0,
-      "borderyneg": 0,
-      "borderypos": 0
-    }
-  },
-  "sopimport": {
-    "node_name": "sopimport1",
-    "node_type": "sopimport",
-    "node_path": "/obj/copnet_dump/sopimport1",
-    "parameter_templates": [
-      {
-        "name": "usesoppath",
-        "label": "Use External SOP",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "soppath",
-        "label": "SOP Path",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          ""
-        ],
-        "string_type": "NodeReference"
-      }
-    ],
-    "parameter_values": {
-      "usesoppath": 0,
-      "soppath": ""
-    }
-  },
-  "stash": {
-    "node_name": "stash1",
-    "node_type": "stash",
-    "node_path": "/obj/copnet_dump/stash1",
-    "parameter_templates": [
-      {
-        "name": "signature",
+        "name": "stdswitcher_2",
         "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "stash",
-        "label": "Layer Stash",
-        "type": "Data",
-        "help": ""
-      },
-      {
-        "name": "stashinput",
-        "label": "Stash Input",
-        "type": "Button",
-        "help": ""
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "stash": null,
-      "stashinput": "0"
-    }
-  },
-  "streakblur": {
-    "node_name": "streakblur1",
-    "node_type": "streakblur",
-    "node_path": "/obj/copnet_dump/streakblur1",
-    "parameter_templates": [
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "dirtype",
-        "label": "Direction Type",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "angle",
-          "coord"
-        ],
-        "menu_labels": [
-          "Angle",
-          "Coordinates"
-        ]
-      },
-      {
-        "name": "dir",
-        "label": "Direction",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "normalizedir",
-        "label": "Normalize Direction",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "angle",
-        "label": "Angle",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -180.0,
-        "max_value": 180.0,
-        "num_components": 1
-      },
-      {
-        "name": "units",
-        "label": "Units",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "image",
-          "pixels"
-        ],
-        "menu_labels": [
-          "Image",
-          "Pixels"
-        ]
-      },
-      {
-        "name": "length",
-        "label": "Length",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.05
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "length_pixels",
-        "label": "Length",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          3.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1024.0,
-        "num_components": 1
-      },
-      {
-        "name": "bias",
-        "label": "Bias",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "mode",
-        "label": "Mode",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "on",
-          "min",
-          "max"
-        ],
-        "menu_labels": [
-          "Blur",
-          "Min",
-          "Max"
-        ]
-      },
-      {
-        "name": "usestreakweight",
-        "label": "Use Streak Weight",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "streakweight",
-        "label": "Streak Weight",
-        "type": "Ramp",
-        "help": ""
-      }
-    ],
-    "parameter_values": {
-      "mask": 1.0,
-      "dirtype": 0,
-      "dirx": 1.0,
-      "diry": 0.0,
-      "normalizedir": 0,
-      "angle": 0.0,
-      "units": 0,
-      "length": 0.05,
-      "length_pixels": 3.0,
-      "bias": 0.0,
-      "mode": 0,
-      "usestreakweight": 0,
-      "streakweight": "<hou.Ramp is_color=False num_keys=2 data=((t=0, 0), (t=1, 1))>",
-      "streakweight1pos": 0.0,
-      "streakweight1value": 0.0,
-      "streakweight1interp": 1,
-      "streakweight2pos": 1.0,
-      "streakweight2value": 1.0,
-      "streakweight2interp": 1
-    }
-  },
-  "vdbleafpoints": {
-    "node_name": "vdbleafpoints1",
-    "node_type": "vdbleafpoints",
-    "node_path": "/obj/copnet_dump/vdbleafpoints1",
-    "parameter_templates": [
-      {
-        "name": "setpos",
-        "label": "Set Positions",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      },
-      {
-        "name": "attribs",
-        "label": "Point Attributes",
         "type": "Folder",
         "help": "",
-        "folder_type": "MultiparmBlock",
+        "folder_type": "Tabs",
         "children": [
           {
-            "name": "attrib#_name",
-            "label": "Name",
+            "name": "inputs",
+            "label": "Inputs",
+            "type": "Folder",
+            "help": "",
+            "folder_type": "MultiparmBlock",
+            "children": [
+              {
+                "name": "input#_name",
+                "label": "Input #",
+                "type": "String",
+                "help": "",
+                "default_value": [
+                  ""
+                ],
+                "string_type": "Regular"
+              },
+              {
+                "name": "input#_type",
+                "label": "Type",
+                "type": "Menu",
+                "help": "",
+                "default_value": 0,
+                "menu_items": [
+                  "floatn",
+                  "int",
+                  "float",
+                  "float2",
+                  "float3",
+                  "float4",
+                  "geo",
+                  "metadata",
+                  "ivdb",
+                  "fvdb",
+                  "vvdb",
+                  "fnvdb"
+                ],
+                "menu_labels": [
+                  "Varying Layer",
+                  "ID",
+                  "Mono",
+                  "UV",
+                  "RGB",
+                  "RGBA",
+                  "Geometry",
+                  "Metadata",
+                  "Integer VDB",
+                  "Float VDB",
+                  "Vector VDB",
+                  "Varying VDB"
+                ]
+              },
+              {
+                "name": "input#_optional",
+                "label": "Optional",
+                "type": "Toggle",
+                "help": "",
+                "default_value": false
+              }
+            ]
+          },
+          {
+            "name": "parm_spacerparm",
+            "label": "",
+            "type": "Separator",
+            "help": ""
+          },
+          {
+            "name": "outputs",
+            "label": "Outputs",
+            "type": "Folder",
+            "help": "",
+            "folder_type": "MultiparmBlock",
+            "children": [
+              {
+                "name": "output#_name",
+                "label": "Output #",
+                "type": "String",
+                "help": "",
+                "default_value": [
+                  ""
+                ],
+                "string_type": "Regular"
+              },
+              {
+                "name": "output#_type",
+                "label": "Type",
+                "type": "Menu",
+                "help": "",
+                "default_value": 0,
+                "menu_items": [
+                  "floatn",
+                  "int",
+                  "float",
+                  "float2",
+                  "float3",
+                  "float4",
+                  "geo",
+                  "ivdb",
+                  "fvdb",
+                  "vvdb",
+                  "fnvdb"
+                ],
+                "menu_labels": [
+                  "Varying Layer",
+                  "ID",
+                  "Mono",
+                  "UV",
+                  "RGB",
+                  "RGBA",
+                  "Geometry",
+                  "Integer VDB",
+                  "Float VDB",
+                  "Vector VDB",
+                  "Varying VDB"
+                ]
+              },
+              {
+                "name": "output#_metadata",
+                "label": "Metadata",
+                "type": "Menu",
+                "help": "",
+                "default_value": 0,
+                "menu_items": [
+                  "first",
+                  "match",
+                  "name"
+                ],
+                "menu_labels": [
+                  "First Input",
+                  "Matching Name",
+                  "Input Name"
+                ]
+              },
+              {
+                "name": "output#_precision",
+                "label": "Precision",
+                "type": "Menu",
+                "help": "",
+                "default_value": 0,
+                "menu_items": [
+                  "node",
+                  "16",
+                  "32"
+                ],
+                "menu_labels": [
+                  "Input Precision",
+                  "16-bit",
+                  "32-bit"
+                ]
+              },
+              {
+                "name": "output#_typeinfo",
+                "label": "Type Info",
+                "type": "Menu",
+                "help": "",
+                "default_value": 0,
+                "menu_items": [
+                  "node",
+                  "none",
+                  "color",
+                  "position",
+                  "vector",
+                  "normal",
+                  "offsetnormal",
+                  "texturecoord",
+                  "id",
+                  "mask",
+                  "sdf",
+                  "height"
+                ],
+                "menu_labels": [
+                  "Input",
+                  "None",
+                  "Color",
+                  "Position",
+                  "Vector",
+                  "Signed Normal",
+                  "Offset Normal",
+                  "Texture Coordinate",
+                  "ID",
+                  "Mask",
+                  "SDF",
+                  "Height"
+                ]
+              },
+              {
+                "name": "output#_metaname",
+                "label": "Input for Metadata",
+                "type": "String",
+                "help": "",
+                "default_value": [
+                  ""
+                ],
+                "string_type": "Regular"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "stdswitcher_3",
+        "label": "Bindings",
+        "type": "Folder",
+        "help": "",
+        "folder_type": "Tabs",
+        "children": [
+          {
+            "name": "bindings",
+            "label": "Bindings",
+            "type": "Folder",
+            "help": "",
+            "folder_type": "MultiparmBlock",
+            "children": [
+              {
+                "name": "stdswitcher0_#",
+                "label": "Bind#",
+                "type": "Folder",
+                "help": "",
+                "folder_type": "Collapsible",
+                "children": [
+                  {
+                    "name": "bindings#_name",
+                    "label": "Name",
+                    "type": "String",
+                    "help": "",
+                    "default_value": [
+                      ""
+                    ],
+                    "string_type": "Regular"
+                  },
+                  {
+                    "name": "bindings#_type",
+                    "label": "Type",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 1,
+                    "menu_items": [
+                      "int",
+                      "float",
+                      "float2",
+                      "float3",
+                      "float4",
+                      "ramp",
+                      "layer",
+                      "attribute",
+                      "volume",
+                      "vdb"
+                    ],
+                    "menu_labels": [
+                      "Integer",
+                      "Float",
+                      "Vector2",
+                      "Vector",
+                      "Vector4",
+                      "Ramp",
+                      "Layer",
+                      "Geometry",
+                      "Volume",
+                      "VDB"
+                    ]
+                  },
+                  {
+                    "name": "bindings#_rampsize",
+                    "label": "Ramp Size",
+                    "type": "Int",
+                    "help": "",
+                    "default_value": [
+                      1024
+                    ],
+                    "min_value": 0,
+                    "max_value": 10,
+                    "num_components": 1
+                  },
+                  {
+                    "name": "bindings#_ramptype",
+                    "label": "Data Type",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 0,
+                    "menu_items": [
+                      "float",
+                      "vector"
+                    ],
+                    "menu_labels": [
+                      "Float",
+                      "Vector"
+                    ]
+                  },
+                  {
+                    "name": "bindings#_ramp",
+                    "label": "Ramp",
+                    "type": "Ramp",
+                    "help": ""
+                  },
+                  {
+                    "name": "bindings#_ramp_rgb",
+                    "label": "Ramp",
+                    "type": "Ramp",
+                    "help": ""
+                  },
+                  {
+                    "name": "bindings#_layertype",
+                    "label": "Data Type",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 4,
+                    "menu_items": [
+                      "int",
+                      "float",
+                      "float2",
+                      "float3",
+                      "float4",
+                      "floatn"
+                    ],
+                    "menu_labels": [
+                      "Integer",
+                      "Float",
+                      "Float2",
+                      "Float3",
+                      "Float4",
+                      "Float?"
+                    ]
+                  },
+                  {
+                    "name": "bindings#_layerborder",
+                    "label": "Border",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 0,
+                    "menu_items": [
+                      "input",
+                      "constant",
+                      "clamp",
+                      "mirror",
+                      "wrap"
+                    ],
+                    "menu_labels": [
+                      "Input",
+                      "Constant",
+                      "Clamp",
+                      "Mirror",
+                      "Wrap"
+                    ]
+                  },
+                  {
+                    "name": "bindings#_portname",
+                    "label": "Port",
+                    "type": "String",
+                    "help": "",
+                    "default_value": [
+                      ""
+                    ],
+                    "string_type": "Regular"
+                  },
+                  {
+                    "name": "bindings#_volume",
+                    "label": "Volume",
+                    "type": "String",
+                    "help": "",
+                    "default_value": [
+                      ""
+                    ],
+                    "string_type": "Regular"
+                  },
+                  {
+                    "name": "bindings#_forcealign",
+                    "label": "Force Alignment",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": true
+                  },
+                  {
+                    "name": "bindings#_resolution",
+                    "label": "Voxel Resolution",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": false
+                  },
+                  {
+                    "name": "bindings#_voxelsize",
+                    "label": "Voxel Size",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": false
+                  },
+                  {
+                    "name": "bindings#_xformtoworld",
+                    "label": "Transform to World",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": false
+                  },
+                  {
+                    "name": "bindings#_xformtovoxel",
+                    "label": "Transform to Voxel",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": false
+                  },
+                  {
+                    "name": "bindings#_vdbtype",
+                    "label": "Data Type",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 0,
+                    "menu_items": [
+                      "any",
+                      "float",
+                      "vector",
+                      "int",
+                      "floatn"
+                    ],
+                    "menu_labels": [
+                      "Any",
+                      "Float",
+                      "Vector",
+                      "Integer",
+                      "Float?"
+                    ]
+                  },
+                  {
+                    "name": "bindings#_attribute",
+                    "label": "Attribute",
+                    "type": "String",
+                    "help": "",
+                    "default_value": [
+                      ""
+                    ],
+                    "string_type": "Regular"
+                  },
+                  {
+                    "name": "bindings#_attribclass",
+                    "label": "Class",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 2,
+                    "menu_items": [
+                      "detail",
+                      "primitive",
+                      "point",
+                      "vertex"
+                    ],
+                    "menu_labels": [
+                      "Detail",
+                      "Primitive",
+                      "Point",
+                      "Vertex"
+                    ]
+                  },
+                  {
+                    "name": "bindings#_attribtype",
+                    "label": "Data Type",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 0,
+                    "menu_items": [
+                      "float",
+                      "int",
+                      "floatarray",
+                      "intarray"
+                    ],
+                    "menu_labels": [
+                      "Float",
+                      "Integer",
+                      "Float Array",
+                      "Integer Array"
+                    ]
+                  },
+                  {
+                    "name": "bindings#_attribsize",
+                    "label": "Tuple Size",
+                    "type": "Int",
+                    "help": "",
+                    "default_value": [
+                      1
+                    ],
+                    "min_value": 0,
+                    "max_value": 10,
+                    "num_components": 1
+                  },
+                  {
+                    "name": "bindings#_precision",
+                    "label": "Precision",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 0,
+                    "menu_items": [
+                      "node",
+                      "16",
+                      "32",
+                      "64"
+                    ],
+                    "menu_labels": [
+                      "Node",
+                      "16-bit",
+                      "32-bit",
+                      "64-bit"
+                    ]
+                  },
+                  {
+                    "name": "bindings#_readable",
+                    "label": "Read",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": true
+                  },
+                  {
+                    "name": "bindings#_writeable",
+                    "label": "Write",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": false
+                  },
+                  {
+                    "name": "bindings#_optional",
+                    "label": "Optional",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": false
+                  },
+                  {
+                    "name": "bindings#_defval",
+                    "label": "Default Value",
+                    "type": "Toggle",
+                    "help": "",
+                    "default_value": false
+                  },
+                  {
+                    "name": "bindings#_intval",
+                    "label": "Value",
+                    "type": "Int",
+                    "help": "",
+                    "default_value": [
+                      0
+                    ],
+                    "min_value": 0,
+                    "max_value": 10,
+                    "num_components": 1
+                  },
+                  {
+                    "name": "bindings#_fval",
+                    "label": "Value",
+                    "type": "Float",
+                    "help": "",
+                    "default_value": [
+                      0.0
+                    ],
+                    "min_value": 0.0,
+                    "max_value": 10.0,
+                    "num_components": 1
+                  },
+                  {
+                    "name": "bindings#_v2val",
+                    "label": "Value",
+                    "type": "Float",
+                    "help": "",
+                    "default_value": [
+                      0.0,
+                      0.0
+                    ],
+                    "min_value": 0.0,
+                    "max_value": 10.0,
+                    "num_components": 2
+                  },
+                  {
+                    "name": "bindings#_v3val",
+                    "label": "Value",
+                    "type": "Float",
+                    "help": "",
+                    "default_value": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "min_value": 0.0,
+                    "max_value": 10.0,
+                    "num_components": 3
+                  },
+                  {
+                    "name": "bindings#_v4val",
+                    "label": "Value",
+                    "type": "Float",
+                    "help": "",
+                    "default_value": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "min_value": 0.0,
+                    "max_value": 10.0,
+                    "num_components": 4
+                  },
+                  {
+                    "name": "bindings#_timescale",
+                    "label": "Time Scale",
+                    "type": "Menu",
+                    "help": "",
+                    "default_value": 0,
+                    "menu_items": [
+                      "none",
+                      "mult",
+                      "invert",
+                      "pow"
+                    ],
+                    "menu_labels": [
+                      "None",
+                      "Timestep",
+                      "1 / Timestep",
+                      "e ^ Timestep"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "stdswitcher_4",
+        "label": "Generated Code",
+        "type": "Folder",
+        "help": "",
+        "folder_type": "Tabs",
+        "children": [
+          {
+            "name": "displaycode",
+            "label": "Display Code",
+            "type": "Button",
+            "help": ""
+          },
+          {
+            "name": "generatedcode",
+            "label": "Generated Code",
             "type": "String",
             "help": "",
             "default_value": [
               ""
             ],
             "string_type": "Regular"
-          },
-          {
-            "name": "attrib#_class",
-            "label": "Class",
-            "type": "Menu",
-            "help": "",
-            "default_value": 2,
-            "menu_items": [
-              "detail",
-              "primitive",
-              "point",
-              "vertex"
-            ],
-            "menu_labels": [
-              "Detail",
-              "Primitive",
-              "Point",
-              "Vertex"
-            ]
-          },
-          {
-            "name": "attrib#_type",
-            "label": "Type",
-            "type": "Menu",
-            "help": "",
-            "default_value": 1,
-            "menu_items": [
-              "int",
-              "float"
-            ],
-            "menu_labels": [
-              "Integer",
-              "Float"
-            ]
-          },
-          {
-            "name": "attrib#_size",
-            "label": "Tuple Size",
-            "type": "Int",
-            "help": "",
-            "default_value": [
-              1
-            ],
-            "min_value": 0,
-            "max_value": 10,
-            "num_components": 1
           }
         ]
       }
     ],
     "parameter_values": {
-      "setpos": 1,
-      "attribs": 0
-    }
-  },
-  "vdbreshape": {
-    "node_name": "vdbreshape1",
-    "node_type": "vdbreshape",
-    "node_path": "/obj/copnet_dump/vdbreshape1",
-    "parameter_templates": [],
-    "parameter_values": {}
-  },
-  "vectorxform2d": {
-    "node_name": "vectortransform2d1",
-    "node_type": "vectorxform2d",
-    "node_path": "/obj/copnet_dump/vectortransform2d1",
-    "parameter_templates": [
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "xOrd",
-        "label": "Order",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "srt",
-          "str",
-          "rst",
-          "rts",
-          "tsr",
-          "trs"
-        ],
-        "menu_labels": [
-          "Scale Rot Trans",
-          "Scale Trans Rot",
-          "Rot Scale Trans",
-          "Rot Trans Scale",
-          "Trans Scale Rot",
-          "Trans Rot Scale"
-        ]
-      },
-      {
-        "name": "t",
-        "label": "Translate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "rz",
-        "label": "Rotate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -180.0,
-        "max_value": 180.0,
-        "num_components": 1
-      },
-      {
-        "name": "s",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "shear1",
-        "label": "Shear",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scale",
-        "label": "Uniform Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.1,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "p",
-        "label": "Pivot",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "invertxform",
-        "label": "Invert Transformation",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      }
-    ],
-    "parameter_values": {
-      "mask": 1.0,
-      "xOrd": 0,
-      "tx": 0.0,
-      "ty": 0.0,
-      "rz": 0.0,
-      "sx": 1.0,
-      "sy": 1.0,
-      "shear1": 0.0,
-      "scale": 1.0,
-      "px": 0.0,
-      "py": 0.0,
-      "invertxform": 0
-    }
-  },
-  "vectorxform": {
-    "node_name": "vectortransform1",
-    "node_type": "vectorxform",
-    "node_path": "/obj/copnet_dump/vectortransform1",
-    "parameter_templates": [
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "xOrd",
-        "label": "Transform Order",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "srt",
-          "str",
-          "rst",
-          "rts",
-          "tsr",
-          "trs"
-        ],
-        "menu_labels": [
-          "Scale Rot Trans",
-          "Scale Trans Rot",
-          "Rot Scale Trans",
-          "Rot Trans Scale",
-          "Trans Scale Rot",
-          "Trans Rot Scale"
-        ]
-      },
-      {
-        "name": "rOrd",
-        "label": "Rotate Order",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "xyz",
-          "xzy",
-          "yxz",
-          "yzx",
-          "zxy",
-          "zyx"
-        ],
-        "menu_labels": [
-          "Rx Ry Rz",
-          "Rx Rz Ry",
-          "Ry Rx Rz",
-          "Ry Rz Rx",
-          "Rz Rx Ry",
-          "Rz Ry Rx"
-        ]
-      },
-      {
-        "name": "t",
-        "label": "Translate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 3
-      },
-      {
-        "name": "r",
-        "label": "Rotate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 360.0,
-        "num_components": 3
-      },
-      {
-        "name": "s",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 3
-      },
-      {
-        "name": "shear",
-        "label": "Shear",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 3
-      },
-      {
-        "name": "scale",
-        "label": "Uniform Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.1,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "parmgroup_pivotxform",
-        "label": "Pivot Transform",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "Collapsible",
-        "children": [
-          {
-            "name": "p",
-            "label": "Pivot Translate",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "min_value": -1.0,
-            "max_value": 1.0,
-            "num_components": 3
-          },
-          {
-            "name": "pr",
-            "label": "Pivot Rotate",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "min_value": 0.0,
-            "max_value": 360.0,
-            "num_components": 3
-          }
-        ]
-      },
-      {
-        "name": "invertxform",
-        "label": "Invert Transformation",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      }
-    ],
-    "parameter_values": {
-      "mask": 1.0,
-      "xOrd": 0,
-      "rOrd": 0,
-      "tx": 0.0,
-      "ty": 0.0,
-      "tz": 0.0,
-      "rx": 0.0,
-      "ry": 0.0,
-      "rz": 0.0,
-      "sx": 1.0,
-      "sy": 1.0,
-      "sz": 1.0,
-      "shear1": 0.0,
-      "shear2": 0.0,
-      "shear3": 0.0,
-      "scale": 1.0,
-      "parmgroup_pivotxform": 0,
-      "px": 0.0,
-      "py": 0.0,
-      "pz": 0.0,
-      "prx": 0.0,
-      "pry": 0.0,
-      "prz": 0.0,
-      "invertxform": 0
-    }
-  },
-  "xform2d": {
-    "node_name": "transform2d1",
-    "node_type": "xform2d",
-    "node_path": "/obj/copnet_dump/transform2d1",
-    "parameter_templates": [
-      {
-        "name": "signature",
-        "label": "Signature",
-        "type": "String",
-        "help": "",
-        "default_value": [
-          "auto"
-        ],
-        "string_type": "Regular"
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "auto",
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap",
-          "clip"
-        ],
-        "menu_labels": [
-          "Auto",
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap",
-          "Clip"
-        ]
-      },
-      {
-        "name": "filter",
-        "label": "Filter",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "point",
-          "bilinear",
-          "box",
-          "triangle",
-          "cubic",
-          "mitchell",
-          "bspline"
-        ],
-        "menu_labels": [
-          "Point",
-          "Bilinear",
-          "Box",
-          "Bartlett",
-          "Catmull-Rom",
-          "Mitchell",
-          "B-spline"
-        ]
-      },
-      {
-        "name": "mask",
-        "label": "Mask",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "xOrd",
-        "label": "Order",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "srt",
-          "str",
-          "rst",
-          "rts",
-          "tsr",
-          "trs"
-        ],
-        "menu_labels": [
-          "Scale Rot Trans",
-          "Scale Trans Rot",
-          "Rot Scale Trans",
-          "Rot Trans Scale",
-          "Trans Scale Rot",
-          "Trans Rot Scale"
-        ]
-      },
-      {
-        "name": "t",
-        "label": "Translate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "rz",
-        "label": "Rotate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -180.0,
-        "max_value": 180.0,
-        "num_components": 1
-      },
-      {
-        "name": "s",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "shear1",
-        "label": "Shear",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 1
-      },
-      {
-        "name": "scale",
-        "label": "Uniform Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.1,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "p",
-        "label": "Pivot",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 2
-      },
-      {
-        "name": "invertxform",
-        "label": "Invert Transformation",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "rasterize",
-        "label": "Rasterize",
-        "type": "Toggle",
-        "help": "",
-        "default_value": true
-      }
-    ],
-    "parameter_values": {
-      "signature": "auto",
-      "border": 0,
+      "stdswitcher1": 0,
+      "kernelcode": "#bind layer src? val=0\n#bind layer !&dst\n\n@KERNEL\n{\n    @dst.set(@src);\n}\n",
+      "options_runover": 0,
+      "kernelname": "generickernel",
+      "writebackkernelname": "writebackkernel",
+      "kerneloptions": "",
+      "options_tile1": 1,
+      "options_tile2": 1,
+      "options_usevdbtile": 0,
+      "options_vdbtile1": 1,
+      "options_vdbtile2": 1,
+      "options_vdbtile3": 1,
+      "options_iterations": 1,
+      "options_iteration": 0,
+      "usewritebackkernel": 0,
+      "options_time": 0,
+      "options_timeinccontext": 1,
+      "options_timeinc": 0,
+      "options_timescale": 1.0,
+      "options_timemethod": 0,
+      "options_importprequel": 1,
+      "options_timing": 0,
       "filter": 2,
-      "mask": 1.0,
-      "xOrd": 0,
-      "tx": 0.0,
-      "ty": 0.0,
-      "rz": 0.0,
-      "sx": 1.0,
-      "sy": 1.0,
-      "shear1": 0.0,
-      "scale": 1.0,
-      "px": 0.0,
-      "py": 0.0,
-      "invertxform": 0,
-      "rasterize": 1
-    }
-  },
-  "xform": {
-    "node_name": "transform1",
-    "node_type": "xform",
-    "node_path": "/obj/copnet_dump/transform1",
-    "parameter_templates": [
-      {
-        "name": "xOrd",
-        "label": "Transform Order",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "srt",
-          "str",
-          "rst",
-          "rts",
-          "tsr",
-          "trs"
-        ],
-        "menu_labels": [
-          "Scale Rot Trans",
-          "Scale Trans Rot",
-          "Rot Scale Trans",
-          "Rot Trans Scale",
-          "Trans Scale Rot",
-          "Trans Rot Scale"
-        ]
-      },
-      {
-        "name": "rOrd",
-        "label": "Rotate Order",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "xyz",
-          "xzy",
-          "yxz",
-          "yzx",
-          "zxy",
-          "zyx"
-        ],
-        "menu_labels": [
-          "Rx Ry Rz",
-          "Rx Rz Ry",
-          "Ry Rx Rz",
-          "Ry Rz Rx",
-          "Rz Rx Ry",
-          "Rz Ry Rx"
-        ]
-      },
-      {
-        "name": "t",
-        "label": "Translate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 3
-      },
-      {
-        "name": "r",
-        "label": "Rotate",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 360.0,
-        "num_components": 3
-      },
-      {
-        "name": "s",
-        "label": "Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "min_value": -1.0,
-        "max_value": 1.0,
-        "num_components": 3
-      },
-      {
-        "name": "shear",
-        "label": "Shear",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "min_value": 0.0,
-        "max_value": 10.0,
-        "num_components": 3
-      },
-      {
-        "name": "scale",
-        "label": "Uniform Scale",
-        "type": "Float",
-        "help": "",
-        "default_value": [
-          1.0
-        ],
-        "min_value": 0.1,
-        "max_value": 10.0,
-        "num_components": 1
-      },
-      {
-        "name": "parmgroup_pivotxform",
-        "label": "Pivot Transform",
-        "type": "Folder",
-        "help": "",
-        "folder_type": "Collapsible",
-        "children": [
-          {
-            "name": "p",
-            "label": "Pivot Translate",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "min_value": -1.0,
-            "max_value": 1.0,
-            "num_components": 3
-          },
-          {
-            "name": "pr",
-            "label": "Pivot Rotate",
-            "type": "Float",
-            "help": "",
-            "default_value": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "min_value": 0.0,
-            "max_value": 360.0,
-            "num_components": 3
-          }
-        ]
-      },
-      {
-        "name": "invertxform",
-        "label": "Invert Transformation",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "rasterize",
-        "label": "Rasterize",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "perspective",
-        "label": "Perspective Camera",
-        "type": "Toggle",
-        "help": "",
-        "default_value": false
-      },
-      {
-        "name": "border",
-        "label": "Border",
-        "type": "Menu",
-        "help": "",
-        "default_value": 0,
-        "menu_items": [
-          "auto",
-          "constant",
-          "clamp",
-          "mirror",
-          "wrap",
-          "clip"
-        ],
-        "menu_labels": [
-          "Auto",
-          "Constant",
-          "Clamp",
-          "Mirror",
-          "Wrap",
-          "Clip"
-        ]
-      },
-      {
-        "name": "filter",
-        "label": "Filter",
-        "type": "Menu",
-        "help": "",
-        "default_value": 2,
-        "menu_items": [
-          "point",
-          "bilinear",
-          "box",
-          "triangle",
-          "cubic",
-          "mitchell",
-          "bspline"
-        ],
-        "menu_labels": [
-          "Point",
-          "Bilinear",
-          "Box",
-          "Bartlett",
-          "Catmull-Rom",
-          "Mitchell",
-          "B-spline"
-        ]
-      }
-    ],
-    "parameter_values": {
-      "xOrd": 0,
-      "rOrd": 0,
-      "tx": 0.0,
-      "ty": 0.0,
-      "tz": 0.0,
-      "rx": 0.0,
-      "ry": 0.0,
-      "rz": 0.0,
-      "sx": 1.0,
-      "sy": 1.0,
-      "sz": 1.0,
-      "shear1": 0.0,
-      "shear2": 0.0,
-      "shear3": 0.0,
-      "scale": 1.0,
-      "parmgroup_pivotxform": 0,
-      "px": 0.0,
-      "py": 0.0,
-      "pz": 0.0,
-      "prx": 0.0,
-      "pry": 0.0,
-      "prz": 0.0,
-      "invertxform": 0,
-      "rasterize": 0,
-      "perspective": 0,
-      "border": 0,
-      "filter": 2
+      "options_precision": 2,
+      "inputs": 1,
+      "outputs": 1,
+      "bindings": 0,
+      "displaycode": "0",
+      "generatedcode": "",
+      "input1_name": "src",
+      "input1_type": 0,
+      "input1_optional": 1,
+      "output1_name": "dst",
+      "output1_type": 0,
+      "output1_metadata": 0,
+      "output1_precision": 0,
+      "output1_typeinfo": 0,
+      "output1_metaname": ""
     }
   }
 }

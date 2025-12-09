@@ -22,6 +22,9 @@ syntax:max (name := getElemsStx) term noWs "[" withoutPosition(term) ", " withou
 macro_rules (kind := getElemsStx)
 | `($x:ident[ $i:term , $is,* ]) => `(getElem $x ($i,$is,*) (by get_elem_tactic))
 
+-- use native decide to prove element indices for trivial inequalities like `0<4∧1<4`
+macro_rules | `(tactic| get_elem_tactic_extensible) => `(tactic| native_decide)
+
 
 class SetElem (coll : Type u) (idx : Type v) (elem : outParam (Type w))
               (valid : outParam (coll → idx → Prop)) where

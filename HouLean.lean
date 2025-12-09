@@ -60,6 +60,7 @@ import HouLean.Data.Array
 import HouLean.Data.BoundingBox
 import HouLean.Data.BoundingCapsule
 import HouLean.Data.BoundingSphere
+import HouLean.Data.Box
 import HouLean.Data.Defs
 import HouLean.Data.Float
 import HouLean.Data.FloatP
@@ -77,6 +78,7 @@ import HouLean.Data.RigidScaleTransform
 import HouLean.Data.RigidScaleVelocity
 import HouLean.Data.RigidTransform
 import HouLean.Data.RigidVelocity
+import HouLean.Data.Simplex
 import HouLean.Data.Transform
 import HouLean.Data.Vector
 import HouLean.Data.Vector2
@@ -131,9 +133,11 @@ import HouLean.OpenCL.Data.Nat
 import HouLean.OpenCL.Data.Prod
 import HouLean.OpenCL.Data.Unit
 import HouLean.OpenCL.Data.Vector
+import HouLean.OpenCL.Kernel.Basic
 import HouLean.OpenCL.WorkItemFunctions
 import HouLean.Python.Grammar
 import HouLean.Python.Translation
+import HouLean.Shape
 import HouLean.TypeTag
 -- import HouLean.Vex.AttributesAndIntrinsics
 -- import HouLean.Vex.Compiler.BoundVariable

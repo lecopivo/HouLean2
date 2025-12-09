@@ -56,7 +56,7 @@ def lu3 [Mul α] [Div α] [Sub α] [One α] [Zero α] (a : Matrix α 3 3) : Matr
 
 /-- LU decomposition for 4x4 matrix without pivoting.
     Returns (L, U) where A = L * U -/
-def lu4 [Mul α] [Div α] [Sub α] [One α] [Zero α] (a : Matrix α 4 4) : MProd (Matrix α 4 4) (Matrix α 4 4) :=
+def lu4 [Mul α] [Div α] [Sub α] [One α] [Zero α] (a : Matrix α 4 4) : (Matrix α 4 4) × (Matrix α 4 4) :=
   -- Row 0 of U
   let u00 := a[0,0]
   let u01 := a[0,1]
@@ -88,7 +88,7 @@ def lu4 [Mul α] [Div α] [Sub α] [One α] [Zero α] (a : Matrix α 4 4) : MPro
               0,   u11, u12, u13;
               0,   0,   u22, u23;
               0,   0,   0,   u33]
-  ⟨L, U⟩
+  (L, U)
 
 
 -- /-- General LU decomposition without pivoting using Doolittle algorithm.
@@ -119,15 +119,17 @@ def lu4 [Mul α] [Div α] [Sub α] [One α] [Zero α] (a : Matrix α 4 4) : MPro
 --   let U := Matrix.zero α n n
 --   computeLU 0 L U
 
--- defun luDecompositionNoPivot [Inhabited α] [Mul α] [Div α] [Sub α] [One α] [Zero α]
---     (a : Matrix α n n) : Matrix α n n × Matrix α n n :=
---   match n with
---   | 0 => (a, a)
---   | 1 => (#m[#v[1]], #m[#v[a[0,0]]])
---   | 2 => lu2 a
---   | 3 => lu3 a
---   | 4 => lu4 a
---   | _ + 5 => panic! "LU decomposition is supported only for small matrices, n≤4" -- luGeneral a
+defun luDecompositionNoPivot [Mul α] [Div α] [Sub α] [One α] [Zero α]
+    (a : Matrix α n n) : Matrix α n n × Matrix α n n :=
+  match n with
+  | 0 => (a, a)
+  | 1 => (#m[#v[1]], #m[#v[a[0,0]]])
+  | 2 => lu2 a
+  | 3 => lu3 a
+  | 4 => lu4 a
+  | n + 5 =>
+    have : Inhabited (Matrix α (n+5) (n+5)) := ⟨0⟩
+    panic! "LU decomposition is supported only for small matrices, n≤4" -- luGeneral a
 
 -- defun luLowerMatrix [Mul α] [Div α] [Sub α] [One α] [Zero α]
 --     (a : Matrix α n n) : Matrix α n n :=
@@ -141,24 +143,24 @@ def lu4 [Mul α] [Div α] [Sub α] [One α] [Zero α] (a : Matrix α 4 4) : MPro
 -- -- Forward and Back Substitution
 -- -- ============================================================================
 
--- /-- Forward substitution: solve Lx = b where L is lower triangular with 1s on diagonal -/
--- def forwardSub2 [Mul α] [Sub α] (L : Matrix α 2 2) (b : Vector α 2) : Vector α 2 :=
---   let x0 := b[0]
---   let x1 := b[1] - L[1,0] * x0
---   #v[x0, x1]
+/-- Forward substitution: solve Lx = b where L is lower triangular with 1s on diagonal -/
+def forwardSub2 [Mul α] [Sub α] (L : Matrix α 2 2) (b : Vector α 2) : Vector α 2 :=
+  let x0 := b[0]
+  let x1 := b[1] - L[1,0] * x0
+  #v[x0, x1]
 
--- def forwardSub3 [Mul α] [Sub α] (L : Matrix α 3 3) (b : Vector α 3) : Vector α 3 :=
---   let x0 := b[0]
---   let x1 := b[1] - L[1,0] * x0
---   let x2 := b[2] - L[2,0] * x0 - L[2,1] * x1
---   #v[x0, x1, x2]
+def forwardSub3 [Mul α] [Sub α] (L : Matrix α 3 3) (b : Vector α 3) : Vector α 3 :=
+  let x0 := b[0]
+  let x1 := b[1] - L[1,0] * x0
+  let x2 := b[2] - L[2,0] * x0 - L[2,1] * x1
+  #v[x0, x1, x2]
 
--- def forwardSub4 [Mul α] [Sub α] (L : Matrix α 4 4) (b : Vector α 4) : Vector α 4 :=
---   let x0 := b[0]
---   let x1 := b[1] - L[1,0] * x0
---   let x2 := b[2] - L[2,0] * x0 - L[2,1] * x1
---   let x3 := b[3] - L[3,0] * x0 - L[3,1] * x1 - L[3,2] * x2
---   #v[x0, x1, x2, x3]
+def forwardSub4 [Mul α] [Sub α] (L : Matrix α 4 4) (b : Vector α 4) : Vector α 4 :=
+  let x0 := b[0]
+  let x1 := b[1] - L[1,0] * x0
+  let x2 := b[2] - L[2,0] * x0 - L[2,1] * x1
+  let x3 := b[3] - L[3,0] * x0 - L[3,1] * x1 - L[3,2] * x2
+  #v[x0, x1, x2, x3]
 
 -- def forwardSubGeneral [Mul α] [Sub α] [Zero α] (L : Matrix α n n) (b : Vector α n) : Vector α n :=
 --   let rec solve (i : Nat) (x : Vector α n) : Vector α n :=
@@ -171,34 +173,37 @@ def lu4 [Mul α] [Div α] [Sub α] [One α] [Zero α] (a : Matrix α 4 4) : MPro
 --   termination_by n - i
 --   solve 0 (Vector.ofFn fun _ => 0)
 
--- defun forwardSubstitution [Mul α] [Sub α] [Zero α] [One α]
---     (L : Matrix α n n) (b : Vector α n) : Vector α n :=
---   match n with
---   | 0 => b
---   | 1 => b
---   | 2 => forwardSub2 (α := α) (by rw [‹n = 2›]; exact L) (by rw [‹n = 2›]; exact b)
---   | 3 => forwardSub3 (α := α) (by rw [‹n = 3›]; exact L) (by rw [‹n = 3›]; exact b)
---   | 4 => forwardSub4 (α := α) (by rw [‹n = 4›]; exact L) (by rw [‹n = 4›]; exact b)
---   | _ + 5 => forwardSubGeneral L b
+defun forwardSubstitution [Mul α] [Sub α] [Zero α] [One α]
+    (L : Matrix α n n) (b : Vector α n) : Vector α n :=
+  match n with
+  | 0 => b
+  | 1 => b
+  | 2 => forwardSub2 L b
+  | 3 => forwardSub3 L b
+  | 4 => forwardSub4 L b
+  | n + 5 =>
+    have : Inhabited (Vector α (n+5)) := ⟨0⟩
+    panic! "Forward Substitution is supported only for small matrices, n≤4!"
 
--- /-- Back substitution: solve Ux = b where U is upper triangular -/
--- def backSub2 [Mul α] [Sub α] [Div α] (U : Matrix α 2 2) (b : Vector α 2) : Vector α 2 :=
---   let x1 := b[1] / U[1,1]
---   let x0 := (b[0] - U[0,1] * x1) / U[0,0]
---   #v[x0, x1]
 
--- def backSub3 [Mul α] [Sub α] [Div α] (U : Matrix α 3 3) (b : Vector α 3) : Vector α 3 :=
---   let x2 := b[2] / U[2,2]
---   let x1 := (b[1] - U[1,2] * x2) / U[1,1]
---   let x0 := (b[0] - U[0,1] * x1 - U[0,2] * x2) / U[0,0]
---   #v[x0, x1, x2]
+/-- Back substitution: solve Ux = b where U is upper triangular -/
+def backSub2 [Mul α] [Sub α] [Div α] (U : Matrix α 2 2) (b : Vector α 2) : Vector α 2 :=
+  let x1 := b[1] / U[1,1]
+  let x0 := (b[0] - U[0,1] * x1) / U[0,0]
+  #v[x0, x1]
 
--- def backSub4 [Mul α] [Sub α] [Div α] (U : Matrix α 4 4) (b : Vector α 4) : Vector α 4 :=
---   let x3 := b[3] / U[3,3]
---   let x2 := (b[2] - U[2,3] * x3) / U[2,2]
---   let x1 := (b[1] - U[1,2] * x2 - U[1,3] * x3) / U[1,1]
---   let x0 := (b[0] - U[0,1] * x1 - U[0,2] * x2 - U[0,3] * x3) / U[0,0]
---   #v[x0, x1, x2, x3]
+def backSub3 [Mul α] [Sub α] [Div α] (U : Matrix α 3 3) (b : Vector α 3) : Vector α 3 :=
+  let x2 := b[2] / U[2,2]
+  let x1 := (b[1] - U[1,2] * x2) / U[1,1]
+  let x0 := (b[0] - U[0,1] * x1 - U[0,2] * x2) / U[0,0]
+  #v[x0, x1, x2]
+
+def backSub4 [Mul α] [Sub α] [Div α] (U : Matrix α 4 4) (b : Vector α 4) : Vector α 4 :=
+  let x3 := b[3] / U[3,3]
+  let x2 := (b[2] - U[2,3] * x3) / U[2,2]
+  let x1 := (b[1] - U[1,2] * x2 - U[1,3] * x3) / U[1,1]
+  let x0 := (b[0] - U[0,1] * x1 - U[0,2] * x2 - U[0,3] * x3) / U[0,0]
+  #v[x0, x1, x2, x3]
 
 -- def backSubGeneral [Mul α] [Sub α] [Div α] [Zero α] (U : Matrix α n n) (b : Vector α n) : Vector α n :=
 --   let rec solve (i : Nat) (x : Vector α n) : Vector α n :=
@@ -215,28 +220,31 @@ def lu4 [Mul α] [Div α] [Sub α] [One α] [Zero α] (a : Matrix α 4 4) : MPro
 --   termination_by n - i
 --   solve 0 (Vector.ofFn fun _ => 0)
 
--- defun backSubstitution [Mul α] [Sub α] [Div α] [Zero α]
---     (U : Matrix α n n) (b : Vector α n) : Vector α n :=
---   match n with
---   | 0 => b
---   | 1 => #v[b[0]! / U[0,0]!]
---   | 2 => backSub2 (α := α) (by rw [‹n = 2›]; exact U) (by rw [‹n = 2›]; exact b)
---   | 3 => backSub3 (α := α) (by rw [‹n = 3›]; exact U) (by rw [‹n = 3›]; exact b)
---   | 4 => backSub4 (α := α) (by rw [‹n = 4›]; exact U) (by rw [‹n = 4›]; exact b)
---   | _ + 5 => backSubGeneral U b
+defun backSubstitution [Mul α] [Sub α] [Div α] [Zero α]
+    (U : Matrix α n n) (b : Vector α n) : Vector α n :=
+  match n with
+  | 0 => b
+  | 1 => #v[b[0] / U[0,0]]
+  | 2 => backSub2 U b
+  | 3 => backSub3 U b
+  | 4 => backSub4 U b
+  | n + 5 =>
+    have : Inhabited (Vector α (n+5)) := ⟨0⟩
+    panic! "Back Substitution is supported only for small matrices, n≤4!"
 
 -- -- ============================================================================
 -- -- Solve Linear System using LU
 -- -- ============================================================================
 
--- /-- Solve Ax = b using LU decomposition (without pivoting) -/
--- defun solveLU [Mul α] [Div α] [Sub α] [One α] [Zero α]
---     (A : Matrix α n n) (b : Vector α n) : Vector α n :=
---   let (L, U) := luDecompositionNoPivot A
---   -- Solve Ly = b
---   let y := forwardSubstitution L b
---   -- Solve Ux = y
---   backSubstitution U y
+/-- Solve Ax = b using LU decomposition (without pivoting) -/
+defun solveLU [Mul α] [Div α] [Sub α] [One α] [Zero α]
+    (A : Matrix α n n) (b : Vector α n) : Vector α n :=
+  let (L, U) := luDecompositionNoPivot A
+  -- Solve Ly = b
+  let y := forwardSubstitution L b
+  -- Solve Ux = y
+  backSubstitution U y
+
 
 -- -- ============================================================================
 -- -- LU with Partial Pivoting (PA = LU)

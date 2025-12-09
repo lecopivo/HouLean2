@@ -3,7 +3,13 @@ import HouLean.TypeTag
 open Lean
 
 -- todo: use this as the canonical Geometry type
-namespace HouLean.NewGeometry
+namespace HouLean
+
+
+inductive AttributeClass where
+  | point | primitive | vertex | detail
+
+namespace NewGeometry
 
 structure Attribute (n : Nat) where
   type : AttribTypeTag

@@ -18,8 +18,16 @@ instance [Mul α] : Mul (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ =
 instance [Inv α] [Mul α] : HDiv (Vector α n) α (Vector α n) := ⟨fun v s => let is := s⁻¹; v.map (fun vi => is * vi)⟩
 instance [Div α] : Div (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui / v[i])⟩
 
-namespace Vector
 
+instance [Min α] : Min (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => min ui v[i])⟩
+instance [Max α] : Max (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => max ui v[i])⟩
+
+instance [ToString α] : ToString (Vector α n) := ⟨fun u => toString u.toArray⟩
+
+def HouLean.basisVector (R : Type) [FloatType R] (n : Nat) (i : Nat) : Vector R n :=
+  .ofFn (fun i' => if i = i' then 1 else 0)
+
+namespace Vector
 
 -- Implementation of HouLean.Math interface
 section Math
