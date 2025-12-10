@@ -112,7 +112,7 @@ def foo (res : Vector Nat 3) (idx : Vector Nat 3) (mass : ArrayPointer Float) (v
   for i in [0:3] do
     for j in [0:3] do
       for k in [0:3] do
-        let linIdx := (idx.x + i) + res.x * (idx.y + j) + res.x * res.y * (idx.z + k) |>.toUInt64
+        let linIdx := (idx.x + i) + res.x * (idx.y + j) + res.x * res.y * (idx.z + k)
         let mi ← mass[linIdx]
         let vi ← vel[linIdx]
         m += mi
@@ -141,9 +141,9 @@ double houlean_opencl_arraytype_get_dpd(double * a, ulong a1)
     return a[a1];
 }
 
-double getelem_pduld(double * xs, ulong i)
+double getelem_pduid(double * xs, uint i)
 {
-    return houlean_opencl_arraytype_get_dpd(xs, i);
+    return houlean_opencl_arraytype_get_dpd(xs, (ulong)(i));
 }
 
 double3 houlean_opencl_arraytype_get_d3pd(double * a, ulong a1)
@@ -151,9 +151,9 @@ double3 houlean_opencl_arraytype_get_d3pd(double * a, ulong a1)
     return vload3(a1, a);
 }
 
-double3 getelem_pduld3(double * xs, ulong i)
+double3 getelem_pduid3(double * xs, uint i)
 {
-    return houlean_opencl_arraytype_get_d3pd(xs, i);
+    return houlean_opencl_arraytype_get_d3pd(xs, (ulong)(i));
 }
 
 double inv_d(double a)
@@ -186,9 +186,9 @@ prod_d_d3 tests_opencl_forloop_foo(uint3 res, uint3 idx, double * mass, double *
             {
                 double m3 = state2.fst;
                 double3 p3 = state2.snd;
-                ulong linIdx = (ulong)(((vector_x_ui3(idx) + i) + (vector_x_ui3(res) * (vector_y_ui3(idx) + j))) + ((vector_x_ui3(res) * vector_y_ui3(res)) * (vector_z_ui3(idx) + k)));
-                double mi = getelem_pduld(mass, linIdx);
-                double3 vi = getelem_pduld3(vel, linIdx);
+                uint linIdx = ((vector_x_ui3(idx) + i) + (vector_x_ui3(res) * (vector_y_ui3(idx) + j))) + ((vector_x_ui3(res) * vector_y_ui3(res)) * (vector_z_ui3(idx) + k));
+                double mi = getelem_pduid(mass, linIdx);
+                double3 vi = getelem_pduid3(vel, linIdx);
                 double m4 = m3 + mi;
                 double3 p4 = p3 + (mi * vi);
                 state2 = (mprod_d_d3){m4, p4};

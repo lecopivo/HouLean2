@@ -16,9 +16,9 @@ float3 houlean_opencl_arraytype_get_f3pf(float * a, ulong a1)
     return vload3(a1, a);
 }
 
-float3 getelem_pfulf3(float * xs, ulong i)
+float3 getelem_pfuif3(float * xs, uint i)
 {
-    return houlean_opencl_arraytype_get_f3pf(xs, i);
+    return houlean_opencl_arraytype_get_f3pf(xs, (ulong)(i));
 }
 
 float3 (anonymous)(float * a)
@@ -27,7 +27,7 @@ float3 (anonymous)(float * a)
     float3 state = b;
     for (uint i = 0; i < 10; i += 1)
     {
-        float3 ai = getelem_pfulf3(a, (ulong)(i));
+        float3 ai = getelem_pfuif3(a, i);
         float3 b1 = state + ai;
         state = b1;
     }
@@ -40,9 +40,11 @@ float3 (anonymous)(float * a)
 #opencl_compile fun (a : ArrayPointer (Vector Float32 3)) => show OpenCLM _ from do
   let mut b : Vector Float32 3 := 0
   for i in [0:10] do
-    let ai ← a[i.toUInt64]
+    let ai ← a[i]
     b := b + ai
   return b
+
+
 
 /--
 info:
@@ -73,12 +75,17 @@ void houlean_opencl_arraytype_set_f33pf(float * a, ulong a1, matrix33f a2)
     return houlean_opencl_matrix_vstore_f33(a, a1, a2);
 }
 
+void houlean_setelemm_pfuif33(float * ptr, uint i, matrix33f a)
+{
+    return houlean_opencl_arraytype_set_f33pf(ptr, (ulong)(i), a);
+}
+
 matrix33f (anonymous)(float * a)
 {
     matrix33f b = houlean_matrix_zeron_f33();
     for (uint i = 0; i < 10; i += 1)
     {
-        houlean_opencl_arraytype_set_f33pf(a, (ulong)(i), b);
+        houlean_setelemm_pfuif33(a, i, b);
     }
     ;
     matrix33f this = b;
@@ -89,7 +96,8 @@ matrix33f (anonymous)(float * a)
 #opencl_compile fun (a : ArrayPointer (Matrix Float32 3 3)) => show OpenCLM _ from do
   let mut b : Matrix Float32 3 3 := 0
   for i in [0:10] do
-    ArrayType.set a i.toUInt64 b
+    a[i] ← b
+
   return b
 
 

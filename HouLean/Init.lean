@@ -35,8 +35,14 @@ class SetElem? (coll : Type u) (idx : Type v) (elem : outParam (Type w))
   setElem? (xs : coll) (i : idx) (x : elem) : Option coll
   setElem! [Inhabited elem] (xs : coll) (i : idx) (x : elem) : coll
 
+/-- Set element of a pointer -/
+class SetElemM (Ptr : Type) (Idx : Type) (Elem : outParam Type)
+    (m : outParam (Type → Type)) (Valid : outParam (Ptr → Idx → Prop)) where
+  setElemM : (ptr : Ptr) → (i : Idx) → Elem → Valid ptr i → m Unit
+
 export SetElem (setElem)
 export SetElem? (setElem? setElem!)
+export SetElemM (setElemM)
 
 axiom sorryProofAxiom {P : Prop} : P
 axiom sorryTermAxiom {P : Sort u} : P

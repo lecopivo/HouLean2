@@ -29,8 +29,19 @@ macro_rules
 | `(doElem| $x:ident $[: $ty]? /= $e) => `(doElem| $x:ident $[: $ty]? := $x:ident / $e)
 
 
+-- a[i] := x
 macro (priority:=high) x:ident noWs "[" i:term "]" " := " xi:term : doElem => do
   `(doElem| $x:ident := setElem $x $i $xi (by get_elem_tactic))
 
+-- a[i,j] := x
 macro (priority:=high) x:ident noWs "[" i:term ", " is:term,* "]" " := " xi:term : doElem => do
   `(doElem| $x:ident := setElem $x ($i,$is,*) $xi (by constructor <;> get_elem_tactic))
+
+
+-- a[i] ← x
+macro (priority:=high) x:ident noWs "[" i:term "]" " ← " xi:term : doElem => do
+  `(doElem| setElemM $x $i $xi (by get_elem_tactic))
+
+-- a[i,j] ← x
+macro (priority:=high) x:ident noWs "[" i:term ", " is:term,* "]" " ← " xi:term : doElem => do
+  `(doElem| setElemM $x ($i,$is,*) $xi (by constructor <;> get_elem_tactic))

@@ -15,6 +15,15 @@ abbrev ArrayPointer (α : Type) {Ptr} [ArrayType α Ptr] := Ptr
 instance {α Ptr} [ArrayType α Ptr] : GetElem (ArrayPointer α) UInt64 (OpenCLM α) (fun _ _ => True) where
   getElem x i _ := ArrayType.get x i
 
+instance {α Ptr} [ArrayType α Ptr] : GetElem (ArrayPointer α) Nat (OpenCLM α) (fun _ _ => True) where
+  getElem x i _ := ArrayType.get x i.toUInt64
+
+instance {α Ptr} [ArrayType α Ptr] : SetElemM (ArrayPointer α) UInt64 α OpenCLM (fun _ _ => True) where
+  setElemM ptr i x _ := ArrayType.set ptr i x
+
+instance {α Ptr} [ArrayType α Ptr] : SetElemM (ArrayPointer α) Nat α OpenCLM (fun _ _ => True) where
+  setElemM ptr i x _ := ArrayType.set ptr i.toUInt64 x
+
 variable {α} [Inhabited α] [AtomicOpenCLType α] [AllowedVectorSize n]
 
 instance : ArrayType α (Pointer α) where
@@ -41,21 +50,3 @@ instance {Ptr} [ProdLike α A] [ArrayType A Ptr] : ArrayType α Ptr where
     return a
   set := fun ptr idx a => do
     ArrayType.set ptr idx (toProdType a)
-
-
--- /-- Set element of a pointer -/
--- class SetElemM (Ptr : Type) (Idx : Type) (Elem : outParam Type)
---     (m : outParam (Type → Type)) (Valid : Ptr → Idx → Prop) where
---   setElemM : (ptr : Ptr) → (i : Idx) → Elem → Valid ptr i → m Unit
-
--- variable {Ptr} [ArrayType α Ptr] (ptr : ArrayPointer α) (i : UInt64) (val : α)
-
--- #check ptr[i]
-
--- variable (ptr : ArrayPointer (struct {a : Float, b : Int, c : Float32}))
-
--- #check ptr[i]
---   rewrite_by
---     simp only [getElem,ArrayType.get,fromProdType,bind_assoc, pure_bind, bind_pure]
-
--- #eval IO.println (OpenCLType.definition? (ArrayPointer (struct {x : Float, y : Float})) |>.get!)
