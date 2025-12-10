@@ -119,7 +119,6 @@ def foo (res : Vector Nat 3) (idx : Vector Nat 3) (mass : ArrayPointer Float) (v
         p += mi * vi
   return (m, p / m)
 
-
 /--
 info:
 uint vector_x_ui3(uint3 a)

@@ -14,6 +14,7 @@ import Tests.Meta.AsContextChange
 import Tests.Meta.EnumType
 import Tests.Meta.OverloadedFunction
 import Tests.Meta.ProdLike
+import Tests.OpenCL.ArrayType
 import Tests.OpenCL.Basic
 import Tests.OpenCL.ForLoop
 import Tests.OpenCL.Grammar

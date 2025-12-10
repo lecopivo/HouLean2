@@ -46,6 +46,11 @@ float3 (anonymous)(float * a)
 
 /--
 info:
+float3 vector_zero_f3()
+{
+    return (float3){0.0f, 0.0f, 0.0f};
+}
+
 matrix33f houlean_matrix_zeron_f33()
 {
     return (matrix33f){vector_zero_f3(), vector_zero_f3(), vector_zero_f3()};

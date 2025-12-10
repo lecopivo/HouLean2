@@ -822,6 +822,7 @@ syntax "#opencl_compile" term : command
 open Elab Term Command in
 elab_rules : command
 | `(#opencl_compile%$tk $fstx:term) =>
+  withoutModifyingEnv do
   runTermElabM fun _ => Term.withDeclName `_opencl_compile do
   let f ← elabTermAndSynthesize fstx none
 

@@ -26,6 +26,11 @@ double (anonymous)(double3 x, double3 y)
 
 /--
 info:
+double vector_dot_d3(double3 u, double3 v)
+{
+    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
+}
+
 double houlean_math_dot_d3d(double3 x, double3 y)
 {
     return vector_dot_d3(x, y);
@@ -102,6 +107,60 @@ prod_d3_d (anonymous)(double3 x)
 
 /--
 info:
+double vector_dot_d3(double3 u, double3 v)
+{
+    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
+}
+
+double houlean_math_sqrt_d(double x)
+{
+    return sqrt(x);
+}
+
+double vector_length2_d3(double3 u)
+{
+    return ((u.x * u.x) + (u.y * u.y)) + (u.z * u.z);
+}
+
+double vector_length_d3(double3 u)
+{
+    return houlean_math_sqrt_d(vector_length2_d3(u));
+}
+
+double houlean_math_abs_d(double x)
+{
+    return fabs(x);
+}
+
+bool houlean_math_approxequal_dd(double x, double y, double tol)
+{
+    return houlean_math_abs_d(x - y) <= tol;
+}
+
+double inv_d(double a)
+{
+    return 1.0d / a;
+}
+
+double3 hdiv_d3dd3(double3 a, double a1)
+{
+    double is = inv_d(a1);
+    return (double3){is * a.x, is * a.y, is * a.z};
+}
+
+prod_d3_d vector_normalize_d3(double3 u)
+{
+    double len = vector_length_d3(u);
+    if (houlean_math_approxequal_dd(len, 0.0d, 1e-6d))
+    {
+        return (prod_d3_d){u, 0.0d};
+    }
+    else
+    {
+        return (prod_d3_d){hdiv_d3dd3(u, len), len};
+    }
+}
+
 double3 vector_normalized_d3(double3 u)
 {
     return vector_normalize_d3(u).fst;
@@ -176,6 +235,30 @@ double3 (anonymous)(double3 x, double3 y, double t)
 
 /--
 info:
+double float_clamp(double x, double lo, double hi)
+{
+    if (x < lo)
+    {
+        return lo;
+    }
+    else
+    {
+        if (hi < x)
+        {
+            return hi;
+        }
+        else
+        {
+            return x;
+        }
+    }
+}
+
+double houlean_math_clamp_dd(double x, double lo, double hi)
+{
+    return float_clamp(x, lo, hi);
+}
+
 double3 houlean_math_clamp_d3d3(double3 x, double3 lo, double3 hi)
 {
     return (double3){houlean_math_clamp_dd(x.x, lo.x, hi.x), houlean_math_clamp_dd(x.y, lo.y, hi.y), houlean_math_clamp_dd(x.z, lo.z, hi.z)};

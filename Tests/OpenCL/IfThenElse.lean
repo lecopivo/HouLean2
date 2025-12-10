@@ -37,6 +37,11 @@ double (anonymous)(double x)
 
 /--
 info:
+double houlean_math_log_d(double x)
+{
+    return log(x);
+}
+
 double (anonymous)(double x)
 {
     if (0.0d < x)
@@ -71,6 +76,11 @@ double (anonymous)(double x)
 
 /--
 info:
+double houlean_math_log_d(double x)
+{
+    return log(x);
+}
+
 double (anonymous)(double x)
 {
     double state = x;

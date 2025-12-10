@@ -67,6 +67,16 @@ float3 (anonymous)(float3 v)
 
 /--
 info:
+float houlean_math_sin_f(float x)
+{
+    return sin(x);
+}
+
+float3 vector_sin_f3(float3 x)
+{
+    return (float3){houlean_math_sin_f(x.x), houlean_math_sin_f(x.y), houlean_math_sin_f(x.z)};
+}
+
 float3 houlean_math_sin_f3(float3 x)
 {
     return vector_sin_f3(x);
@@ -95,6 +105,11 @@ float3 houlean_matrix_vecmul_sum_rows_f33(float3 v, matrix33f a)
 float3 hmul_f3f33f3(float3 a, matrix33f a1)
 {
     return houlean_matrix_vecmul_sum_rows_f33(a, a1);
+}
+
+float vector_dot_f3(float3 u, float3 v)
+{
+    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
 }
 
 float3 houlean_matrix_coli_f330(matrix33f a)
@@ -139,6 +154,11 @@ float houlean_matrix_det2_f(matrix22f a)
     return (a.row0.x * a.row1.y) - (a.row0.y * a.row1.x);
 }
 
+float inv_f(float a)
+{
+    return 1.0f / a;
+}
+
 matrix22f houlean_matrix_inv2_f(matrix22f a)
 {
     float d = houlean_matrix_det2_f(a);
@@ -162,6 +182,11 @@ float houlean_matrix_det3_f(matrix33f a)
     return ((a.row0.x * ((a.row1.y * a.row2.z) - (a.row1.z * a.row2.y))) - (a.row0.y * ((a.row1.x * a.row2.z) - (a.row1.z * a.row2.x)))) + (a.row0.z * ((a.row1.x * a.row2.y) - (a.row1.y * a.row2.x)));
 }
 
+float inv_f(float a)
+{
+    return 1.0f / a;
+}
+
 matrix33f houlean_matrix_inv3_f(matrix33f a)
 {
     float d = houlean_matrix_det3_f(a);
@@ -180,6 +205,11 @@ matrix33f (anonymous)(matrix33f A)
 
 /--
 info:
+float inv_f(float a)
+{
+    return 1.0f / a;
+}
+
 matrix44f houlean_matrix_inv4_f(matrix44f a)
 {
     float s0 = (a.row0.x * a.row1.y) - (a.row1.x * a.row0.y);
