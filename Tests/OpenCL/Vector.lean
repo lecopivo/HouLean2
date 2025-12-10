@@ -78,20 +78,20 @@ double3 hdiv_d3dd3(double3 a, double a1)
     return (double3){is * a.x, is * a.y, is * a.z};
 }
 
-prodd3d vector_normalize_d3(double3 u)
+prod_d3_d vector_normalize_d3(double3 u)
 {
     double len = vector_length_d3(u);
     if (houlean_math_approxequal_dd(len, 0.0d, 1e-6d))
     {
-        return (prodd3d){u, 0.0d};
+        return (prod_d3_d){u, 0.0d};
     }
     else
     {
-        return (prodd3d){hdiv_d3dd3(u, len), len};
+        return (prod_d3_d){hdiv_d3dd3(u, len), len};
     }
 }
 
-prodd3d (anonymous)(double3 x)
+prod_d3_d (anonymous)(double3 x)
 {
     return vector_normalize_d3(x);
 }

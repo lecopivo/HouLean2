@@ -2,6 +2,7 @@ import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Data.Int
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.MProd
+import HouLean.OpenCL.Data.Prod
 
 open HouLean.OpenCL
 
@@ -75,4 +76,28 @@ def fib {α} [Add α] [One α] [Zero α] (n : Nat) := Id.run do
   return b
 
 
--- #opencl_compile fib (α:=Float)
+/--
+info:
+double tests_opencl_forloop_fib_d(uint n)
+{
+    double a = 0.0d;
+    double b = 1.0d;
+    mprod_d_d state = (mprod_d_d){a, b};
+    for (uint x = 0; x < n; x += 1)
+    {
+        double a1 = state.fst;
+        double b1 = state.snd;
+        double b2 = a1 + b1;
+        state = (mprod_d_d){b1, b2};
+    }
+    mprod_d_d r = state;
+    return r.snd;
+}
+
+double (anonymous)(uint n)
+{
+    return tests_opencl_forloop_fib_d(n);
+}
+-/
+#guard_msgs in
+#opencl_compile fib (α:=Float)

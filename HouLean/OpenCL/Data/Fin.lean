@@ -1,5 +1,6 @@
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Data.Init
+import HouLean.OpenCL.Data.InlinedLoop
 
 namespace HouLean.OpenCL
 
@@ -7,56 +8,26 @@ attribute [opencl_csimp] sum
 
 variable {m} [Monad m]
 
-implemented_by (f : α → Fin 0 → α) (init : α) : Fin.foldl 0 f init = init
-implemented_by (f : α → Fin 1 → α) (init : α) : Fin.foldl 1 f init = f init 0
-implemented_by (f : α → Fin 2 → α) (init : α) : Fin.foldl 2 f init = f (f init 0) 1
-implemented_by (f : α → Fin 3 → α) (init : α) : Fin.foldl 3 f init = f (f (f init 0) 1) 2
-implemented_by (f : α → Fin 4 → α) (init : α) : Fin.foldl 4 f init = f (f (f (f init 0) 1) 2) 3
-implemented_by (f : α → Fin 5 → α) (init : α) : Fin.foldl 5 f init = f (f (f (f (f init 0) 1) 2) 3) 4
-implemented_by (f : α → Fin 6 → α) (init : α) : Fin.foldl 6 f init = f (f (f (f (f (f init 0) 1) 2) 3) 4) 5
-implemented_by (f : α → Fin 7 → α) (init : α) : Fin.foldl 7 f init = f (f (f (f (f (f (f init 0) 1) 2) 3) 4) 5) 6
-implemented_by (f : α → Fin 8 → α) (init : α) : Fin.foldl 8 f init = f (f (f (f (f (f (f (f init 0) 1) 2) 3) 4) 5) 6) 7
-implemented_by (f : α → Fin 9 → α) (init : α) : Fin.foldl 9 f init = f (f (f (f (f (f (f (f (f init 0) 1) 2) 3) 4) 5) 6) 7) 8
-implemented_by (f : α → Fin 10 → α) (init : α) : Fin.foldl 10 f init = f (f (f (f (f (f (f (f (f (f init 0) 1) 2) 3) 4) 5) 6) 7) 8) 9
 
-implemented_by (f : α → Fin 0 → m α) (init : α) : Fin.foldlM 0 f init = pure init
-implemented_by (f : α → Fin 1 → m α) (init : α) : Fin.foldlM 1 f init = do pure (← f init 0)
-implemented_by (f : α → Fin 2 → m α) (init : α) : Fin.foldlM 2 f init = do pure (← f (← f init 0) 1)
-implemented_by (f : α → Fin 3 → m α) (init : α) : Fin.foldlM 3 f init = do pure (← f (← f (← f init 0) 1) 2)
-implemented_by (f : α → Fin 4 → m α) (init : α) : Fin.foldlM 4 f init = do pure (← f (← f (← f (← f init 0) 1) 2) 3)
-implemented_by (f : α → Fin 5 → m α) (init : α) : Fin.foldlM 5 f init = do pure (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4)
-implemented_by (f : α → Fin 6 → m α) (init : α) : Fin.foldlM 6 f init = do pure (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5)
-implemented_by (f : α → Fin 7 → m α) (init : α) : Fin.foldlM 7 f init = do pure (← f (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5) 6)
-implemented_by (f : α → Fin 8 → m α) (init : α) : Fin.foldlM 8 f init = do pure (← f (← f (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5) 6) 7)
-implemented_by (f : α → Fin 9 → m α) (init : α) : Fin.foldlM 9 f init = do pure (← f (← f (← f (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5) 6) 7) 8)
-implemented_by (f : α → Fin 10 → m α) (init : α) : Fin.foldlM 10 f init = do pure (← f (← f (← f (← f (← f (← f (← f (← f (← f (← f init 0) 1) 2) 3) 4) 5) 6) 7) 8) 9)
+implemented_by (f : α → Fin n → α) (init : α) :
+  Fin.foldl n f init
+  =
+  inlinedLoop n (fun i s => f s i) init
 
-implemented_by (f : Fin 0 → α → α) (init : α) : Fin.foldr 0 f init = init
-implemented_by (f : Fin 1 → α → α) (init : α) : Fin.foldr 1 f init = f 0 init
-implemented_by (f : Fin 2 → α → α) (init : α) : Fin.foldr 2 f init = f 1 (f 0 init)
-implemented_by (f : Fin 3 → α → α) (init : α) : Fin.foldr 3 f init = f 2 (f 1 (f 0 init))
-implemented_by (f : Fin 4 → α → α) (init : α) : Fin.foldr 4 f init = f 3 (f 2 (f 1 (f 0 init)))
-implemented_by (f : Fin 5 → α → α) (init : α) : Fin.foldr 5 f init = f 4 (f 3 (f 2 (f 1 (f 0 init))))
-implemented_by (f : Fin 6 → α → α) (init : α) : Fin.foldr 6 f init = f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init)))))
-implemented_by (f : Fin 7 → α → α) (init : α) : Fin.foldr 7 f init = f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init))))))
-implemented_by (f : Fin 8 → α → α) (init : α) : Fin.foldr 8 f init = f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init)))))))
-implemented_by (f : Fin 9 → α → α) (init : α) : Fin.foldr 9 f init = f 8 (f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init))))))))
-implemented_by (f : Fin 10 → α → α) (init : α) : Fin.foldr 10 f init = f 9 (f 8 (f 7 (f 6 (f 5 (f 4 (f 3 (f 2 (f 1 (f 0 init)))))))))
+implemented_by (f : α → Fin n → m α) (init : α) :
+  Fin.foldlM n f init
+  =
+  inlinedLoopM n (fun i s => f s i) init
 
+implemented_by (f : Fin n → α → α) (init : α) :
+  Fin.foldr n f init
+  =
+  inlinedLoop n (fun i s => f ⟨n-i.1-1, by omega⟩ s) init
 
-implemented_by (P : Fin 0 → Prop) [∀ i, Decidable (P i)] :
-  decide (∀ i, P i) = true := by simp
-implemented_by (P : Fin 1 → Prop) [∀ i, Decidable (P i)] :
-  decide (∀ i, P i) = decide (P 0) := by simp
-implemented_by (P : Fin 2 → Prop) [∀ i, Decidable (P i)] :
-  decide (∀ i, P i) = decide (P 0) && decide (P 1) := by simp
-implemented_by (P : Fin 3 → Prop) [∀ i, Decidable (P i)] :
-  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2)
-implemented_by (P : Fin 4 → Prop) [∀ i, Decidable (P i)] :
-  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2) && decide (P 3)
-implemented_by (P : Fin 5 → Prop) [∀ i, Decidable (P i)] :
-  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2) && decide (P 3) && decide (P 4)
-implemented_by (P : Fin 6 → Prop) [∀ i, Decidable (P i)] :
-  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2) && decide (P 3) && decide (P 4) && decide (P 5)
-implemented_by (P : Fin 7 → Prop) [∀ i, Decidable (P i)] :
-  decide (∀ i, P i) = decide (P 0) && decide (P 1) && decide (P 2) && decide (P 3) && decide (P 4) && decide (P 5) && decide (P 6)
+implemented_by (f : Fin n → α → m α) (init : α) :
+  Fin.foldrM n f init
+  =
+  inlinedLoopM n (fun i s => f ⟨n-i.1-1, by omega⟩ s) init
+
+implemented_by (P : Fin n → Prop) [∀ i, Decidable (P i)] :
+  decide (∀ i, P i) = inlinedLoop n (fun i r => r && decide (P i)) (init:=true)

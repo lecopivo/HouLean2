@@ -7,10 +7,10 @@ namespace HouLean.OpenCL
 --       Ideally `Prod` will be so called "macro type" that should be completely eliminated from
 --       runtime
 instance [a : OpenCLType α] [b : OpenCLType β] : OpenCLType (Prod α β) where
-  name := s!"prod{a.shortName}{b.shortName}"
-  shortName := s!"p{a.shortName}{b.shortName}"
+  name := s!"prod_{a.shortName}_{b.shortName}"
+  shortName := s!"p{a.shortName}{b.shortName}" -- `Pointer α` already uses prefix `p`, so maybe use something different
   definition? :=
-    s!"struct prod{a.shortName}{b.shortName}\n\
+    s!"struct prod_{a.shortName}_{b.shortName}\n\
        \{\n\
          {a.name} fst;\n\
          {b.name} snd;\n\
@@ -43,3 +43,10 @@ implemented_by [Inhabited β] (x : Prod α β) :
   x.2
   =
   (oclFunction (Prod α β → β) ".snd" .postfix) x
+
+-- casesOn
+implemented_by {α : Type _} {β : Type _} {motive : Prod α β → Sort _}
+  (t : Prod α β) (f : (fst : α) → (snd : β) → motive ⟨fst, snd⟩) :
+  (Prod.casesOn t f : motive t)
+  =
+  f t.1 t.2 := by rfl

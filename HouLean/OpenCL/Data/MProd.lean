@@ -7,7 +7,7 @@ namespace HouLean.OpenCL
 --       Ideally `MProd` will be so called "macro type" that should be completely eliminated from
 --       runtime
 instance [a : OpenCLType α] [b : OpenCLType β] : OpenCLType (MProd α β) where
-  name := s!"mprod{a.shortName}{b.shortName}"
+  name := s!"mprod_{a.shortName}_{b.shortName}"
   shortName := s!"mp{a.shortName}{b.shortName}"
   definition? :=
     s!"struct prod{a.shortName}{b.shortName}\n\
@@ -43,3 +43,10 @@ implemented_by [Inhabited β] (x : MProd α β) :
   x.2
   =
   (oclFunction (MProd α β → β) ".snd" .postfix) x
+
+-- casesOn
+implemented_by {α : Type _} {β : Type _} {motive : MProd α β → Sort _}
+  (t : MProd α β) (f : (fst : α) → (snd : β) → motive ⟨fst, snd⟩) :
+  (MProd.casesOn t f : motive t)
+  =
+  f t.1 t.2 := by rfl

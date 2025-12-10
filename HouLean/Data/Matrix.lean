@@ -100,6 +100,10 @@ macro_rules
 def ofFn (f : (i j : Nat) → (h : i < m ∧ j < n) → α) : Matrix α m n :=
   ⟨.ofFn (fun i => .ofFn fun j => f i j (by grind))⟩
 
+def fromRows (f : (i : Nat) → (h : i < m) → Vector α n) : Matrix α m n :=
+  ⟨.ofFn (fun i => f i.1 i.2)⟩
+
+
 variable {n' : Nat}
 
 def mapRowsFinIdx (f : (i : Nat) →  Vector α n → (h : i < m) → Vector β n') (a : Matrix α m n) : Matrix β m n' :=

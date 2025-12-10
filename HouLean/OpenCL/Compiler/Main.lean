@@ -312,6 +312,7 @@ inductive AppCase where
   | ite (cond t e : Expr)
   | app
   | value (e : Expr)
+  | matchE
 
 /--
 Classify an application expression to determine how to compile it.
@@ -345,6 +346,9 @@ def appCase (e : Expr) : MetaM AppCase := do
   if e.isAppOfArity ``pure 4 ||
      e.isAppOfArity ``ForInStep.yield 2 then
      return .value e.appArg!
+
+  if ← isMatcherApp e then
+     return .matchE
 
   return .app
 
@@ -421,6 +425,7 @@ Main compilation function that converts a Lean expression to OpenCL code.
 partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
     (runSimp := true) : CompileM Unit := do
   withIncRecDepth do
+
   if let some val ← runInterpreter e then
     return ← cont e (.lit val)
 
@@ -504,6 +509,10 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
       let elseBody ← compileScope els cont
       addStatement (.ite condCode thnBody elseBody)
 
+    | .matchE =>
+      let e' ← Meta.letBindMatchDiscrs e (doUnfold:=true)
+      compile e' cont (runSimp:=true)
+
   | .fvar .. =>
     let some varName := (← read).fvarMap[e]?
       | throwError "Unrecognized free variable: {e}\nAvailable: {(← read).fvarMap.toArray.map (·.1)}"
@@ -521,6 +530,9 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
 
   | .const .. =>
     throwError "Unexpected constant: {e}"
+
+  | .mdata _ e =>
+    compile e cont runSimp
 
   | _ =>
     throwError "Unsupported expression constructor: {e.ctorName}"

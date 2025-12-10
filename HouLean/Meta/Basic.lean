@@ -173,3 +173,65 @@ def mkLocalDecls [MonadControlT MetaM n] [Monad n]
 def withLocalDecls' [Inhabited α] [MonadControlT MetaM n] [Monad n]
   (names : Array Name) (bi : BinderInfo) (types : Array Expr) (k : Array Expr → n α) : n α :=
   withLocalDecls (mkLocalDecls names bi types) k
+
+
+/-- If `e` is a match expression then all discriminants are turned into a let bindings
+if they are not free variable already.
+
+For example the expression
+```
+let (x,y) := f x
+x + y
+```
+gets elaborated to
+```
+match f x with
+| (x,y) => x + y
+```
+and running `whnf` with `iota := true` and `zeta := false` turns it into
+```
+(f x).1 + (f x).2
+```
+which is undesirable. Therefore this function turns
+```
+match f x with
+| (x,y) => x + y
+```
+into
+```
+let r := f x
+match r with
+| (x,y) => x + y
+```
+and now running whnf on the let body will produce
+```
+let r := f x
+r.1 + r.2
+```
+which preserves the let binding of the original expression
+
+ -/
+partial def letBindMatchDiscrs (e : Expr) (doUnfold := false) : MetaM Expr := do
+  let some info := isMatcherAppCore? (← getEnv) e
+    | return e
+  let (fn, args) := e.withApp (fun fn args => (fn,args))
+  go fn args info 0 #[]
+where
+  go (fn : Expr) (args : Array Expr) (info : MatcherInfo) (i : Nat) (xs : Array Expr) : MetaM Expr := do
+    if i = info.numDiscrs then
+      let mut e := fn.beta args
+      if doUnfold then
+        -- todo: maybe check that the proof of unfolding is rfl as we use it int whnf
+        e := (← unfold e fn.constName!).expr
+      return ← mkLambdaFVars xs e
+    else
+      let xi := args[i + info.numParams + 1]!
+      if xi.isFVar then
+        -- do nothing if `xi` is already fvar
+        go fn args info (i+1) xs
+      else
+        let name := Name.appendAfter `r (toString i)
+        withLetDecl name (← inferType xi) xi fun xvar => do
+          let args := args.set! (i + info.numParams + 1) xvar
+          let xs := xs.push xvar
+          go fn args info (i+1) xs
