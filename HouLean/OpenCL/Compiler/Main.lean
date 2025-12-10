@@ -619,6 +619,11 @@ def mangleFunName (funName : Name) (info : FunInfo) (args : Array Expr) : MetaM 
     if (← isClass? argType).isSome then
       -- Skip typeclasses in mangled name
       continue
+    if argType.isForall then
+      -- skip any functions
+      -- for genuite function we should just inline the function and not mangle at all
+      -- for propositions we should skip, like in `getElem` we want to skip `valid`
+      continue
     else if argType.isType then
       let oclType ← getOpenCLType arg
       typeSuffix := typeSuffix ++ oclType.shortName

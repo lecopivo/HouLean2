@@ -317,17 +317,9 @@ instance {α} [AtomicOpenCLType α] : Inhabited (Pointer α) :=
   Classical.inhabited_of_nonempty (by infer_instance)
 
 instance [ty : AtomicOpenCLType α] : OpenCLType (Pointer α) where
-  name := ty.name ++ "*"
+  name := ty.name ++ " *"
   shortName := "p" ++ ty.shortName
 
-/-- Type `α` can be stored and loaeds from a pointer to type `A`.
-
-For example `α := Vector Float32 3` and `A := Float32` for storing and loading `float3` to/from `float *`  -/
-class ArrayType (α : Type) (A : outParam Type) where
-  get : Pointer A → UInt64 → OpenCLM α
-  set : Pointer A → UInt64 → α → OpenCLM Unit
-
-attribute [reducible] ArrayType.get ArrayType.set
 
 section LoadAndStore
 
@@ -342,12 +334,7 @@ opaque Pointer.set [AtomicOpenCLType α] (a : Pointer α) (offset : UInt64) (val
 opaque Pointer.vload [AtomicOpenCLType α] [AllowedVectorSize n] (offset : UInt64) (a : Pointer α) : OpenCLM (Vector α n)
 opaque Pointer.vstore [AtomicOpenCLType α] [AllowedVectorSize n] (val : Vector α n) (offset : UInt64) (a : Pointer α) : OpenCLM Unit
 
-variable [t : AtomicOpenCLType α]
-
-@[reducible]
-instance [AtomicOpenCLType α] : ArrayType α α where
-  get := Pointer.get
-  set := Pointer.set
+variable [AtomicOpenCLType α]
 
 instance : OpenCLFunction (Pointer.get (α:=α)) where
   name := ""
@@ -359,18 +346,11 @@ instance : OpenCLFunction (Pointer.set (α:=α)) where
 
 variable [AllowedVectorSize n]
 
-@[reducible]
-instance : ArrayType (Vector α n) α where
-  get ptr off := Pointer.vload off ptr
-  set ptr off val := Pointer.vstore val off ptr
-
 instance : OpenCLFunction (Pointer.vload (α:=α) (n:=n)) where
   name := s!"vload{n}"
 
 instance : OpenCLFunction (Pointer.vstore (α:=α) (n:=n)) where
   name := s!"vstore{n}"
-
-
 
 
 -- =================================================================================================

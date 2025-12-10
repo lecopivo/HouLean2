@@ -5,7 +5,7 @@ import HouLean.OpenCL.Data.Unit
 import HouLean.OpenCL.Data.Int
 import HouLean.OpenCL.Data.Bool
 import HouLean.OpenCL.WorkItemFunctions
-import HouLean.OpenCL.Data.ArrayPointer
+import HouLean.OpenCL.Data.ArrayType
 
 open HouLean OpenCL
 
@@ -42,9 +42,7 @@ def clearSurfaces
   let _ ← surface_grid_out_acc.set g_coord 0
   return
 
-
 -- #opencl_compile clearSurfaces
-
 
 noncomputable
 def clearGrids

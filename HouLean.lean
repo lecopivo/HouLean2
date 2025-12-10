@@ -100,6 +100,7 @@ import HouLean.LinearAlgebra
 import HouLean.Math
 import HouLean.Meta.AnonymousStruct
 import HouLean.Meta.Basic
+import HouLean.Meta.DoNotation
 import HouLean.Meta.EnumType
 import HouLean.Meta.Exact
 import HouLean.Meta.Float
@@ -118,8 +119,8 @@ import HouLean.OpenCL.Compiler.Grammar
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Compiler.Parser
 import HouLean.OpenCL.Compiler.Types
-import HouLean.OpenCL.Data.ArrayPointer
 import HouLean.OpenCL.Data.ArrayRef
+import HouLean.OpenCL.Data.ArrayType
 import HouLean.OpenCL.Data.Bool
 import HouLean.OpenCL.Data.Fin
 import HouLean.OpenCL.Data.Float

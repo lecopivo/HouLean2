@@ -1,8 +1,8 @@
 import HouLean.OpenCL.Compiler.Main
 import HouLean.Data.Geometry
 import HouLean.Data.FloatP
-import HouLean.OpenCL.Data.ArrayPointer
 import HouLean.OpenCL.Data.NanoVDB
+import HouLean.OpenCL.Data.ArrayType
 import HouLean.Apex.Generated.Defs
 
 namespace HouLean.OpenCL

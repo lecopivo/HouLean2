@@ -1,6 +1,7 @@
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Fin
 import HouLean.OpenCL.Data.Int
+import HouLean.OpenCL.Data.ArrayType
 import HouLean.Data.Matrix
 
 namespace HouLean.OpenCL
@@ -8,6 +9,7 @@ namespace HouLean.OpenCL
 open Compiler Qq HouLean Math
 
 namespace Matrix
+
 
 /-- `Matrix T m n` on OpenCL level is modeled as structure with `m` row vectors.  -/
 instance [t : AtomicOpenCLType α] [AllowedVectorSize n] : OpenCLType (Matrix α m n) :=
@@ -30,7 +32,7 @@ instance [t : AtomicOpenCLType α] [AllowedVectorSize n] : OpenCLType (Matrix α
 def vload [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
     (ptr : Pointer α) (off : UInt64) : OpenCLM (Matrix α m n) := do
   return Matrix.mk (← Vector.ofFnM fun i =>
-    ArrayType.get (α:=Vector α n) ptr ((off.toUInt32 * m.toUInt32 + i.1.toUInt32).toUInt64))
+    ArrayType.get (Elem:=Vector α n) ptr ((off.toUInt32 * m.toUInt32 + i.1.toUInt32).toUInt64))
 
 def vstore [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
     (ptr : Pointer α) (off : UInt64) (value : Matrix α m n) : OpenCLM Unit := do
@@ -39,7 +41,8 @@ def vstore [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
 
 -- why do we have to unfold this?
 @[reducible]
-instance [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] : ArrayType (Matrix α m n) α where
+instance [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] :
+    ArrayType (Matrix α m n) (Pointer α) where
   get := vload
   set := vstore
 
@@ -78,7 +81,9 @@ theorem opencl_rewrite_matrix_col (a : Matrix α m n) (j : Nat) (h) :
     =
     a.colI (j:=j) h := by rfl
 
-@[opencl_csimp]
+-- It is very important to have `↓` here to prevent the simplifier to turn the
+-- index product `id : Nat×Nat` into OpenCL implementation.
+@[opencl_csimp ↓]
 theorem opencl_rewrite_matrix_getElem (a : Matrix α m n) (ij : Nat×Nat) (h) :
     a[ij]'h
     =
