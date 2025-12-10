@@ -188,7 +188,7 @@ deriving Inhabited
 structure OCLFunction where
   name : String
   kind : OpenCLFunction.FunKind
-deriving Inhabited
+deriving Inhabited, BEq
 
 open Qq
 def getOpenCLType? (type : Expr) (doWhnf := false) :

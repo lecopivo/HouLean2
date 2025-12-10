@@ -233,6 +233,7 @@ def simplifyExpr (e : Expr) : CompileM Expr := do
 def addStatement (stmt : CodeStatement) : CompileM Unit :=
   modify (fun s => {s with statements := s.statements.push stmt})
 
+open Qq in
 /--
 Introduce a let-bound variable in both Lean and OpenCL contexts.
 
@@ -256,9 +257,14 @@ def withLetVar (name : Name) (val : Expr) (oclVal : CodeExpr)
     (cont : Expr → CompileM α) : CompileM α := do
   let type ← inferType val
   withLetDecl name type val fun var => do
-    withFVars #[var] fun varName => do
-      let oclType ← getOpenCLType type
-      addStatement (.letE varName[0]! oclType oclVal)
+    if ¬(← isDefEq q(Unit) type) then
+      withFVars #[var] fun varName => do
+        let oclType ← getOpenCLType type
+        addStatement (.letE varName[0]! oclType oclVal)
+        cont var
+    else
+      if oclVal != .erased then
+        addStatement (.funCall oclVal)
       cont var
 
 /--
@@ -278,9 +284,14 @@ Introduce a local variable (not let-bound) in both Lean and OpenCL contexts.
 def withLocalVar (name : Name) (type : Expr) (oclVal : CodeExpr)
     (cont : Expr → CompileM α) : CompileM α :=
   withLocalDeclD name type fun var => do
-    withFVars #[var] fun varName => do
-      let oclType ← getOpenCLType type
-      addStatement (.letE varName[0]! oclType oclVal)
+    if ¬(← isDefEq q(Unit) type) then
+      withFVars #[var] fun varName => do
+        let oclType ← getOpenCLType type
+        addStatement (.letE varName[0]! oclType oclVal)
+        cont var
+    else
+      if oclVal != .erased then
+        addStatement (.funCall oclVal)
       cont var
 
 /--
@@ -386,10 +397,13 @@ Introduce a mutable variable in OpenCL context.
 -/
 def withMutVar (name : Name) (type : OCLType) (val : CodeExpr)
     (cont : String → CompileM α) : CompileM α := do
-  let name := nameToString name
-  mkUniqueName name fun name => do
-  addStatement (.letE name type val)
-  cont name
+  if val != .erased then
+    let name := nameToString name
+    mkUniqueName name fun name => do
+    addStatement (.letE name type val)
+    cont name
+  else
+    cont ""
 
 mutual
 
@@ -493,7 +507,10 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
         let idxName := varNames[0]!
         let body := f.beta xs
         let loopBody ← compileScope body (fun _ r =>
-          addStatement (.assignment stateName r))
+          if r != .erased then
+            addStatement (.assignment stateName r)
+          else
+            pure ())
         pure (idxName, loopBody)
 
       addStatement (.forLoop idxName startCode stopCode stepCode loopBody)
@@ -526,7 +543,7 @@ partial def compile (e : Expr) (cont : Expr → CodeExpr → CompileM Unit)
 
 
   | .const ``PUnit.unit _ =>
-    cont e CodeExpr.errased
+    cont e CodeExpr.erased
 
   | .const .. =>
     throwError "Unexpected constant: {e}"

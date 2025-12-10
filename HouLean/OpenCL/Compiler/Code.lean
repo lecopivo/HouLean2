@@ -5,15 +5,15 @@ open Lean Meta
 namespace HouLean.OpenCL.Compiler
 
 inductive CodeExpr where
-  | errased
+  | erased
   | lit (val : String)
   | fvar (name : String)
   | app (fn : OCLFunction) (args : Array CodeExpr)
-deriving Inhabited
+deriving Inhabited, BEq
 
 partial def CodeExpr.toString (c : CodeExpr) (maybeBracket := false) : CoreM String := do
   match c with
-  | .errased => return ""
+  | .erased => return ""
   | .lit val => return val
   | .fvar n => return n
   | .app fn args =>
@@ -105,7 +105,7 @@ partial def CodeStatement.toString (stmt : CodeStatement)
               {indent}\{\n\
               {b}\n\
               {indent}}"
-  | .funCall v => return s!"{← v.toString};"
+  | .funCall v => return s!"{indent}{← v.toString};"
   | .ret v => return s!"{indent}return {← v.toString};"
 
 -- -- bunch of let bindings, add support for `if then else` and `for(..){ .. }`

@@ -29,7 +29,6 @@ float3 (anonymous)(float * a)
     {
         float3 ai = getelem_pfulf3(a, (ulong)(i));
         float3 b1 = state + ai;
-        void x = ;
         state = b1;
     }
     float3 r = state;
@@ -59,8 +58,8 @@ void houlean_opencl_arraytype_set_f3pf(float * a, ulong a1, float3 a2)
 
 void houlean_opencl_matrix_vstore_f33(float * ptr, ulong off, matrix33f value)
 {
-    void a = houlean_opencl_arraytype_set_f3pf(ptr, (ulong)(((uint)(off) * (uint)(3)) + (uint)(0)), value.row0);
-    void a1 = houlean_opencl_arraytype_set_f3pf(ptr, (ulong)(((uint)(off) * (uint)(3)) + (uint)(1)), value.row1);
+    houlean_opencl_arraytype_set_f3pf(ptr, (ulong)(((uint)(off) * (uint)(3)) + (uint)(0)), value.row0);
+    houlean_opencl_arraytype_set_f3pf(ptr, (ulong)(((uint)(off) * (uint)(3)) + (uint)(1)), value.row1);
     return houlean_opencl_arraytype_set_f3pf(ptr, (ulong)(((uint)(off) * (uint)(3)) + (uint)(2)), value.row2);
 }
 
@@ -72,13 +71,11 @@ void houlean_opencl_arraytype_set_f33pf(float * a, ulong a1, matrix33f a2)
 matrix33f (anonymous)(float * a)
 {
     matrix33f b = houlean_matrix_zeron_f33();
-    void state = ;
     for (uint i = 0; i < 10; i += 1)
     {
-        void x = houlean_opencl_arraytype_set_f33pf(a, (ulong)(i), b);
-        state = ;
+        houlean_opencl_arraytype_set_f33pf(a, (ulong)(i), b);
     }
-    void r = state;
+    ;
     matrix33f this = b;
     return this;
 }
