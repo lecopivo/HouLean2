@@ -53,7 +53,7 @@ def mkProdLikeInstanceAux (structName : Name) : MetaM Unit := do
   let lvls := info.levelParams
 
   forallTelescope info.type fun parms _ => do
-    withLocalDeclD `s (← mkAppM structName parms) fun s => do
+    withLocalDeclD `s (← mkAppOptM structName (parms.map some)) fun s => do
 
     let types ← sinfo.fieldNames.mapIdxM (fun i _ => inferType (s.proj structName i))
     let (P, prod, projs) ← mkProdLikeProjs types 0 s structName
@@ -61,7 +61,7 @@ def mkProdLikeInstanceAux (structName : Name) : MetaM Unit := do
     withLocalDeclD `p P fun p => do
 
     let projs := projs.map (fun proj => proj.foldl (init:=p) (fun p i => p.proj ``Prod i))
-    let mk ← mkAppM (structName.append `mk) projs
+    let mk ← mkAppOptM (structName.append `mk) ((parms ++ projs).map some)
 
     let fromProdType ← mkLambdaFVars #[p] mk
     let toProdType ← mkLambdaFVars #[s] prod

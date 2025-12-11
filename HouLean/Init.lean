@@ -3,7 +3,6 @@ import Qq
 
 namespace HouLean
 
-abbrev Float64 := Float
 
 /-! Kitchen sink file for the very general declarations that are useful everywhere
 -/
@@ -46,6 +45,56 @@ export SetElemM (setElemM)
 
 axiom sorryProofAxiom {P : Prop} : P
 axiom sorryTermAxiom {P : Sort u} : P
+
+
+abbrev Float64 := Float
+opaque Float16 : Type := UInt16
+
+-- todo move this somewhere
+inductive Precision where
+  /- | half -/ | single | double
+deriving Repr
+
+instance : Max Precision where
+  max p q :=
+    match p, q with
+    | .single, .single => .single
+    | _, _ => .double
+
+instance : LE Precision where
+  le p q :=
+    match p, q with
+    | .double, .single => False
+    | _, _ => True
+
+def FloatP (prec : Precision) :=
+  match prec with
+  -- | .half => Float16
+  | .single => Float32
+  | .double => Float64
+
+instance : Repr (FloatP prec) :=
+  match prec with
+  | .single => inferInstanceAs (Repr Float32)
+  | .double => inferInstanceAs (Repr Float64)
+
+def IntP (prec : Precision) :=
+  match prec with
+  -- | .half => Int16
+  | .single => Int32
+  | .double => Int64
+
+instance : Repr (IntP prec) :=
+  match prec with
+  | .single => inferInstanceAs (Repr Int32)
+  | .double => inferInstanceAs (Repr Int64)
+
+
+def UIntP (prec : Precision) :=
+  match prec with
+  -- | .half => UInt16
+  | .single => UInt32
+  | .double => UInt64
 
 
 /-- Same as `sorry` but makes sure that the term is of type `Prop`.

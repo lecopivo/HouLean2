@@ -146,7 +146,7 @@ variable (a : A) (val : Float)
 
 /--
 info: let __src := foo 0.1;
-{ x := __src.x, y := __src.y, val := val } : AnonStruct.Tests.Meta.AnonymousStruct4
+{ x := __src.x, y := __src.y, val := val } : AnonStruct.Tests.Meta.AnonymousStruct5
 -/
 #guard_msgs in
 #check struct (foo 0.1) push% val := val

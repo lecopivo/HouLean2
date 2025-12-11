@@ -99,6 +99,7 @@ import HouLean.LeanGraph.Scopes
 import HouLean.LinearAlgebra
 import HouLean.Math
 import HouLean.Meta.AnonymousStruct
+import HouLean.Meta.AppInfo
 import HouLean.Meta.Basic
 import HouLean.Meta.DoNotation
 import HouLean.Meta.EnumType
@@ -121,6 +122,7 @@ import HouLean.OpenCL.Compiler.Parser
 import HouLean.OpenCL.Compiler.Types
 import HouLean.OpenCL.Data.ArrayRef
 import HouLean.OpenCL.Data.ArrayType
+import HouLean.OpenCL.Data.Attribute
 import HouLean.OpenCL.Data.Bool
 import HouLean.OpenCL.Data.Fin
 import HouLean.OpenCL.Data.Float
@@ -134,6 +136,7 @@ import HouLean.OpenCL.Data.Nat
 import HouLean.OpenCL.Data.Prod
 import HouLean.OpenCL.Data.Unit
 import HouLean.OpenCL.Data.Vector
+import HouLean.OpenCL.Data.Volume
 import HouLean.OpenCL.Kernel.Basic
 import HouLean.OpenCL.WorkItemFunctions
 import HouLean.Python.Grammar

@@ -8,6 +8,7 @@ namespace HouLean
 
 inductive AttributeClass where
   | point | primitive | vertex | detail
+deriving Repr, BEq
 
 namespace NewGeometry
 

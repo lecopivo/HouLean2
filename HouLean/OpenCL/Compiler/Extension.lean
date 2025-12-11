@@ -1,6 +1,7 @@
 import Lean
 import HouLean.OpenCL.Basic
 import HouLean.Meta.AnonymousStruct
+import HouLean.Meta.OverloadedFunction
 
 open Lean Meta
 
@@ -190,29 +191,37 @@ structure OCLFunction where
   kind : OpenCLFunction.FunKind
 deriving Inhabited, BEq
 
-open Qq
-def getOpenCLType? (type : Expr) (doWhnf := false) :
+
+-- todo: move this
+def evalExpr' (α : Type) [t : ToExpr α] (e : Expr) : MetaM α := do
+  if e.hasFVar then
+    let vars := (← (e.collectFVars.run {})).2.fvarIds.map (Expr.fvar)
+    throwError m!"Can't compile time evaluate {e}\nIt contains free variables {vars}"
+  try
+    unsafe evalExpr α t.toTypeExpr e
+  catch err =>
+    throwError m!"Failed to compile time evaluate {e}\n{err.toMessageData}"
+
+
+open Lean Meta Qq
+def getOpenCLType? (type : Expr) :
     MetaM (Option OCLType) := do
   unless ← isTypeCorrect type do return none
-  let mut type := type
-  if doWhnf then
-    type ← whnfC type
+  let type ← whnfR type
   let cls ← mkAppM ``OpenCL.OpenCLType #[type]
   let some inst ← synthInstance? cls | return none
-
-  try
-    let name ← unsafe evalExpr String q(String) (← mkAppOptM ``OpenCL.OpenCLType.name #[type, inst])
-    let shortName ← unsafe evalExpr String q(String) (← mkAppOptM ``OpenCL.OpenCLType.shortName #[type, inst])
-    let _definition? ← unsafe evalExpr (Option String) q(Option String) (← mkAppOptM ``OpenCL.OpenCLType.definition? #[type, inst])
-    return .some { name, shortName }
-  catch e =>
-    throwError e.toMessageData
+  let inst ← whnf inst
+  let name ← evalExpr' String (← whnf (inst.proj ``OpenCLType 0))
+  let shortName ← evalExpr' String (← whnf (inst.proj ``OpenCLType 1))
+  let _definition? ← evalExpr' (Option String) (← whnf (inst.proj ``OpenCLType 2))
+  return .some { name, shortName }
 
 open Qq
-def getOpenCLType (type : Expr) (doWhnf := false) : MetaM OCLType := do
-  let some t ← getOpenCLType? type doWhnf
+def getOpenCLType (type : Expr) : MetaM OCLType := do
+  let some t ← getOpenCLType? type
     | throwError m!"Not an OpenCL type {type}!"
   return t
+
 
 def getOpenCLFunction? (f : Expr) (doWhnf := false) :
     MetaM (Option OCLFunction) := do
@@ -223,13 +232,11 @@ def getOpenCLFunction? (f : Expr) (doWhnf := false) :
       mkLambdaFVars xs body
   let cls ← mkAppM ``OpenCL.OpenCLFunction #[f]
   let some inst ← synthInstance? cls | return none
-  try
-    let name ← unsafe evalExpr String q(String) (← mkAppOptM ``OpenCL.OpenCLFunction.name #[none, f, inst])
-    let kind ← unsafe evalExpr OpenCLFunction.FunKind q(OpenCLFunction.FunKind) (← mkAppOptM ``OpenCL.OpenCLFunction.kind #[none, f, inst])
-    let _definition? ← unsafe evalExpr (Option String) q(Option String) (← mkAppOptM ``OpenCL.OpenCLFunction.definition? #[none, f, inst])
-    return .some { name, kind }
-  catch e =>
-    throwError e.toMessageData
+  let inst ← whnf inst
+  let name ← evalExpr' String (← whnf (inst.proj ``OpenCLFunction 0))
+  let kind ← evalExpr' OpenCLFunction.FunKind (← whnf (inst.proj ``OpenCLFunction 1))
+  let _definition? ← evalExpr' (Option String) (← whnf (inst.proj ``OpenCLFunction 2))
+  return .some { name, kind }
 
 
 def getOpenCLApp? (e : Expr) (doWhnf := false) :
@@ -256,10 +263,19 @@ def addOpenCLFunction (f : Expr) (name : String) (kind : OpenCLFunction.FunKind)
   let kindExpr := toExpr kind
   let defExpr ← mkAppM ``Option.some #[mkStrLit definition]
 
-  let type ← mkAppM ``OpenCL.OpenCLFunction #[f] >>= instantiateMVars
-  let val ← mkAppOptM ``OpenCL.OpenCLFunction.mk #[none, f, nameExpr, kindExpr, defExpr] >>= instantiateMVars
+  let vars := (← (f.collectFVars.run {})).2.fvarIds.map (Expr.fvar)
+  let val ← mkAppOptM ``OpenCL.OpenCLFunction.mk #[none, f, nameExpr, kindExpr, defExpr]
+    >>= mkLambdaFVars vars
+    >>= instantiateMVars
+  let type ← inferType val >>= instantiateMVars
 
-  let name := s!"instOpenCLFunction{name.capitalize}".toName
+  let name ← mkUniqueDeclName (s!"instOpenCLFunction{name.capitalize}".toName)
+
+  if val.hasFVar then
+    throwError m!"can't add open cl function, it has free variable\n{val}\n{← inferType val}"
+
+  if type.hasFVar then
+    throwError m!"can't add open cl function, the type has free variable\n{val}\n{← inferType val}"
 
   let decl : Declaration := .defnDecl {
     name := name
@@ -270,8 +286,11 @@ def addOpenCLFunction (f : Expr) (name : String) (kind : OpenCLFunction.FunKind)
     safety := .safe
   }
 
+  try
   addAndCompile decl
   addInstance name .global 1000
+  catch e =>
+    throwError m!"failed to compile {f}\n{e.toMessageData}"
 
 
 -- #opencl_print

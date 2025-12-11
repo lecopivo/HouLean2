@@ -8,6 +8,7 @@ open HouLean OpenCL
 
 namespace Tests.OpenCL.Basic
 
+
 /--
 info:
 float houlean_math_lerp_ff(float x, float y, float t)
@@ -118,3 +119,27 @@ matrix33f (anonymous)(matrix33f x, matrix33f y)
   let a := x + y
   let b := Math.lerp x y (0.3 : Float32)
   a + b)
+
+
+set_option linter.unusedVariables false in
+abbrev Foo (n : Nat) := Float
+
+def foo (n : Nat) (x : Foo n) : Float :=
+  let a := x + x
+  a
+
+/--
+info:
+double tests_opencl_basic_foo(uint n, double x)
+{
+    double a = x + x;
+    return a;
+}
+
+double (anonymous)(uint n, double x)
+{
+    return tests_opencl_basic_foo(n, x);
+}
+-/
+#guard_msgs in
+#opencl_compile foo

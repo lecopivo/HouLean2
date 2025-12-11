@@ -2,23 +2,6 @@ import HouLean.Data.Float
 
 namespace HouLean
 
-def FloatP (prec : Float.Precision) :=
-  match prec with
-  | .single => Float32
-  | .double => Float64
-
-instance : Max Float.Precision where
-  max p q :=
-    match p, q with
-    | .single, .single => .single
-    | _, _ => .double
-
-instance : LE Float.Precision where
-  le p q :=
-    match p, q with
-    | .double, .single => False
-    | _, _ => True
-
 instance {prec} : FloatType (FloatP prec) :=
   match prec with
   | .single => inferInstanceAs (FloatType Float32)
@@ -31,7 +14,7 @@ instance : Coe Float64 (FloatP .double) := ⟨fun x => x⟩
 
 /-- Cast precision of a floating point number. Only cast to higher precisions is allowed. -/
 @[inline]
-def FloatP.precCast (x : FloatP p) (q : Float.Precision) (h : p ≤ q := by (try simp (config := {zetaDelta := true}) [max,LE.le]); (try grind)) : FloatP q :=
+def FloatP.precCast (x : FloatP p) (q : Precision) (h : p ≤ q := by (try simp (config := {zetaDelta := true}) [max,LE.le]); (try grind)) : FloatP q :=
   match p, q, h with
   | .single, .single, _ => x
   | .single, .double, _ => x.toFloat

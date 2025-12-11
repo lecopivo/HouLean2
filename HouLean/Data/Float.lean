@@ -12,6 +12,7 @@ inductive _root_.Float.Precision where
   | double -- 64 bit
   -- | quadruple -- 128 bit
   -- | octuple -- 256 bit
+deriving Repr, BEq
 
 /-- Interface for `Float32` and `Float64` -/
 class FloatType (R : Type) extends
