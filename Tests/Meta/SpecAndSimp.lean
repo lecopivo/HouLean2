@@ -9,7 +9,9 @@ import Qq
 
 open Lean Meta Qq HouLean Meta
 
-open OpenCL.Compiler2
+namespace Test.OpenCL.SpecAndSimp
+
+open OpenCL.Compiler3
 def skipImplementedBy (e : Expr) : MetaM Bool := do
   let s := (compilerExt.getState (← getEnv)).implementedBy
   let candidates ← s.getMatch e
@@ -25,7 +27,7 @@ def skipImplementedBy (e : Expr) : MetaM Bool := do
             skip := true
       if skip then
         continue
-      logInfo m!"skipping specialization of {e}"
+      -- logInfo m!"skipping specialization of {e}"
       return true
   return false
 
@@ -36,7 +38,7 @@ def foo {α} [Add α] [Mul α] (x : α) :=
   a + b + x
 
 -- set_option trace.Meta.Tactic.simp true
-set_option trace.HouLean.specialize true
+
 #eval foo 10
 
 attribute [opencl_csimp] Nat.add_zero Nat.zero_add
