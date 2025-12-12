@@ -120,6 +120,7 @@ import HouLean.OpenCL.Compiler.Grammar
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Compiler.Main2
 import HouLean.OpenCL.Compiler.Parser
+import HouLean.OpenCL.Compiler.RewriteRules
 import HouLean.OpenCL.Compiler.Types
 import HouLean.OpenCL.Data.ArrayRef
 import HouLean.OpenCL.Data.ArrayType
@@ -139,6 +140,7 @@ import HouLean.OpenCL.Data.Unit
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Volume
 import HouLean.OpenCL.Kernel.Basic
+import HouLean.OpenCL.Reference.Operators
 import HouLean.OpenCL.WorkItemFunctions
 import HouLean.Python.Grammar
 import HouLean.Python.Translation

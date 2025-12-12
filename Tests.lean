@@ -23,6 +23,7 @@ import Tests.OpenCL.IfThenElse
 import Tests.OpenCL.MPM
 import Tests.OpenCL.Matrix
 -- import Tests.OpenCL.P2G
+import Tests.OpenCL.RewriteRules
 import Tests.OpenCL.Vector
 import Tests.Python.Basic
 import Tests.Python.Block
