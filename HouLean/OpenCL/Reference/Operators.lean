@@ -57,12 +57,20 @@ impl_by [AtomicOpenCLType R] [AndOp R] : x &&& y ==> x & y
 impl_by [AtomicOpenCLType R] [AndOp R] : x &&& y ==> x & y
 
 -- '>'
+impl_by : decide (a > b) ==> a > b
+impl_by [AtomicOpenCLType R] [LT R] [DecidableLT R] : decide (x > y) ==> x > y
 
 -- '<'
+impl_by : decide (a < b) ==> a < b
+impl_by [AtomicOpenCLType R] [LT R] [DecidableLT R] : decide (x < y) ==> x < y
 
 -- '>='
+impl_by : decide (a ≥ b) ==> a >= b
+impl_by [AtomicOpenCLType R] [LE R] [DecidableLE R] : decide (x ≥ y) ==> x >= y
 
 -- '<='
+impl_by : decide (a ≤ b) ==> a <= b
+impl_by [AtomicOpenCLType R] [LE R] [DecidableLE R] : decide (x ≤ y) ==> x <= y
 
 -- '|'
 impl_by [AtomicOpenCLType R] [OrOp R] : x ||| y ==> x | y
@@ -70,7 +78,6 @@ impl_by [AtomicOpenCLType R] [OrOp R] : x ||| y ==> x | y
 -- '!'
 impl_by : !a ==> !a
 impl_by : decide (¬a) ==> !a
-
 
 
 -- '&&'
@@ -96,8 +103,4 @@ impl_by [AtomicOpenCLType R] [ShiftLeft R]  : x <<< y ==> x << y
 
 -- 'op='
 
-
 -- 'sizeof'
-
-
-impl_by (b : Bool) : decide (b = true) ==> b
