@@ -22,11 +22,15 @@ structure State where
 
 abbrev M := ReaderT Context <| StateT State SimpM
 
+instance : MonadRecDepth M where
+  withRecDepth n x := fun ctx s => MonadRecDepth.withRecDepth n (x ctx s)
+  getRecDepth := liftM (m := SimpM) <| MonadRecDepth.getRecDepth
+  getMaxRecDepth := liftM (m := SimpM) <| MonadRecDepth.getMaxRecDepth
+
 -- forward declare `specializeAndSimp`
 initialize specializeAndSimpRef : IO.Ref (Expr → M Expr) ← IO.mkRef (fun e => pure e)
 def specializeAndSimp (e : Expr) : M Expr := do
   (← specializeAndSimpRef.get) e
-
 
 
 def getTheorems (attr : Name) : MetaM SimpTheorems := do
@@ -54,9 +58,13 @@ simproc_decl let_stopper_simproc (_) := fun e => do
 
 def M.runInMeta (x : M α)
    (config : Config := {}) (simpConfig : Simp.Config := {})
-   (simpAttrs : Array Name := #[])  : MetaM α := do
+   (simpAttrs : Array Name := #[])
+   (skipSpec : Expr → MetaM Bool) : MetaM α := do
 
-  let ctx : SpecializeAndSimp.Context := { config := config }
+  let ctx : SpecializeAndSimp.Context := {
+    config := config,
+    skipSpecialization := skipSpec
+  }
   let s : SpecializeAndSimp.State := {}
 
   -- todo: always include `let_stopper_simproc`
@@ -75,8 +83,9 @@ end SpecializeAndSimp
 open SpecializeAndSimp in
 def specializeAndSimp (e : Expr)
      (config : SpecializeAndSimp.Config := {}) (simpConfig : Simp.Config := {})
-     (simpAttrs : Array Name := #[]) : MetaM Expr := do
-  (SpecializeAndSimp.specializeAndSimp e).runInMeta config simpConfig simpAttrs
+     (simpAttrs : Array Name := #[])
+     (skipSpec : Expr → MetaM Bool) : MetaM Expr := do
+  (SpecializeAndSimp.specializeAndSimp e).runInMeta config simpConfig simpAttrs skipSpec
 
 
 
