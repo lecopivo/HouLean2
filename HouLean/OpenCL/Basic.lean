@@ -316,6 +316,7 @@ noncomputable
 instance {α} [AtomicOpenCLType α] : Inhabited (Pointer α) :=
   Classical.inhabited_of_nonempty (by infer_instance)
 
+noncomputable
 instance [ty : AtomicOpenCLType α] : OpenCLType (Pointer α) where
   name := ty.name ++ " *"
   shortName := "p" ++ ty.shortName
