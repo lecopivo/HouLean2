@@ -78,12 +78,12 @@ theorem vector_ofFn (f : Fin 3 → α) : Vector.ofFn f = #v[f 0, f 1, f 2] := so
 macro_rules | `(tactic| get_elem_tactic_extensible) => `(tactic| sorry_proof)
 
 
-set_option trace.HouLean.specialize.detail true
-run_meta
-  let e :=
-    q(fun x y z : Float => #v[x,y,z])
+-- set_option trace.HouLean.specialize.detail true
+-- run_meta
+--   let e :=
+--     q(fun x y z : Float => #v[x,y,z])
 
-  lambdaTelescope e fun _ e => do
-  let e' ← specializeAndSimp e {} { zeta := false } #[`opencl_csimp] skipImplementedBy
+--   lambdaTelescope e fun _ e => do
+--   let e' ← specializeAndSimp e {} { zeta := false } #[`opencl_csimp] skipImplementedBy
 
-  logInfo e'
+--   logInfo e'

@@ -14,6 +14,7 @@ import Tests.Meta.AsContextChange
 import Tests.Meta.EnumType
 import Tests.Meta.OverloadedFunction
 import Tests.Meta.ProdLike
+import Tests.Meta.SpecAndSimp
 import Tests.OpenCL.ArrayType
 import Tests.OpenCL.Attribute
 import Tests.OpenCL.Basic

@@ -1,6 +1,6 @@
 import HouLean.OpenCL.Compiler.Grammar
 
-namespace HouLean.OpenCL.Compiler2
+namespace HouLean.OpenCL.Compiler3
 
 /-- Gadget identity function that will stop `simp` from simplifying an expression.
 
