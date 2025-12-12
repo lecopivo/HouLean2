@@ -14,6 +14,9 @@ inductive _root_.Float.Precision where
   -- | octuple -- 256 bit
 deriving Repr, BEq
 
+class Convert (α β : Type) where
+  convert (β) : α → β
+
 /-- Interface for `Float32` and `Float64` -/
 class FloatType (R : Type) extends
     Add R, Sub R, Neg R, Mul R, Div R, One R, Zero R, Inv R, Pow R R,
@@ -34,6 +37,8 @@ class FloatType (R : Type) extends
   decLt : DecidableLT R
   decLe : DecidableLE R
   prec : Float.Precision
+  toNat : R → Nat
+  toInt : R → Int
 
 variable {R} [FloatType R]
 
@@ -67,6 +72,8 @@ instance : FloatType Float where
   decLt := by infer_instance
   decLe := by infer_instance
   prec := .single
+  toNat x := x.toUInt64.toNat
+  toInt x := x.toInt64.toInt
 
 instance : FloatType Float32 where
   inv x := 1.0/x
@@ -93,6 +100,8 @@ instance : FloatType Float32 where
   decLt := by infer_instance
   decLe := by infer_instance
   prec := .double
+  toNat x := x.toUInt64.toNat
+  toInt x := x.toInt64.toInt
 
 def Math.pi {R : Type} [FloatType R] : R := Math.acos (-1.0)
 

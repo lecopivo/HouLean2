@@ -9,7 +9,6 @@ import HouLean.Meta.DoNotation
 
 namespace HouLean.OpenCL
 
-
 structure Frame (R : Type) (dim : Nat) where
   toWorldMatrix : Matrix R (dim+1) (dim+1)
   toFrameMatrix : Matrix R (dim+1) (dim+1)
@@ -78,170 +77,59 @@ instance {write} :
 
 namespace Volume
 
-class Interpolate (Idx Dom Val : Type) (Val' : outParam Type) where
-  interpolate : (Idx → Val) → (Dom → Val')
+class Interpolate (Idx Dom Val : Type) (Val' : outParam Type) (m : Type → Type) where
+  interpolate : (Idx → m Val) → (Dom → m Val')
 
 export Interpolate (interpolate)
 
-instance : Interpolate Int Float Float Float where
-  interpolate data x :=
+instance {m} [Monad m] : Interpolate Nat Float Float Float m where
+  interpolate data x := do
     let xi := x.floor
     let w := x - xi
-    let i := xi.toInt64.toInt
-    Math.lerp (data i) (data (i+1)) w
+    let i := xi.toUInt64.toNat
+    return  Math.lerp (← data i) (← data (i+1)) w
 
-instance [Interpolate Idx Dom Float Float] : Interpolate (Int×Idx) (Float×Dom) Float Float where
+instance {m} [Monad m] [Interpolate Idx Dom Float Float m] :
+    Interpolate (Nat×Idx) (Float×Dom) Float Float m where
   interpolate data x :=
     let (x0, x1) := x
     interpolate (fun i => interpolate (fun idx => data (i, idx)) x1) x0
-
     -- interpolate (fun idx => interpolate (fun i => data (i, idx)) x0) x1
 
+def sample
+    (vol : Volume Float res frame name input (read:=true) write)
+    (p : Vector Float 3) : OpenCLM Float :=
+  -- generated with
+  -- (interpolate (fun ijk : Nat×Nat×Nat => vol[ijk]'sorry_proof) (p[0],p[1],p[2]))
+  -- rewrite_by
+  --   simp -zeta only [interpolate,pure_bind,bind_pure,bind_assoc]
+  --   lift_lets
+  --   simp -zeta only [interpolate,pure_bind,bind_pure,bind_assoc]
+  have xi := p[0].floor;
+  have w := p[0] - xi;
+  have i := xi.toUInt64.toNat;
+  have xi := p[1].floor;
+  have w_1 := p[1] - xi;
+  have i_1 := xi.toUInt64.toNat;
+  have xi := p[2].floor;
+  have w_2 := p[2] - xi;
+  have i_2 := xi.toUInt64.toNat;
+  do
+  let x ← vol[(i, i_1, i_2)]'sorry_proof
+  let x_1 ← vol[(i, i_1, i_2 + 1)]'sorry_proof
+  let x_2 ← vol[(i, i_1 + 1, i_2)]'sorry_proof
+  let x_3 ← vol[(i, i_1 + 1, i_2 + 1)]'sorry_proof
+  let x_4 ← vol[(i + 1, i_1, i_2)]'sorry_proof
+  let x_5 ← vol[(i + 1, i_1, i_2 + 1)]'sorry_proof
+  let x_6 ← vol[(i + 1, i_1 + 1, i_2)]'sorry_proof
+  let x_7 ← vol[(i + 1, i_1 + 1, i_2 + 1)]'sorry_proof
+  return (Math.lerp (Math.lerp (Math.lerp x x_1 w_2) (Math.lerp x_2 x_3 w_2) w_1)
+        (Math.lerp (Math.lerp x_4 x_5 w_2) (Math.lerp x_6 x_7 w_2) w_1) w)
+
+def sampleAndGradient
+    (vol : Volume Float res frame name input (read:=true) write)
+    (p : Vector Float 3) : OpenCLM (Float × Vector Float 3) := do
+  let y ← vol.sample p
+  return (y,0)
+
 end Volume
-
--- use native decide to prove element indices for trivial inequalities like `0<4∧1<4`
-macro_rules | `(tactic| get_elem_tactic_extensible) => `(tactic| sorry_proof)
-
-set_option linter.unusedVariables false
-
-set_option pp.proofs false
-def kernel
-  (res) (frame : Frame Float32 3)
-  (surface : Volume Float32 res frame)
-  (mass    : Volume Float32 res frame (write:=true))
-  (x : Float32)
-  (i : Nat×Nat×Nat)
-  : OpenCLM Unit := do
-
-
-  -- let mut x := x
-  for i in [0:res.x] do
-  for j in [0:res.y] do
-  for k in [0:res.z] do
-  -- --   -- have : i < res.x := by get_elem_tactic
-  -- --   -- have : j < res.y := by get_elem_tactic
-  -- --   -- have : k < res.z := by get_elem_tactic
-    let sdf ← surface[i,j,k]
-    let m ← mass[i,j,k]
-
-    if sdf < 0 then
-      mass[i,j,k] ← 10*m
-
-
-/--
-info:
-uint vector_x_ui3(uint3 a)
-{
-    return a.x;
-}
-
-uint vector_y_ui3(uint3 a)
-{
-    return a.y;
-}
-
-uint vector_z_ui3(uint3 a)
-{
-    return a.z;
-}
-
-float houlean_opencl_arraytype_get_fpf(float * a, ulong a1)
-{
-    return a[a1];
-}
-
-float getelem_pfuif(float * xs, uint i)
-{
-    return houlean_opencl_arraytype_get_fpf(xs, (ulong)(i));
-}
-
-float getelem_voldatafpuipuiuif(volumedataf xs, prod_ui_puiui i)
-{
-    uint idx = ((xs.offset + (vector_x_ui3(xs.stride) * i.fst)) + (vector_y_ui3(xs.stride) * i.snd.fst)) + (vector_z_ui3(xs.stride) * i.snd.snd);
-    return getelem_pfuif(xs.ptr, idx);
-}
-
-float getelem_voldatafpuipuiuif(volumedataf xs, prod_ui_puiui i)
-{
-    uint idx = ((xs.offset + (vector_x_ui3(xs.stride) * i.fst)) + (vector_y_ui3(xs.stride) * i.snd.fst)) + (vector_z_ui3(xs.stride) * i.snd.snd);
-    return getelem_pfuif(xs.ptr, idx);
-}
-
-void houlean_opencl_arraytype_set_fpf(float * a, ulong a1, float a2)
-{
-    return a[a1] = a2;
-}
-
-void houlean_setelemm_pfuif(float * ptr, uint i, float a)
-{
-    return houlean_opencl_arraytype_set_fpf(ptr, (ulong)(i), a);
-}
-
-void houlean_setelemm_voldatafpuipuiuif(volumedataf ptr, prod_ui_puiui i, float a)
-{
-    uint idx = ((ptr.offset + (vector_x_ui3(ptr.stride) * i.fst)) + (vector_y_ui3(ptr.stride) * i.snd.fst)) + (vector_z_ui3(ptr.stride) * i.snd.snd);
-    return houlean_setelemm_pfuif(ptr.ptr, idx, a);
-}
-
-void houlean_opencl_kernel(uint3 res, framef3 frame, volumedataf surface, volumedataf mass, float x, prod_ui_puiui i)
-{
-    for (uint i1 = 0; i1 < vector_x_ui3(res); i1 += 1)
-    {
-        for (uint j = 0; j < vector_y_ui3(res); j += 1)
-        {
-            for (uint k = 0; k < vector_z_ui3(res); k += 1)
-            {
-                float sdf = getelem_voldatafpuipuiuif(surface, (prod_ui_puiui){i1, (prod_ui_ui){j, k}});
-                float m = getelem_voldatafpuipuiuif(mass, (prod_ui_puiui){i1, (prod_ui_ui){j, k}});
-                if (sdf < 0.0f)
-                {
-                    houlean_setelemm_voldatafpuipuiuif(mass, (prod_ui_puiui){i1, (prod_ui_ui){j, k}}, 10.0f * m);
-                }
-                else
-                {
-
-                }
-            }
-            ;
-        }
-        ;
-    }
-    ;
-    return ;
-}
-
-void (anonymous)(uint3 res, framef3 frame, volumedataf surface, volumedataf mass, float x, prod_ui_puiui i)
-{
-    return houlean_opencl_kernel(res, frame, surface, mass, x, i);
-}
--/
-#guard_msgs in
-#opencl_compile kernel
-
-
-
-
--- def kernel
---   {npoints res} {frame : Frame Float32 3}
---   (P   : Attribute .point (Vector Float32 3) npoints (write:=true))
---   (vel : Attribute .point (Vector Float32 3) npoints (write:=true))
---   (surface : Volume Float32 res frame (input:=1))
---   (mass    : Volume Float32 res frame (input:=1))
---   (maxiter : Nat)
---   : OpenCLM Unit := do
-
---   let idx := (← getGlobalId 0).toNat
---   if h : ¬(idx < npoints) then
---     return
---   else
-
---   let mut p ← P[idx]
-
---   for i in [0:maxiter] do
---     let (dist, grad) ← surface.sampleAndGradient p
---     let (normal, gradLength) := grad.normalize
---     if 0 < dist || gradLength ≈ 0 then
---       break
---     p -= dist * normal
-
---   P[idx] ← p

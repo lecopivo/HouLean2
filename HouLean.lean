@@ -118,6 +118,7 @@ import HouLean.OpenCL.Compiler.Code
 import HouLean.OpenCL.Compiler.Extension
 import HouLean.OpenCL.Compiler.Grammar
 import HouLean.OpenCL.Compiler.Main
+import HouLean.OpenCL.Compiler.Main2
 import HouLean.OpenCL.Compiler.Parser
 import HouLean.OpenCL.Compiler.Types
 import HouLean.OpenCL.Data.ArrayRef

@@ -7,6 +7,7 @@ open Compiler Qq
 
 implemented_by : Nat.toUInt32    = oclFunction _ "(uint)"
 implemented_by : UInt64.toUInt32 = oclFunction _ "(uint)"
+implemented_by : UInt32.toNat    = oclFunction _ "" .infix
 
 implemented_by : Nat.toUInt64    = oclFunction _ "(ulong)"
 implemented_by : UInt32.toUInt64 = oclFunction _ "(ulong)"
