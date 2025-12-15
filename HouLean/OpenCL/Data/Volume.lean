@@ -154,7 +154,7 @@ defun linearInterpolate {Idx Dom} [LinearInterpolate Idx Dom Float] {n : Nat}
 
 
 
-
+set_option linter.unusedVariables false in
 declfun linearInterpolateGrad {Idx Dom Val : Type} (f : Idx → Val) (x : Dom) : Val × Dom
 
 defun linearInterpolateGrad {n : Nat} (f : Fin n → Float) (x : Float) : Float × Float :=
@@ -182,7 +182,7 @@ defun linearInterpolateGrad {Idx Dom} [Sub Dom] [Math.Lerp Dom Float]
 
   (Math.lerp y0 y1 w, (y0 - y1, Math.lerp d0 d1 w))
 
-defun linearInterpolateGrad (f : Vector Int 0 → Float) (x : Vector Float 0) : Float × Vector Float 0 :=
+defun linearInterpolateGrad (f : Vector Int 0 → Float) (_ : Vector Float 0) : Float × Vector Float 0 :=
   (f #v[], #v[])
 
 defun linearInterpolateGrad {n} [inst : LinearInterpolateGrad (Vector Int n) (Vector Float n) Float]

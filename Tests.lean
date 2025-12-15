@@ -12,6 +12,7 @@ import Tests.LeanGraph.PortType
 import Tests.Meta.AnonymousStruct
 import Tests.Meta.AsContextChange
 import Tests.Meta.EnumType
+import Tests.Meta.Float
 import Tests.Meta.OverloadedFunction
 import Tests.Meta.ProdLike
 import Tests.Meta.SpecAndSimp
@@ -25,6 +26,7 @@ import Tests.OpenCL.MPM
 import Tests.OpenCL.Matrix
 -- import Tests.OpenCL.P2G
 import Tests.OpenCL.RewriteRules
+import Tests.OpenCL.SpecAndSimp
 import Tests.OpenCL.Vector
 import Tests.Python.Basic
 import Tests.Python.Block

@@ -94,7 +94,7 @@ simproc_decl let_stopper_simproc (_) := fun e => do
 def M.runInMeta (x : M α)
    (config : Config := {}) (simpConfig : Simp.Config := {})
    (simpAttrs : Array Name := #[])
-   (customSpec : Expr → M (Option Expr)) : MetaM α := do
+   (customSpec : Expr → M (Option Expr)) : MetaM (α × State) := do
 
   let ctx : SpecializeAndSimp.Context := {
     config := config,
@@ -112,9 +112,9 @@ def M.runInMeta (x : M α)
   -- todo: always include `let_stopper_simproc`
   let simpMthds := Simp.mkDefaultMethodsCore (← simpAttrs.mapM getSimprocs)
 
-  let ((r, _), _) ← x mthds ctx s simpMthds.toMethodsRef simpCtx |>.run simpState
+  let ((r, s), _) ← x mthds ctx s simpMthds.toMethodsRef simpCtx |>.run simpState
 
-  return r
+  return (r,s)
 
 
 end SpecializeAndSimp
@@ -124,4 +124,5 @@ def specializeAndSimp (e : Expr)
     (config : SpecializeAndSimp.Config := {}) (simpConfig : Simp.Config := {})
     (simpAttrs : Array Name := #[])
     (customSpec : Expr → M (Option Expr) := fun _ => return none) : MetaM Expr := do
-  (SpecializeAndSimp.specializeAndSimp e).runInMeta config simpConfig simpAttrs customSpec
+  let (r,_) ← (SpecializeAndSimp.specializeAndSimp e).runInMeta config simpConfig simpAttrs customSpec
+  return r

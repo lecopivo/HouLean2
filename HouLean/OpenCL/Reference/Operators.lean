@@ -64,6 +64,7 @@ impl_by [AtomicOpenCLType R] [LT R] [DecidableLT R] : decide (x > y) ==> x > y
 impl_by : decide (a < b) ==> a < b
 impl_by [AtomicOpenCLType R] [LT R] [DecidableLT R] : decide (x < y) ==> x < y
 
+
 -- '>='
 impl_by : decide (a ≥ b) ==> a >= b
 impl_by [AtomicOpenCLType R] [LE R] [DecidableLE R] : decide (x ≥ y) ==> x >= y
@@ -78,15 +79,18 @@ impl_by [AtomicOpenCLType R] [OrOp R] : x ||| y ==> x | y
 -- '!'
 impl_by : !a ==> !a
 impl_by : decide (¬a) ==> !a
-
+@[opencl_csimp]
+theorem decide_not (P : Prop) [Decidable P] : decide (¬P) = !(decide P) := by simp only [_root_.decide_not]
 
 -- '&&'
 impl_by (a b : Bool) : a && b ==> a && b
-example {P Q} [Decidable P] [Decidable Q] : decide (P ∧ Q) = decide P && decide Q := sorry_proof
+@[opencl_csimp]
+theorem decide_and {P Q} [Decidable P] [Decidable Q] : (decide (P ∧ Q)) = (decide P && decide Q) := sorry_proof
 
 -- '||'
 impl_by (a b : Bool) : a || b ==> a || b
-example {P Q} [Decidable P] [Decidable Q] : decide (P ∨ Q) = decide P || decide Q := sorry_proof
+@[opencl_csimp]
+theorem decide_or {P Q} [Decidable P] [Decidable Q] : (decide (P ∨ Q)) = (decide P || decide Q) := sorry_proof
 
 
 -- '?:'

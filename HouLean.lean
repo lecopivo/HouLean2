@@ -110,6 +110,7 @@ import HouLean.Meta.OverloadedFunction
 import HouLean.Meta.ParamStruct
 import HouLean.Meta.ProdLike
 import HouLean.Meta.RewriteBy
+import HouLean.Meta.RunInterpreter
 import HouLean.Meta.SimpTheoremName
 import HouLean.Meta.SpecializeAndSimp.Extension
 import HouLean.Meta.SpecializeAndSimp.Main
@@ -124,6 +125,7 @@ import HouLean.OpenCL.Compiler.Grammar
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Compiler.Parser
 import HouLean.OpenCL.Compiler.RewriteRules
+import HouLean.OpenCL.Compiler.SpecAndSimp
 import HouLean.OpenCL.Compiler.Types
 import HouLean.OpenCL.Data.ArrayRef
 import HouLean.OpenCL.Data.ArrayType
@@ -142,8 +144,16 @@ import HouLean.OpenCL.Data.Prod
 import HouLean.OpenCL.Data.Unit
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Volume
+import HouLean.OpenCL.Data2.Vector
 import HouLean.OpenCL.Kernel.Basic
+import HouLean.OpenCL.Reference
+import HouLean.OpenCL.Reference.CommonBuiltInFunctions
+import HouLean.OpenCL.Reference.DataTypes
+import HouLean.OpenCL.Reference.GeometricBuiltInFunctions
+import HouLean.OpenCL.Reference.MathBuilInFuctions
 import HouLean.OpenCL.Reference.Operators
+import HouLean.OpenCL.Reference.VectorComponentAddressing
+import HouLean.OpenCL.Reference.WorkItermFunctions
 import HouLean.OpenCL.WorkItemFunctions
 import HouLean.Python.Grammar
 import HouLean.Python.Translation

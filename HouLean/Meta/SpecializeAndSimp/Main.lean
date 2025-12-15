@@ -1,5 +1,6 @@
 import HouLean.Meta.SpecializeAndSimp.Types
 import HouLean.Meta.OverloadedFunction
+import HouLean.Meta.RunInterpreter
 import Lean
 import Qq
 
@@ -160,6 +161,10 @@ partial def specializeExprImpl (e : Expr) : M Expr := do
   withConfig (fun cfg => {cfg with zeta := false, zetaDelta := false}) do
   let e ← instantiateMVars e
   trace[HouLean.specialize] m!"{e}"
+
+  if let some val ← runInterpreterForPrimitiveTypes? e then
+    return toExpr val
+
   if ← skipSpecialization e then
     return e
 

@@ -1,6 +1,6 @@
 import HouLean.OpenCL.Compiler.RewriteRules
 
-open Lean Meta HouLean OpenCL Compiler Compiler3 Math
+open Lean HouLean Meta OpenCL Compiler Compiler3 Math
 
 namespace HouLean.OpenCL
 

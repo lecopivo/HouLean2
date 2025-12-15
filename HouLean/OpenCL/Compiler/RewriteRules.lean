@@ -1,4 +1,7 @@
 import HouLean.OpenCL.Compiler.Grammar
+import HouLean.Meta.RunInterpreter
+
+open HouLean.Meta
 
 namespace HouLean.OpenCL.Compiler3
 
@@ -133,12 +136,12 @@ def runBuilder (xs : Array Expr) (builder : ImplementedByBuilder) : MetaM (TSynt
   return ← b xs
 
 
-def runInterpreter? (α : Type) [t : ToExpr α] (val : Expr) : MetaM (Option α) := do
-  try
-    let val ← unsafe evalExpr α t.toTypeExpr val
-    return some val
-  catch _ =>
-    return none
+-- def runInterpreter? (α : Type) [t : ToExpr α] (val : Expr) : MetaM (Option α) := do
+--   try
+--     let val ← unsafe evalExpr α t.toTypeExpr val
+--     return some val
+--   catch _ =>
+--     return none
 
 
 partial def compileExpr (e : Expr) : MetaM (TSyntax `oclExpr) := do
