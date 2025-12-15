@@ -1,6 +1,7 @@
 import HouLean.Meta.SpecializeAndSimp.Types
 import HouLean.Meta.OverloadedFunction
 import Lean
+import Qq
 
 open Lean Meta
 
@@ -31,6 +32,26 @@ private def shouldAddToMangledName (type : Expr) : MetaM Bool := do
   if (← inferType type).isProp then return false
   return true
 
+open Qq in
+def maybeEvalWithInterpreter (e : Expr) : MetaM Expr := do
+  let type ← inferType e
+
+  try
+    if (← isDefEq type q(Nat)) then
+      let val ← unsafe evalExpr' Nat ``Nat e
+      return mkNatLit val
+
+    if (← isDefEq type q(Nat)) then
+      let val ← unsafe evalExpr' String ``String e
+      return mkStrLit val
+
+    -- nothing applies
+    return e
+  catch _ =>
+
+    -- can't evaluate
+    return e
+
 /-- Specialize a function application by consuming compile-time known arguments. -/
 def specializeFunApp (fn : Expr) (args : Array Expr) : MetaM FunSpecializationResult := do
   let some funName := fn.constName?
@@ -54,12 +75,14 @@ where
       return (f, remainingArgs, nameParts)
     | arg :: rest =>
       if !(arg.hasFVar || arg.hasMVar) then
+        let arg ← maybeEvalWithInterpreter arg
         -- Arg is compile-time known, consume it via beta reduction
         let type ← inferType arg
-        let nameParts ← if ← shouldAddToMangledName type then
-          pure (nameParts.push (← exprToString arg))
-        else
-          pure nameParts
+        let nameParts ←
+          if ← shouldAddToMangledName type then
+            pure (nameParts.push (← exprToString arg))
+          else
+            pure nameParts
         go (e.beta #[arg]) rest vars remainingArgs nameParts
       else
         -- Arg has free/meta vars, keep it as a parameter
@@ -70,6 +93,7 @@ where
 def addSpecialization (s : Specialization) : M Unit :=
   modify fun state => { state with
     specializations := state.specializations.insert s.fn s
+    specOrder := state.specOrder.push s.specializationName
   }
 
 /-- Unfold a definition, handling projections specially. -/
@@ -84,6 +108,7 @@ private def unfoldDef (e : Expr) (declName : Name) : MetaM Expr := do
 
 /-- Define a new specialized function and register it. -/
 partial def defineNewSpecialization (r : FunSpecializationResult) : M (Option Name) := do
+  withTraceNode `HouLean.specialize (fun res => return m!"[{exceptEmoji res}] Specializing {r.fn'} : {← inferType r.fn'}") do
   forallTelescope (← inferType r.fn') fun xs _ => do
     let body := r.fn'.beta xs
     let body' ← unfoldDef body r.funName
@@ -123,17 +148,23 @@ private def skipSpecialization (e : Expr) : M Bool := do
   let type ← inferType e
   if (← isClass? type).isSome then return true
   if (← inferType type).isProp then return true
-  if ← (← read).skipSpecialization e then return true
+  if ← isMatcherApp e then return true
+  if let some decl := e.getAppFn.constName? then
+    if ← isRecursiveDefinition decl then
+      return true
   return false
 
 /-- Recursively specialize an expression. -/
-partial def specializeExpr (e : Expr) : M Expr := do
+partial def specializeExprImpl (e : Expr) : M Expr := do
+  -- there is some zetaDelta reduction happening somewhere :( not sure where
+  withConfig (fun cfg => {cfg with zeta := false, zetaDelta := false}) do
   let e ← instantiateMVars e
   trace[HouLean.specialize] m!"{e}"
   if ← skipSpecialization e then
-    let (fn, args) := e.withApp (·, ·)
-    let args ← args.mapM specializeExpr
-    return fn.beta args
+    return e
+
+  if let some e ← customSpec e then
+    return e
 
   match e with
   | .app .. =>
@@ -141,9 +172,11 @@ partial def specializeExpr (e : Expr) : M Expr := do
     match fn with
     | .const .. =>
       let r ← specializeFunApp fn args
+
+      -- run specialization on the arguments
       let args' ← r.args'.mapM specializeExpr
 
-      -- No specialization needed
+      -- No specialization of the function needed
       if fn == r.fn' then
         return r.fn'.beta args'
 
@@ -151,11 +184,11 @@ partial def specializeExpr (e : Expr) : M Expr := do
       let specs := (← get).specializations
       if let some spec := specs[r.fn']? then
         trace[HouLean.specialize.detail] "reusing specialization {spec.specializationName}"
-        return ← mkAppM spec.specializationName args'
+        return ← mkAppOptM spec.specializationName (args'.map some)
 
       -- Create new specialization
       if let some specName ← defineNewSpecialization r then
-        return ← mkAppM specName args'
+        return ← mkAppOptM specName (args'.map some)
       else
         return r.fn'.beta args'
 
@@ -166,9 +199,15 @@ partial def specializeExpr (e : Expr) : M Expr := do
         let args' ← args.mapM specializeExpr
         return mkAppN (.proj typeName idx struct) args'
 
+    | .fvar .. =>
+      let args' ← args.mapM specializeExpr
+      return mkAppN fn args'
+
     | other =>
-      throwError "specializeExpr: unhandled function kind {other.ctorName}"
+      throwError "specializeExpr: unhandled function kind {other.ctorName}, {e}"
   | _ => return e
+
+initialize specializeExprRef.set specializeExprImpl
 
 /-- Main entry point: specialize and simplify an expression. -/
 partial def specializeAndSimpImpl (e : Expr) : M Expr := do

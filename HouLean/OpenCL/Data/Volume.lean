@@ -132,4 +132,71 @@ def sampleAndGradient
   let y ← vol.sample p
   return (y,0)
 
+
+
 end Volume
+
+
+declfun linearInterpolate {Idx Dom Val : Type} (f : Idx → Val) (x : Dom) : Val
+
+defun linearInterpolate {n : Nat} (f : Fin n → Float) (x : Float) : Float :=
+  let xi := x.floor
+  let w := x - xi
+  let i := xi.toUInt64.toNat
+  let i0 : Fin n := ⟨min i (n-1), sorry_proof⟩
+  let i1 : Fin n := ⟨min (i+1) (n-1), sorry_proof⟩
+  Math.lerp (f i0) (f i1) w
+
+defun linearInterpolate {Idx Dom} [LinearInterpolate Idx Dom Float] {n : Nat}
+    (f : Fin n × Idx → Float) (x : Float × Dom) : Float :=
+  let (x0,x1) := x
+  linearInterpolate (fun i => linearInterpolate (fun idx => f (i, idx)) x1) x0
+
+
+
+
+declfun linearInterpolateGrad {Idx Dom Val : Type} (f : Idx → Val) (x : Dom) : Val × Dom
+
+defun linearInterpolateGrad {n : Nat} (f : Fin n → Float) (x : Float) : Float × Float :=
+  let xi := x.floor
+  let w := x - xi
+  let i := xi.toUInt64.toNat
+  let i0 : Fin n := ⟨min i (n-1), sorry_proof⟩
+  let i1 : Fin n := ⟨min (i+1) (n-1), sorry_proof⟩
+  let y0 := f i0
+  let y1 := f i1
+  (Math.lerp y0 y1 w, y1 - y0)
+
+defun linearInterpolateGrad {Idx Dom} [Sub Dom] [Math.Lerp Dom Float]
+    [LinearInterpolateGrad Idx Dom Float] {n : Nat}
+    (f : Fin n × Idx → Float) (x : Float × Dom) :=
+  let (x0,x1) := x
+
+  let xi := x0.floor
+  let w := x0 - xi
+  let i := xi.toUInt64.toNat
+  let i0 : Fin n := ⟨min i (n-1), sorry_proof⟩
+  let i1 : Fin n := ⟨min (i+1) (n-1), sorry_proof⟩
+  let (y0, d0) := linearInterpolateGrad (fun idx => f (i0, idx)) x1
+  let (y1, d1) := linearInterpolateGrad (fun idx => f (i1, idx)) x1
+
+  (Math.lerp y0 y1 w, (y0 - y1, Math.lerp d0 d1 w))
+
+defun linearInterpolateGrad (f : Vector Int 0 → Float) (x : Vector Float 0) : Float × Vector Float 0 :=
+  (f #v[], #v[])
+
+defun linearInterpolateGrad {n} [inst : LinearInterpolateGrad (Vector Int n) (Vector Float n) Float]
+    (f : Vector Int (n+1) → Float) (x : Vector Float (n+1)) : Float × Vector Float (n+1) :=
+  let x0 := x[n]
+  let x1 := x.pop
+
+  let xi := x0.floor
+  let w := x0 - xi
+  let i := xi.toInt64.toInt
+  let i0 : Int := i
+  let i1 : Int := i+1
+  have : LinearInterpolateGrad (Vector Int n) (Vector Float (n + 1 - 1)) Float := inst
+  let (y0, d0) := linearInterpolateGrad (fun idx : Vector Int n => f (idx.push i0)) x1
+  let (y1, d1) := linearInterpolateGrad (fun idx : Vector Int n => f (idx.push i1)) x1
+
+  (Math.lerp y0 y1 w, (Math.lerp d0 d1 w).push (y0 - y1))

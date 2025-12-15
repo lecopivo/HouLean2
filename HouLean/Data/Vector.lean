@@ -104,7 +104,7 @@ instance {R} [FloatType R] : ApproxEqual (Vector R n) R where
 
 variable [Add α] [Sub α] [Mul α] [Div α] [Zero α] [Inv α]
 
-defun dot (u v : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*v[i])
+defun dot (u v : Vector α n) : α := ∑ (i : Fin n), u[i]*v[i]
 -- todo: unify the to `cross` once defun works for these
 def cross2 (u v : Vector α 2) : α := u.x * v.y - u.y * v.x
 def cross3 (u v : Vector α 3) : Vector α 3 :=
