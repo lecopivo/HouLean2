@@ -24,8 +24,7 @@ structure FunSpecializationResult where
   mangledName : Name
 
 private def exprToString (e : Expr) : MetaM String := do
-  let e ← whnf e
-  return toString (← ppExpr e)
+  return toString (← ppExpr e) |>.replace " " "_" |>.replace "." "_" |>.replace "-" "_"
 
 /-- Check if an argument should contribute to the mangled name. -/
 private def shouldAddToMangledName (type : Expr) : MetaM Bool := do
@@ -35,23 +34,9 @@ private def shouldAddToMangledName (type : Expr) : MetaM Bool := do
 
 open Qq in
 def maybeEvalWithInterpreter (e : Expr) : MetaM Expr := do
-  let type ← inferType e
-
-  try
-    if (← isDefEq type q(Nat)) then
-      let val ← unsafe evalExpr' Nat ``Nat e
-      return mkNatLit val
-
-    if (← isDefEq type q(Nat)) then
-      let val ← unsafe evalExpr' String ``String e
-      return mkStrLit val
-
-    -- nothing applies
-    return e
-  catch _ =>
-
-    -- can't evaluate
-    return e
+  if let some val ← runInterpreterForPrimitiveTypes? e then
+    return toExpr val
+  return e
 
 /-- Specialize a function application by consuming compile-time known arguments. -/
 def specializeFunApp (fn : Expr) (args : Array Expr) : MetaM FunSpecializationResult := do
@@ -180,6 +165,9 @@ partial def specializeExprImpl (e : Expr) : M Expr := do
 
       -- run specialization on the arguments
       let args' ← r.args'.mapM specializeExpr
+
+      if [``ite, ``dite, ``forIn, ``LT.lt, ``LE.le].contains r.funName then
+        return r.fn'.beta args'
 
       -- No specialization of the function needed
       if fn == r.fn' then

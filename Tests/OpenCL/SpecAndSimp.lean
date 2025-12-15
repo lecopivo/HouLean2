@@ -23,7 +23,7 @@ Resulting specialization:
   u.dot_Float_3 v
 -/
 #guard_msgs in
-#opencl_ssimp u.dot v
+#opencl_sas u.dot v
 
 
 -- todo: why is it flipping inequalities ?? :(
@@ -32,14 +32,14 @@ info: Resulting specialization:
   decide (y > x)
 -/
 #guard_msgs in
-#opencl_ssimp (decide (x < y))
+#opencl_sas (decide (x < y))
 
 /--
 info: Resulting specialization:
   decide (x > y)
 -/
 #guard_msgs in
-#opencl_ssimp (decide (x > y))
+#opencl_sas (decide (x > y))
 
 
 /--
@@ -47,14 +47,14 @@ info: Resulting specialization:
   !(decide (y > x) && decide (x > 0e0))
 -/
 #guard_msgs in
-#opencl_ssimp decide (¬(x < y ∧ 0 < x))
+#opencl_sas decide (¬(x < y ∧ 0 < x))
 
 /--
 info: Resulting specialization:
   -0.1343
 -/
 #guard_msgs in
-#opencl_ssimp (-134.3e-3 : Float)
+#opencl_sas (-134.3e-3 : Float)
 
 /--
 info: HouLean.Math.CatmullRom.catmullRom_Float_Float:
@@ -67,7 +67,7 @@ Resulting specialization:
   CatmullRom.catmullRom_Float_Float (exp (sin x)) x y (x + y) x
 -/
 #guard_msgs in
-#opencl_ssimp (catmullRom (exp (sin x)) x y (x + y) x)
+#opencl_sas (catmullRom (exp (sin x)) x y (x + y) x)
 
 
 /--
@@ -86,14 +86,14 @@ fun p0 p1 t0 t1 t =>
   #v[Hermite.hermite_Float_Float p0[0] p1[0] t0[0] t1[0] t, Hermite.hermite_Float_Float p0[1] p1[1] t0[1] t1[1] t,
     Hermite.hermite_Float_Float p0[2] p1[2] t0[2] t1[2] t]
 
-HouLean.Math.Hermite.«hermite_Vector Float 3_Float»:
+HouLean.Math.Hermite.hermite_Vector_Float_3_Float:
 fun p0 p1 t0 t1 t => p0.hermite_Float_3 p1 t0 t1 t
 
 Resulting specialization:
-  Hermite.«hermite_Vector Float 3_Float» u v (u + v) (3e0 * u) x
+  Hermite.hermite_Vector_Float_3_Float u v (u + v) (3e0 * u) x
 -/
 #guard_msgs in
-#opencl_ssimp (hermite u v (u+v) ((3.0:Float)*u) x)
+#opencl_sas (hermite u v (u+v) ((3.0:Float)*u) x)
 
 
 /--
@@ -104,7 +104,7 @@ info: Resulting specialization:
   a
 -/
 #guard_msgs in
-#opencl_ssimp (∑ (i : Fin 3), v[i])
+#opencl_sas (∑ (i : Fin 3), v[i])
 
 
 /--
@@ -112,186 +112,77 @@ info: Resulting specialization:
   #v[sin v[0], sin v[1], sin v[2]]
 -/
 #guard_msgs in
-#opencl_ssimp (v.map sin)
+#opencl_sas (v.map sin)
 
 
 /--
 info: Vector.zero_Float_3:
-#v[0, 0, 0]
+#v[0e0, 0, 0]
 
-Zero.«zero_Vector Float (instOfNatNat 3).1»:
+Zero.«zero_Vector_Float_(instOfNatNat_3)_1»:
 Vector.zero_Float_3
 
-OfNat.«ofNat_Vector Float 3_0»:
-Zero.«zero_Vector Float (instOfNatNat 3).1»
+OfNat.ofNat_Vector_Float_3_0:
+Zero.«zero_Vector_Float_(instOfNatNat_3)_1»
 
 Resulting specialization:
-  OfNat.«ofNat_Vector Float 3_0»
+  OfNat.ofNat_Vector_Float_3_0
 -/
 #guard_msgs in
-#opencl_ssimp (0 : Vector Float 3)
+#opencl_sas (0 : Vector Float 3)
 
 
 /--
 info: Resulting specialization:
-  #v[1, 1, 1]
+  #v[1e0, 1, 1]
 -/
 #guard_msgs in
-#opencl_ssimp (.replicate _ 1 : Vector Float 3)
+#opencl_sas (.replicate _ 1 : Vector Float 3)
 
+/--
+info: Resulting specialization:
+  let a := v[0];
+  let a := a + v[1];
+  let a := a + v[2];
+  a
+-/
+#guard_msgs in
+#opencl_sas (v.foldl (·+·) 0)
 
 
 /--
-info: Vector.toArray_Float_3:
-fun self => self.1
-
-Array.size_Float:
-fun a => a.toList.length
-
-LE.le_Nat:
-fun a a_1 => a.le a_1
-
-dite_Float:
-fun c [h : Decidable c] t e => Decidable.rec (fun h => e h) (fun h => t h) h
-
-Array.«foldlM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»:
-fun as stop =>
-  let fold := fun stop h => Array.foldlM.loop (fun x1 x2 => pure (x1 + x2)) as stop h (stop - 0) 0 0;
-  dite_Float (LE.le_Nat stop as.size_Float) (fun h => fold stop h) fun h => fold as.size ⋯
-
-Array.«foldl_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»:
-fun as stop => as.«foldlM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0» stop
-
-Vector.«foldl_Float_Float_3_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0»:
-fun xs =>
-  xs.toArray_Float_3.«foldl_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»
-    xs.toArray_Float_3.size_Float
-
-Resulting specialization:
-  v.«foldl_Float_Float_3_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0»
----
-error: code generator does not support recursor `Decidable.rec` yet, consider using 'match ... with' and/or structural recursion
----
-error: failed to compile definition, compiler IR check failed at `Array.«foldlM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»`. Error: depends on declaration 'dite_Float', which has no executable code; consider marking definition as 'noncomputable'
----
-error: failed to compile definition, compiler IR check failed at `Array.«foldl_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»`. Error: depends on declaration 'Array.«foldlM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»', which has no executable code; consider marking definition as 'noncomputable'
----
-error: failed to compile definition, compiler IR check failed at `Vector.«foldl_Float_Float_3_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0»`. Error: depends on declaration 'Array.«foldl_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»', which has no executable code; consider marking definition as 'noncomputable'
+info: Resulting specialization:
+  let a := v[2];
+  let a := v[1] + a;
+  let a := v[0] + a;
+  a
 -/
 #guard_msgs in
-#opencl_ssimp (v.foldl (·+·) 0)
-
-
-
-
+#opencl_sas (v.foldr (·+·) 0)
 
 /--
-info: Vector.toArray_Float_3:
-fun self => self.1
-
-Array.size_Float:
-fun a => a.toList.length
-
-LE.le_Nat:
-fun a a_1 => a.le a_1
-
-dite_Float:
-fun c [h : Decidable c] t e => Decidable.rec (fun h => e h) (fun h => t h) h
-
-Array.«foldrM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»:
-fun as start =>
-  dite_Float (LE.le_Nat start as.size_Float)
-    (fun h => if 0 < start then Array.foldrM.fold (fun x1 x2 => pure (x1 + x2)) as 0 start h 0 else pure 0) fun h =>
-    if 0 < as.size then Array.foldrM.fold (fun x1 x2 => pure (x1 + x2)) as 0 as.size ⋯ 0 else pure 0
-
-Array.«foldr_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»:
-fun as start =>
-  as.«foldrM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0» start
-
-Vector.«foldr_Float_Float_3_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0»:
-fun xs =>
-  xs.toArray_Float_3.«foldr_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»
-    xs.toArray_Float_3.size_Float
-
-Resulting specialization:
-  v.«foldr_Float_Float_3_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0»
----
-error: code generator does not support recursor `Decidable.rec` yet, consider using 'match ... with' and/or structural recursion
----
-error: failed to compile definition, compiler IR check failed at `Array.«foldrM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»`. Error: depends on declaration 'dite_Float', which has no executable code; consider marking definition as 'noncomputable'
----
-error: failed to compile definition, compiler IR check failed at `Array.«foldr_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»`. Error: depends on declaration 'Array.«foldrM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»', which has no executable code; consider marking definition as 'noncomputable'
----
-error: failed to compile definition, compiler IR check failed at `Vector.«foldr_Float_Float_3_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0»`. Error: depends on declaration 'Array.«foldr_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»', which has no executable code; consider marking definition as 'noncomputable'
+info: Resulting specialization:
+  let a := u[0];
+  let a := a + u[1];
+  let a := a + u[2];
+  a
 -/
 #guard_msgs in
-#opencl_ssimp (v.foldr (·+·) 0)
-
-
-
-/--
-info: Vector.toArray_Float_3:
-fun self => self.1
-
-Array.size_Float:
-fun a => a.toList.length
-
-LE.le_Nat:
-fun a a_1 => a.le a_1
-
-dite_Float:
-fun c [h : Decidable c] t e => Decidable.rec (fun h => e h) (fun h => t h) h
-
-Array.«foldrM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»:
-fun as start =>
-  dite_Float (LE.le_Nat start as.size_Float)
-    (fun h => if 0 < start then Array.foldrM.fold (fun x1 x2 => pure (x1 + x2)) as 0 start h 0 else pure 0) fun h =>
-    if 0 < as.size then Array.foldrM.fold (fun x1 x2 => pure (x1 + x2)) as 0 as.size ⋯ 0 else pure 0
-
-Array.«foldr_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»:
-fun as start =>
-  as.«foldrM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0» start
-
-Array.sum_Float:
-fun a => a.«foldr_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0» a.size_Float
-
-Vector.sum_Float_3:
-fun xs => xs.toArray_Float_3.sum_Float
-
-Resulting specialization:
-  u.sum_Float_3
----
-error: code generator does not support recursor `Decidable.rec` yet, consider using 'match ... with' and/or structural recursion
----
-error: failed to compile definition, compiler IR check failed at `Array.«foldrM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»`. Error: depends on declaration 'dite_Float', which has no executable code; consider marking definition as 'noncomputable'
----
-error: failed to compile definition, compiler IR check failed at `Array.«foldr_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»`. Error: depends on declaration 'Array.«foldrM_Float_Float_fun type => type_fun x1 x2 => pure (x1 + x2)_Float.ofScientific 0 false 0_0»', which has no executable code; consider marking definition as 'noncomputable'
----
-error: failed to compile definition, compiler IR check failed at `Array.sum_Float`. Error: depends on declaration 'Array.«foldr_Float_Float_fun x1 x2 => x1 + x2_Float.ofScientific 0 false 0_0»', which has no executable code; consider marking definition as 'noncomputable'
----
-error: failed to compile definition, compiler IR check failed at `Vector.sum_Float_3`. Error: depends on declaration 'Array.sum_Float', which has no executable code; consider marking definition as 'noncomputable'
--/
-#guard_msgs in
-#opencl_ssimp (u.sum)
-
-
-
+#opencl_sas (u.sum)
 
 /--
 info: Resulting specialization:
   #v[10 * ↑0, 10 * ↑1, 10 * ↑2, 10 * ↑3, 10 * ↑4, 10 * ↑5, 10 * ↑6, 10 * ↑7, 10 * ↑8, 10 * ↑9]
 -/
 #guard_msgs in
-#opencl_ssimp (Vector.ofFn (fun i : Fin 10 => 10*i.1))
-
-
+#opencl_sas (Vector.ofFn (fun i : Fin 10 => 10*i.1))
 
 
 variable (n : Nat) (i : Fin 3)
 
 /-- error: Expected `n` to be value known at compile time! -/
 #guard_msgs in
-#opencl_ssimp (Vector.ofFn (fun i : Fin n => 10*i.1))
+#opencl_sas (Vector.ofFn (fun i : Fin n => 10*i.1))
 
 /--
 info: Fin.val_3:
@@ -301,4 +192,147 @@ Resulting specialization:
   u[i.val_3]
 -/
 #guard_msgs in
-#opencl_ssimp (u[i])
+#opencl_sas (u[i])
+
+/--
+info: Vector.dot_Float_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+Vector.refract_Float_3:
+fun v normal eta =>
+  let dt := v.dot_Float_3 normal;
+  let k := 1e0 - eta * eta * (1e0 - dt * dt);
+  let s := eta * dt + sqrt k;
+  if k < 0e0 then 0 else eta * v - s * normal
+
+HouLean.Math.Refract.refract_Vector_Float_3_Float:
+fun v n eta => v.refract_Float_3 n eta
+
+Resulting specialization:
+  Refract.refract_Vector_Float_3_Float u v x
+-/
+#guard_msgs in
+#opencl_sas refract u v x
+
+/--
+info: Vector.compDiv_Float_3:
+fun x y => #v[x[0] / y[0], x[1] / y[1], x[2] / y[2]]
+
+HouLean.Math.CompDiv.compDiv_Vector_Float_3:
+fun x y => x.compDiv_Float_3 y
+
+Resulting specialization:
+  CompDiv.compDiv_Vector_Float_3 u v
+-/
+#guard_msgs in
+#opencl_sas compDiv u v
+
+/--
+info: Vector.length2_Float_3:
+fun u =>
+  let a := u[0] * u[0];
+  let a := a + u[1] * u[1];
+  let a := a + u[2] * u[2];
+  a
+
+Vector.length_Float_3:
+fun u => sqrt u.length2_Float_3
+
+HouLean.Math.ApproxEqual.approxEqual_Float_Float_0e0_1e_6:
+fun x => decide (1e-6 ≥ abs (x - 0e0))
+
+Inv.inv_Float:
+fun a => 1e0 / a
+
+HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3:
+fun a a_1 =>
+  let is := Inv.inv_Float a_1;
+  #v[is * a[0], is * a[1], is * a[2]]
+
+Vector.normalize_Float_3:
+fun u =>
+  let len := u.length_Float_3;
+  if ApproxEqual.approxEqual_Float_Float_0e0_1e_6 len = true then (u, 0e0)
+  else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
+
+Prod.fst_Vector_Float_3_Float:
+fun self => self.1
+
+Vector.normalized_Float_3:
+fun u => u.normalize_Float_3.fst_Vector_Float_3_Float
+
+Vector.dot_Float_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+Vector.slerp_Float_3:
+fun v w t =>
+  let d := v.normalized_Float_3.dot_Float_3 w.normalized_Float_3;
+  let d := clamp d (-1e0) 1e0;
+  let theta := acos d;
+  let s := sin theta;
+  let a := sin ((1e0 - t) * theta) / s;
+  let b := sin (t * theta) / s;
+  if ApproxEqual.approxEqual_Float_Float_0e0_1e_6 theta = true then lerp v w t else a * v + b * w
+
+HouLean.Math.Slerp.slerp_Vector_Float_3_Float:
+fun x y t => x.slerp_Float_3 y t
+
+Resulting specialization:
+  Slerp.slerp_Vector_Float_3_Float u v x
+-/
+#guard_msgs in
+#opencl_sas slerp u v x
+
+
+/--
+info: Vector.dot_Float_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+Vector.length2_Float_3:
+fun u =>
+  let a := u[0] * u[0];
+  let a := a + u[1] * u[1];
+  let a := a + u[2] * u[2];
+  a
+
+Vector.projectToSegment_Float_3:
+fun point a b =>
+  let ab := b - a;
+  let ap := point - a;
+  let t := clamp (ap.dot_Float_3 ab / ab.length2_Float_3) 0e0 1e0;
+  a + t * ab
+
+HouLean.Math.ProjectToSegment.projectToSegment_Vector_Float_3:
+fun point a b => point.projectToSegment_Float_3 a b
+
+Resulting specialization:
+  ProjectToSegment.projectToSegment_Vector_Float_3 u v w
+-/
+#guard_msgs in
+#opencl_sas projectToSegment u v w
+
+
+private def foo (x y : Float) := x + y
+
+
+/--
+info: _private.Tests.OpenCL.SpecAndSimp.0.Test.OpenCL.SpecAndSimp.foo_0e0:
+fun y => 0e0 + y
+
+Resulting specialization:
+  foo_0e0 x
+-/
+#guard_msgs in
+#opencl_sas (foo 0.0 x)

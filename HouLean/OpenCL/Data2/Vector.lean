@@ -25,5 +25,17 @@ theorem vector_mapFinIdx {α β} {n : Nat} (f : (i : Nat) → α → i < n → �
     u.mapFinIdx f = .ofFn fun i => f i u[i] (i.2) := by ext i; simp
 
 @[opencl_csimp]
+theorem vector_foldl {α β} {n : Nat} (f : β → α → β) (b : β) (u : Vector α n) :
+    u.foldl f b = Fin.foldl n (fun b i => f b u[i]) b := sorry_proof
+
+@[opencl_csimp]
+theorem vector_foldr {α β} {n : Nat} (f : α → β → β) (b : β) (u : Vector α n) :
+    u.foldr f b = Fin.foldr n (fun i b => f u[i] b) b := sorry_proof
+
+@[opencl_csimp]
+theorem vector_sum [Add α] [Zero α] (u : Vector α n) :
+    u.sum = ∑ (i : Fin n), u[i] := sorry_proof
+
+@[opencl_csimp]
 theorem vector_replicate {α} {n : Nat} (a : α) :
-    Vector.replicate n a = .ofFn fun i => a := by ext i; simp
+    Vector.replicate n a = .ofFn fun _ => a := by ext i; simp

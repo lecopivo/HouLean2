@@ -59,8 +59,13 @@ simproc_decl list_ofFn_unroll (unroll (List.ofFn _)) := fun e => do
 attribute [opencl_csimp] list_ofFn_unroll
 
 
+
 open Elab Command Term SpecializeAndSimp in
-elab c:"#opencl_ssimp " e:term : command => do
+/-- OpenCL 'Specialize and Simplify' form of an expression.
+
+The is a preview of the first stage of the OpenCL compiler which specializes functions and runs
+simplifier. -/
+elab c:"#opencl_sas " e:term : command => do
   withoutModifyingEnv do
   runTermElabM fun _ => do
 
