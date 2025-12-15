@@ -51,6 +51,8 @@ simproc_decl list_ofFn_unroll (unroll (List.ofFn _)) := fun e => do
         let i := toExpr i
         e ← mkAppM ``List.cons #[f.app i, e]
       return .visit { expr := e}
+    else
+      throwError m!"Expected `{n}` to be value known at compile time!"
   return .continue
 
 
