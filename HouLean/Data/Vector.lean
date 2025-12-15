@@ -111,7 +111,7 @@ def cross3 (u v : Vector α 3) : Vector α 3 :=
   #v[u.y * v.z - u.z * v.y,
      u.z * v.x - u.x * v.z,
      u.x * v.y - u.y * v.x]
--- def cross4 (u v : Vector α 3) : Vector α 8 := sorry
+-- def cross4 (u v : Vector α 4) : Vector α 6 := sorry
 defun length2 (u : Vector α n) : α := HouLean.sum (fun i : Fin n => u[i]*u[i])
 defun length [Sqrt α] (u : Vector α n) : α := Math.sqrt u.length2
 defun distance2 (u v : Vector α n) : α := (u-v).length2
