@@ -44,7 +44,8 @@ def withFVars (xs : Array Expr) (go : Array String → CompileM α) : CompileM �
   go names ctx
 
 
-partial def splitList (list : Expr) : MetaM (Array Expr) :=
+partial def splitList (list : Expr) : MetaM (Array Expr) := do
+  let list ← instantiateMVars list
   go list #[]
 where
   go (l : Expr) (xs : Array Expr) : MetaM (Array Expr) := do
@@ -62,7 +63,7 @@ where
         let i : Q(Nat) := mkNatLit i.1
         pure (f.beta #[q(⟨$i, sorry_proof⟩ : Fin $n)])
     else
-      throwError m!"Can't split argument list {list}!"
+      throwError m!"Can't split argument list {list}! Case: {l.ctorName}"
 
 
 

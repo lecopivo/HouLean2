@@ -69,51 +69,26 @@ initialize compilerExt : CompilerExt ←
   }
 
 
-partial def implementedBy (e : Expr) : MetaM (TSyntax `oclExpr) := do
-  let e ← instantiateMVars e
-  match e with
-  | .fvar id =>
-    let name ← id.getUserName
-    let id := mkIdent name
-    `(oclExpr| $id:ident)
-  | _ =>
-   -- let args := e.getAppArgs
+def _root_.Lean.Expr.getFVars (e : Expr) : MetaM (Array Expr) := do
+  return (← e.collectFVars.run {}).2.fvarIds.map Expr.fvar
 
-   let s := (compilerExt.getState (← getEnv)).implementedBy
-   let candidates ← s.getMatch e
-   for c in candidates do
-
-     let (args,_,body) ← lambdaMetaTelescope c.lhs
-
-     unless ← isDefEq body e do
-       continue
-
-     let mut compiledArgs : NameMap (TSyntax `oclExpr) := {}
-     for (n, i) in c.argsToCompile do
-       let some arg := args[i]?  | throwError m!"Can't apply {c.lhs} to {e}. Invalid argument index {i}!"
-       -- we might call `implementedBy` multiple times for one argument
-       -- this seems wasteful but I'm not expecting more
-       let arg ← implementedBy arg
-       compiledArgs := compiledArgs.insert n arg
-
-     -- todo: override for argList?
-
-     -- replace
-     let compiled ← c.rhs.raw.replaceM fun s =>
-       match s with
-       | `(oclExpr| $id:ident) =>
-         return compiledArgs.get? id.getId
-       | _ =>
-         return none
-
-     return ⟨compiled⟩
-
-   throwError "Don't know how to compile {e}!"
+def _root_.Lean.Expr.getMVars (e : Expr) : MetaM (Array Expr) := do
+  return (e.collectMVars {}).result.map Expr.mvar
 
 
 open Lean Meta
-def addImpementedBy (lhs : Expr) (rhs : TSyntax `oclExpr) : MetaM Unit := do
+def addImpementedBy (lhs : Expr) (rhs : TSyntax `oclExpr) : MetaM ImplementedBy := do
+
+  let lhs ← instantiateMVars lhs
   let type ← inferType lhs
+
+  if lhs.hasMVar then
+    let mvars ← lhs.getMVars
+    throwError m!"Can't add implemented_by `{lhs} ==> {rhs}`. Lhs contains mvars: {mvars}"
+
+  if lhs.hasFVar then
+    let fvars ← lhs.getFVars
+    throwError m!"Can't add implemented_by `{lhs} ==> {rhs}`. Lhs contains mvars: {fvars}"
 
   -- figure out which arguments of lhs appear on the rhs
   -- store their name and index
@@ -128,6 +103,7 @@ def addImpementedBy (lhs : Expr) (rhs : TSyntax `oclExpr) : MetaM Unit := do
               return some (name, i)
           return none)
 
+
   let (xs,_,_) ← forallMetaTelescope (← inferType lhs)
   let body := lhs.beta xs
   let keys ← DiscrTree.mkPath body
@@ -140,6 +116,113 @@ def addImpementedBy (lhs : Expr) (rhs : TSyntax `oclExpr) : MetaM Unit := do
   }
 
   compilerExt.add (.implementedBy impl)
+
+  return impl
+
+open Qq in
+unsafe def getBuilder (declName : Name) : MetaM (Array Expr → MetaM (TSyntax `oclExpr)) := do
+  let env ← getEnv
+  let opts ← getOptions
+  match env.find? declName with
+  | none      => throwError m!"Unknown constant `{declName}`"
+  | some info =>
+    if ← isDefEq q(Array Expr → MetaM (TSyntax `oclExpr)) info.type then
+      return (← IO.ofExcept <| env.evalConst (Array Expr → MetaM (TSyntax `oclExpr)) opts declName)
+    else
+      throwError m!"ImplementedByBuilder `{privateToUserName declName}` has an unexpected type: Expected `ImplementedByBuilder`, but found `{info.type}`"
+
+
+def runBuilder (xs : Array Expr) (builder : ImplementedByBuilder) : MetaM (TSyntax `oclExpr) := do
+  let b ← unsafe getBuilder builder.declName
+  return ← b xs
+
+
+def runInterpreter? (α : Type) [t : ToExpr α] (val : Expr) : MetaM (Option α) := do
+  try
+    let val ← unsafe evalExpr α t.toTypeExpr val
+    return some val
+  catch _ =>
+    return none
+
+
+partial def compileExpr (e : Expr) : MetaM (TSyntax `oclExpr) := do
+  withTraceNode `HouLean.OpenCL.compiler (fun r => return m!"[{exceptEmoji r}] {e}") do
+  let e ← instantiateMVars e
+  match e with
+  | .fvar id =>
+    let name ← id.getUserName
+    let id := mkIdent name
+    `(oclExpr| $id:ident)
+  | .lit (.natVal val) =>
+    let val := Syntax.mkNatLit val
+    return ← `(oclExpr| $val:num)
+  | _ =>
+
+   if let some val ← runInterpreter? Nat e then
+     let val := Syntax.mkNatLit val
+     return ← `(oclExpr| $val:num)
+
+   -- try existing implemented_by
+   let s := (compilerExt.getState (← getEnv)).implementedBy
+   let candidates ← s.getMatch e
+   for c in candidates do
+
+     let (args,_,_) ← forallMetaTelescope (← inferType c.lhs)
+     let body := c.lhs.beta args
+
+     unless ← isDefEq body e do
+       continue
+
+     -- todo: check that all arguments has been synthesized! most importantly all typeclases has been!
+
+     return ← applyImpl c args
+
+   -- try implemented_by builders
+   let s := (compilerExt.getState (← getEnv)).implementedByBuilders
+   let candidates ← s.getMatch e
+   for b in candidates do
+
+     let (args,_,_) ← forallMetaTelescope (← inferType b.lhs)
+     let body := b.lhs.beta args
+
+     unless ← isDefEq body e do
+       continue
+     -- todo: check that all arguments has been synthesized! most importantly all typeclases has been!
+
+     return ← runBuilder args b
+
+   throwError "Don't know how to compile {e}!"
+
+where
+  applyImpl (impl : ImplementedBy) (args : Array Expr) : MetaM (TSyntax `oclExpr) := do
+
+     trace[HouLean.OpenCL.compiler] m!"Applying implemented_by, {impl.lhs} ==> {impl.rhs}"
+
+     -- compile all arguments
+     let mut compiledArgs : NameMap (TSyntax `oclExpr) := {}
+     for (n, i) in impl.argsToCompile do
+       let some arg := args[i]?  | throwError m!"Can't apply {impl.lhs} to {e}. Invalid argument index {i}!"
+
+       let arg ← compileExpr arg
+       compiledArgs := compiledArgs.insert n arg
+
+     -- replace compiled arguments in rhs
+     let compiled ← impl.rhs.raw.replaceM fun s =>
+       match s with
+       | `(oclExpr| $id:ident) =>
+         return compiledArgs.get? id.getId
+       | _ =>
+         return none
+
+     return ⟨compiled⟩
+
+
+def compileType (e : Expr) : MetaM Ident := do
+  match ← compileExpr e with
+  | `(oclExpr| $id:ident) => return id
+  | stx =>
+    throwError m!"Unexpected result when compiling type {stx}!"
+
 
 open Lean Elab Term Command
 elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " rhs:oclExpr : command => do
@@ -158,7 +241,26 @@ elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " rhs:oclExpr : command
         let mvars := (e.collectMVars {}).result.map (Expr.mvar)
         throwError s!"Bug in {decl_name%}, failed to build lhs expression! fvars: {fvars}, mvars: {mvars}, {e} : {← inferType e}"
 
-      addImpementedBy e rhs
+      let _ ← addImpementedBy e rhs
+
+
+/-- Turns function of type `argType → ... → argType → α` to `Array argType → α`. -/
+def arrayUncurry (argType : Expr) (f : Expr) : MetaM Expr := do
+
+  forallTelescope (← inferType f) fun xs _ => do
+    let ts ← xs.mapM inferType
+    unless ← ts.allM (isDefEq · argType) do
+      throwError m!"Expecting function with arugments of type {argType}, got argument types {ts}!"
+
+    withLocalDeclD `x (← mkAppM ``Array #[argType]) fun a => do
+
+      let mut xs' : Array Expr := #[]
+      for i in [0:xs.size] do
+        let i := mkNatLit i
+        xs' := xs'.push (← mkAppM ``getElem! #[a,i])
+
+      mkLambdaFVars #[a] (f.beta xs')
+
 
 
 open Lean Elab Term Command Qq
@@ -171,17 +273,19 @@ elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " "do" rhs:doElem* : co
       let e ← mkLambdaFVars xs e >>= instantiateMVars
       let ctx' := ctx.filter (fun c => e.containsFVar c.fvarId!)
       let e ← mkLambdaFVars ctx' e >>= instantiateMVars
+      let lhs ← instantiateMVars e
 
-
+      -- Declare implemented_by builder
       let decls ← (ctx'++xs).mapM (fun x => do
         return (← x.fvarId!.getUserName, .default, fun _ => pure q(Expr)))
       let builder ← liftM <|
         withLocalDecls decls fun ys => do
           let rhs ← elabTermAndSynthesize (← `(term| do $[$rhs:doElem]*)) q(MetaM (TSyntax `oclExpr))
           mkLambdaFVars ys rhs
-
+      let builder ← arrayUncurry q(Expr) builder >>= instantiateMVars
       let builderType ← inferType builder >>= instantiateMVars
-      let builderDeclName ← mkUniqueDeclName `implStxBuilder
+      let builderDeclName ← mkAuxDeclName `implStxBuilder
+
 
       let decl : Declaration := .defnDecl {
         name := builderDeclName
@@ -194,50 +298,25 @@ elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " "do" rhs:doElem* : co
 
       addAndCompile decl
 
+      -- Register implemented_by builder
       let (_,_,body) ← lambdaMetaTelescope e
       let keys ← DiscrTree.mkPath body
 
       let b : ImplementedByBuilder := {
         keys := keys
-        lhs := e
+        lhs := lhs
         declName := builderDeclName
         arity := decls.size
       }
 
+      if lhs.hasMVar then
+        let mvars ← lhs.getMVars
+        let ts ← liftM <| mvars.mapM inferType
+        throwError m!"Can't add implemented_by builder `{lhs} ==> {rhs}`. Lhs contains mvars: {mvars} : {ts}"
+
+      if lhs.hasFVar then
+        let fvars ← lhs.getFVars
+
+        throwError m!"Can't add implemented_by builder `{lhs} ==> {rhs}`. Lhs contains mvars: {fvars}"
+
       compilerExt.add (.implementedByBuilder b)
-      logInfo m!"script:\n{rhs}"
-
-
-#check Simp.getSimprocExtension?
-
-  -- let ctx ← read
-  -- match ctx.env.find? declName with
-  -- | none      => throw <| IO.userError ("Unknown constant `" ++ toString declName ++ "`")
-  -- | some info =>
-  --   match info.type with
-  --   | .const ``Simproc _ =>
-  --     return .inl (← IO.ofExcept <| ctx.env.evalConst Simproc ctx.opts declName)
-  --   | .const ``DSimproc _ =>
-  --     return .inr (← IO.ofExcept <| ctx.env.evalConst DSimproc ctx.opts declName)
-  --   | _ => throw <| IO.userError s!"Simproc `{privateToUserName declName}` has an unexpected type: Expected `Simproc` or `DSimproc`, but found `{info.type}`"
-
-
-unsafe def getBuilder (declName : Name) : CoreM (Array Expr → MetaM (TSyntax `oclExpr)) := do
-  let env ← getEnv
-  let opts ← getOptions
-  match env.find? declName with
-  | none      => throwError m!"Unknown constant `{declName}`"
-  | some info =>
-    match info.type with
-    | .const ``ImplementedByBuilder _ =>
-      return (← IO.ofExcept <| env.evalConst (Array Expr → MetaM (TSyntax `oclExpr)) opts declName)
-    | _ => throwError m!"ImplementedByBuilder `{privateToUserName declName}` has an unexpected type: Expected `ImplementedByBuilder`, but found `{info.type}`"
-
-
-def instantiateBuilder (xs : Array Expr) (builder : ImplementedByBuilder) : MetaM Bool := do
-
-  let lhs := builder.lhs.beta xs
-  let b ← unsafe getBuilder builder.declName
-  let rhs ← b xs
-
-  sorry

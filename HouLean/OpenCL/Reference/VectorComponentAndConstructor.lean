@@ -6,15 +6,12 @@ namespace HouLean.OpenCL
 
 variable {α : Type} [AtomicOpenCLType α] {n : Nat}
 
--- todo: to changes to explicit projections .x, .y, .z, .w, .s4, .s5, ...
-impl_by {α : Type} [AtomicOpenCLType α] {n : Nat} (u : Vector α n) (i : Nat) (h) :
-    getElem u i h ==> getElem(u,i)
+-- -- todo: to changes to explicit projections .x, .y, .z, .w, .s4, .s5, ...
+-- impl_by {α : Type} [AtomicOpenCLType α] {n : Nat} (u : Vector α n) (i : Nat) (h) :
+--     getElem u i h ==> getElem(u,i)
 
 
-open Lean Meta
-def compileExpr (e : Expr) : MetaM (TSyntax `oclExpr) := sorry
-def compileType (e : Expr) : MetaM Ident := sorry
-def runInterpreter? (α : Type) (e : Expr) : MetaM (Option α) := sorry
+open Lean Meta Compiler3
 
 
 def indexToSuffix? (i : Nat) : Option Name :=
@@ -38,7 +35,6 @@ def indexToSuffix? (i : Nat) : Option Name :=
   | _ => none
 
 
-open Lean Meta in
 impl_by (u : Vector α n) (i : Nat) (h) : u[i]'h ==> do
 
   let some i ← runInterpreter? Nat i
@@ -58,21 +54,21 @@ attribute [opencl_csimp] Fin.getElem_fin
 --
 
 
-#check evalConst
 
 /- Vector contructor rule  e.g. #v[x,y,z] ==> (float3){x,y,z}
 
 The notation `#v[x,y,z]` stands for `Vector.mk [x,y,z].toArray h` and this rule matches on this
 irrespective of the length of the list.
  -/
-impl_by {α : Type} [AtomicOpenCLType α] (l : List α) (h) :
-    Vector.mk l.toArray h ==> do
+set_option pp.all true in
+impl_by {n : Nat} {α : Type} [AtomicOpenCLType α] (l : List α) (h) :
+    Vector.mk (n:=n) l.toArray h ==> do
 
   let xs ← splitList l
   let xs ← xs.mapM compileExpr
   let t ← compileType α
 
-  return ← `(oclExpr| ($t){$xs,*} )
+  return ← `(oclExpr| ($t:ident){$xs:oclExpr,*} )
 
 
 -- def genericKernel
@@ -90,38 +86,38 @@ impl_by {α : Type} [AtomicOpenCLType α] (l : List α) (h) :
 --     P[i] += dt * v[i]
 
 
--- vector 2
-impl_by (x y : Nat) : #v[x,y] ==> (uint3){x,y}
-impl_by (x y : Int) : #v[x,y] ==> (int3){x,y}
-impl_by (x y : UInt16) : #v[x,y] ==> (ushort3){x,y}
-impl_by (x y :  Int16) : #v[x,y] ==>  (short3){x,y}
-impl_by (x y : UInt32) : #v[x,y] ==> (uint3){x,y}
-impl_by (x y :  Int32) : #v[x,y] ==>  (int3){x,y}
-impl_by (x y : UInt64) : #v[x,y] ==> (ulong3){x,y}
-impl_by (x y :  Int64) : #v[x,y] ==>  (long3){x,y}
-impl_by (x y : Float32) : #v[x,y] ==> (float3){x,y}
-impl_by (x y : Float64) : #v[x,y] ==> (double3){x,y}
+-- -- vector 2
+-- impl_by (x y : Nat) : #v[x,y] ==> (uint3){x,y}
+-- impl_by (x y : Int) : #v[x,y] ==> (int3){x,y}
+-- impl_by (x y : UInt16) : #v[x,y] ==> (ushort3){x,y}
+-- impl_by (x y :  Int16) : #v[x,y] ==>  (short3){x,y}
+-- impl_by (x y : UInt32) : #v[x,y] ==> (uint3){x,y}
+-- impl_by (x y :  Int32) : #v[x,y] ==>  (int3){x,y}
+-- impl_by (x y : UInt64) : #v[x,y] ==> (ulong3){x,y}
+-- impl_by (x y :  Int64) : #v[x,y] ==>  (long3){x,y}
+-- impl_by (x y : Float32) : #v[x,y] ==> (float3){x,y}
+-- impl_by (x y : Float64) : #v[x,y] ==> (double3){x,y}
 
--- vector 3
-impl_by (x y z : Nat) : #v[x,y,z] ==> (uint3){x,y,z}
-impl_by (x y z : Int) : #v[x,y,z] ==> (int3){x,y,z}
-impl_by (x y z : UInt16) : #v[x,y,z] ==> (ushort3){x,y,z}
-impl_by (x y z :  Int16) : #v[x,y,z] ==>  (short3){x,y,z}
-impl_by (x y z : UInt32) : #v[x,y,z] ==> (uint3){x,y,z}
-impl_by (x y z :  Int32) : #v[x,y,z] ==>  (int3){x,y,z}
-impl_by (x y z : UInt64) : #v[x,y,z] ==> (ulong3){x,y,z}
-impl_by (x y z :  Int64) : #v[x,y,z] ==>  (long3){x,y,z}
-impl_by (x y z : Float32) : #v[x,y,z] ==> (float3){x,y,z}
-impl_by (x y z : Float64) : #v[x,y,z] ==> (double3){x,y,z}
+-- -- vector 3
+-- impl_by (x y z : Nat) : #v[x,y,z] ==> (uint3){x,y,z}
+-- impl_by (x y z : Int) : #v[x,y,z] ==> (int3){x,y,z}
+-- impl_by (x y z : UInt16) : #v[x,y,z] ==> (ushort3){x,y,z}
+-- impl_by (x y z :  Int16) : #v[x,y,z] ==>  (short3){x,y,z}
+-- impl_by (x y z : UInt32) : #v[x,y,z] ==> (uint3){x,y,z}
+-- impl_by (x y z :  Int32) : #v[x,y,z] ==>  (int3){x,y,z}
+-- impl_by (x y z : UInt64) : #v[x,y,z] ==> (ulong3){x,y,z}
+-- impl_by (x y z :  Int64) : #v[x,y,z] ==>  (long3){x,y,z}
+-- impl_by (x y z : Float32) : #v[x,y,z] ==> (float3){x,y,z}
+-- impl_by (x y z : Float64) : #v[x,y,z] ==> (double3){x,y,z}
 
--- vector 4
-impl_by (x y z w : Nat) : #v[x,y,z,w] ==> (uint4){x,y,z,w}
-impl_by (x y z w : Int) : #v[x,y,z,w] ==> (int4){x,y,z,w}
-impl_by (x y z w : UInt16) : #v[x,y,z,w] ==> (ushort4){x,y,z,w}
-impl_by (x y z w :  Int16) : #v[x,y,z,w] ==>  (short4){x,y,z,w}
-impl_by (x y z w : UInt32) : #v[x,y,z,w] ==> (uint4){x,y,z,w}
-impl_by (x y z w :  Int32) : #v[x,y,z,w] ==>  (int4){x,y,z,w}
-impl_by (x y z w : UInt64) : #v[x,y,z,w] ==> (ulong4){x,y,z,w}
-impl_by (x y z w :  Int64) : #v[x,y,z,w] ==>  (long4){x,y,z,w}
-impl_by (x y z w : Float32) : #v[x,y,z,w] ==> (float4){x,y,z,w}
-impl_by (x y z w : Float64) : #v[x,y,z,w] ==> (double4){x,y,z,w}
+-- -- vector 4
+-- impl_by (x y z w : Nat) : #v[x,y,z,w] ==> (uint4){x,y,z,w}
+-- impl_by (x y z w : Int) : #v[x,y,z,w] ==> (int4){x,y,z,w}
+-- impl_by (x y z w : UInt16) : #v[x,y,z,w] ==> (ushort4){x,y,z,w}
+-- impl_by (x y z w :  Int16) : #v[x,y,z,w] ==>  (short4){x,y,z,w}
+-- impl_by (x y z w : UInt32) : #v[x,y,z,w] ==> (uint4){x,y,z,w}
+-- impl_by (x y z w :  Int32) : #v[x,y,z,w] ==>  (int4){x,y,z,w}
+-- impl_by (x y z w : UInt64) : #v[x,y,z,w] ==> (ulong4){x,y,z,w}
+-- impl_by (x y z w :  Int64) : #v[x,y,z,w] ==>  (long4){x,y,z,w}
+-- impl_by (x y z w : Float32) : #v[x,y,z,w] ==> (float4){x,y,z,w}
+-- impl_by (x y z w : Float64) : #v[x,y,z,w] ==> (double4){x,y,z,w}
