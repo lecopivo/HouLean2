@@ -1,3 +1,4 @@
+#exit
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Data.Int
 import HouLean.OpenCL.Data.Vector

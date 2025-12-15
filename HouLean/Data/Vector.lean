@@ -17,7 +17,7 @@ instance : SetElem (Vector α n) Nat α (fun _ i => i < n) where
 
 instance [Mul α] : Mul (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui * v[i])⟩
 -- instance [Mul α] : HMul (Vector α n) α (Vector α n) := ⟨fun v s => v.map (fun vi => vi * s)⟩
-instance [Inv α] [Mul α] : HDiv (Vector α n) α (Vector α n) := ⟨fun v s => let is := s⁻¹; v.map (fun vi => is * vi)⟩
+instance [Inv α] [Mul α] : HDiv (Vector α n) α (Vector α n) := ⟨fun v s => let is := s⁻¹; is * v⟩
 instance [Div α] : Div (Vector α n) := ⟨fun u v => u.mapFinIdx (fun i ui _ => ui / v[i])⟩
 
 
@@ -30,6 +30,13 @@ def HouLean.basisVector (R : Type) [FloatType R] (n : Nat) (i : Nat) : Vector R 
   .ofFn (fun i' => if i = i' then 1 else 0)
 
 namespace Vector
+
+def split1 (v : Vector T (n+1)) : Vector T n × T :=
+  (.ofFn fun i => v[i], v[n])
+
+def split (v : Vector T (n+n')) : Vector T n × Vector T n' :=
+  (.ofFn fun i => v[i], .ofFn fun i => v[n+i.1])
+
 
 -- Implementation of HouLean.Math interface
 section Math

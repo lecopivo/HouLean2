@@ -37,7 +37,8 @@ impl_by : Unit ==> void
 /- `Vector T n` is compiled to `Tn` e.g. `Vector Float32 3 ==> float3` -/
 impl_by {n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Vector T n ==> do
 
-  let some n ← runInterpreter? Nat n | throwError m!"Size {n} of vector has to be known at compile time!"
+  let some n ← runInterpreter? Nat n
+    | throwError m!"Size {n} of vector has to be known at compile time!"
   let type ← compileType T
 
   let name := mkIdent <| type.getId.appendAfter (toString n)
@@ -56,6 +57,10 @@ impl_by {n : Nat} {α : Type} [AtomicOpenCLType α] [AllowedVectorSize n] (l : L
 
   let xs ← splitList l
   let xs ← xs.mapM compileExpr
-  let t ← compileType α
+  let type ← compileType α
 
-  return ← `(oclExpr| ($t:ident){$xs:oclExpr,*} )
+  let some n ← runInterpreter? Nat n
+    | throwError m!"Size {n} of vector has to be known at compile time!"
+  let name := mkIdent <| type.getId.appendAfter (toString n)
+
+  return ← `(oclExpr| ($name){$xs:oclExpr,*} )

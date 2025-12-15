@@ -30,15 +30,15 @@ macro "#ocl_compile_expr_with_csimp" f:term : command =>
 #ocl_compile_expr fun x y : Float => x + y
 
 
-/-- info: (float){x, y + x} -/
+/-- info: (float2){x, y + x} -/
 #guard_msgs in
 #ocl_compile_expr fun x y : Float32 => #v[x,y + x]
 
-/-- info: (double){x, x * y, z} -/
+/-- info: (double3){x, x * y, z} -/
 #guard_msgs in
 #ocl_compile_expr fun x y z : Float => #v[x,x * y,z]
 
-/-- info: (uint){x, y, z} -/
+/-- info: (uint3){x, y, z} -/
 #guard_msgs in
 #ocl_compile_expr fun x y z : Nat => #v[x,y,z]
 

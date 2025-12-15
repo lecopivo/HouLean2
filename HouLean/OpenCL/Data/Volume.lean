@@ -2,17 +2,11 @@ import HouLean.OpenCL.Data.ArrayType
 import HouLean.OpenCL.Data.Fin
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Matrix
-import HouLean.OpenCL.Data.Int
 import HouLean.OpenCL.Data.Prod
 import HouLean.Data.Vector
 import HouLean.Meta.DoNotation
 
 namespace HouLean.OpenCL
-
-structure Frame (R : Type) (dim : Nat) where
-  toWorldMatrix : Matrix R (dim+1) (dim+1)
-  toFrameMatrix : Matrix R (dim+1) (dim+1)
-deriving Inhabited
 
 instance [t : OpenCLType R] : OpenCLType (Frame R dim) where
   name := s!"frame{t.shortName}{dim}"
@@ -24,10 +18,6 @@ implemented_by [Inhabited R] (f : Frame R dim) :
 
 implemented_by [Inhabited R] (f : Frame R dim) :
   f.toWorldMatrix = oclFunction (_ → _) ".toFrameMatrix" .postfix f
-
-set_option linter.unusedVariables false in
-/-- Vector living in a particular frame -/
-def FVector {dim} (R : Type) (frame : Frame R dim) := Vector R dim
 
 -- make this dimension independent?
 structure VolumeData (type : Type) {Ptr} [ArrayType type Ptr] where

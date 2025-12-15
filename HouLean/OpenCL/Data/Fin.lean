@@ -4,10 +4,7 @@ import HouLean.OpenCL.Data.InlinedLoop
 
 namespace HouLean.OpenCL
 
-attribute [opencl_csimp] sum
-
 variable {m} [Monad m]
-
 
 implemented_by (f : α → Fin n → α) (init : α) :
   Fin.foldl n f init

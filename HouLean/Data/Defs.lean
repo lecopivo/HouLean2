@@ -56,6 +56,18 @@ structure Matrix (α : Type) (m n : Nat) where
   data : Vector (Vector α n) m
 deriving Inhabited
 
+/-- Coordinate frame -/
+structure Frame (R : Type) (dim : Nat) where
+  toWorldMatrix : Matrix R (dim+1) (dim+1)
+  toFrameMatrix : Matrix R (dim+1) (dim+1)
+deriving Inhabited
+
+
+set_option linter.unusedVariables false in
+/-- Vector in a give coordinate frame -/
+def FVector {dim} (R : Type) (frame : Frame R dim) := Vector R dim
+
+
 /-- Rigid transformation without scaling.
 -/
 structure RigidTransform where

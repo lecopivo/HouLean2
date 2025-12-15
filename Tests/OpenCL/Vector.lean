@@ -1,273 +1,385 @@
-import HouLean.OpenCL.Data.Matrix
-import HouLean.OpenCL.Data.Prod
+import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Init
+import HouLean.OpenCL.Data.Fin
+import HouLean.OpenCL.Reference
 
-open HouLean OpenCL Math
+namespace Test.OpenCL.SpecAndSimp
 
-open HoudiniMatrixVecMul
+open HouLean Math
 
-namespace Tests.OpenCL.Vector
+variable (u v w : Vector Float 3) (x y : Float)
+
+/--
+info: Vector.dot_Float_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+Resulting specialization:
+  u.dot_Float_3 v
+-/
+#guard_msgs in
+#opencl_sas u.dot v
+
+
+-- todo: why is it flipping inequalities ?? :(
+/--
+info: Resulting specialization:
+  decide (y > x)
+-/
+#guard_msgs in
+#opencl_sas (decide (x < y))
+
+/--
+info: Resulting specialization:
+  decide (x > y)
+-/
+#guard_msgs in
+#opencl_sas (decide (x > y))
 
 
 /--
-info:
-double vector_dot_d3(double3 u, double3 v)
-{
-    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
-}
-
-double (anonymous)(double3 x, double3 y)
-{
-    return vector_dot_d3(x, y);
-}
+info: Resulting specialization:
+  !(decide (y > x) && decide (x > 0e0))
 -/
 #guard_msgs in
-#opencl_compile (fun x y : Vector Float 3 => x.dot y)
+#opencl_sas decide (¬(x < y ∧ 0 < x))
 
 /--
-info:
-double vector_dot_d3(double3 u, double3 v)
-{
-    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
-}
-
-double houlean_math_dot_d3d(double3 x, double3 y)
-{
-    return vector_dot_d3(x, y);
-}
-
-double (anonymous)(double3 x, double3 y)
-{
-    return houlean_math_dot_d3d(x, y);
-}
+info: Resulting specialization:
+  -0.1343
 -/
 #guard_msgs in
-#opencl_compile (fun x y : Vector Float 3 => dot x y)
+#opencl_sas (-134.3e-3 : Float)
+
+/--
+info: HouLean.Math.CatmullRom.catmullRom_Float_Float:
+fun p0 p1 p2 p3 t =>
+  let t2 := t * t;
+  let t3 := t2 * t;
+  0.5 * (2e0 * p1 + (-p0 + p2) * t + (2e0 * p0 - 5e0 * p1 + 4e0 * p2 - p3) * t2 + (-p0 + 3e0 * p1 - 3e0 * p2 + p3) * t3)
+
+Resulting specialization:
+  CatmullRom.catmullRom_Float_Float (exp (sin x)) x y (x + y) x
+-/
+#guard_msgs in
+#opencl_sas (catmullRom (exp (sin x)) x y (x + y) x)
 
 
 /--
-info:
-double houlean_math_sqrt_d(double x)
-{
-    return sqrt(x);
-}
+info: Vector.length2_Float_3:
+fun u =>
+  let a := u[0] * u[0];
+  let a := a + u[1] * u[1];
+  let a := a + u[2] * u[2];
+  a
 
-double vector_length2_d3(double3 u)
-{
-    return ((u.x * u.x) + (u.y * u.y)) + (u.z * u.z);
-}
+Vector.length_Float_3:
+fun u => sqrt u.length2_Float_3
 
-double vector_length_d3(double3 u)
-{
-    return houlean_math_sqrt_d(vector_length2_d3(u));
-}
+HouLean.Math.ApproxEqual.approxEqual_Float_Float_0e0_1e_6:
+fun x => decide (1e-6 ≥ abs (x - 0e0))
 
-double houlean_math_abs_d(double x)
-{
-    return fabs(x);
-}
+Inv.inv_Float:
+fun a => 1e0 / a
 
-bool houlean_math_approxequal_dd(double x, double y, double tol)
-{
-    return houlean_math_abs_d(x - y) <= tol;
-}
+HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3:
+fun a a_1 =>
+  let is := Inv.inv_Float a_1;
+  is * a
 
-double inv_d(double a)
-{
-    return 1.0d / a;
-}
+Vector.normalize_Float_3:
+fun u =>
+  let len := u.length_Float_3;
+  if ApproxEqual.approxEqual_Float_Float_0e0_1e_6 len = true then (u, 0e0)
+  else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
 
-double3 hdiv_d3dd3(double3 a, double a1)
-{
-    double is = inv_d(a1);
-    return (double3){is * a.x, is * a.y, is * a.z};
-}
+HouLean.Math.Normalize.normalize_Vector_Float_3_Float:
+fun x => x.normalize_Float_3
 
-prod_d3_d vector_normalize_d3(double3 u)
-{
-    double len = vector_length_d3(u);
-    if (houlean_math_approxequal_dd(len, 0.0d, 1e-6d))
-    {
-        return (prod_d3_d){u, 0.0d};
-    }
-    else
-    {
-        return (prod_d3_d){hdiv_d3dd3(u, len), len};
-    }
-}
-
-prod_d3_d (anonymous)(double3 x)
-{
-    return vector_normalize_d3(x);
-}
+Resulting specialization:
+  Normalize.normalize_Vector_Float_3_Float u
 -/
 #guard_msgs in
-#opencl_compile (fun x : Vector Float 3 => x.normalize)
+#opencl_sas normalize u
 
 
 /--
-info:
-double vector_dot_d3(double3 u, double3 v)
-{
-    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
-}
+info: HouLean.Math.Hermite.hermite_Float_Float:
+fun p0 p1 t0 t1 t =>
+  let t2 := t * t;
+  let t3 := t2 * t;
+  let h00 := 2e0 * t3 - 3e0 * t2 + 1e0;
+  let h10 := t3 - 2e0 * t2 + t;
+  let h01 := -2e0 * t3 + 3e0 * t2;
+  let h11 := t3 - t2;
+  h00 * p0 + h10 * t0 + h01 * p1 + h11 * t1
 
-double houlean_math_sqrt_d(double x)
-{
-    return sqrt(x);
-}
+Vector.hermite_Float_3:
+fun p0 p1 t0 t1 t =>
+  #v[Hermite.hermite_Float_Float p0[0] p1[0] t0[0] t1[0] t, Hermite.hermite_Float_Float p0[1] p1[1] t0[1] t1[1] t,
+    Hermite.hermite_Float_Float p0[2] p1[2] t0[2] t1[2] t]
 
-double vector_length2_d3(double3 u)
-{
-    return ((u.x * u.x) + (u.y * u.y)) + (u.z * u.z);
-}
+HouLean.Math.Hermite.hermite_Vector_Float_3_Float:
+fun p0 p1 t0 t1 t => p0.hermite_Float_3 p1 t0 t1 t
 
-double vector_length_d3(double3 u)
-{
-    return houlean_math_sqrt_d(vector_length2_d3(u));
-}
-
-double houlean_math_abs_d(double x)
-{
-    return fabs(x);
-}
-
-bool houlean_math_approxequal_dd(double x, double y, double tol)
-{
-    return houlean_math_abs_d(x - y) <= tol;
-}
-
-double inv_d(double a)
-{
-    return 1.0d / a;
-}
-
-double3 hdiv_d3dd3(double3 a, double a1)
-{
-    double is = inv_d(a1);
-    return (double3){is * a.x, is * a.y, is * a.z};
-}
-
-prod_d3_d vector_normalize_d3(double3 u)
-{
-    double len = vector_length_d3(u);
-    if (houlean_math_approxequal_dd(len, 0.0d, 1e-6d))
-    {
-        return (prod_d3_d){u, 0.0d};
-    }
-    else
-    {
-        return (prod_d3_d){hdiv_d3dd3(u, len), len};
-    }
-}
-
-double3 vector_normalized_d3(double3 u)
-{
-    return vector_normalize_d3(u).fst;
-}
-
-double houlean_math_clamp_dd(double x, double lo, double hi)
-{
-    if (x < lo)
-    {
-        return lo;
-    }
-    else
-    {
-        if (hi < x)
-        {
-            return hi;
-        }
-        else
-        {
-            return x;
-        }
-    }
-}
-
-double houlean_math_acos_d(double x)
-{
-    return acos(x);
-}
-
-double3 vector_lerp_d3(double3 x, double3 y, double t)
-{
-    return x + (t * (y - x));
-}
-
-double3 houlean_math_lerp_d3d(double3 x, double3 y, double t)
-{
-    return vector_lerp_d3(x, y, t);
-}
-
-double houlean_math_sin_d(double x)
-{
-    return sin(x);
-}
-
-double3 vector_slerp_d3(double3 v, double3 w, double t)
-{
-    double d = vector_dot_d3(vector_normalized_d3(v), vector_normalized_d3(w));
-    double d1 = houlean_math_clamp_dd(d, -1.0d, 1.0d);
-    double theta = houlean_math_acos_d(d1);
-    if (houlean_math_approxequal_dd(theta, 0.0d, 1e-6d))
-    {
-        return houlean_math_lerp_d3d(v, w, t);
-    }
-    else
-    {
-        double s = houlean_math_sin_d(theta);
-        double a = houlean_math_sin_d((1.0d - t) * theta) / s;
-        double b = houlean_math_sin_d(t * theta) / s;
-        return (a * v) + (b * w);
-    }
-}
-
-double3 (anonymous)(double3 x, double3 y, double t)
-{
-    return vector_slerp_d3(x, y, t);
-}
+Resulting specialization:
+  Hermite.hermite_Vector_Float_3_Float u v (u + v) (3e0 * u) x
 -/
 #guard_msgs in
-#opencl_compile (fun (x y : Vector Float 3) (t : Float) => x.slerp y t)
-
+#opencl_sas (hermite u v (u+v) ((3.0:Float)*u) x)
 
 
 /--
-info:
-double float_clamp(double x, double lo, double hi)
-{
-    if (x < lo)
-    {
-        return lo;
-    }
-    else
-    {
-        if (hi < x)
-        {
-            return hi;
-        }
-        else
-        {
-            return x;
-        }
-    }
-}
-
-double houlean_math_clamp_dd(double x, double lo, double hi)
-{
-    return float_clamp(x, lo, hi);
-}
-
-double3 houlean_math_clamp_d3d3(double3 x, double3 lo, double3 hi)
-{
-    return (double3){houlean_math_clamp_dd(x.x, lo.x, hi.x), houlean_math_clamp_dd(x.y, lo.y, hi.y), houlean_math_clamp_dd(x.z, lo.z, hi.z)};
-}
-
-double3 (anonymous)(double3 x, double3 bbmin, double3 bbmax)
-{
-    return houlean_math_clamp_d3d3(x, bbmin, bbmax);
-}
+info: Resulting specialization:
+  let a := v[0];
+  let a := a + v[1];
+  let a := a + v[2];
+  a
 -/
 #guard_msgs in
-#opencl_compile (fun x bbmin bbmax : Vector Float 3 => clamp x bbmin bbmax)
+#opencl_sas (∑ (i : Fin 3), v[i])
+
+
+/--
+info: Resulting specialization:
+  #v[sin v[0], sin v[1], sin v[2]]
+-/
+#guard_msgs in
+#opencl_sas (v.map sin)
+
+
+/--
+info: Vector.zero_Float_3:
+#v[0e0, 0, 0]
+
+Zero.«zero_Vector_Float_(instOfNatNat_3)_1»:
+Vector.zero_Float_3
+
+OfNat.ofNat_Vector_Float_3_0:
+Zero.«zero_Vector_Float_(instOfNatNat_3)_1»
+
+Resulting specialization:
+  OfNat.ofNat_Vector_Float_3_0
+-/
+#guard_msgs in
+#opencl_sas (0 : Vector Float 3)
+
+
+/--
+info: Resulting specialization:
+  #v[1e0, 1, 1]
+-/
+#guard_msgs in
+#opencl_sas (.replicate _ 1 : Vector Float 3)
+
+/--
+info: Resulting specialization:
+  let a := v[0];
+  let a := a + v[1];
+  let a := a + v[2];
+  a
+-/
+#guard_msgs in
+#opencl_sas (v.foldl (·+·) 0)
+
+
+/--
+info: Resulting specialization:
+  let a := v[2];
+  let a := v[1] + a;
+  let a := v[0] + a;
+  a
+-/
+#guard_msgs in
+#opencl_sas (v.foldr (·+·) 0)
+
+/--
+info: Resulting specialization:
+  let a := u[0];
+  let a := a + u[1];
+  let a := a + u[2];
+  a
+-/
+#guard_msgs in
+#opencl_sas (u.sum)
+
+/--
+info: Resulting specialization:
+  #v[10 * ↑0, 10 * ↑1, 10 * ↑2, 10 * ↑3, 10 * ↑4, 10 * ↑5, 10 * ↑6, 10 * ↑7, 10 * ↑8, 10 * ↑9]
+-/
+#guard_msgs in
+#opencl_sas (Vector.ofFn (fun i : Fin 10 => 10*i.1))
+
+
+variable (n : Nat) (i : Fin 3)
+
+/-- error: Expected `n` to be value known at compile time! -/
+#guard_msgs in
+#opencl_sas (Vector.ofFn (fun i : Fin n => 10*i.1))
+
+/--
+info: Fin.val_3:
+fun self => self.1
+
+Resulting specialization:
+  u[i.val_3]
+-/
+#guard_msgs in
+#opencl_sas (u[i])
+
+/--
+info: Vector.dot_Float_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+Vector.refract_Float_3:
+fun v normal eta =>
+  let dt := v.dot_Float_3 normal;
+  let k := 1e0 - eta * eta * (1e0 - dt * dt);
+  let s := eta * dt + sqrt k;
+  if k < 0e0 then 0 else eta * v - s * normal
+
+HouLean.Math.Refract.refract_Vector_Float_3_Float:
+fun v n eta => v.refract_Float_3 n eta
+
+Resulting specialization:
+  Refract.refract_Vector_Float_3_Float u v x
+-/
+#guard_msgs in
+#opencl_sas refract u v x
+
+/--
+info: Vector.compDiv_Float_3:
+fun x y => #v[x[0] / y[0], x[1] / y[1], x[2] / y[2]]
+
+HouLean.Math.CompDiv.compDiv_Vector_Float_3:
+fun x y => x.compDiv_Float_3 y
+
+Resulting specialization:
+  CompDiv.compDiv_Vector_Float_3 u v
+-/
+#guard_msgs in
+#opencl_sas compDiv u v
+
+/--
+info: Vector.length2_Float_3:
+fun u =>
+  let a := u[0] * u[0];
+  let a := a + u[1] * u[1];
+  let a := a + u[2] * u[2];
+  a
+
+Vector.length_Float_3:
+fun u => sqrt u.length2_Float_3
+
+HouLean.Math.ApproxEqual.approxEqual_Float_Float_0e0_1e_6:
+fun x => decide (1e-6 ≥ abs (x - 0e0))
+
+Inv.inv_Float:
+fun a => 1e0 / a
+
+HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3:
+fun a a_1 =>
+  let is := Inv.inv_Float a_1;
+  is * a
+
+Vector.normalize_Float_3:
+fun u =>
+  let len := u.length_Float_3;
+  if ApproxEqual.approxEqual_Float_Float_0e0_1e_6 len = true then (u, 0e0)
+  else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
+
+Prod.fst_Vector_Float_3_Float:
+fun self => self.1
+
+Vector.normalized_Float_3:
+fun u => u.normalize_Float_3.fst_Vector_Float_3_Float
+
+Vector.dot_Float_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+Vector.slerp_Float_3:
+fun v w t =>
+  let d := v.normalized_Float_3.dot_Float_3 w.normalized_Float_3;
+  let d := clamp d (-1e0) 1e0;
+  let theta := acos d;
+  let s := sin theta;
+  let a := sin ((1e0 - t) * theta) / s;
+  let b := sin (t * theta) / s;
+  if ApproxEqual.approxEqual_Float_Float_0e0_1e_6 theta = true then lerp v w t else a * v + b * w
+
+HouLean.Math.Slerp.slerp_Vector_Float_3_Float:
+fun x y t => x.slerp_Float_3 y t
+
+Resulting specialization:
+  Slerp.slerp_Vector_Float_3_Float u v x
+-/
+#guard_msgs in
+#opencl_sas slerp u v x
+
+
+/--
+info: HouLean.Math.Clamp.clamp_Vector_Float_3_Vector_Float_3:
+fun x lo hi => #v[clamp x[0] lo[0] hi[0], clamp x[1] lo[1] hi[1], clamp x[2] lo[2] hi[2]]
+
+Resulting specialization:
+  Clamp.clamp_Vector_Float_3_Vector_Float_3 u v w
+-/
+#guard_msgs in
+#opencl_sas clamp u v w
+
+
+/--
+info: Vector.dot_Float_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+Vector.length2_Float_3:
+fun u =>
+  let a := u[0] * u[0];
+  let a := a + u[1] * u[1];
+  let a := a + u[2] * u[2];
+  a
+
+Vector.projectToSegment_Float_3:
+fun point a b =>
+  let ab := b - a;
+  let ap := point - a;
+  let t := clamp (ap.dot_Float_3 ab / ab.length2_Float_3) 0e0 1e0;
+  a + t * ab
+
+HouLean.Math.ProjectToSegment.projectToSegment_Vector_Float_3:
+fun point a b => point.projectToSegment_Float_3 a b
+
+Resulting specialization:
+  ProjectToSegment.projectToSegment_Vector_Float_3 u v w
+-/
+#guard_msgs in
+#opencl_sas projectToSegment u v w
+
+
+private def foo (x y : Float) := x + y
+
+
+/--
+info: _private.Tests.OpenCL.Vector.0.Test.OpenCL.SpecAndSimp.foo_0e0:
+fun y => 0e0 + y
+
+Resulting specialization:
+  foo_0e0 x
+-/
+#guard_msgs in
+#opencl_sas (foo 0.0 x)

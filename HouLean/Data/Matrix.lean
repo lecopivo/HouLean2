@@ -306,34 +306,41 @@ defun catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Mat
 -- Geometric Queries
 -- ============================================================================
 
+def split1 (a : Matrix T (n+1) (n+1)) : (Matrix T n n × Vector T n) × (Vector T n × T) :=
+  ((.ofFn fun i j _ => a[i,j], .ofFn fun i => a[i,n]),
+   (.ofFn fun j => a[n,j], a[n,n]))
+
+def split (a : Matrix T (m+m') (n+n')) : (Matrix T m n × Matrix T m n') × (Matrix T m' n × Matrix T m' n') :=
+  ((.ofFn fun i j _ => a[i,j], .ofFn fun i j _ => a[i,n+j]),
+   (.ofFn fun i j _ => a[m+i,j], .ofFn fun i j _ => a[m+i,n+j]))
+
+
 variable [One α] [Div α] [Inv α]
 
 /-- Transform point. Computes `(point 1) * transform`.  -/
 def transformPointLeft (transform : Matrix α (n+1) (n+1)) (point : Vector α n) : Vector α n :=
+  let tmp := transform.split1
+  let ((a,u),(v,s)) := tmp
+  let w := point.dot u + s
+  (point * a + v) / w
 
-  let point' := Vector.ofFn fun j : Fin n =>
-    transform[n,j.1] + ∑ (k : Fin n), point[k] * transform[k,j]
-  let w := transform[n,n] + ∑ (k : Fin n), point[k] * transform[k.1,n]
-
-  point' / w
-
+open NormalMatrixVecMul in
 /-- Transform point. Computes `transform * (point 1)`.  -/
 def transformPointRight (transform : Matrix α (n+1) (n+1)) (point : Vector α n) : Vector α n :=
-
-  let point' := Vector.ofFn fun i : Fin n =>
-    transform[i.1,n] + ∑ (k : Fin n), transform[i,k] * point[k]
-  let w := transform[n,n] + ∑ (k : Fin n), point[k] * transform[k,n]
-
-  point' / w
+  let tmp := transform.split1
+  let ((a,u),(v,s)) := tmp
+  let w := point.dot v + s
+  (a * point + u) / w
 
 /-- Transform vector. Computes `(vector 0) * transform` -/
 def transformVectorLeft (transform : Matrix α (n+1) (n+1)) (vector : Vector α n) : Vector α n :=
-  Vector.ofFn fun j : Fin n =>
-    ∑ (k : Fin n), vector[k] * transform[k,j]
-    -- HouLean.sum (fun k : Fin n => vector[k] * transform[k.1,j.1])
+  let tmp := transform.split1
+  let ((a,_),(_,_)) := tmp
+  vector * a
 
+open NormalMatrixVecMul in
 /-- Transform vector. Computes `transform * (vector 0)` -/
 def transformVectorRight (transform : Matrix α (n+1) (n+1)) (vector : Vector α n) : Vector α n :=
-  Vector.ofFn fun i : Fin n =>
-    ∑ (k : Fin n), transform[i,k] * vector[k]
-    -- HouLean.sum (fun k : Fin n => transform[i.1, k.1] * vector[k])
+  let tmp := transform.split1
+  let ((a,_),(_,_)) := tmp
+  a * vector

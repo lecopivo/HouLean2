@@ -1,3 +1,4 @@
+#exit
 import HouLean.OpenCL.Data.Attribute
 import HouLean.OpenCL.Data.Volume
 import HouLean.OpenCL.Data.Int

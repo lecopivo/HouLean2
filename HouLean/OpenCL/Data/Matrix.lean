@@ -1,7 +1,7 @@
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Fin
-import HouLean.OpenCL.Data.Int
-import HouLean.OpenCL.Data.ArrayType
+-- import HouLean.OpenCL.Data.ArrayType
+import HouLean.OpenCL.Reference
 import HouLean.Data.Matrix
 
 namespace HouLean.OpenCL
@@ -10,23 +10,70 @@ open Compiler Qq HouLean Math
 
 namespace Matrix
 
+open Lean  in
+def matrixTypeIdent (elem : String) (m n : Nat) : Ident :=
+  mkIdent <| .mkSimple <| s!"matrix{m}{n}{elem}"
 
-/-- `Matrix T m n` on OpenCL level is modeled as structure with `m` row vectors.  -/
-instance [t : AtomicOpenCLType α] [AllowedVectorSize n] : OpenCLType (Matrix α m n) :=
-  let name :=
-    --if m = n then
-    --  s!"matrix{m}{t.shortName}"
-    --else
-      s!"matrix{m}{n}{t.shortName}"
-  {
-    name := name
-    shortName := s!"{t.shortName}{m}{n}"
-    definition? :=
-      let r : OpenCLType (Vector α n) := by infer_instance
-      ((Array.range m).foldl (init:=s!"typedef struct\{")
-        (fun s i => s ++ s!"\n  {r.name} row{i}")) ++ s!"\n}  {name};"
-  }
+open Lean Meta Compiler3 in
+/- `Matrix T m n` is compiled to `Tn` e.g. `Vector Float32 3 ==> float3` -/
+impl_by {m n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Matrix T m n ==> do
 
+  let some m ← runInterpreter? Nat m
+    | throwError m!"Number of rows {m} of a matrix has to be known at compile time!"
+  let some n ← runInterpreter? Nat n
+    | throwError m!"Number of columns {n} of a matrix has to be known at compile time!"
+  let type ← compileType T
+
+  let id := matrixTypeIdent s!"{type}" m n
+
+  return ← `(oclExpr| $id:ident)
+
+
+/- Matrix contructor rule  e.g. #m[row0,row1,row2] ==> (matrix33){row0,row1,row2}  -/
+open Meta Compiler3 in
+impl_by {m n : Nat} {α : Type} [AtomicOpenCLType α] (l : List (Vector α n)) (h) :
+    Matrix.mk (m:=m) (Vector.mk l.toArray h) ==> do
+
+  let xs ← splitList l
+  let xs ← xs.mapM compileExpr
+  let t ← compileType α
+
+  let some m ← runInterpreter? Nat m
+    | throwError m!"Number of rows {m} of a matrix has to be known at compile time!"
+  let some n ← runInterpreter? Nat n
+    | throwError m!"Number of columns {n} of a matrix has to be known at compile time!"
+  let matrixId := matrixTypeIdent s!"{t}" m n
+
+  return ← `(oclExpr| ($matrixId){$xs:oclExpr,*} )
+
+/- Matrix projection rule  e.g. a.row 2 ==> a.row2  -/
+open Lean Meta Compiler3 in
+impl_by {m n : Nat} {T} (a : Matrix T m n) (i) (h) : a.row i h  ==> do
+
+  let a ← compileExpr a
+  let some i ← runInterpreter? Nat i
+    | throwError m!"Number of rows {m} of a matrix has to be known at compile time!"
+  let proj := mkIdent (Name.appendAfter `row (toString i))
+
+  return ← `(oclExpr| $a:oclExpr.$proj:ident)
+
+
+@[opencl_csimp]
+theorem matrix_getElem_nat_nat (a : Matrix T m n) (ij : Nat×Nat) (h) : a[ij]'h = (a.row ij.1)[ij.2] := by rfl
+@[opencl_csimp]
+theorem matrix_getElem_fin_nat (a : Matrix T m n) (ij : Fin m'×Nat) (h) : a[ij]'h = (a.row ij.1)[ij.2] := by rfl
+@[opencl_csimp]
+theorem matrix_getElem_nat_fin (a : Matrix T m n) (ij : Nat×Fin n') (h) : a[ij]'h = (a.row ij.1)[ij.2] := by rfl
+@[opencl_csimp]
+theorem matrix_getElem_fin_fin (a : Matrix T m n) (ij : Fin m'×Fin n') (h) : a[ij]'h = (a.row ij.1)[ij.2] := by rfl
+
+@[opencl_csimp]
+theorem matrix_mapRowsFinIdx (f : (i : Nat) →  Vector α n → (h : i < m) → Vector β n') (a : Matrix α m n) :
+  a.mapRowsFinIdx f = Matrix.fromRows fun i h => f i (a.row i) h := by sorry_proof
+
+
+
+#exit
 -- why do we have to unfold this?
 @[opencl_csimp]
 def vload [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
@@ -60,6 +107,16 @@ implemented_by [t : AtomicOpenCLType α] [Inhabited α] (f : Fin m → Vector α
   =
   (oclFunction (List (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
   (argList (List.ofFn f))
+
+
+open Lean Elab Term Meta in
+elab c:"#ocl_compile_expr" f:term : command => do
+  Command.runTermElabM fun _ => do
+    let f ← elabTermAndSynthesize f none
+    lambdaTelescope f fun _ b => do
+      let stx ← Compiler3.compileExpr b
+      logInfoAt c stx
+
 
 
 /-- Same as `Matrix.col` but `i` is implicit argument thus forced to be compile time evaluated.

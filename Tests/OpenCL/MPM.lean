@@ -1,3 +1,4 @@
+#exit
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Data.ArrayRef
 import HouLean.OpenCL.Data.NanoVDB

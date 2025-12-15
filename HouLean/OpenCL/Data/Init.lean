@@ -78,6 +78,7 @@ attribute [opencl_csimp]
 instance [t : OpenCLType α] : OpenCLType (Id α) := t
 attribute [opencl_csimp] Id.run
 
+attribute [opencl_csimp] sum
 
 open Lean Meta Qq in
 simproc_decl normalize_ocl_fun_name (oclFunction _ _ _) := fun e => do

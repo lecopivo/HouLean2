@@ -1,84 +1,39 @@
+import HouLean.OpenCL.Compiler.SpecAndSimp
+import HouLean.OpenCL.Basic
 import HouLean.Data.Vector
-import HouLean.OpenCL.Compiler.Main
-import HouLean.OpenCL.Data.Float
-import HouLean.OpenCL.Data.Fin
-import HouLean.OpenCL.Data.InlinedLoop
 
 namespace HouLean.OpenCL
 
-open Qq HouLean Math
-
-variable {α : Type} {n : Nat}
-
--- constructor
-implemented_by [t : AtomicOpenCLType α] [Inhabited α] (n) (xs : List α) (h) :
-  Vector.mk (n:=n) xs.toArray h
-  =
-  (oclFunction (List α → Vector α n) s!"({t.name}{n})" .constructor)
-  (argList xs)
-
--- ofFn
-implemented_by [t : AtomicOpenCLType α] [Inhabited α] (n) (f : (Fin n) → α) :
-  Vector.ofFn f
-  =
-  (oclFunction (List α → Vector α n) s!"({t.name}{n})" .constructor)
-  (argList (List.ofFn f))
-
-
-
-def componentProjection (i : Nat) : String :=
-     (if i = 0 then
-        ".x"
-      else if i = 1 then
-        ".y"
-      else if i = 2 then
-        ".z"
-      else if i = 3 then
-        ".w"
-      else if i < 10 then
-        s!".s{i}"
-      else if i = 10 then
-        ".sa"
-      else if i = 11 then
-        ".sb"
-      else if i = 12 then
-        ".sc"
-      else if i = 13 then
-        ".sd"
-      else if i = 14 then
-        ".se"
-      else if i = 15 then
-        ".sf"
-      else
-        panic! "The index has to be known at compile time")
+open Compiler3 Meta
 
 @[opencl_csimp]
-theorem opencl_rewrite_vector_getElem_nat [Inhabited α] (v : Vector α n) (i : Nat) (h) :
-    v[i]'h
-    =
-    (v |> oclFunction (type := Vector α n → α) (componentProjection i) (kind := .postfix)) := sorry_proof
+theorem vector_ofFn {α} {n : Nat} (f : Fin n → α) :
+    Vector.ofFn f = Vector.mk (unroll (List.ofFn f)).toArray (by simp[unroll]) := by simp[unroll]
 
 @[opencl_csimp]
-theorem Vector.getElemFin_eq_getElemNat' (v : Vector α n) (i : Fin m) (h) :
-  v[i]'h = v[i.1] := by rfl
+theorem vector_map {α β} {n : Nat} (f : α → β) (u : Vector α n) :
+    u.map f = .ofFn fun i => f u[i] := by ext i; simp
 
--- map
-implemented_by {β} (f : α → β) (v : Vector α n) :
-    v.map f = let v := v; .ofFn (fun i => f (v[i]))
-implemented_by {β} (f : Nat → α → β) (v : Vector α n) :
-    v.mapIdx f = let v := v; .ofFn (fun i => f i.1 (v[i]))
-implemented_by {β} (f : (i : Nat) → α → i < n → β) (v : Vector α n) :
-    v.mapFinIdx f = let v := v; .ofFn (fun i => f i.1 (v[i]) (by grind))
+@[opencl_csimp]
+theorem vector_mapIdx {α β} {n : Nat} (f : Nat → α → β) (u : Vector α n) :
+    u.mapIdx f = .ofFn fun i => f i u[i] := by ext i; simp
 
--- fold
-implemented_by {β} (f : β → α → β) (init : β) (v : Vector α n) :
-    v.foldl f init = let v := v; inlinedLoop n (fun i x => f x (v[i])) init
-implemented_by {β} (f : α → β → β) (init : β) (v : Vector α n) :
-    v.foldr f init = let v := v; inlinedLoop n (fun i x => f v[n-i-1] x) init
+@[opencl_csimp]
+theorem vector_mapFinIdx {α β} {n : Nat} (f : (i : Nat) → α → i < n → β) (u : Vector α n) :
+    u.mapFinIdx f = .ofFn fun i => f i u[i] (i.2) := by ext i; simp
 
--- sum
-implemented_by [Add α] [Zero α] (u : Vector α n) : u.sum = let u := u; u.foldl (· + ·) 0
+@[opencl_csimp]
+theorem vector_foldl {α β} {n : Nat} (f : β → α → β) (b : β) (u : Vector α n) :
+    u.foldl f b = Fin.foldl n (fun b i => f b u[i]) b := sorry_proof
 
--- zero
-implemented_by [Zero α] : (0 : Vector α n) = Vector.zero (α:=α) (n:=n)
-implemented_by (a : α) : Vector.replicate n a = .ofFn (fun _ => a)
+@[opencl_csimp]
+theorem vector_foldr {α β} {n : Nat} (f : α → β → β) (b : β) (u : Vector α n) :
+    u.foldr f b = Fin.foldr n (fun i b => f u[i] b) b := sorry_proof
+
+@[opencl_csimp]
+theorem vector_sum [Add α] [Zero α] (u : Vector α n) :
+    u.sum = ∑ (i : Fin n), u[i] := sorry_proof
+
+@[opencl_csimp]
+theorem vector_replicate {α} {n : Nat} (a : α) :
+    Vector.replicate n a = .ofFn fun _ => a := by ext i; simp

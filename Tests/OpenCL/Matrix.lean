@@ -1,6 +1,6 @@
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Data.Init
-import HouLean.OpenCL.Data.MProd
+-- import HouLean.OpenCL.Data.MProd
 import HouLean.Data.LinearAlgebra.Basic
 
 open HouLean OpenCL Math
@@ -8,232 +8,299 @@ open HouLean OpenCL Math
 open HoudiniMatrixVecMul
 
 
-/--
-info:
-float inv_f(float a)
-{
-    return 1.0f / a;
-}
-
-matrix33f houlean_matrix_sdiv_f33(matrix33f a, float s)
-{
-    float is = inv_f(s);
-    return (matrix33f){is * a.row0, is * a.row1, is * a.row2};
-}
-
-matrix33f hdiv_f33ff33(matrix33f a, float a1)
-{
-    return houlean_matrix_sdiv_f33(a, a1);
-}
-
-matrix33f (anonymous)(float s, matrix33f A)
-{
-    return hdiv_f33ff33(A, s);
-}
--/
-#guard_msgs in
-#opencl_compile (fun (s : Float32) (A : Matrix Float32 3 3) => A / s)
+variable (A B : Matrix Float32 3 3) (s : Float32) (u v : Vector Float32 3)
+  (A2 B2 : Matrix Float32 2 2) (A4 B4 : Matrix Float32 4 4)
 
 
 /--
-info:
-float houlean_math_sin_f(float x)
-{
-    return sin(x);
-}
-
-float3 vector_sin_f3(float3 x)
-{
-    return (float3){houlean_math_sin_f(x.x), houlean_math_sin_f(x.y), houlean_math_sin_f(x.z)};
-}
-
-float vector_dot_f3(float3 u, float3 v)
-{
-    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
-}
-
-float3 (anonymous)(float3 v)
-{
-    float3 a = v + vector_sin_f3(v);
-    float b = vector_dot_f3(v, v);
-    return b * a;
-}
+info: Resulting specialization:
+  (A.row 0 ⋯)[1]
 -/
 #guard_msgs in
-#opencl_compile (fun (v : Vector Float32 3) =>
+#opencl_sas A[0,1]
+
+
+/--
+info: HouLean.Matrix.col_Float32_3_3_1:
+fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
+
+Resulting specialization:
+  A.col_Float32_3_3_1
+-/
+#guard_msgs in
+#opencl_sas A.col 1
+
+
+/--
+info: Inv.inv_Float32:
+fun a => 1e0 / a
+
+HouLean.Matrix.fromRows_3_Float32_3:
+fun f => { data := #v[f 0 ⋯, f 1 ⋯, f 2 ⋯] }
+
+HouLean.Matrix.mapRows_3_Float32_3_Float32_3:
+fun f a => Matrix.fromRows_3_Float32_3 fun i h => f (a.row i h)
+
+HouLean.Matrix.sdiv_Float32_3_3:
+fun a s =>
+  let is := Inv.inv_Float32 s;
+  Matrix.mapRows_3_Float32_3_Float32_3 (fun x => is * x) a
+
+HDiv.hDiv_Matrix_Float32_3_3_Float32_Matrix_Float32_3_3:
+fun a a_1 => a.sdiv_Float32_3_3 a_1
+
+Resulting specialization:
+  HDiv.hDiv_Matrix_Float32_3_3_Float32_Matrix_Float32_3_3 A s
+-/
+#guard_msgs in
+#opencl_sas (A / s)
+
+
+/--
+info: Vector.sin_Float32_3:
+fun x => #v[sin x[0], sin x[1], sin x[2]]
+
+Vector.dot_Float32_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+Resulting specialization:
+  let a := v + v.sin_Float32_3;
+  let b := v.dot_Float32_3 v;
+  b * a
+-/
+#guard_msgs in
+#opencl_sas (
   let a := v + v.sin
   let b := v.dot v
   b * a)
 
-/--
-info:
-float houlean_math_sin_f(float x)
-{
-    return sin(x);
-}
-
-float3 vector_sin_f3(float3 x)
-{
-    return (float3){houlean_math_sin_f(x.x), houlean_math_sin_f(x.y), houlean_math_sin_f(x.z)};
-}
-
-float3 houlean_math_sin_f3(float3 x)
-{
-    return vector_sin_f3(x);
-}
-
-float3 (anonymous)(float3 x)
-{
-    return houlean_math_sin_f3(x);
-}
--/
-#guard_msgs in
-#opencl_compile Math.sin (α:=Vector Float32 3)
 
 /--
-info:
-float3 vector_zero_f3()
-{
-    return (float3){0.0f, 0.0f, 0.0f};
-}
+info: Vector.sin_Float32_3:
+fun x => #v[sin x[0], sin x[1], sin x[2]]
 
-float3 houlean_matrix_vecmul_sum_rows_f33(float3 v, matrix33f a)
-{
-    return ((vector_zero_f3() + (v.x * a.row0)) + (v.y * a.row1)) + (v.z * a.row2);
-}
+HouLean.Math.Sin.sin_Vector_Float32_3:
+fun x => x.sin_Float32_3
 
-float3 hmul_f3f33f3(float3 a, matrix33f a1)
-{
-    return houlean_matrix_vecmul_sum_rows_f33(a, a1);
-}
-
-float vector_dot_f3(float3 u, float3 v)
-{
-    return ((u.x * v.x) + (u.y * v.y)) + (u.z * v.z);
-}
-
-float3 houlean_matrix_coli_f330(matrix33f a)
-{
-    return (float3){a.row0.x, a.row1.x, a.row2.x};
-}
-
-float3 houlean_matrix_coli_f331(matrix33f a)
-{
-    return (float3){a.row0.y, a.row1.y, a.row2.y};
-}
-
-float3 houlean_matrix_coli_f332(matrix33f a)
-{
-    return (float3){a.row0.z, a.row1.z, a.row2.z};
-}
-
-matrix33f houlean_matrix_matmul_f333(matrix33f a, matrix33f b)
-{
-    return (matrix33f){(float3){vector_dot_f3(a.row0, houlean_matrix_coli_f330(b)), vector_dot_f3(a.row0, houlean_matrix_coli_f331(b)), vector_dot_f3(a.row0, houlean_matrix_coli_f332(b))}, (float3){vector_dot_f3(a.row1, houlean_matrix_coli_f330(b)), vector_dot_f3(a.row1, houlean_matrix_coli_f331(b)), vector_dot_f3(a.row1, houlean_matrix_coli_f332(b))}, (float3){vector_dot_f3(a.row2, houlean_matrix_coli_f330(b)), vector_dot_f3(a.row2, houlean_matrix_coli_f331(b)), vector_dot_f3(a.row2, houlean_matrix_coli_f332(b))}};
-}
-
-matrix33f hmul_f33f33f33(matrix33f a, matrix33f a1)
-{
-    return houlean_matrix_matmul_f333(a, a1);
-}
-
-float3 (anonymous)(float3 v, matrix33f A, matrix33f B)
-{
-    return hmul_f3f33f3(v, hmul_f33f33f33(A, B));
-}
+Resulting specialization:
+  Sin.sin_Vector_Float32_3 v
 -/
 #guard_msgs in
-#opencl_compile (fun (v : Vector Float32 3) (A B : Matrix Float32 3 3) => v * (A * B))
-
+#opencl_sas Math.sin v
 
 
 /--
-info:
-float houlean_matrix_det2_f(matrix22f a)
-{
-    return (a.row0.x * a.row1.y) - (a.row0.y * a.row1.x);
-}
+info: HouLean.Matrix.ofFn_3_3_Float32:
+fun f => { data := #v[#v[f 0 0 ⋯, f 0 1 ⋯, f 0 2 ⋯], #v[f 1 0 ⋯, f 1 1 ⋯, f 1 2 ⋯], #v[f 2 0 ⋯, f 2 1 ⋯, f 2 2 ⋯]] }
 
-float inv_f(float a)
-{
-    return 1.0f / a;
-}
+HouLean.Matrix.matMul_Float32_3_3_3:
+fun a b => Matrix.ofFn_3_3_Float32 fun i j x => (a.row i ⋯).dot (b.col j ⋯)
 
-matrix22f houlean_matrix_inv2_f(matrix22f a)
-{
-    float d = houlean_matrix_det2_f(a);
-    float id = inv_f(d);
-    return (matrix22f){(float2){a.row1.y * id, ( -a.row0.y) * id}, (float2){( -a.row1.x) * id, a.row0.x * id}};
-}
+HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3:
+fun a a_1 => a.matMul_Float32_3_3_3 a_1
 
-matrix22f (anonymous)(matrix22f A)
-{
-    return houlean_matrix_inv2_f(A);
-}
+HouLean.Matrix.col_Float32_3_3_0:
+fun a => #v[(a.row 0 ⋯)[0], (a.row 1 ⋯)[0], (a.row 2 ⋯)[0]]
+
+Vector.dot_Float32_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+HouLean.Matrix.col_Float32_3_3_1:
+fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
+
+HouLean.Matrix.col_Float32_3_3_2:
+fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
+
+HouLean.Matrix.vecMul_Float32_3_3:
+fun v a =>
+  #v[v.dot_Float32_3 a.col_Float32_3_3_0, v.dot_Float32_3 a.col_Float32_3_3_1, v.dot_Float32_3 a.col_Float32_3_3_2]
+
+HMul.hMul_Vector_Float32_3_Matrix_Float32_3_3_Vector_Float32_3:
+fun a a_1 => Matrix.vecMul_Float32_3_3 a a_1
+
+Resulting specialization:
+  HMul.hMul_Vector_Float32_3_Matrix_Float32_3_3_Vector_Float32_3 v
+    (HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3 A B)
 -/
 #guard_msgs in
-#opencl_compile (fun (A : Matrix Float32 2 2) => A.inv2)
+#opencl_sas (v * (A * B))
 
 
 /--
-info:
-float houlean_matrix_det3_f(matrix33f a)
-{
-    return ((a.row0.x * ((a.row1.y * a.row2.z) - (a.row1.z * a.row2.y))) - (a.row0.y * ((a.row1.x * a.row2.z) - (a.row1.z * a.row2.x)))) + (a.row0.z * ((a.row1.x * a.row2.y) - (a.row1.y * a.row2.x)));
-}
+info: HouLean.Matrix.det2_Float32:
+fun a => (a.row 0 ⋯)[0] * (a.row 1 ⋯)[1] - (a.row 0 ⋯)[1] * (a.row 1 ⋯)[0]
 
-float inv_f(float a)
-{
-    return 1.0f / a;
-}
+Inv.inv_Float32:
+fun a => 1e0 / a
 
-matrix33f houlean_matrix_inv3_f(matrix33f a)
-{
-    float d = houlean_matrix_det3_f(a);
-    float id = inv_f(d);
-    return (matrix33f){(float3){((a.row1.y * a.row2.z) - (a.row1.z * a.row2.y)) * id, ((a.row0.z * a.row2.y) - (a.row0.y * a.row2.z)) * id, ((a.row0.y * a.row1.z) - (a.row0.z * a.row1.y)) * id}, (float3){((a.row1.z * a.row2.x) - (a.row1.x * a.row2.z)) * id, ((a.row0.x * a.row2.z) - (a.row0.z * a.row2.x)) * id, ((a.row0.z * a.row1.x) - (a.row0.x * a.row1.z)) * id}, (float3){((a.row1.x * a.row2.y) - (a.row1.y * a.row2.x)) * id, ((a.row0.y * a.row2.x) - (a.row0.x * a.row2.y)) * id, ((a.row0.x * a.row1.y) - (a.row0.y * a.row1.x)) * id}};
-}
+HouLean.Matrix.inv2_Float32:
+fun a =>
+  let d := a.det2_Float32;
+  let id := Inv.inv_Float32 d;
+  { data := #v[#v[(a.row 1 ⋯)[1] * id, -(a.row 0 ⋯)[1] * id], #v[-(a.row 1 ⋯)[0] * id, (a.row 0 ⋯)[0] * id]] }
 
-matrix33f (anonymous)(matrix33f A)
-{
-    return houlean_matrix_inv3_f(A);
-}
+Resulting specialization:
+  A2.inv2_Float32
 -/
 #guard_msgs in
-#opencl_compile (fun (A : Matrix Float32 3 3) => A.inv3)
+#opencl_sas (A2.inv2)
 
 
 /--
-info:
-float inv_f(float a)
-{
-    return 1.0f / a;
-}
+info: HouLean.Matrix.det3_Float32:
+fun a =>
+  (a.row 0 ⋯)[0] * ((a.row 1 ⋯)[1] * (a.row 2 ⋯)[2] - (a.row 1 ⋯)[2] * (a.row 2 ⋯)[1]) -
+      (a.row 0 ⋯)[1] * ((a.row 1 ⋯)[0] * (a.row 2 ⋯)[2] - (a.row 1 ⋯)[2] * (a.row 2 ⋯)[0]) +
+    (a.row 0 ⋯)[2] * ((a.row 1 ⋯)[0] * (a.row 2 ⋯)[1] - (a.row 1 ⋯)[1] * (a.row 2 ⋯)[0])
 
-matrix44f houlean_matrix_inv4_f(matrix44f a)
-{
-    float s0 = (a.row0.x * a.row1.y) - (a.row1.x * a.row0.y);
-    float s1 = (a.row0.x * a.row1.z) - (a.row1.x * a.row0.z);
-    float s2 = (a.row0.x * a.row1.w) - (a.row1.x * a.row0.w);
-    float s3 = (a.row0.y * a.row1.z) - (a.row1.y * a.row0.z);
-    float s4 = (a.row0.y * a.row1.w) - (a.row1.y * a.row0.w);
-    float s5 = (a.row0.z * a.row1.w) - (a.row1.z * a.row0.w);
-    float c5 = (a.row2.z * a.row3.w) - (a.row3.z * a.row2.w);
-    float c4 = (a.row2.y * a.row3.w) - (a.row3.y * a.row2.w);
-    float c3 = (a.row2.y * a.row3.z) - (a.row3.y * a.row2.z);
-    float c2 = (a.row2.x * a.row3.w) - (a.row3.x * a.row2.w);
-    float c1 = (a.row2.x * a.row3.z) - (a.row3.x * a.row2.z);
-    float c0 = (a.row2.x * a.row3.y) - (a.row3.x * a.row2.y);
-    float d = (((((s0 * c5) - (s1 * c4)) + (s2 * c3)) + (s3 * c2)) - (s4 * c1)) + (s5 * c0);
-    float id = inv_f(d);
-    return (matrix44f){(float4){(((a.row1.y * c5) - (a.row1.z * c4)) + (a.row1.w * c3)) * id, (((( -a.row0.y) * c5) + (a.row0.z * c4)) - (a.row0.w * c3)) * id, (((a.row3.y * s5) - (a.row3.z * s4)) + (a.row3.w * s3)) * id, (((( -a.row2.y) * s5) + (a.row2.z * s4)) - (a.row2.w * s3)) * id}, (float4){(((( -a.row1.x) * c5) + (a.row1.z * c2)) - (a.row1.w * c1)) * id, (((a.row0.x * c5) - (a.row0.z * c2)) + (a.row0.w * c1)) * id, (((( -a.row3.x) * s5) + (a.row3.z * s2)) - (a.row3.w * s1)) * id, (((a.row2.x * s5) - (a.row2.z * s2)) + (a.row2.w * s1)) * id}, (float4){(((a.row1.x * c4) - (a.row1.y * c2)) + (a.row1.w * c0)) * id, (((( -a.row0.x) * c4) + (a.row0.y * c2)) - (a.row0.w * c0)) * id, (((a.row3.x * s4) - (a.row3.y * s2)) + (a.row3.w * s0)) * id, (((( -a.row2.x) * s4) + (a.row2.y * s2)) - (a.row2.w * s0)) * id}, (float4){(((( -a.row1.x) * c3) + (a.row1.y * c1)) - (a.row1.z * c0)) * id, (((a.row0.x * c3) - (a.row0.y * c1)) + (a.row0.z * c0)) * id, (((( -a.row3.x) * s3) + (a.row3.y * s1)) - (a.row3.z * s0)) * id, (((a.row2.x * s3) - (a.row2.y * s1)) + (a.row2.z * s0)) * id}};
-}
+Inv.inv_Float32:
+fun a => 1e0 / a
 
-matrix44f (anonymous)(matrix44f A)
-{
-    return houlean_matrix_inv4_f(A);
-}
+HouLean.Matrix.inv3_Float32:
+fun a =>
+  let d := a.det3_Float32;
+  let id := Inv.inv_Float32 d;
+  {
+    data :=
+      #v[#v[((a.row 1 ⋯)[1] * (a.row 2 ⋯)[2] - (a.row 1 ⋯)[2] * (a.row 2 ⋯)[1]) * id,
+          ((a.row 0 ⋯)[2] * (a.row 2 ⋯)[1] - (a.row 0 ⋯)[1] * (a.row 2 ⋯)[2]) * id,
+          ((a.row 0 ⋯)[1] * (a.row 1 ⋯)[2] - (a.row 0 ⋯)[2] * (a.row 1 ⋯)[1]) * id],
+        #v[((a.row 1 ⋯)[2] * (a.row 2 ⋯)[0] - (a.row 1 ⋯)[0] * (a.row 2 ⋯)[2]) * id,
+          ((a.row 0 ⋯)[0] * (a.row 2 ⋯)[2] - (a.row 0 ⋯)[2] * (a.row 2 ⋯)[0]) * id,
+          ((a.row 0 ⋯)[2] * (a.row 1 ⋯)[0] - (a.row 0 ⋯)[0] * (a.row 1 ⋯)[2]) * id],
+        #v[((a.row 1 ⋯)[0] * (a.row 2 ⋯)[1] - (a.row 1 ⋯)[1] * (a.row 2 ⋯)[0]) * id,
+          ((a.row 0 ⋯)[1] * (a.row 2 ⋯)[0] - (a.row 0 ⋯)[0] * (a.row 2 ⋯)[1]) * id,
+          ((a.row 0 ⋯)[0] * (a.row 1 ⋯)[1] - (a.row 0 ⋯)[1] * (a.row 1 ⋯)[0]) * id]] }
+
+Resulting specialization:
+  A.inv3_Float32
 -/
 #guard_msgs in
-set_option maxRecDepth 1000 in
-#opencl_compile (fun (A : Matrix Float32 4 4) => A.inv4)
+#opencl_sas (A.inv3)
+
+
+/--
+info: Inv.inv_Float32:
+fun a => 1e0 / a
+
+HouLean.Matrix.inv4_Float32:
+fun a =>
+  let s0 := (a.row 0 ⋯)[0] * (a.row 1 ⋯)[1] - (a.row 1 ⋯)[0] * (a.row 0 ⋯)[1];
+  let s1 := (a.row 0 ⋯)[0] * (a.row 1 ⋯)[2] - (a.row 1 ⋯)[0] * (a.row 0 ⋯)[2];
+  let s2 := (a.row 0 ⋯)[0] * (a.row 1 ⋯)[3] - (a.row 1 ⋯)[0] * (a.row 0 ⋯)[3];
+  let s3 := (a.row 0 ⋯)[1] * (a.row 1 ⋯)[2] - (a.row 1 ⋯)[1] * (a.row 0 ⋯)[2];
+  let s4 := (a.row 0 ⋯)[1] * (a.row 1 ⋯)[3] - (a.row 1 ⋯)[1] * (a.row 0 ⋯)[3];
+  let s5 := (a.row 0 ⋯)[2] * (a.row 1 ⋯)[3] - (a.row 1 ⋯)[2] * (a.row 0 ⋯)[3];
+  let c5 := (a.row 2 ⋯)[2] * (a.row 3 ⋯)[3] - (a.row 3 ⋯)[2] * (a.row 2 ⋯)[3];
+  let c4 := (a.row 2 ⋯)[1] * (a.row 3 ⋯)[3] - (a.row 3 ⋯)[1] * (a.row 2 ⋯)[3];
+  let c3 := (a.row 2 ⋯)[1] * (a.row 3 ⋯)[2] - (a.row 3 ⋯)[1] * (a.row 2 ⋯)[2];
+  let c2 := (a.row 2 ⋯)[0] * (a.row 3 ⋯)[3] - (a.row 3 ⋯)[0] * (a.row 2 ⋯)[3];
+  let c1 := (a.row 2 ⋯)[0] * (a.row 3 ⋯)[2] - (a.row 3 ⋯)[0] * (a.row 2 ⋯)[2];
+  let c0 := (a.row 2 ⋯)[0] * (a.row 3 ⋯)[1] - (a.row 3 ⋯)[0] * (a.row 2 ⋯)[1];
+  let d := s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0;
+  let id := Inv.inv_Float32 d;
+  {
+    data :=
+      #v[#v[((a.row 1 ⋯)[1] * c5 - (a.row 1 ⋯)[2] * c4 + (a.row 1 ⋯)[3] * c3) * id,
+          (-(a.row 0 ⋯)[1] * c5 + (a.row 0 ⋯)[2] * c4 - (a.row 0 ⋯)[3] * c3) * id,
+          ((a.row 3 ⋯)[1] * s5 - (a.row 3 ⋯)[2] * s4 + (a.row 3 ⋯)[3] * s3) * id,
+          (-(a.row 2 ⋯)[1] * s5 + (a.row 2 ⋯)[2] * s4 - (a.row 2 ⋯)[3] * s3) * id],
+        #v[(-(a.row 1 ⋯)[0] * c5 + (a.row 1 ⋯)[2] * c2 - (a.row 1 ⋯)[3] * c1) * id,
+          ((a.row 0 ⋯)[0] * c5 - (a.row 0 ⋯)[2] * c2 + (a.row 0 ⋯)[3] * c1) * id,
+          (-(a.row 3 ⋯)[0] * s5 + (a.row 3 ⋯)[2] * s2 - (a.row 3 ⋯)[3] * s1) * id,
+          ((a.row 2 ⋯)[0] * s5 - (a.row 2 ⋯)[2] * s2 + (a.row 2 ⋯)[3] * s1) * id],
+        #v[((a.row 1 ⋯)[0] * c4 - (a.row 1 ⋯)[1] * c2 + (a.row 1 ⋯)[3] * c0) * id,
+          (-(a.row 0 ⋯)[0] * c4 + (a.row 0 ⋯)[1] * c2 - (a.row 0 ⋯)[3] * c0) * id,
+          ((a.row 3 ⋯)[0] * s4 - (a.row 3 ⋯)[1] * s2 + (a.row 3 ⋯)[3] * s0) * id,
+          (-(a.row 2 ⋯)[0] * s4 + (a.row 2 ⋯)[1] * s2 - (a.row 2 ⋯)[3] * s0) * id],
+        #v[(-(a.row 1 ⋯)[0] * c3 + (a.row 1 ⋯)[1] * c1 - (a.row 1 ⋯)[2] * c0) * id,
+          ((a.row 0 ⋯)[0] * c3 - (a.row 0 ⋯)[1] * c1 + (a.row 0 ⋯)[2] * c0) * id,
+          (-(a.row 3 ⋯)[0] * s3 + (a.row 3 ⋯)[1] * s1 - (a.row 3 ⋯)[2] * s0) * id,
+          ((a.row 2 ⋯)[0] * s3 - (a.row 2 ⋯)[1] * s1 + (a.row 2 ⋯)[2] * s0) * id]] }
+
+Resulting specialization:
+  A4.inv4_Float32
+-/
+#guard_msgs in
+#opencl_sas (A4.inv4)
+
+
+attribute [opencl_csimp] Matrix.fromRows Matrix.mapRows₂ Matrix.ofFn
+
+/--
+info: HouLean.Matrix.col_Float32_3_3_0:
+fun a => #v[(a.row 0 ⋯)[0], (a.row 1 ⋯)[0], (a.row 2 ⋯)[0]]
+
+Vector.dot_Float32_3:
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+HouLean.Matrix.col_Float32_3_3_1:
+fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
+
+HouLean.Matrix.col_Float32_3_3_2:
+fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
+
+HouLean.Matrix.col_Float32_3_3_01:
+fun a => #v[(a.row 0 ⋯)[0], (a.row 1 ⋯)[0], (a.row 2 ⋯)[0]]
+
+HouLean.Matrix.col_Float32_3_3_11:
+fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
+
+HouLean.Matrix.col_Float32_3_3_21:
+fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
+
+HouLean.Matrix.col_Float32_3_3_02:
+fun a => #v[(a.row 0 ⋯)[0], (a.row 1 ⋯)[0], (a.row 2 ⋯)[0]]
+
+HouLean.Matrix.col_Float32_3_3_12:
+fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
+
+HouLean.Matrix.col_Float32_3_3_22:
+fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
+
+HouLean.Matrix.matMul_Float32_3_3_3:
+fun a b =>
+  {
+    data :=
+      #v[#v[(a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_0, (a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_1,
+          (a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_2],
+        #v[(a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_01, (a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_11,
+          (a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_21],
+        #v[(a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_02, (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_12,
+          (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_22]] }
+
+HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3:
+fun a a_1 => a.matMul_Float32_3_3_3 a_1
+
+Resulting specialization:
+  HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3 A A
+-/
+#guard_msgs in
+#opencl_sas (A * A) -- repeats col function
+
+
+/--
+info: HouLean.Matrix.identity_Float_3:
+{
+  data :=
+    #v[#v[if ↑0 = ↑0 then 1 else 0, if ↑0 = ↑1 then 1 else 0, if ↑0 = ↑2 then 1 else 0],
+      #v[if ↑1 = ↑0 then 1 else 0, if ↑1 = ↑1 then 1 else 0, if ↑1 = ↑2 then 1 else 0],
+      #v[if ↑2 = ↑0 then 1 else 0, if ↑2 = ↑1 then 1 else 0, if ↑2 = ↑2 then 1 else 0]] }
+
+Resulting specialization:
+  Matrix.identity_Float_3
+-/
+#guard_msgs in
+#opencl_sas Matrix.identity Float 3 -- does not reduce element of matrix

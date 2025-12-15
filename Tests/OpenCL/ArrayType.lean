@@ -1,3 +1,4 @@
+#exit
 import HouLean.OpenCL.Data.ArrayType
 import HouLean.OpenCL.Data.Matrix
 import HouLean.Meta.DoNotation

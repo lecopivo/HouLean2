@@ -170,7 +170,7 @@ partial def specializeExprImpl (e : Expr) : M Expr := do
         return r.fn'.beta args'
 
       -- No specialization of the function needed
-      if fn == r.fn' then
+      if (← isDefEq fn r.fn') then
         return r.fn'.beta args'
 
       -- Check for existing specialization

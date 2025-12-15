@@ -30,23 +30,21 @@ info: fun x y =>
 attribute [opencl_csimp] normalize_ocl_fun_name
 
 
-/-- info: fun x y => ocl%((double3){x, y, x}) : Float → Float → Vector Float 3 -/
+/-- info: fun x y => #v[x, y, x] : Float → Float → Vector Float 3 -/
 #guard_msgs in
 #check (fun x y : Float => #v[x,y,x])
   rewrite_by
     simp -zeta only [opencl_csimp]
 
 
-/-- info: fun x y => ocl%((double3){x, y, x}.y) : Float → Float → Float -/
+/-- info: fun x y => #v[x, y, x][1] : Float → Float → Float -/
 #guard_msgs in
 #check (fun x y : Float => #v[x,y,x][1])
   rewrite_by
     simp -zeta only [opencl_csimp]
 
 
-/--
-info: fun x y => ocl%((matrix22d){(double2){x, y}, (double2){y, x}}.row0.x) : Float → Float → Float
--/
+/-- info: fun x y => ({ data := #v[#v[x, y], #v[y, x]] }.row 0 ⋯)[0] : Float → Float → Float -/
 #guard_msgs in
 #check (fun x y : Float => #m[#v[x,y],#v[y,x]][(0,0)])
   rewrite_by
