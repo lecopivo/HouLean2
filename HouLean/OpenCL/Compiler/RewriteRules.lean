@@ -23,10 +23,6 @@ def no_simp {α : Sort u} (a : α) := a
 simproc_decl no_simp_simproc (no_simp _) := fun e =>
   return .done { expr := e }
 
-
-def oclFunction' {type : Type} (spec : type) (name : String) (kind : OpenCLFunction.FunKind := .normal) : type := spec
-
-
 open Lean Meta Math
 
 structure ImplementedBy where

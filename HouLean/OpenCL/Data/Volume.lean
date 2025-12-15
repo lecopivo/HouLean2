@@ -136,7 +136,7 @@ def sampleAndGradient
 
 end Volume
 
-
+set_option linter.unusedVariables false in
 declfun linearInterpolate {Idx Dom Val : Type} (f : Idx → Val) (x : Dom) : Val
 
 defun linearInterpolate {n : Nat} (f : Fin n → Float) (x : Float) : Float :=

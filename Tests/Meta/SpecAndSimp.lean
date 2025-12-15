@@ -53,8 +53,6 @@ def foo {α} [Add α] [Mul α] (x : α) :=
 
 -- set_option trace.Meta.Tactic.simp true
 
-#eval foo 10
-
 /-- Gadget identity map that will unroll loops at compile time. -/
 def unroll {α : Sort u} (a : α) : α := a
 
@@ -78,7 +76,6 @@ simproc_decl list_ofFn_unroll (unroll (List.ofFn _)) := fun e => do
       return .visit { expr := e}
   return .continue
 
-#check (unroll <| List.ofFn (fun i : Fin 5 => 3*i.1)) rewrite_by simp only [list_ofFn_unroll]
 
 @[opencl_csimp]
 theorem vector_mk_ofFn {α : Type} {n : Nat} (f : Fin n → α) (h) :
