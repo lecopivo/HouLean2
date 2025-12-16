@@ -162,6 +162,23 @@ partial def mkProdMkProjs (type : Expr) : MetaM (Expr × Array Expr) := do
 
   return (mk, projsX ++ projsY)
 
+/-- Turns function of type `argType → ... → argType → α` to `Array argType → α`. -/
+def arrayUncurry (argType : Expr) (f : Expr) : MetaM Expr := do
+
+  forallTelescope (← inferType f) fun xs _ => do
+    let ts ← xs.mapM inferType
+    unless ← ts.allM (isDefEq · argType) do
+      throwError m!"Expecting function with arugments of type {argType}, got argument types {ts}!"
+
+    withLocalDeclD `x (← mkAppM ``Array #[argType]) fun a => do
+
+      let mut xs' : Array Expr := #[]
+      for i in [0:xs.size] do
+        let i := mkNatLit i
+        xs' := xs'.push (← mkAppM ``getElem! #[a,i])
+
+      mkLambdaFVars #[a] (f.beta xs')
+
 
 /-- Make local declarations is we have an array of names and types. -/
 def mkLocalDecls [MonadControlT MetaM n] [Monad n]

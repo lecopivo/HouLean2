@@ -4,8 +4,7 @@ import HouLean.Data.Vector
 
 namespace HouLean.OpenCL
 
-open Lean Meta Compiler2
-
+open Lean Meta Compiler
 
 def indexToSuffix? (i : Nat) : Option Name :=
   match i with

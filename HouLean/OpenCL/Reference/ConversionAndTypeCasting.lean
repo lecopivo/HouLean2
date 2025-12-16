@@ -1,17 +1,10 @@
-import HouLean.OpenCL.Compiler.RewriteRules
-import HouLean.OpenCL.Reference.Operators
-
-open Lean HouLean Meta OpenCL Compiler Compiler3 Math
+import HouLean.OpenCL.Compiler
 
 namespace HouLean.OpenCL
-
-open Compiler Qq
-
 
 -- It is unclear if these translations are really faithful
 -- do they work the same whne translating signed to unsigned,
 -- int to float, float to int, ...?
-
 
 -- Nat --> ??
 impl_by (x : Nat) : Int.ofNat x  ==> (int)(x)

@@ -4,7 +4,7 @@ import HouLean.Data.Vector
 
 namespace HouLean.OpenCL
 
-open Compiler3 Meta
+open Compiler Meta
 
 @[opencl_csimp]
 theorem vector_ofFn {α} {n : Nat} (f : Fin n → α) :

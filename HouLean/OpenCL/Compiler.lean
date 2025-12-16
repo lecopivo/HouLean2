@@ -1,3 +1,5 @@
-import HouLean.OpenCL.Compiler.Main2
+import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Compiler.RewriteRules
-import HouLean.OpenCL.Compiler.Grammar2
+import HouLean.OpenCL.Compiler.SpecAndSimp
+import HouLean.OpenCL.Compiler.Grammar
+import HouLean.OpenCL.Compiler.Types

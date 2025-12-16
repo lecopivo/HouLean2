@@ -1,9 +1,9 @@
 import HouLean.OpenCL.Compiler
 import HouLean.OpenCL.Basic
 
-open HouLean OpenCL Compiler2 Math
-
 namespace HouLean.OpenCL
+
+open Math
 
 variable {R} {m n : Nat} (x y z : R) (u v : Vector R n) (a b : Bool)
 

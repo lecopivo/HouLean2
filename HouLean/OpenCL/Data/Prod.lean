@@ -3,6 +3,7 @@ import HouLean.OpenCL.Compiler.Main
 namespace HouLean.OpenCL
 
 
+#exit
 -- todo: this all should just be `deriving OpenCLType for Prod`
 --       Ideally `Prod` will be so called "macro type" that should be completely eliminated from
 --       runtime

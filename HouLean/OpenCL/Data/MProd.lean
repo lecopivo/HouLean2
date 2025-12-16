@@ -2,6 +2,7 @@ import HouLean.OpenCL.Compiler.Main
 
 namespace HouLean.OpenCL
 
+#exit
 
 -- todo: this all should just be `deriving OpenCLType for MProd`
 --       Ideally `MProd` will be so called "macro type" that should be completely eliminated from

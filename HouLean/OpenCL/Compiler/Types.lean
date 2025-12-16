@@ -1,23 +1,21 @@
-import HouLean.Data.Defs
-import HouLean.OpenCL.Compiler.Extension
-import HouLean.OpenCL.Compiler.Code
+import Lean
 
-open Lean Meta Qq HouLean
+open Lean Meta Simp
 
 namespace HouLean.OpenCL.Compiler
+
 structure Context where
   fvarMap : ExprMap String := {}
   usedNames : Std.HashMap String Nat := {}
 
 structure State where
-  compiledFunctions : Array CodeFunction := #[]
-  statements : Array CodeStatement := #[]
+  statements : Array (TSyntax `clStmtLike) := #[]
   -- all functions that has been compiled in this run
 
-abbrev CompileM := ReaderT Compiler.Context <| StateT State <| SimpM
+abbrev CompileM := ReaderT Context <| StateT State <| MetaM
 
-initialize compileFunctionRef : IO.Ref (Expr → CompileM CodeFunction) ←
+initialize compileFunctionRef : IO.Ref (Expr → CompileM (TSyntax `clFunction)) ←
   IO.mkRef (fun _ => pure default)
 
-def compileFunction (f : Expr) : CompileM CodeFunction := do
+def compileFunction (f : Expr) : CompileM (TSyntax `clFunction) := do
   (← compileFunctionRef.get) f

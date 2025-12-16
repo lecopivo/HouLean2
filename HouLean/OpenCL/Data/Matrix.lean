@@ -2,11 +2,12 @@ import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Fin
 -- import HouLean.OpenCL.Data.ArrayType
 import HouLean.OpenCL.Reference
+import HouLean.OpenCL.Compiler
 import HouLean.Data.Matrix
 
 namespace HouLean.OpenCL
 
-open Qq HouLean Math Compiler2
+open Lean Meta Qq Math Compiler
 
 namespace Matrix
 
@@ -14,7 +15,6 @@ open Lean  in
 def matrixTypeIdent (elem : String) (m n : Nat) : Ident :=
   mkIdent <| .mkSimple <| s!"matrix{m}{n}{elem}"
 
-open Lean Meta Compiler3 in
 /- `Matrix T m n` is compiled to `Tn` e.g. `Vector Float32 3 ==> float3` -/
 impl_by {m n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Matrix T m n ==> do
 
@@ -30,7 +30,6 @@ impl_by {m n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Matrix T m 
 
 
 /- Matrix contructor rule  e.g. #m[row0,row1,row2] ==> (matrix33){row0,row1,row2}  -/
-open Meta Compiler3 in
 impl_by {m n : Nat} {α : Type} [AtomicOpenCLType α] (l : List (Vector α n)) (h) :
     Matrix.mk (m:=m) (Vector.mk l.toArray h) ==> do
 
@@ -47,7 +46,6 @@ impl_by {m n : Nat} {α : Type} [AtomicOpenCLType α] (l : List (Vector α n)) (
   return ← `(clExpr| ($matrixId:ident){$[$xs:clExpr],*} )
 
 /- Matrix projection rule  e.g. a.row 2 ==> a.row2  -/
-open Lean Meta Compiler3 in
 impl_by {m n : Nat} {T} (a : Matrix T m n) (i) (h) : a.row i h  ==> do
 
   let a ← compileExpr a

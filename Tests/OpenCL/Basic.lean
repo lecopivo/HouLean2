@@ -9,6 +9,7 @@ open HouLean OpenCL
 namespace Tests.OpenCL.Basic
 
 
+#exit
 /--
 info:
 float houlean_math_lerp_ff(float x, float y, float t)

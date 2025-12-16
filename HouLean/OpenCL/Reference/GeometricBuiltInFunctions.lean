@@ -2,9 +2,9 @@ import HouLean.OpenCL.Compiler
 import HouLean.OpenCL.Basic
 import HouLean.Data.Vector
 
-open HouLean OpenCL Compiler2 Math
-
 namespace HouLean.OpenCL
+
+open Math
 
 variable {R} [FloatType R] {n} [AllowedVectorSize n] (x y z w : R) (u v : Vector R n)
 

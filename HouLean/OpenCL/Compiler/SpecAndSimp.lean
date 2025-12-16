@@ -1,12 +1,12 @@
-import HouLean.OpenCL.Compiler.RewriteRules
 import HouLean.Meta.SpecializeAndSimp.Main
+import HouLean.OpenCL.Compiler.RewriteRules
 import HouLean.OpenCL.Basic
 
-namespace HouLean.OpenCL.Compiler3
+namespace HouLean.OpenCL.Compiler
 
 open Lean Meta
 
-open OpenCL.Compiler3 SpecializeAndSimp in
+open OpenCL.Compiler SpecializeAndSimp in
 def specializeImplementedBy (e : Expr) : M (Option Expr) := do
   let s := (compilerExt.getState (← getEnv)).implementedBy
   let candidates := (← s.getMatch e).map (·.lhs)

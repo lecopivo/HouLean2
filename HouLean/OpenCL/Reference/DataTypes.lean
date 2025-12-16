@@ -1,10 +1,9 @@
-import HouLean.OpenCL.Compiler.RewriteRules
-import HouLean.OpenCL.Compiler.Main2
+import HouLean.OpenCL.Compiler
 import HouLean.OpenCL.Basic
 
-open Lean HouLean Meta OpenCL Compiler2 Math
-
 namespace HouLean.OpenCL
+
+open Compiler Meta Lean
 
 variable {α : Type} [AtomicOpenCLType α] {n : Nat}
 
@@ -47,7 +46,6 @@ impl_by {n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Vector T n ==
   return ← `(clExpr| $name:ident)
 
 
-open Compiler2 in
 /- Vector contructor rule  e.g. #v[x,y,z] ==> (float3){x,y,z}
 
 The notation `#v[x,y,z]` stands for `Vector.mk [x,y,z].toArray h` and this rule matches on this
