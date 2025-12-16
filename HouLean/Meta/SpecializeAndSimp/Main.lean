@@ -78,7 +78,7 @@ where
 
 def addSpecialization (s : Specialization) : M Unit :=
   modify fun state => { state with
-    specializations := state.specializations.insert s.fn s
+    specializations := state.specializations.insertCore s.keys s
     specOrder := state.specOrder.push s.specializationName
   }
 
@@ -122,7 +122,11 @@ partial def defineNewSpecialization (r : FunSpecializationResult) : M (Option Na
     addAndCompile decl
     trace[HouLean.specialize] "compiled {name}"
 
+    let (xs,_,_) ← forallMetaTelescope (← inferType r.fn')
+    let keys ← DiscrTree.mkPath (r.fn'.beta xs)
+
     addSpecialization {
+      keys := keys
       originalName := r.funName
       specializationName := name
       fn := r.fn'
@@ -175,9 +179,13 @@ partial def specializeExprImpl (e : Expr) : M Expr := do
 
       -- Check for existing specialization
       let specs := (← get).specializations
-      if let some spec := specs[r.fn']? then
-        trace[HouLean.specialize.detail] "reusing specialization {spec.specializationName}"
-        return ← mkAppOptM spec.specializationName (args'.map some)
+      let candidates ←
+        forallTelescope (← inferType r.fn') fun xs _ =>
+          specs.getMatch (r.fn'.beta xs)
+      for c in candidates do
+        if ← isDefEq r.fn' c.fn then
+          trace[HouLean.specialize.detail] "reusing specialization {c.specializationName}"
+          return ← mkAppOptM c.specializationName (args'.map some)
 
       -- Create new specialization
       if let some specName ← defineNewSpecialization r then

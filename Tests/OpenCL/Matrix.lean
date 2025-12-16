@@ -252,34 +252,16 @@ fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
 HouLean.Matrix.col_Float32_3_3_2:
 fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
 
-HouLean.Matrix.col_Float32_3_3_01:
-fun a => #v[(a.row 0 ⋯)[0], (a.row 1 ⋯)[0], (a.row 2 ⋯)[0]]
-
-HouLean.Matrix.col_Float32_3_3_11:
-fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
-
-HouLean.Matrix.col_Float32_3_3_21:
-fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
-
-HouLean.Matrix.col_Float32_3_3_02:
-fun a => #v[(a.row 0 ⋯)[0], (a.row 1 ⋯)[0], (a.row 2 ⋯)[0]]
-
-HouLean.Matrix.col_Float32_3_3_12:
-fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
-
-HouLean.Matrix.col_Float32_3_3_22:
-fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
-
 HouLean.Matrix.matMul_Float32_3_3_3:
 fun a b =>
   {
     data :=
       #v[#v[(a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_0, (a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_1,
           (a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_2],
-        #v[(a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_01, (a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_11,
-          (a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_21],
-        #v[(a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_02, (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_12,
-          (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_22]] }
+        #v[(a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_0, (a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_1,
+          (a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_2],
+        #v[(a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_0, (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_1,
+          (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_2]] }
 
 HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3:
 fun a a_1 => a.matMul_Float32_3_3_3 a_1
@@ -288,7 +270,7 @@ Resulting specialization:
   HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3 A A
 -/
 #guard_msgs in
-#opencl_sas (A * A) -- repeats col function
+#opencl_sas (A * A)
 
 
 /--

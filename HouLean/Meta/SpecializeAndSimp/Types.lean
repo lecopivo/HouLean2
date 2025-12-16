@@ -7,9 +7,11 @@ namespace HouLean.Meta
 namespace SpecializeAndSimp
 
 structure Specialization where
+  keys : Array DiscrTree.Key
   originalName : Name
   specializationName : Name
   fn : Expr
+deriving BEq
 
 structure Config where
 
@@ -17,7 +19,7 @@ structure Context where
   config : Config := {}
 
 structure State where
-  specializations : ExprMap Specialization := {}
+  specializations : DiscrTree Specialization := {}
   specOrder : Array Name := {}
 
 private opaque MethodsRefPointed : NonemptyType.{0}

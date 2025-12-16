@@ -5,6 +5,7 @@ open Lean Meta
 namespace HouLean.OpenCL.Compiler2
 
 structure Specialization where
+  keys : Array DiscrTree.Key
   originalName : Name
   specializationName : Name
   fn : Expr
@@ -37,7 +38,7 @@ deriving Inhabited
 structure Extension where
   implementedBy : DiscrTree ImplementedBy
   implementedByBuilders : DiscrTree ImplementedByBuilder
-  specializations : ExprMap Specialization
+  specializations : DiscrTree Specialization
 deriving Inhabited
 
 abbrev CompilerExt := SimpleScopedEnvExtension SingleExtension Extension
@@ -53,5 +54,5 @@ initialize compilerExt : CompilerExt ←
       | .implementedByBuilder b =>
         {es with implementedByBuilders := es.implementedByBuilders.insertCore b.keys b}
       | .specialization s =>
-        {es with specializations := es.specializations.insert s.fn s}
+        {es with specializations := es.specializations.insertCore s.keys s}
   }
