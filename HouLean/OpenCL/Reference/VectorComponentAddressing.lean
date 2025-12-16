@@ -1,13 +1,10 @@
-import HouLean.OpenCL.Compiler.RewriteRules
+import HouLean.OpenCL.Compiler
+import HouLean.OpenCL.Basic
 import HouLean.Data.Vector
-
-open HouLean OpenCL Compiler Math
 
 namespace HouLean.OpenCL
 
-
-
-open Lean Meta Compiler3
+open Lean Meta Compiler2
 
 
 def indexToSuffix? (i : Nat) : Option Name :=
@@ -31,6 +28,7 @@ def indexToSuffix? (i : Nat) : Option Name :=
   | _ => none
 
 
+/- Vector element access gets compiled to component projection -/
 impl_by {n : Nat} {T : Type} [AtomicOpenCLType T] (u : Vector T n) (i : Nat) (h) :
     u[i]'h ==> do
 
@@ -42,7 +40,7 @@ impl_by {n : Nat} {T : Type} [AtomicOpenCLType T] (u : Vector T n) (i : Nat) (h)
     | throwError m!"Invalid index {i}, has to be smaller than 16!"
   let idx := mkIdent suffix
 
-  return ← `(oclExpr| $u:oclExpr.$idx:ident)
+  return ← `(clExpr| $u:clExpr.$idx:ident)
 
 -- normalize `getElem` from indexing with `Fin n` to indexing with `Nat`
 attribute [opencl_csimp] Fin.getElem_fin

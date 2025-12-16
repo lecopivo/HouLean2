@@ -1,5 +1,6 @@
 import HouLean.OpenCL.Compiler.RewriteRules
 import HouLean.Meta.SpecializeAndSimp.Main
+import HouLean.OpenCL.Basic
 
 namespace HouLean.OpenCL.Compiler3
 

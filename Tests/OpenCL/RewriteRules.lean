@@ -2,8 +2,9 @@ import HouLean.OpenCL.Compiler.RewriteRules
 import HouLean.OpenCL.Reference.Operators
 import HouLean.OpenCL.Reference.DataTypes
 import HouLean.OpenCL.Reference.VectorComponentAddressing
+import HouLean.Meta.RewriteBy
 
-open HouLean OpenCL Math Compiler3
+open HouLean OpenCL Math Compiler2
 
 variable {R : Type} {m n : Nat}
 
@@ -15,7 +16,7 @@ elab c:"#ocl_compile_expr" f:term : command => do
   Command.runTermElabM fun _ => do
     let f ← elabTermAndSynthesize f none
     lambdaTelescope f fun _ b => do
-      let stx ← Compiler3.compileExpr b
+      let stx ← compileExpr b
       logInfoAt c stx
 
 

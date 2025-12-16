@@ -1,30 +1,9 @@
-import HouLean.OpenCL.Compiler.Grammar
+import HouLean.OpenCL.Compiler.Grammar2
 import HouLean.Meta.RunInterpreter
 
 open HouLean.Meta
 
 namespace HouLean.OpenCL.Compiler3
-
-/-- Gadget identity function that will stop `simp` from simplifying an expression.
-
-This is useful when the lhs of simp theorem appears on the rhs. You can wrap the occurence
-in `no_simp` an prevent simp from an infinite loop.
-
-The main use is for `simp` based compiler. For example for compiling to C we might define this
-function, which indicates that `spec` should be replaced with C function with the name `cfun`
-```
-def cFunction (spec : α) (cfun : String) : α := spec
-```
-Then we add the following simp theorem
-```
-theorem compile_sin : Float.sin = cFunction (no_simp Float.sin) "sin" := rfl
-```
-where we wrapped `Float.sin` in `no_simp` to preven this theorem to be applied again on the `spec`
-argument of `cFunction`. -/
-def no_simp {α : Sort u} (a : α) := a
-
-simproc_decl no_simp_simproc (no_simp _) := fun e =>
-  return .done { expr := e }
 
 open Lean Meta Math
 
@@ -32,7 +11,7 @@ structure ImplementedBy where
   keys : Array DiscrTree.Key
   argsToCompile : Array (Name × Nat)
   lhs : Expr
-  rhs : TSyntax `oclExpr
+  rhs : TSyntax `clExpr
 deriving Inhabited, BEq
 
 structure ImplementedByBuilder where
@@ -42,16 +21,31 @@ structure ImplementedByBuilder where
   arity : Nat
 deriving Inhabited, BEq
 
+structure OpenCLFunction where
+  funDef : TSyntax ``clFunction
+  clName : Name
+  leanName : Name
+
+structure OpenCLType where
+  typeDef? : Option (TSyntax `clTypeSpec)
+  clType : Name
+  leanType : Expr
+
 inductive SingleExtension where
   | implementedBy (impl : ImplementedBy)
   | implementedByBuilder (b : ImplementedByBuilder)
+  | clFunDef (val : OpenCLFunction)
+  | clTypeDef (val : OpenCLType)
 deriving Inhabited
 
 /-- Enviroment extension that holds all necessary information for the APEX compiler. -/
 structure Extension where
   implementedBy : DiscrTree ImplementedBy
   implementedByBuilders : DiscrTree ImplementedByBuilder
+  clFunctions : NameMap OpenCLFunction
+  clTypes : ExprMap OpenCLType
 deriving Inhabited
+
 
 abbrev CompilerExt := SimpleScopedEnvExtension SingleExtension Extension
 
@@ -65,18 +59,15 @@ initialize compilerExt : CompilerExt ←
         {es with implementedBy := es.implementedBy.insertCore impl.keys impl}
       | .implementedByBuilder b =>
         {es with implementedByBuilders := es.implementedByBuilders.insertCore b.keys b}
+      | .clFunDef x =>
+        {es with clFunctions := es.clFunctions.insert x.leanName x}
+      | .clTypeDef x =>
+        {es with clTypes := es.clTypes.insert x.leanType x}
   }
 
 
-def _root_.Lean.Expr.getFVars (e : Expr) : MetaM (Array Expr) := do
-  return (← e.collectFVars.run {}).2.fvarIds.map Expr.fvar
-
-def _root_.Lean.Expr.getMVars (e : Expr) : MetaM (Array Expr) := do
-  return (e.collectMVars {}).result.map Expr.mvar
-
-
 open Lean Meta
-def addImpementedBy (lhs : Expr) (rhs : TSyntax `oclExpr) : MetaM ImplementedBy := do
+def addImpementedBy (lhs : Expr) (rhs : TSyntax `clExpr) : MetaM ImplementedBy := do
 
   let lhs ← instantiateMVars lhs
   let type ← inferType lhs
@@ -119,19 +110,19 @@ def addImpementedBy (lhs : Expr) (rhs : TSyntax `oclExpr) : MetaM ImplementedBy 
   return impl
 
 open Qq in
-unsafe def getBuilder (declName : Name) : MetaM (Array Expr → MetaM (TSyntax `oclExpr)) := do
+unsafe def getBuilder (declName : Name) : MetaM (Array Expr → MetaM (TSyntax `clExpr)) := do
   let env ← getEnv
   let opts ← getOptions
   match env.find? declName with
   | none      => throwError m!"Unknown constant `{declName}`"
   | some info =>
-    if ← isDefEq q(Array Expr → MetaM (TSyntax `oclExpr)) info.type then
-      return (← IO.ofExcept <| env.evalConst (Array Expr → MetaM (TSyntax `oclExpr)) opts declName)
+    if ← isDefEq q(Array Expr → MetaM (TSyntax `clExpr)) info.type then
+      return (← IO.ofExcept <| env.evalConst (Array Expr → MetaM (TSyntax `clExpr)) opts declName)
     else
       throwError m!"ImplementedByBuilder `{privateToUserName declName}` has an unexpected type: Expected `ImplementedByBuilder`, but found `{info.type}`"
 
 
-def runBuilder (xs : Array Expr) (builder : ImplementedByBuilder) : MetaM (TSyntax `oclExpr) := do
+def runBuilder (xs : Array Expr) (builder : ImplementedByBuilder) : MetaM (TSyntax `clExpr) := do
   let b ← unsafe getBuilder builder.declName
   return ← b xs
 
@@ -143,88 +134,8 @@ def runBuilder (xs : Array Expr) (builder : ImplementedByBuilder) : MetaM (TSynt
 --   catch _ =>
 --     return none
 
-
-partial def compileExpr (e : Expr) : MetaM (TSyntax `oclExpr) := do
-  withTraceNode `HouLean.OpenCL.compiler (fun r => return m!"[{exceptEmoji r}] {e}") do
-  let e ← instantiateMVars e
-  match e with
-  | .fvar id =>
-    let name ← id.getUserName
-    let id := mkIdent name
-    `(oclExpr| $id:ident)
-  | .lit (.natVal val) =>
-    let val := Syntax.mkNatLit val
-    return ← `(oclExpr| $val:num)
-  | _ =>
-
-   if let some val ← runInterpreter? Nat e then
-     let val := Syntax.mkNatLit val
-     return ← `(oclExpr| $val:num)
-
-   -- try existing implemented_by
-   let s := (compilerExt.getState (← getEnv)).implementedBy
-   let candidates ← s.getMatch e
-   for c in candidates do
-
-     let (args,_,_) ← forallMetaTelescope (← inferType c.lhs)
-     let body := c.lhs.beta args
-
-     unless ← isDefEq body e do
-       continue
-
-     -- todo: check that all arguments has been synthesized! most importantly all typeclases has been!
-
-     return ← applyImpl c args
-
-   -- try implemented_by builders
-   let s := (compilerExt.getState (← getEnv)).implementedByBuilders
-   let candidates ← s.getMatch e
-   for b in candidates do
-
-     let (args,_,_) ← forallMetaTelescope (← inferType b.lhs)
-     let body := b.lhs.beta args
-
-     unless ← isDefEq body e do
-       continue
-     -- todo: check that all arguments has been synthesized! most importantly all typeclases has been!
-
-     return ← runBuilder args b
-
-   throwError "Don't know how to compile {e}!"
-
-where
-  applyImpl (impl : ImplementedBy) (args : Array Expr) : MetaM (TSyntax `oclExpr) := do
-
-     trace[HouLean.OpenCL.compiler] m!"Applying implemented_by, {impl.lhs} ==> {impl.rhs}"
-
-     -- compile all arguments
-     let mut compiledArgs : NameMap (TSyntax `oclExpr) := {}
-     for (n, i) in impl.argsToCompile do
-       let some arg := args[i]?  | throwError m!"Can't apply {impl.lhs} to {e}. Invalid argument index {i}!"
-
-       let arg ← compileExpr arg
-       compiledArgs := compiledArgs.insert n arg
-
-     -- replace compiled arguments in rhs
-     let compiled ← impl.rhs.raw.replaceM fun s =>
-       match s with
-       | `(oclExpr| $id:ident) =>
-         return compiledArgs.get? id.getId
-       | _ =>
-         return none
-
-     return ⟨compiled⟩
-
-
-def compileType (e : Expr) : MetaM Ident := do
-  match ← compileExpr e with
-  | `(oclExpr| $id:ident) => return id
-  | stx =>
-    throwError m!"Unexpected result when compiling type {stx}!"
-
-
 open Lean Elab Term Command
-elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " rhs:oclExpr : command => do
+elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " rhs:clExpr : command => do
 
   runTermElabM fun ctx => do
     elabBinders bs fun xs => do
@@ -279,7 +190,7 @@ elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " "do" rhs:doElem* : co
         return (← x.fvarId!.getUserName, .default, fun _ => pure q(Expr)))
       let builder ← liftM <|
         withLocalDecls decls fun ys => do
-          let rhs ← elabTermAndSynthesize (← `(term| do $[$rhs:doElem]*)) q(MetaM (TSyntax `oclExpr))
+          let rhs ← elabTermAndSynthesize (← `(term| do $[$rhs:doElem]*)) q(MetaM (TSyntax `clExpr))
           mkLambdaFVars ys rhs
       let builder ← arrayUncurry q(Expr) builder >>= instantiateMVars
       let builderType ← inferType builder >>= instantiateMVars

@@ -235,3 +235,25 @@ where
           let args := args.set! (i + info.numParams + 1) xvar
           let xs := xs.push xvar
           go fn args info (i+1) xs
+
+
+partial def splitList (list : Expr) : MetaM (Array Expr) := do
+  let list ← instantiateMVars list
+  go list #[]
+where
+  go (l : Expr) (xs : Array Expr) : MetaM (Array Expr) := do
+    if l.isAppOf ``List.nil then
+      return xs
+    else if l.isAppOfArity ``List.cons 3 then
+      let head := l.getArg! 1
+      let tail := l.getArg! 2
+      go tail (xs.push head)
+    else
+      throwError m!"Can't split argument list {list}! Case: {l.ctorName}"
+
+
+def _root_.Lean.Expr.getFVars (e : Expr) : MetaM (Array Expr) := do
+  return (← e.collectFVars.run {}).2.fvarIds.map Expr.fvar
+
+def _root_.Lean.Expr.getMVars (e : Expr) : MetaM (Array Expr) := do
+  return (e.collectMVars {}).result.map Expr.mvar

@@ -6,7 +6,7 @@ import HouLean.Data.Matrix
 
 namespace HouLean.OpenCL
 
-open Compiler Qq HouLean Math
+open Qq HouLean Math Compiler2
 
 namespace Matrix
 
@@ -26,7 +26,7 @@ impl_by {m n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Matrix T m 
 
   let id := matrixTypeIdent s!"{type}" m n
 
-  return ← `(oclExpr| $id:ident)
+  return ← `(clExpr| $id:ident)
 
 
 /- Matrix contructor rule  e.g. #m[row0,row1,row2] ==> (matrix33){row0,row1,row2}  -/
@@ -44,7 +44,7 @@ impl_by {m n : Nat} {α : Type} [AtomicOpenCLType α] (l : List (Vector α n)) (
     | throwError m!"Number of columns {n} of a matrix has to be known at compile time!"
   let matrixId := matrixTypeIdent s!"{t}" m n
 
-  return ← `(oclExpr| ($matrixId){$xs:oclExpr,*} )
+  return ← `(clExpr| ($matrixId:ident){$[$xs:clExpr],*} )
 
 /- Matrix projection rule  e.g. a.row 2 ==> a.row2  -/
 open Lean Meta Compiler3 in
@@ -55,7 +55,7 @@ impl_by {m n : Nat} {T} (a : Matrix T m n) (i) (h) : a.row i h  ==> do
     | throwError m!"Number of rows {m} of a matrix has to be known at compile time!"
   let proj := mkIdent (Name.appendAfter `row (toString i))
 
-  return ← `(oclExpr| $a:oclExpr.$proj:ident)
+  return ← `(clExpr| $a:clExpr.$proj:ident)
 
 
 @[opencl_csimp]

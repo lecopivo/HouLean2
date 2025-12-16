@@ -1,6 +1,7 @@
-import HouLean.OpenCL.Compiler.RewriteRules
+import HouLean.OpenCL.Compiler
+import HouLean.OpenCL.Basic
 
-open HouLean OpenCL Compiler Math
+open HouLean OpenCL Compiler2 Math
 
 namespace HouLean.OpenCL
 

@@ -134,3 +134,26 @@ def sum {α} [Add α] [Zero α] (f : Fin n → α) : α := Fin.foldl n (init := 
 
 open Lean.Parser.Term in
 macro "∑" binder:funBinder ", " body:term : term => `(sum fun $binder => $body)
+
+
+
+/-- Gadget identity function that will stop `simp` from simplifying an expression.
+
+This is useful when the lhs of simp theorem appears on the rhs. You can wrap the occurence
+in `no_simp` an prevent simp from an infinite loop.
+
+The main use is for `simp` based compiler. For example for compiling to C we might define this
+function, which indicates that `spec` should be replaced with C function with the name `cfun`
+```
+def cFunction (spec : α) (cfun : String) : α := spec
+```
+Then we add the following simp theorem
+```
+theorem compile_sin : Float.sin = cFunction (no_simp Float.sin) "sin" := rfl
+```
+where we wrapped `Float.sin` in `no_simp` to preven this theorem to be applied again on the `spec`
+argument of `cFunction`. -/
+def no_simp {α : Sort u} (a : α) := a
+
+simproc_decl no_simp_simproc (no_simp _) := fun e =>
+  return .done { expr := e }

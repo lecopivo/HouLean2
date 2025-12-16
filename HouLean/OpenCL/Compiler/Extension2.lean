@@ -1,19 +1,10 @@
 import Lean
+import HouLean.OpenCL.Compiler.Grammar2
+import HouLean.OpenCL.Basic
 
 open Lean Meta
 
 namespace HouLean.OpenCL.Compiler2
-
-structure Specialization where
-  keys : Array DiscrTree.Key
-  originalName : Name
-  specializationName : Name
-  fn : Expr
-  -- /-- `∀ x₁ ... xₙ, original = specialized`
-  -- To apply specizalization we unify `origianal` with the current expression
-  -- and replace it with `specialized` -/
-  -- statement : Expr
-deriving Inhabited, BEq
 
 structure ImplementedBy where
   keys : Array DiscrTree.Key
@@ -28,17 +19,29 @@ structure ImplementedByBuilder where
   syntaxBuilder : Name
 deriving Inhabited, BEq
 
+structure OpenCLFunction where
+  funDef : TSyntax ``clFunction
+  clName : Name
+  leanName : Name
+
+structure OpenCLType where
+  typeDef? : Option (TSyntax `clTypeSpec)
+  clType : Name
+  leanType : Expr
+
 inductive SingleExtension where
   | implementedBy (impl : ImplementedBy)
   | implementedByBuilder (b : ImplementedByBuilder)
-  | specialization (s : Specialization)
+  | clFunDef (val : OpenCLFunction)
+  | clTypeDef (val : OpenCLType)
 deriving Inhabited
 
 /-- Enviroment extension that holds all necessary information for the APEX compiler. -/
 structure Extension where
   implementedBy : DiscrTree ImplementedBy
   implementedByBuilders : DiscrTree ImplementedByBuilder
-  specializations : DiscrTree Specialization
+  clFunctions : NameMap OpenCLFunction
+  clTypes : ExprMap OpenCLType
 deriving Inhabited
 
 abbrev CompilerExt := SimpleScopedEnvExtension SingleExtension Extension
@@ -53,6 +56,8 @@ initialize compilerExt : CompilerExt ←
         {es with implementedBy := es.implementedBy.insertCore impl.keys impl}
       | .implementedByBuilder b =>
         {es with implementedByBuilders := es.implementedByBuilders.insertCore b.keys b}
-      | .specialization s =>
-        {es with specializations := es.specializations.insertCore s.keys s}
+      | .clFunDef x =>
+        {es with clFunctions := es.clFunctions.insert x.leanName x}
+      | .clTypeDef x =>
+        {es with clTypes := es.clTypes.insert x.leanType x}
   }

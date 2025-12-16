@@ -186,7 +186,7 @@ syntax:max (name := clCharConst) char : clExpr
 syntax:max str : clExpr
 
 /-- An OpenCL compound literal. -/
-syntax:max "(" clType ")" "{" clInitializerElem,*,? "}" : clExpr
+syntax:max "(" ident ")" "{" clInitializerElem,*,? "}" : clExpr
 
 /-- A parenthetical expression. -/
 syntax:max "(" clExpr ")" : clExpr
@@ -200,7 +200,7 @@ syntax:1000 clExpr:1000 "[" clExpr "]" : clExpr
 syntax:1000 clExpr:1000 "(" clExpr,* ")" : clExpr
 
 /-- A member access expression. -/
-syntax:1000 clExpr:1000 "." ident : clExpr
+syntax:1000 clExpr:1000 noWs "." noWs ident : clExpr
 
 /-- A member access through pointer expression. -/
 syntax:1000 clExpr:1000 "->" ident : clExpr
@@ -585,12 +585,6 @@ syntax (name := clVectorType)
    &"int" <|> &"uint" <|> &"long" <|> &"ulong" <|>
    &"float" <|> &"double" <|> &"half") noWs clVectorSuffix : clTypeSpec
 
-/-! ### Vector Literals -/
-
--- /-- OpenCL vector literal: (float4)(1.0f, 2.0f, 3.0f, 4.0f). -/
--- syntax:max "(" (&"char" <|> &"uchar" <|> &"short" <|> &"ushort" <|>
---                 &"int" <|> &"uint" <|> &"long" <|> &"ulong" <|>
---                 &"float" <|> &"double" <|> &"half") noWs clVectorSuffix ")" "{" clExpr,+ "}" : clExpr
 
 /-! ### Image Types -/
 

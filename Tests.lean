@@ -19,6 +19,7 @@ import Tests.Meta.SpecAndSimp
 import Tests.OpenCL.ArrayType
 import Tests.OpenCL.Attribute
 import Tests.OpenCL.Basic
+import Tests.OpenCL.Compiler2
 import Tests.OpenCL.ForLoop
 import Tests.OpenCL.Grammar
 import Tests.OpenCL.Grammar2
