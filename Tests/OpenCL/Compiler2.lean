@@ -1,6 +1,7 @@
 import HouLean.OpenCL.Compiler
 import HouLean.OpenCL.Reference
 import HouLean.Data.Float
+import HouLean.Meta.RewriteBy
 
 open HouLean OpenCL Compiler Lean
 
@@ -12,14 +13,17 @@ elab c:"#ocl_compile" f:term : command => do
   withoutModifyingEnv do
   Command.runTermElabM fun _ => do
     let f ← elabTermAndSynthesize f none
-    lambdaTelescope f fun _ b => do
-      let (_,s) ← compileBlock b {} {}
+    lambdaTelescope f fun xs b => do
+      let go : CompileM Unit := do
+        withFVars xs fun _ => do
+          compileBlock b
+      let (_,s) ← go {} {}
       let stx ← `(clCompStmt| { $s.statements* })
       logInfoAt c stx
 
 /--
 info: {
-      double a = x * y;
+      const double a = x * y;
       return a + x * y;
 }
 -/
@@ -30,8 +34,8 @@ info: {
 
 /--
 info: {
-      double a = x * y;
-      double b = a - x + y;
+      const double a = x * y;
+      const double b = a - x + y;
       return a + x * y / b;
 }
 -/
@@ -43,9 +47,9 @@ info: {
 
 /--
 info: {
-      Prod_double_Prod_double_double p = (Prod_double_Prod_double_double){x, (Prod_double_double){x * y, x + x}};
-      double a = p.snd.fst;
-      double b = p.snd.snd;
+      const Prod_double_Prod_double_double p = (Prod_double_Prod_double_double){x, (Prod_double_double){x * y, x + x}};
+      const double a = p.snd.fst;
+      const double b = p.snd.snd;
       return a + b;
 }
 -/
@@ -57,6 +61,74 @@ info: {
   a + b
 
 
+/--
+info: {
+      if (y >= x)
+        {
+              return x + y;
+        } else
+        {
+              return x * y;
+        }
+}
+-/
+#guard_msgs in
+#ocl_compile fun x y : Float =>
+  if x ≤ y then
+    x + y
+  else
+    x * y
+
+impl_by {α : Type} (m : Type → Type) [Monad m] (x : α) : pure (f:=m) x ==> x
+
+/--
+info: {
+      const uint id = get_global_id(n);
+      if (10 > id)
+        {
+              return x;
+        } else
+        {
+              return y;
+        }
+}
+-/
+#guard_msgs in
+#ocl_compile (fun x y : Float => do
+  let id ← getGlobalId 0
+  if id < 10 then
+    return x
+  return y)
+  rewrite_by
+    simp -zeta only [pure_bind, bind_pure, bind_assoc]
+
+
+/--
+info: {
+      const uint id = get_global_id(n);
+      const double w = x;
+      if (10 > id)
+        {
+              const double w1 = w + y;
+              return w1;
+        } else
+        {
+              return w;
+        }
+}
+-/
+#guard_msgs in
+#ocl_compile (fun x y : Float => do
+  let id ← getGlobalId 0
+  let mut w := x
+  if id < 10 then
+    w := w + y
+  return w)
+  rewrite_by
+    simp -zeta only [pure_bind, bind_pure, bind_assoc]
+  --   simp -zeta only [pure_bind, bind_pure, bind_assoc]
+
+
 def foo (x y : Float) :=
   let a := x * y
   let b := a - x + y
@@ -64,8 +136,8 @@ def foo (x y : Float) :=
 
 /--
 info: double test_opencl_compiler_foo(double x, double y){
-      double a = x * y;
-      double b = a - x + y;
+      const double a = x * y;
+      const double b = a - x + y;
       return a + x * y / b;
 }
 -/

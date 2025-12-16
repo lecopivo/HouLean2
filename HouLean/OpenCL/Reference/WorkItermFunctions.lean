@@ -15,9 +15,7 @@ open Compiler Qq
 
 OpenCL function: `uint get_work_dim()` -/
 opaque getWorkDim : OpenCLM UInt32
-
-instance : OpenCLFunction getWorkDim where
-  name := "get_work_dim"
+impl_by : getWorkDim ==> get_work_dim()
 
 
 /-- Returns the number of global work-items specified for dimension identified by dimindx. This value is given by the global_work_size argument to clEnqueueNDRangeKernel.
@@ -26,9 +24,7 @@ Valid values of dimindx are 0 to get_work_dim() - 1. For other values of dimindx
 
 OpenCL function: `size_t get_global_size(uint dimindx)` -/
 opaque getGlobalSize (dimindx : UInt32) : OpenCLM UInt32
-
-instance : OpenCLFunction getGlobalSize where
-  name := "get_global_size"
+impl_by (dimindx : UInt32) : getGlobalSize dimindx ==> get_global_size(dimindx)
 
 
 /-- Returns the unique global work-item ID value for dimension identified by dimindx. The global work-item ID specifies the work-item ID based on the number of global work-items specified to execute the kernel.
@@ -37,9 +33,7 @@ Valid values of dimindx are 0 to get_work_dim() - 1. For other values of dimindx
 
 OpenCL function: `size_t get_global_id(uint dimindx)` -/
 opaque getGlobalId (dimindx : UInt32) : OpenCLM UInt32
-
-instance : OpenCLFunction getGlobalId where
-  name := "get_global_id"
+impl_by (dimindx : UInt32) : getGlobalId dimindx ==> get_global_id(n)
 
 
 /-- Returns the number of local work-items specified in dimension identified by dimindx. This value is at most the value given by the local_work_size argument to clEnqueueNDRangeKernel if local_work_size is not NULL; otherwise the OpenCL implementation chooses an appropriate local_work_size value which is returned by this function.
@@ -48,9 +42,8 @@ Valid values of dimindx are 0 to get_work_dim() - 1. For other values of dimindx
 
 OpenCL function: `size_t get_local_size(uint dimindx)` -/
 opaque getLocalSize (dimindx : UInt32) : OpenCLM UInt32
+impl_by (dimidx : UInt32) : getLocalSize dimidx ==> get_local_size(dimidx)
 
-instance : OpenCLFunction getLocalSize where
-  name := "get_local_size"
 
 /-- Returns the same value as that returned by get_local_size(dimindx) if the kernel is executed with a uniform work-group size. If the kernel is executed with a non-uniform work-group size, returns the number of local work-items in each of the work-groups that make up the uniform region of the global range.
 
