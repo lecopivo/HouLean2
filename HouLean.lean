@@ -108,6 +108,7 @@ import HouLean.Meta.Float
 import HouLean.Meta.KnownField
 import HouLean.Meta.OverloadedFunction
 import HouLean.Meta.ParamStruct
+import HouLean.Meta.Parser
 import HouLean.Meta.ProdLike
 import HouLean.Meta.RewriteBy
 import HouLean.Meta.RunInterpreter
@@ -122,6 +123,7 @@ import HouLean.OpenCL.Compiler.Code
 import HouLean.OpenCL.Compiler.Extension
 import HouLean.OpenCL.Compiler.Extension2
 import HouLean.OpenCL.Compiler.Grammar
+import HouLean.OpenCL.Compiler.Grammar2
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.Compiler.Parser
 import HouLean.OpenCL.Compiler.RewriteRules
@@ -142,6 +144,7 @@ import HouLean.OpenCL.Data.Volume
 import HouLean.OpenCL.Kernel.Basic
 import HouLean.OpenCL.Reference
 import HouLean.OpenCL.Reference.CommonBuiltInFunctions
+import HouLean.OpenCL.Reference.ConversionAndTypeCasting
 import HouLean.OpenCL.Reference.DataTypes
 import HouLean.OpenCL.Reference.GeometricBuiltInFunctions
 import HouLean.OpenCL.Reference.MathBuilInFuctions

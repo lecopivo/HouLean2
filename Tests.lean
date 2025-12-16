@@ -21,6 +21,7 @@ import Tests.OpenCL.Attribute
 import Tests.OpenCL.Basic
 import Tests.OpenCL.ForLoop
 import Tests.OpenCL.Grammar
+import Tests.OpenCL.Grammar2
 import Tests.OpenCL.IfThenElse
 import Tests.OpenCL.MPM
 import Tests.OpenCL.Matrix
