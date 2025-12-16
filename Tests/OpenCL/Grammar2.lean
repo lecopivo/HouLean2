@@ -15,9 +15,6 @@ namespace HouLean.OpenCL
 elab c:"#opencl_check_def " e:clCmd : command => do
   logInfoAt c e.raw.prettyPrint
 
-elab c:"#opencl_check_def " e:clDeclaration : command => do
-  logInfoAt c e.raw.prettyPrint
-
 elab c:"#opencl_check_type " e:clType : command => do
   logInfoAt c e
 
