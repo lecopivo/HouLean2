@@ -37,15 +37,15 @@ open OpenCL
 --------------------------------------------------------------------------------
 
 /-- A `specifier-qualifier` of the OpenCL grammar. -/
-declare_syntax_cat clSpec (behavior := both)
+declare_syntax_cat clSpec (behavior := symbol)
 
 /-- A `type-specifier` of the OpenCL grammar. -/
-declare_syntax_cat clTypeSpec (behavior := both)
+declare_syntax_cat clTypeSpec (behavior := symbol)
 
 syntax clTypeSpec : clSpec
 
 /-- A `type-qualifier` of the OpenCL grammar. -/
-declare_syntax_cat clTypeQ (behavior := both)
+declare_syntax_cat clTypeQ (behavior := symbol)
 
 syntax clTypeQ : clSpec
 
@@ -53,10 +53,10 @@ syntax clTypeQ : clSpec
 syntax clPointer := (" * " clTypeQ*)+
 
 /-- A `direct-declarator` of the OpenCL grammar. -/
-declare_syntax_cat clDirectDeclarator (behavior := both)
+declare_syntax_cat clDirectDeclarator (behavior := symbol)
 
 /-- A `direct-abstract-declarator` of the OpenCL grammar. -/
-declare_syntax_cat clDirectAbsDeclarator (behavior := both)
+declare_syntax_cat clDirectAbsDeclarator (behavior := symbol)
 
 /-- A `declarator` of the OpenCL grammar. -/
 syntax clDeclarator := (clPointer)? clDirectDeclarator
@@ -68,7 +68,7 @@ syntax clAbsDeclarator := (clPointer (clDirectAbsDeclarator)?) <|> clDirectAbsDe
 syntax clType := clSpec+ optional(clAbsDeclarator)
 
 /-- An `assignment-expression` of the OpenCL grammar. -/
-declare_syntax_cat clExpr (behavior := both)
+declare_syntax_cat clExpr (behavior := symbol)
 
 /-- A `constant-expression` of the OpenCL grammar. -/
 syntax clConstExpr := clExpr:20
@@ -95,10 +95,10 @@ syntax clInitializerElem := optional(clDesignator+ "=") clInitializer
 syntax "{" clInitializerElem,*,? "}" : clInitializer
 
 /-- A `statement` of the OpenCL grammar. -/
-declare_syntax_cat clStmt (behavior := both)
+declare_syntax_cat clStmt (behavior := symbol)
 
 /-- A top-level OpenCL command (preprocessor directive or external declaration). -/
-declare_syntax_cat clCmd (behavior := both)
+declare_syntax_cat clCmd (behavior := symbol)
 
 --------------------------------------------------------------------------------
 /-! ## Comments                                                               -/
@@ -208,8 +208,8 @@ syntax:1000 clExpr:1000 "->" ident : clExpr
 /-- A postfix increment expression. -/
 syntax:1000 clExpr:1000 "++" : clExpr
 
-/-- A postfix decrement expression. -/
-syntax:1000 clExpr:1000 "--" : clExpr
+-- /-- A postfix decrement expression. -/
+-- syntax:1000 clExpr:1000 "--" : clExpr
 
 /-! ### Vector Component Access -/
 
@@ -255,8 +255,8 @@ syntax:1000 clExpr:1000 ".odd" : clExpr
 /-- A prefix increment expression. -/
 syntax:500 "++" clExpr:500 : clExpr
 
-/-- A prefix decrement expression. -/
-syntax:500 "--" clExpr:500 : clExpr
+-- /-- A prefix decrement expression. -/
+-- syntax:500 "--" clExpr:500 : clExpr
 
 /-- An address-of expression. -/
 syntax:500 "&" clExpr:100 : clExpr
@@ -398,7 +398,7 @@ syntax "__attribute__" noWs "(" "(" (rawIdent ("(" clExpr,* ")")?),* ")" ")" : c
 /-! #### Storage Class Specifiers -/
 
 /-- A storage class specifier. -/
-declare_syntax_cat clStorageClassSpec (behavior := both)
+declare_syntax_cat clStorageClassSpec (behavior := symbol)
 
 syntax "auto" : clStorageClassSpec
 syntax "extern" : clStorageClassSpec
@@ -412,7 +412,7 @@ syntax clStorageClassSpec : clDeclSpec
 /-! #### Function Specifiers -/
 
 /-- A function specifier. -/
-declare_syntax_cat clFunSpec (behavior := both)
+declare_syntax_cat clFunSpec (behavior := symbol)
 
 syntax "inline" : clFunSpec
 syntax "_Noreturn" : clFunSpec

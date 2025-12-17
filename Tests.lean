@@ -13,12 +13,14 @@ import Tests.Meta.AnonymousStruct
 import Tests.Meta.AsContextChange
 import Tests.Meta.EnumType
 import Tests.Meta.Float
+import Tests.Meta.FloatLinter
 import Tests.Meta.OverloadedFunction
 import Tests.Meta.ProdLike
 import Tests.Meta.SpecAndSimp
 import Tests.OpenCL.ArrayType
 import Tests.OpenCL.Attribute
 import Tests.OpenCL.Basic
+import Tests.OpenCL.Compiler
 import Tests.OpenCL.Compiler2
 import Tests.OpenCL.ForLoop
 import Tests.OpenCL.Grammar

@@ -121,10 +121,10 @@ def M.runInMeta (x : M α)
 
 end SpecializeAndSimp
 
-open SpecializeAndSimp in
-def specializeAndSimp (e : Expr)
-    (config : SpecializeAndSimp.Config := {}) (simpConfig : Simp.Config := {})
-    (simpAttrs : Array Name := #[])
-    (customSpec : Expr → M (Option Expr) := fun _ => return none) : MetaM Expr := do
-  let (r,_) ← (SpecializeAndSimp.specializeAndSimp e).runInMeta config simpConfig simpAttrs customSpec
-  return r
+-- open SpecializeAndSimp in
+-- def specializeAndSimp (e : Expr)
+--     (config : SpecializeAndSimp.Config := {}) (simpConfig : Simp.Config := {})
+--     (simpAttrs : Array Name := #[])
+--     (customSpec : Expr → M (Option Expr) := fun _ => return none) : MetaM Expr := do
+--   let (r,_) ← (SpecializeAndSimp.specializeAndSimp e).runInMeta config simpConfig simpAttrs customSpec
+--   return r

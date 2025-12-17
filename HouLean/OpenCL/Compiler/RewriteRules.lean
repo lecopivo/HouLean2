@@ -6,8 +6,16 @@ namespace HouLean.OpenCL.Compiler
 
 open Lean Meta
 
-open Lean Elab Term Command
-elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " rhs:clExpr : command => do
+syntax "impl_by" bracketedBinder* " : " term " ==> " clExpr : command
+
+
+open Lean Elab Term Command Syntax in
+elab_rules : command
+| `(impl_by $bs:bracketedBinder*  :  $lhs:term  ==> $rhs:clExpr) => do
+
+  -- strip any comments after this command
+  -- todo: figure out how to set up the parser such that we do not have to do this!
+  let rhs : TSyntax `clExpr := ⟨rhs.raw.setTailInfo .none⟩
 
   runTermElabM fun ctx => do
     elabBinders bs fun xs => do
@@ -23,7 +31,15 @@ elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " rhs:clExpr : command 
         let mvars := (e.collectMVars {}).result.map (Expr.mvar)
         throwError s!"Bug in {decl_name%}, failed to build lhs expression! fvars: {fvars}, mvars: {mvars}, {e} : {← inferType e}"
 
-      let _ ← addImpementedBy e rhs
+      let args := ctx' ++ xs
+      let mut argsToCompile : Array (Name × Nat) := #[]
+      for arg in args, i in [0:args.size] do
+        let id := arg.fvarId!
+        let name ← id.getUserName
+        if rhs.raw.hasIdent name then
+          argsToCompile := argsToCompile.push (name, i)
+
+      let _ ← addImplementedBy e rhs argsToCompile
 
 
 open Lean Elab Term Command Qq

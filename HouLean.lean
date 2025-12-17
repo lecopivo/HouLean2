@@ -105,6 +105,7 @@ import HouLean.Meta.DoNotation
 import HouLean.Meta.EnumType
 import HouLean.Meta.Exact
 import HouLean.Meta.Float
+import HouLean.Meta.FloatLinter
 import HouLean.Meta.KnownField
 import HouLean.Meta.OverloadedFunction
 import HouLean.Meta.ParamStruct
@@ -120,6 +121,7 @@ import HouLean.Meta.Structure
 import HouLean.Meta.TypeOf
 import HouLean.OpenCL.Basic
 import HouLean.OpenCL.Compiler
+import HouLean.OpenCL.Compiler.Compile
 import HouLean.OpenCL.Compiler.Extension
 import HouLean.OpenCL.Compiler.Grammar
 import HouLean.OpenCL.Compiler.Main
@@ -135,6 +137,7 @@ import HouLean.OpenCL.Data.InlinedLoop
 import HouLean.OpenCL.Data.MProd
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Data.NanoVDB
+import HouLean.OpenCL.Data.Pointer
 import HouLean.OpenCL.Data.Prod
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Volume

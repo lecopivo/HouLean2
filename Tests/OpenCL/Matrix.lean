@@ -21,7 +21,7 @@ info: Resulting specialization:
 
 
 /--
-info: HouLean.Matrix.col_Float32_3_3_1:
+info: def HouLean.Matrix.col_Float32_3_3_1 := ⏎
 fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
 
 Resulting specialization:
@@ -32,21 +32,32 @@ Resulting specialization:
 
 
 /--
-info: Inv.inv_Float32:
+info: def HouLean.Matrix.add_Float32_3_3 := ⏎
+fun a b => { data := #v[a.row 0 ⋯ + b.row 0 ⋯, a.row 1 ⋯ + b.row 1 ⋯, a.row 2 ⋯ + b.row 2 ⋯] }
+
+def Add.add_Matrix_Float32_3_3 := ⏎
+fun a a_1 => a.add_Float32_3_3 a_1
+
+def HAdd.hAdd_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3 := ⏎
+fun a a_1 => Add.add_Matrix_Float32_3_3 a a_1
+
+Resulting specialization:
+  HAdd.hAdd_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3 A B
+-/
+#guard_msgs in
+#opencl_sas A + B
+
+
+/--
+info: def Inv.inv_Float32 := ⏎
 fun a => 1e0 / a
 
-HouLean.Matrix.fromRows_3_Float32_3:
-fun f => { data := #v[f 0 ⋯, f 1 ⋯, f 2 ⋯] }
-
-HouLean.Matrix.mapRows_3_Float32_3_Float32_3:
-fun f a => Matrix.fromRows_3_Float32_3 fun i h => f (a.row i h)
-
-HouLean.Matrix.sdiv_Float32_3_3:
+def HouLean.Matrix.sdiv_Float32_3_3 := ⏎
 fun a s =>
   let is := Inv.inv_Float32 s;
-  Matrix.mapRows_3_Float32_3_Float32_3 (fun x => is * x) a
+  { data := #v[is * a.row 0 ⋯, is * a.row 1 ⋯, is * a.row 2 ⋯] }
 
-HDiv.hDiv_Matrix_Float32_3_3_Float32_Matrix_Float32_3_3:
+def HDiv.hDiv_Matrix_Float32_3_3_Float32_Matrix_Float32_3_3 := ⏎
 fun a a_1 => a.sdiv_Float32_3_3 a_1
 
 Resulting specialization:
@@ -57,10 +68,10 @@ Resulting specialization:
 
 
 /--
-info: Vector.sin_Float32_3:
+info: def Vector.sin_Float32_3 := ⏎
 fun x => #v[sin x[0], sin x[1], sin x[2]]
 
-Vector.dot_Float32_3:
+def Vector.dot_Float32_3 := ⏎
 fun u v =>
   let a := u[0] * v[0];
   let a := a + u[1] * v[1];
@@ -80,10 +91,10 @@ Resulting specialization:
 
 
 /--
-info: Vector.sin_Float32_3:
+info: def Vector.sin_Float32_3 := ⏎
 fun x => #v[sin x[0], sin x[1], sin x[2]]
 
-HouLean.Math.Sin.sin_Vector_Float32_3:
+def HouLean.Math.Sin.sin_Vector_Float32_3 := ⏎
 fun x => x.sin_Float32_3
 
 Resulting specialization:
@@ -94,36 +105,41 @@ Resulting specialization:
 
 
 /--
-info: HouLean.Matrix.ofFn_3_3_Float32:
-fun f => { data := #v[#v[f 0 0 ⋯, f 0 1 ⋯, f 0 2 ⋯], #v[f 1 0 ⋯, f 1 1 ⋯, f 1 2 ⋯], #v[f 2 0 ⋯, f 2 1 ⋯, f 2 2 ⋯]] }
-
-HouLean.Matrix.matMul_Float32_3_3_3:
-fun a b => Matrix.ofFn_3_3_Float32 fun i j x => (a.row i ⋯).dot (b.col j ⋯)
-
-HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3:
-fun a a_1 => a.matMul_Float32_3_3_3 a_1
-
-HouLean.Matrix.col_Float32_3_3_0:
+info: def HouLean.Matrix.col_Float32_3_3_0 := ⏎
 fun a => #v[(a.row 0 ⋯)[0], (a.row 1 ⋯)[0], (a.row 2 ⋯)[0]]
 
-Vector.dot_Float32_3:
+def Vector.dot_Float32_3 := ⏎
 fun u v =>
   let a := u[0] * v[0];
   let a := a + u[1] * v[1];
   let a := a + u[2] * v[2];
   a
 
-HouLean.Matrix.col_Float32_3_3_1:
+def HouLean.Matrix.col_Float32_3_3_1 := ⏎
 fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
 
-HouLean.Matrix.col_Float32_3_3_2:
+def HouLean.Matrix.col_Float32_3_3_2 := ⏎
 fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
 
-HouLean.Matrix.vecMul_Float32_3_3:
+def HouLean.Matrix.matMul_Float32_3_3_3 := ⏎
+fun a b =>
+  {
+    data :=
+      #v[#v[(a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_0, (a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_1,
+          (a.row 0 ⋯).dot_Float32_3 b.col_Float32_3_3_2],
+        #v[(a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_0, (a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_1,
+          (a.row 1 ⋯).dot_Float32_3 b.col_Float32_3_3_2],
+        #v[(a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_0, (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_1,
+          (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_2]] }
+
+def HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3 := ⏎
+fun a a_1 => a.matMul_Float32_3_3_3 a_1
+
+def HouLean.Matrix.vecMul_Float32_3_3 := ⏎
 fun v a =>
   #v[v.dot_Float32_3 a.col_Float32_3_3_0, v.dot_Float32_3 a.col_Float32_3_3_1, v.dot_Float32_3 a.col_Float32_3_3_2]
 
-HMul.hMul_Vector_Float32_3_Matrix_Float32_3_3_Vector_Float32_3:
+def HMul.hMul_Vector_Float32_3_Matrix_Float32_3_3_Vector_Float32_3 := ⏎
 fun a a_1 => Matrix.vecMul_Float32_3_3 a a_1
 
 Resulting specialization:
@@ -135,13 +151,13 @@ Resulting specialization:
 
 
 /--
-info: HouLean.Matrix.det2_Float32:
+info: def HouLean.Matrix.det2_Float32 := ⏎
 fun a => (a.row 0 ⋯)[0] * (a.row 1 ⋯)[1] - (a.row 0 ⋯)[1] * (a.row 1 ⋯)[0]
 
-Inv.inv_Float32:
+def Inv.inv_Float32 := ⏎
 fun a => 1e0 / a
 
-HouLean.Matrix.inv2_Float32:
+def HouLean.Matrix.inv2_Float32 := ⏎
 fun a =>
   let d := a.det2_Float32;
   let id := Inv.inv_Float32 d;
@@ -155,16 +171,16 @@ Resulting specialization:
 
 
 /--
-info: HouLean.Matrix.det3_Float32:
+info: def HouLean.Matrix.det3_Float32 := ⏎
 fun a =>
   (a.row 0 ⋯)[0] * ((a.row 1 ⋯)[1] * (a.row 2 ⋯)[2] - (a.row 1 ⋯)[2] * (a.row 2 ⋯)[1]) -
       (a.row 0 ⋯)[1] * ((a.row 1 ⋯)[0] * (a.row 2 ⋯)[2] - (a.row 1 ⋯)[2] * (a.row 2 ⋯)[0]) +
     (a.row 0 ⋯)[2] * ((a.row 1 ⋯)[0] * (a.row 2 ⋯)[1] - (a.row 1 ⋯)[1] * (a.row 2 ⋯)[0])
 
-Inv.inv_Float32:
+def Inv.inv_Float32 := ⏎
 fun a => 1e0 / a
 
-HouLean.Matrix.inv3_Float32:
+def HouLean.Matrix.inv3_Float32 := ⏎
 fun a =>
   let d := a.det3_Float32;
   let id := Inv.inv_Float32 d;
@@ -188,10 +204,10 @@ Resulting specialization:
 
 
 /--
-info: Inv.inv_Float32:
+info: def Inv.inv_Float32 := ⏎
 fun a => 1e0 / a
 
-HouLean.Matrix.inv4_Float32:
+def HouLean.Matrix.inv4_Float32 := ⏎
 fun a =>
   let s0 := (a.row 0 ⋯)[0] * (a.row 1 ⋯)[1] - (a.row 1 ⋯)[0] * (a.row 0 ⋯)[1];
   let s1 := (a.row 0 ⋯)[0] * (a.row 1 ⋯)[2] - (a.row 1 ⋯)[0] * (a.row 0 ⋯)[2];
@@ -236,23 +252,23 @@ Resulting specialization:
 attribute [opencl_csimp] Matrix.fromRows Matrix.mapRows₂ Matrix.ofFn
 
 /--
-info: HouLean.Matrix.col_Float32_3_3_0:
+info: def HouLean.Matrix.col_Float32_3_3_0 := ⏎
 fun a => #v[(a.row 0 ⋯)[0], (a.row 1 ⋯)[0], (a.row 2 ⋯)[0]]
 
-Vector.dot_Float32_3:
+def Vector.dot_Float32_3 := ⏎
 fun u v =>
   let a := u[0] * v[0];
   let a := a + u[1] * v[1];
   let a := a + u[2] * v[2];
   a
 
-HouLean.Matrix.col_Float32_3_3_1:
+def HouLean.Matrix.col_Float32_3_3_1 := ⏎
 fun a => #v[(a.row 0 ⋯)[1], (a.row 1 ⋯)[1], (a.row 2 ⋯)[1]]
 
-HouLean.Matrix.col_Float32_3_3_2:
+def HouLean.Matrix.col_Float32_3_3_2 := ⏎
 fun a => #v[(a.row 0 ⋯)[2], (a.row 1 ⋯)[2], (a.row 2 ⋯)[2]]
 
-HouLean.Matrix.matMul_Float32_3_3_3:
+def HouLean.Matrix.matMul_Float32_3_3_3 := ⏎
 fun a b =>
   {
     data :=
@@ -263,7 +279,7 @@ fun a b =>
         #v[(a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_0, (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_1,
           (a.row 2 ⋯).dot_Float32_3 b.col_Float32_3_3_2]] }
 
-HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3:
+def HMul.hMul_Matrix_Float32_3_3_Matrix_Float32_3_3_Matrix_Float32_3_3 := ⏎
 fun a a_1 => a.matMul_Float32_3_3_3 a_1
 
 Resulting specialization:
@@ -274,7 +290,7 @@ Resulting specialization:
 
 
 /--
-info: HouLean.Matrix.identity_Float_3:
+info: def HouLean.Matrix.identity_Float_3 := ⏎
 {
   data :=
     #v[#v[if ↑0 = ↑0 then 1 else 0, if ↑0 = ↑1 then 1 else 0, if ↑0 = ↑2 then 1 else 0],

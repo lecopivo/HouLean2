@@ -92,6 +92,41 @@ private def unfoldDef (e : Expr) (declName : Name) : MetaM Expr := do
   else
     return unfolded
 
+def isInlineType (type : Expr) : MetaM Bool := do
+  if type.isForall then
+    forallTelescope type fun _ r => do
+      if r.isSort then
+        return false
+      else if (← isClass? r).isSome then
+        return false
+      else
+        return true
+  else
+    return false
+
+def shouldInline (fname : Name) (args : Array Expr) : MetaM Bool := do
+  if fname == ``Bind.bind then
+    return false
+
+  for arg in args do
+    let t ← inferType arg
+    if ← isInlineType t then
+      trace[HouLean.specialize] "inling {fname} because argument {arg} is function type!"
+      return true
+  return false
+
+
+def inline? (e : Expr) : MetaM (Option Expr) := do
+  if let some fname := e.getAppFn.constName? then
+    let args := e.getAppArgs
+    if ← shouldInline fname args then
+      let e' := (← unfold e fname).expr
+      if e' != e then
+        trace[HouLean.specialize] m!"inlined {fname}: {e} ==> {e'}"
+        return e'
+  return none
+
+
 /-- Define a new specialized function and register it. -/
 partial def defineNewSpecialization (r : FunSpecializationResult) : M (Option Name) := do
   withTraceNode `HouLean.specialize (fun res => return m!"[{exceptEmoji res}] Specializing {r.fn'} : {← inferType r.fn'}") do
@@ -102,8 +137,6 @@ partial def defineNewSpecialization (r : FunSpecializationResult) : M (Option Na
     if body == body' then
       trace[HouLean.specialize] "cannot unfold {r.funName}, skipping specialization"
       return none
-
-    trace[HouLean.specialize] "creating specialization {r.mangledName}"
 
     let body'' ← specializeAndSimp body'
     let value ← mkLambdaFVars xs body'' >>= instantiateMVars
@@ -144,12 +177,23 @@ private def skipSpecialization (e : Expr) : M Bool := do
       return true
   return false
 
+
+def specializeArgsOnly (funName : Name) : M Bool := do
+  if [``ite, ``dite, ``forIn, ``LT.lt, ``LE.le, ``Bind.bind].contains funName then
+    return true
+
+  if let some info ← getProjectionFnInfo? funName then
+    if ¬info.fromClass then
+      return true
+
+  return false
+
+
 /-- Recursively specialize an expression. -/
 partial def specializeExprImpl (e : Expr) : M Expr := do
   -- there is some zetaDelta reduction happening somewhere :( not sure where
   withConfig (fun cfg => {cfg with zeta := false, zetaDelta := false}) do
   let e ← instantiateMVars e
-  trace[HouLean.specialize] m!"{e}"
 
   if let some val ← runInterpreterForPrimitiveTypes? e then
     return toExpr val
@@ -164,18 +208,20 @@ partial def specializeExprImpl (e : Expr) : M Expr := do
   | .app .. =>
     let (fn, args) := e.withApp (·, ·)
     match fn with
-    | .const .. =>
+    | .const fname _ =>
       let r ← specializeFunApp fn args
 
       -- run specialization on the arguments
       let args' ← r.args'.mapM specializeExpr
 
-      if [``ite, ``dite, ``forIn, ``LT.lt, ``LE.le].contains r.funName then
+      if ← specializeArgsOnly r.funName then
         return r.fn'.beta args'
 
-      -- No specialization of the function needed
-      if (← isDefEq fn r.fn') then
-        return r.fn'.beta args'
+      -- the current function call might not need specialization but functions inside might
+      -- so we continue specializing!
+      -- -- No specialization of the function needed
+      -- if (← isDefEq fn r.fn') then
+      --   return r.fn'.beta args'
 
       -- Check for existing specialization
       let specs := (← get).specializations
@@ -230,11 +276,16 @@ partial def specializeAndSimpImpl (e : Expr) : M Expr := do
       mkLetFVars #[v''] b'
 
   | .app .. =>
-    let e ← simplify e
-    let e ← liftLets e
+    let mut e := e
+    e ← simplify e
+    e ← liftLets e
 
     if e.isLet then
       return ← specializeAndSimp e
+
+    -- inline function?
+    if let some e' ← inline? e then
+      return ← specializeAndSimp e'
 
     match e with
     | .app .. =>
@@ -248,7 +299,10 @@ partial def specializeAndSimpImpl (e : Expr) : M Expr := do
 where
   simplify (e : Expr) : M Expr := do
     withTraceNode `HouLean.specialize.simplify (fun _ => return m!"simplify") do
-      return (← Simp.simp e).expr
+      let e' := (← Simp.simp e).expr
+      if e != e' then
+        trace[HouLean.specialize] "simplified {indentExpr e}\n  ==> {indentExpr e'}"
+      return e'
 
   liftLets (e : Expr) : M Expr := do
     withTraceNode `HouLean.specialize.liftLets (fun _ => return m!"liftLets") do

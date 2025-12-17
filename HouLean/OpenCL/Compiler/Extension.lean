@@ -68,10 +68,10 @@ initialize compilerExt : CompilerExt ←
 
 
 open Lean Meta
-def addImpementedBy (lhs : Expr) (rhs : TSyntax `clExpr) : MetaM ImplementedBy := do
+def addImplementedBy (lhs : Expr) (rhs : TSyntax `clExpr) (argsToCompile : Array (Name × Nat)) : MetaM ImplementedBy := do
 
   let lhs ← instantiateMVars lhs
-  let type ← inferType lhs
+  -- let type ← inferType lhs
 
   if lhs.hasMVar then
     let mvars ← lhs.getMVars
@@ -81,19 +81,20 @@ def addImpementedBy (lhs : Expr) (rhs : TSyntax `clExpr) : MetaM ImplementedBy :
     let fvars ← lhs.getFVars
     throwError m!"Can't add implemented_by `{lhs} ==> {rhs}`. Lhs contains mvars: {fvars}"
 
-  -- figure out which arguments of lhs appear on the rhs
-  -- store their name and index
-  let argsToCompile ←
-    forallTelescope type fun args _ => do
-      args.zip (.range args.size)
-        |>.filterMapM (fun (arg,i) => do
-          if arg.isFVar then
-            let name ← arg.fvarId!.getUserName
-            -- arguments that appear on the rhs should be compiled!
-            if rhs.raw.hasIdent name then
-              return some (name, i)
-          return none)
+  -- -- figure out which arguments of lhs appear on the rhs
+  -- -- store their name and index
+  -- let argsToCompile ←
+  --   forallTelescope type fun args _ => do
+  --     args.zip (.range args.size)
+  --       |>.filterMapM (fun (arg,i) => do
+  --         if arg.isFVar then
+  --           let name ← arg.fvarId!.getUserName
+  --           -- arguments that appear on the rhs should be compiled!
+  --           if rhs.raw.hasIdent name then
+  --             return some (name, i)
+  --         return none)
 
+  trace[HouLean.OpenCL.compiler] "Added implemented by\n{lhs} ==> {rhs}\nargs to compile: {argsToCompile}"
 
   let (xs,_,_) ← forallMetaTelescope (← inferType lhs)
   let body := lhs.beta xs
@@ -109,6 +110,17 @@ def addImpementedBy (lhs : Expr) (rhs : TSyntax `clExpr) : MetaM ImplementedBy :
   compilerExt.add (.implementedBy impl)
 
   return impl
+
+def addOpenCLType (type : Expr) (clTypeName : String) (definition : TSyntax `clTypeSpec) : MetaM Unit := do
+
+  compilerExt.add (.clTypeDef {
+    typeDef? := definition
+    clType := .mkSimple clTypeName
+    leanType := type
+  })
+
+  let clId := mkIdent (.mkSimple clTypeName)
+  let _ ← addImplementedBy type (← `(clExpr| $clId:ident)) #[]
 
 open Qq in
 unsafe def getBuilder (declName : Name) : CompileM (Array Expr → CompileM (TSyntax `clExpr)) := do

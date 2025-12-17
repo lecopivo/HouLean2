@@ -79,19 +79,3 @@ instance [t : OpenCLType α] : OpenCLType (Id α) := t
 attribute [opencl_csimp] Id.run
 
 attribute [opencl_csimp] sum
-
-open Lean Meta Qq in
-simproc_decl normalize_ocl_fun_name (oclFunction _ _ _) := fun e => do
-
-  let name := e.getArg! 2
-  try
-    let name ← unsafe evalExpr String q(String) name
-    let name := mkStrLit name
-    let e := e.withApp (fun fn args => mkAppN fn (args.set! 2 name))
-    return .visit { expr := e }
-  catch _ =>
-    pure ()
-
-  return .continue
-
--- attribute [opencl_csimp] normalize_ocl_fun_name

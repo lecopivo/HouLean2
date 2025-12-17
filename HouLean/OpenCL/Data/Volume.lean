@@ -1,3 +1,4 @@
+#exit
 import HouLean.OpenCL.Data.ArrayType
 import HouLean.OpenCL.Data.Fin
 import HouLean.OpenCL.Data.Vector

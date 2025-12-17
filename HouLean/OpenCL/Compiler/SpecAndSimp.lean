@@ -71,14 +71,19 @@ elab c:"#opencl_sas " e:term : command => do
   runTermElabM fun _ => do
 
     let e ← elabTermAndSynthesize e none
-    let (e', s) ← (SpecializeAndSimp.specializeAndSimp e).runInMeta
+
+    forallTelescope (← inferType e) fun xs _ => do
+    let body := e.beta xs
+
+    let (body', s) ← (SpecializeAndSimp.specializeAndSimp body).runInMeta
       {} { zeta := false } #[`opencl_csimp] specializeImplementedBy
 
+    let e' ← mkLambdaFVars xs body'
 
     let mut m : MessageData := ""
     for s in s.specOrder do
       let info ← getConstInfo s
-      m := m ++ m!"{s}:\n{info.value!}\n\n"
+      m := m ++ m!"def {s} := \n{info.value!}\n\n"
     m := m ++ m!"Resulting specialization:{indentExpr e'}"
 
     logInfoAt c m

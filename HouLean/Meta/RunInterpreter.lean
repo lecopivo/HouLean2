@@ -9,6 +9,7 @@ namespace HouLean.Meta
 
 def runInterpreter? (α : Type) [t : ToExpr α] (val : Expr) : MetaM (Option α) := do
   try
+    let val ← instantiateMVars val
     let val ← unsafe evalExpr α t.toTypeExpr val
     return some val
   catch _ =>
@@ -16,6 +17,7 @@ def runInterpreter? (α : Type) [t : ToExpr α] (val : Expr) : MetaM (Option α)
 
 def runInterpreter?' (α : Type) (t : Expr) (val : Expr) : MetaM (Option α) := do
   try
+    let val ← instantiateMVars val
     let val ← unsafe evalExpr α t val
     return some val
   catch _ =>
@@ -36,6 +38,7 @@ inductive PrimitiveValue where
   | float32 (x : Float32)
   | float64 (x : Float64)
   | unit
+
 
 protected def PrimitiveValue.toExpr (v : PrimitiveValue) : Expr :=
   match v with

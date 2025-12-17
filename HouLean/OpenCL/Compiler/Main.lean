@@ -21,18 +21,11 @@ def nameToString (n : Name) : String :=
 def _root_.HouLean.Meta.PrimitiveValue.toOpenCLSyntax (val : PrimitiveValue) : MetaM (TSyntax `clExpr) :=
   match val with
   | .bool b => if b then `(clExpr| true) else `(clExpr| false)
-  | .int x | .nat x | .usize x
-  | .int16 x | .uint16 x
-  | .int32 x | .uint32 x
-  | .int64 x | .uint64 x =>
-    let lit := Syntax.mkNumLit (toString x)
-    `(clExpr| $lit:num)
-  | .float32 x =>
-    let lit := Syntax.mkScientificLit (Float.toString' x.toFloat (precision := 7))
-    `(clExpr| $lit:scientific)
-  | .float64 x =>
-    let lit := Syntax.mkScientificLit (Float.toString' x)
-    `(clExpr| $lit:scientific)
+  | .int x | .nat x | .usize x | .int16 x | .uint16 x
+  | .int32 x | .uint32 x | .int64 x | .uint64 x =>
+    `(clExpr| $(Syntax.mkNumLit (toString x)):num)
+  | .float32 x => `(clExpr| $(Syntax.mkScientificLit (Float.toString' x.toFloat (precision := 7))):scientific)
+  | .float64 x => `(clExpr| $(Syntax.mkScientificLit (Float.toString' x)):scientific)
   | .unit => `(clExpr| null)
 
 /-! # Variable Management -/
@@ -41,40 +34,29 @@ def _root_.HouLean.Meta.PrimitiveValue.toOpenCLSyntax (val : PrimitiveValue) : M
 def withFVar (x : Expr) (go : Ident → CompileM α) : CompileM α := do
   let baseName := nameToString (← x.fvarId!.getUserName)
   let ctx ← read
-
-  let (name, usedNames) :=
-    match ctx.usedNames[baseName]? with
+  let (name, usedNames) := match ctx.usedNames[baseName]? with
     | some count => (s!"{baseName}{count + 1}", ctx.usedNames.insert baseName (count + 1))
     | none => (baseName, ctx.usedNames.insert baseName 0)
-
-  let fvarMap := ctx.fvarMap.insert x name
   trace[HouLean.OpenCL.compiler] "Introduced variable: {name}"
-
-  withReader (fun _ => { fvarMap := fvarMap, usedNames := usedNames }) (go (mkIdent (.mkSimple name)))
+  withReader (fun _ => { fvarMap := ctx.fvarMap.insert x name, usedNames }) do
+    go (mkIdent (.mkSimple name))
 
 /-- Introduce multiple fresh variables with properly nested scopes. -/
 def withFVars (xs : Array Expr) (go : Array Ident → CompileM α) : CompileM α :=
-  loop xs.toList #[]
+  go' xs.toList #[]
 where
-  loop : List Expr → Array Ident → CompileM α
+  go' : List Expr → Array Ident → CompileM α
     | [], ids => go ids
-    | x :: xs, ids => withFVar x fun id => loop xs (ids.push id)
+    | x :: xs, ids => withFVar x fun id => go' xs (ids.push id)
 
 /-- Add a statement to the current block. -/
-def addStatement (stmt : TSyntax `clStmtLike) : CompileM Unit :=
+def addStatement (stmt : TSyntax `clStmtLike) : CompileM Unit := do
   modify fun s => { s with statements := s.statements.push stmt }
 
 /-! # Application Classification -/
 
 /--
 Classification of application expressions for compilation.
-
-- `bind`: Monadic bind operation `mx >>= f`
-- `forLoop`: For-in loop with range `(start, stop, step, init, body)`
-- `ite`: If-then-else conditional
-- `app`: General function application
-- `value`: Pure value (wrapped in `pure`/`yield`)
-- `matchE`: Match expression
 -/
 inductive AppCase where
   | bind (mx f : Expr)
@@ -86,112 +68,109 @@ inductive AppCase where
 
 /-- Eta-expand an expression by one argument. -/
 def etaExpand1 (e : Expr) : MetaM Expr := do
-  forallBoundedTelescope (← inferType e) (some 1) fun xs _ =>
-    mkLambdaFVars xs (e.beta xs)
+  forallBoundedTelescope (← inferType e) (some 1) fun xs _ => mkLambdaFVars xs (e.beta xs)
 
 /-- Classify an application expression to determine compilation strategy. -/
 def appCase (e : Expr) : MetaM AppCase := do
   if e.isAppOfArity ``bind 6 then
     let mx := e.appFn!.appArg!
-    let f := (← etaExpand1 e.appArg!)
-
+    let f ← etaExpand1 e.appArg!
     if mx.isAppOfArity ``forIn 9 then
       let range := mx.getRevArg! 2
-      let init := mx.getRevArg! 1
-      let loop := mx.getRevArg! 0
       return .forLoop
         (← mkAppM ``Std.Range.start #[range] >>= whnfI)
         (← mkAppM ``Std.Range.stop #[range] >>= whnfI)
         (← mkAppM ``Std.Range.step #[range] >>= whnfI)
-        init
-        loop
+        (mx.getRevArg! 1)
+        (mx.getRevArg! 0)
         f
-    else
-      return .bind mx f
-
-
+    return .bind mx f
   if e.isAppOfArity ``ite 5 then
     return .ite (e.getRevArg! 3) (e.getRevArg! 1) (e.getRevArg! 0)
-
   if e.isAppOfArity ``pure 4 || e.isAppOfArity ``ForInStep.yield 2 then
     return .value e.appArg!
-
   if ← isMatcherApp e then
     return .matchE
-
   return .app
+
+/-! # Bind Classification -/
+
+inductive BindCase where
+  | normal
+  | statement
+  | remove
+
+def bindCase (val : Expr) : MetaM BindCase := do
+  let type ← inferType val
+  let m ← mkFreshExprMVarQ q(Type → Type)
+  if ← isDefEq type q($m Unit) then
+    let _ ← mkFreshExprMVarQ q(Monad $m)
+    return if ← isDefEq val q(pure (f := $m) ()) then .remove else .statement
+  else
+    return .normal
 
 /-! # Expression Compilation -/
 
 mutual
+
 /-- Try to find and apply an `implemented_by` rule for the expression. -/
 partial def tryImplementedBy (e : Expr) : CompileM (Option (TSyntax `clExpr)) := do
-  let s := (compilerExt.getState (← getEnv)).implementedBy
-  for c in ← s.getMatch e do
-    let (args, _, _) ← forallMetaTelescope (← inferType c.lhs)
-    let body := c.lhs.beta args
-    if ← isDefEq body e then
-      return some (← applyImpl c args e)
+  let rules := (compilerExt.getState (← getEnv)).implementedBy
+  for rule in ← rules.getMatch e do
+    let (args, _, _) ← forallMetaTelescope (← inferType rule.lhs)
+    if ← isDefEq (rule.lhs.beta args) e then
+      return some (← applyRule rule args e)
   return none
 where
-  applyImpl (impl : ImplementedBy) (args : Array Expr) (e : Expr) : CompileM (TSyntax `clExpr) := do
-    trace[HouLean.OpenCL.compiler] "Applying implemented_by: {impl.lhs} ==> {impl.rhs}"
-
+  applyRule (impl : ImplementedBy) (args : Array Expr) (e : Expr) : CompileM (TSyntax `clExpr) := do
     let mut compiledArgs : NameMap (TSyntax `clExpr) := {}
     for (n, i) in impl.argsToCompile do
       let some arg := args[i]? | throwError "Invalid argument index {i} in implemented_by for {e}"
       compiledArgs := compiledArgs.insert n (← compileExpr arg)
-
     let compiled ← impl.rhs.raw.replaceM fun
       | `(clExpr| $id:ident) => return compiledArgs.get? id.getId
       | _ => return none
-
+    trace[HouLean.OpenCL.compiler] "Applying implemented_by: {e} ==> {compiled}\n  args: {compiledArgs.toArray}"
     return ⟨compiled⟩
 
 /-- Try to find and run an `implemented_by` builder for the expression. -/
 partial def tryImplementedByBuilder (e : Expr) : CompileM (Option (TSyntax `clExpr)) := do
-  let s := (compilerExt.getState (← getEnv)).implementedByBuilders
-  for b in ← s.getMatch e do
-    let (args, _, _) ← forallMetaTelescope (← inferType b.lhs)
-    let body := b.lhs.beta args
-    if ← isDefEq body e then
-      return some (← runBuilder args b)
+  let builders := (compilerExt.getState (← getEnv)).implementedByBuilders
+  for builder in ← builders.getMatch e do
+    let (args, _, _) ← forallMetaTelescope (← inferType builder.lhs)
+    if ← isDefEq (builder.lhs.beta args) e then
+      return some (← runBuilder args builder)
   return none
 
 /-- Compile a Lean expression to OpenCL syntax. -/
 partial def compileExpr (e : Expr) : CompileM (TSyntax `clExpr) := do
   withConfig (fun cfg => { cfg with zeta := false, zetaDelta := false }) do
   withTraceNode `HouLean.OpenCL.compiler (fun r => return m!"[{exceptEmoji r}] {e}") do
+    -- Try interpreting as primitive
+    if let some val ← runInterpreterForPrimitiveTypes? e then
+      return ← val.toOpenCLSyntax
+    let e ← instantiateMVars e
+    let e := e.headBeta
+    match e with
+    | .fvar .. =>
+      let some id := (← read).fvarMap[e]? | throwError "Unrecognized free variable: {e}"
+      `(clExpr| $(mkIdent (.mkSimple id)):ident)
+    | _ =>
+      -- Try implemented_by rules
+      if let some result ← tryImplementedBy e then return result
+      if let some result ← tryImplementedByBuilder e then return result
+      -- Handle special cases
+      if let some fname := e.getAppFn.constName? then
+        if ← isProjectionFn fname then
+          throwError "Projection encountered; should compile structure: {e}"
+        if ← isConstructorApp e then
+          throwError "Constructor encountered; should compile structure/enum: {e}"
+        if ← isMatcher fname then
+          return ← compileExpr (← unfold e fname).expr
+        if isCasesOnRecursor (← getEnv) fname then
+          throwError "Cases-on recursor not supported: {e}"
+      throwError "Don't know how to compile: {e}"
 
-  -- Try interpreting as primitive
-  if let some val ← runInterpreterForPrimitiveTypes? e then
-    return ← val.toOpenCLSyntax
-
-  let e ← instantiateMVars e
-  let e := e.headBeta
-
-  match e with
-  | .fvar .. =>
-    let some id := (← read).fvarMap[e]? | throwError "Unrecognized free variable: {e}"
-    `(clExpr| $(mkIdent (.mkSimple id)):ident)
-
-  | _ =>
-    -- Try implemented_by rules
-    if let some result ← tryImplementedBy e then return result
-    if let some result ← tryImplementedByBuilder e then return result
-
-    -- Handle special cases
-    if let some fname := e.getAppFn.constName? then
-      if ← isProjectionFn fname then
-        throwError "Projection encountered; should compile structure: {e}"
-      if ← isConstructorApp e then
-        throwError "Constructor encountered; should compile structure/enum: {e}"
-      if ← isMatcher fname then
-        return ← compileExpr (← unfold e fname).expr
-      if isCasesOnRecursor (← getEnv) fname then
-        throwError "Cases-on recursor not supported: {e}"
-
-    throwError "Don't know how to compile: {e}"
 end
 
 /-! # Type Compilation -/
@@ -203,10 +182,8 @@ partial def compileStructure (type : Expr) (structName : Name) (params : Array E
   let ps ← params.mapM compileType
   let name := ps.foldl (init := nameToString structName)
     fun s p => s ++ "_" ++ (toString (Syntax.prettyPrint p)).replace " " ""
-
   let clId := mkIdent (.mkSimple name)
-  let _ ← addImpementedBy type (← `(clExpr| $clId:ident))
-
+  let _ ← addImplementedBy type (← `(clExpr| $clId:ident)) #[]
   -- Generate projection implementations
   let info := getStructureInfo (← getEnv) structName
   withLocalDeclD `x type fun x => do
@@ -214,16 +191,15 @@ partial def compileStructure (type : Expr) (structName : Name) (params : Array E
       let projExpr := x.proj structName i
       let lhs ← mkLambdaFVars #[x] projExpr
       let rhs ← `(clExpr| $(mkIdent `x):ident.$(mkIdent fieldName):ident)
-      let _ ← addImpementedBy lhs rhs
-
+      let _ ← addImplementedBy lhs rhs #[(`x, 0)]
   -- Generate constructor implementation
   let ctor := getStructureCtor (← getEnv) structName
   let mkLhs ← mkAppOptM ctor.name (params.map some)
-  let mkRhs ← forallTelescope (← inferType mkLhs) fun xs _ => do
-    let ids ← xs.mapM fun x => return mkIdent (← x.fvarId!.getUserName)
-    `(clExpr| ($clId){$[$ids:ident],*})
-  let _ ← addImpementedBy mkLhs mkRhs
-
+  let argNames ← forallTelescope (← inferType mkLhs) fun xs _ =>
+    xs.mapM fun x => x.fvarId!.getUserName
+  let argIds := argNames.map mkIdent
+  let mkRhs ← `(clExpr| ($clId){$[$argIds:ident],*})
+  let _ ← addImplementedBy mkLhs mkRhs (argNames.zip (.range argNames.size))
   return clId
 
 /-- Compile a Lean type to an OpenCL type identifier. -/
@@ -245,28 +221,11 @@ end
 /-- Check if a let binding should be inlined (functions or Unit type). -/
 def shouldInlineLet (type : Expr) : CompileM Bool := do
   if type.isForall then return true
-  if ← isDefEq type q(Unit) then return true
-  return false
+  isDefEq type q(Unit)
 
 /-- Default continuation: emit a return statement. -/
 def finishBlockDefault (x : TSyntax `clExpr) : CompileM Unit := do
   addStatement (← `(clStmtLike| return $x;))
-
-inductive BindCase where
-  | normal | statement | remove
-
-def bindCase (val : Expr) : MetaM BindCase := do
-  let type ← inferType val
-  let m ← mkFreshExprMVarQ q(Type → Type)
-  if ← isDefEq type q($m Unit) then
-    let _ ← mkFreshExprMVarQ q(Monad $m)
-    let pureUnit := q(pure (f:=$m) ())
-    if ← isDefEq val pureUnit then
-      return .remove
-    else
-      return .statement
-  else
-    return .normal
 
 mutual
 
@@ -275,82 +234,77 @@ partial def compileBlock (e : Expr) (cont : TSyntax `clExpr → CompileM Unit :=
   match e with
   | .letE n t v b _ =>
     if ← shouldInlineLet t then
-      return ← compileBlock (b.instantiate1 v) cont
-
-    let t' ← compileType t
-    let v' ← compileExpr v
-    withLetDecl n t v fun var => do
-      withFVar var fun varId => do
+      compileBlock (b.instantiate1 v) cont
+    else
+      let t' ← compileType t
+      let v' ← compileExpr v
+      withLetDecl n t v fun var => withFVar var fun varId => do
         let c ← `(clTypeQ| const)
         addStatement (← `(clStmtLike| $c:clTypeQ $t':ident $varId:ident = $v':clExpr;))
         compileBlock (b.instantiate1 var) cont
+  | _ => compileAppCase e cont
 
-  | e =>
-    match ← appCase e with
-    | .bind mx f =>
-      let .lam name t body _ := f | throwError "Invalid bind: expected lambda, got {f}"
-      let t' ← compileType t
-      let mx' ← compileExpr mx
-      match ← bindCase mx with
-      | .remove =>
-        compileBlock (body.instantiate1 q(())) cont
-      | .statement =>
-        addStatement (← `(clStmtLike| $mx':clExpr;))
-        compileBlock (body.instantiate1 q(())) cont
-      | .normal =>
-        withLocalDeclD name t fun var => do
-          withFVar var fun varId => do
-            let c ← `(clTypeQ| const)
-            addStatement (← `(clStmtLike| $c:clTypeQ $t':ident $varId:ident = $mx':clExpr;))
-            compileBlock (body.instantiate1 var) cont
+/-- Compile based on application case classification. -/
+partial def compileAppCase (e : Expr) (cont : TSyntax `clExpr → CompileM Unit) : CompileM Unit := do
+  match ← appCase e with
+  | .bind mx f => compileBind mx f cont
+  | .forLoop start stop step init f rest => compileForLoop start stop step init f rest cont
+  | .ite cond t e => compileIte cond t e cont
+  | .matchE => throwError "TODO: implement match compilation:\n{e}"
+  | .app => cont (← compileExpr e)
+  | .value e => cont (← compileExpr e)
 
-    | .forLoop start stop step init f rest =>
+/-- Compile a monadic bind. -/
+partial def compileBind (mx f : Expr) (cont : TSyntax `clExpr → CompileM Unit) : CompileM Unit := do
+  let .lam name t body _ := f | throwError "Invalid bind: expected lambda, got {f}"
+  match ← bindCase mx with
+  | .remove => compileBlock (body.instantiate1 q(())) cont
+  | .statement =>
+    addStatement (← `(clStmtLike| $(← compileExpr mx):clExpr;))
+    compileBlock (body.instantiate1 q(())) cont
+  | .normal =>
+    let t' ← compileType t
+    let mx' ← compileExpr mx
+    withLocalDeclD name t fun var => withFVar var fun varId => do
+      let c ← `(clTypeQ| const)
+      addStatement (← `(clStmtLike| $c:clTypeQ $t':ident $varId:ident = $mx':clExpr;))
+      compileBlock (body.instantiate1 var) cont
 
-      let initType ← inferType init
-      let initType' ← compileType initType
-      let init' ← compileExpr init
+/-- Compile a for loop. -/
+partial def compileForLoop (start stop step init f rest : Expr)
+    (cont : TSyntax `clExpr → CompileM Unit) : CompileM Unit := do
+  let initType ← inferType init
+  let initType' ← compileType initType
+  let init' ← compileExpr init
+  withLocalDeclD `state initType fun state => withFVar state fun stateId => do
+    addStatement (← `(clStmtLike| $initType':ident $stateId:ident = $init':clExpr;))
+    let _ ← forallBoundedTelescope (← inferType f) (some 1) fun xs _ => do
+      let idx := xs[0]!
+      withFVar idx fun idxId => do
+        let body := f.beta #[idx, state]
+        let body' ← compileScope body (fun r => do
+          addStatement (← `(clStmtLike| $stateId:ident = $r:clExpr;)))
+        let start' ← compileExpr start
+        let stop' ← compileExpr stop
+        let step' ← compileExpr step
+        addStatement (← `(clStmtLike|
+          for (uint $idxId:ident = $start':clExpr; $idxId:ident < $stop'; $idxId:ident += $step') $body'))
+    compileBlock (rest.beta #[state]) cont
 
-      withLocalDeclD `state initType fun state => do
-      withFVar state fun stateId => do
-
-      addStatement (← `(clStmtLike| $initType':ident $stateId:ident = $init':clExpr;))
-
-      let _ ← forallBoundedTelescope (← inferType f) (some 1) fun xs _ => do
-          let idx := xs[0]!
-          withFVar idx fun idxId => do
-
-          let body := f.beta #[idx, state]
-          let body' ← compileScope body (fun r => do
-            addStatement (← `(clStmtLike| $stateId:ident = $r:clExpr;)))
-
-          let start' ← compileExpr start
-          let stop' ← compileExpr stop
-          let step' ← compileExpr step
-
-          addStatement (← `(clStmtLike|
-            for (uint $idxId:ident = $start':clExpr; $idxId:ident < $stop'; $idxId:ident += $step') $body' ))
-
-      compileBlock (rest.beta #[state]) cont
-
-    | .ite cond t e =>
-      let decCond ← mkAppOptM ``decide #[cond, none]
-      let cond' ← compileExpr decCond
-      let thnBody ← compileScope t cont
-      let elseBody ← compileScope e cont
-      addStatement (← `(clStmtLike| if ($cond') $thnBody else $elseBody))
-    | .matchE => throwError "TODO: implement match compilation:\n{e}"
-    | .app => cont (← compileExpr e)
-    | .value e => cont (← compileExpr e)
-
+/-- Compile an if-then-else. -/
+partial def compileIte (cond t e : Expr) (cont : TSyntax `clExpr → CompileM Unit) : CompileM Unit := do
+  let decCond ← mkAppOptM ``decide #[cond, none]
+  let cond' ← compileExpr decCond
+  let thnBody ← compileScope t cont
+  let elsBody ← compileScope e cont
+  addStatement (← `(clStmtLike| if ($cond') $thnBody else $elsBody))
 
 /-- Compile a scoped block, saving and restoring statement state. -/
 partial def compileScope (e : Expr) (cont : TSyntax `clExpr → CompileM Unit) : CompileM (TSyntax `clStmt) := do
   let saved ← get
-  set { : State}
-
+  set { : State }
   compileBlock e cont
   let stmts := (← get).statements
-
   set saved
   `(clStmt| {$stmts*})
 
@@ -361,47 +315,37 @@ end
 /-- Register an OpenCL function definition and its implementation rule. -/
 def addOpenCLFunDef (leanName : Name) (clName : Name) (funDef : TSyntax ``clFunction) : MetaM Unit := do
   let info ← getConstInfo leanName
-
   compilerExt.add (.clFunDef { funDef, clName, leanName })
-
-  let rhs ← forallTelescope info.type fun xs _ => do
-    let names ← xs.filterMapM fun x => do
-      let id := x.fvarId!
-      if (← id.getBinderInfo).isExplicit then
-        return some (← id.getUserName)
-      else
-        return none
-    let args := names.map mkIdent
-    `(clExpr| $(mkIdent clName):ident($[$args:ident],*))
-
-  let lhs ← mkConstWithFreshMVarLevels leanName
-  let _ ← addImpementedBy lhs rhs
+  let namesAndBinders ← forallTelescope info.type fun xs _ =>
+    xs.mapM fun x => do return (← x.fvarId!.getUserName, ← x.fvarId!.getBinderInfo)
+  let mut argsToCompile : Array (Name × Nat) := #[]
+  for (n, bi) in namesAndBinders, i in [0:namesAndBinders.size] do
+    if bi.isExplicit then
+      let n := if argsToCompile.any (·.1 == n.eraseMacroScopes)
+        then n.eraseMacroScopes.appendAfter (toString i)
+        else n.eraseMacroScopes
+      argsToCompile := argsToCompile.push (n, i)
+  let argIds := argsToCompile.map fun (n, _) => mkIdent n
+  let rhs ← `(clExpr| $(mkIdent clName):ident($[$argIds:ident],*))
+  let lhs ← mkConstWithFreshMVarLevels leanName >>= etaExpand
+  let _ ← addImplementedBy lhs rhs argsToCompile
 
 /-- Compile a Lean declaration to an OpenCL function. -/
 def compileDecl (declName : Name) : MetaM (TSyntax ``clFunction) := do
   let info ← getConstInfo declName
   let some val := info.value? | throwError "Cannot compile {declName}: not a definition"
-
   let funName := Name.mkSimple <|
     declName.eraseMacroScopes.toString.toLower.replace "." "_"
   let funId := mkIdent funName
-
   forallTelescope (← inferType val) fun xs _ => do
     let body := val.beta xs
-
-    let go : CompileM (TSyntax ``clFunction) :=
-      withFVars xs fun varIds => do
-        let rt' ← compileType (← inferType body)
-        let ts' ← xs.mapM (inferType · >>= compileType)
-
-        compileBlock body
-
-        let returnType : TSyntax `clDeclSpec ← `(clDeclSpec| $rt':ident)
-        let argTypes ← ts'.mapM fun t => `(clTypeSpec| $t:ident)
-        let stmts := (← get).statements
-
-        `(clFunction| $returnType $funId:ident($[$argTypes:clTypeSpec $varIds:ident],*) { $stmts* })
-
+    let go : CompileM (TSyntax ``clFunction) := withFVars xs fun varIds => do
+      let rt' ← compileType (← inferType body)
+      let ts' ← xs.mapM (inferType · >>= compileType)
+      compileBlock body
+      let stmts := (← get).statements
+      let argTypes ← ts'.mapM fun t => `(clTypeSpec| $t:ident)
+      `(clFunction| $rt':ident $funId:ident($[$argTypes:clTypeSpec $varIds:ident],*) { $stmts* })
     let (fundef, _) ← go {} {}
     addOpenCLFunDef declName funName fundef
     return fundef

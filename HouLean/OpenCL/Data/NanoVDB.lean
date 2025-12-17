@@ -1,3 +1,4 @@
+#exit
 import HouLean.Math
 import HouLean.Data.Defs
 import HouLean.Data.Float

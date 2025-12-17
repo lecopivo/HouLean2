@@ -9,8 +9,15 @@ set_option linter.unusedVariables false
 
 Implementation detail:
 This is just a pointer `ArrayPointer type` that is anotated with attribute information. -/
-abbrev Attribute (cls : AttributeClass) (type : Type) (size : Nat) (name : String := "")
-    (input : Nat := 0) (read := true) (write := false) {Ptr} [ArrayType type Ptr] :=
+abbrev Attribute
+    (cls : AttributeClass)
+    (type : Type)
+    (size : Nat)
+    (name : String := "")
+    (input : Nat := 0)
+    (read := true)
+    (write := false)
+    {Ptr} [ArrayType type Ptr] :=
   ArrayPointer type
 
 variable {cls : AttributeClass} {type : Type} {size : Nat} {name : String} {input : Nat}

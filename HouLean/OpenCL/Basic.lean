@@ -30,14 +30,14 @@ This ia jsut a macro for:
 ```
 @[opencl_csimp] theorem opencl_compile_rewrite_rule bs* : lhs = rhs
 ``` -/
-scoped syntax "implemented_by" bracketedBinder* " : " term:55 " = " term (" := " term)? : command
+scoped syntax "opencl_rewrite" bracketedBinder* " : " term:55 " = " term (" := " term)? : command
 
 /-- Compilers gadget that turns `f (argList [xs,*])` to `f xs.*` -/
 def argList {α} (args : List α) : List α := args
 
 open Lean Elab Term Command in
 elab_rules : command
-| `(implemented_by $bs:bracketedBinder* : $lhs:term = $rhs:term $[ := $prf]?) => do
+| `(opencl_rewrite $bs:bracketedBinder* : $lhs:term = $rhs:term $[ := $prf]?) => do
   -- let lhsStr ← liftTermElabM <|
   --   withAutoBoundImplicit do
   --   elabBinders bs fun _ => do
@@ -62,13 +62,13 @@ elab_rules : command
 -- Compile Time Value
 -- =================================================================================================
 
-/-- This value of the type `CompTime α` is enforced to be known at compile time. -/
-abbrev CompTime (α : Sort u) := α
+-- /-- This value of the type `CompTime α` is enforced to be known at compile time. -/
+-- abbrev CompTime (α : Sort u) := α
 
-/-- This proposition has OpenCL compiler support and it checks that the interpreter evaluates
-`a` to `b`. Only few types are supported like `Nat`, `Int`. -/
-structure CompTimeEq {α} (a b : α) : Prop where
-  eq : a = b
+-- /-- This proposition has OpenCL compiler support and it checks that the interpreter evaluates
+-- `a` to `b`. Only few types are supported like `Nat`, `Int`. -/
+-- structure CompTimeEq {α} (a b : α) : Prop where
+--   eq : a = b
 
 -- =================================================================================================
 -- OpenCL Type
@@ -99,9 +99,9 @@ instance [inst : OpenCLType α] : OpenCLType (OpenCLM α) where
   name := inst.name
   shortName := inst.shortName
 
-instance : OpenCLType Unit where
-  name := "void"
-  shortName := "v"
+-- instance : OpenCLType Unit where
+--   name := "void"
+--   shortName := "v"
 
 instance : AtomicOpenCLType Char where
   name := "char"
@@ -184,48 +184,48 @@ instance [t : AtomicOpenCLType T] [AllowedVectorSize n] : OpenCLType (Vector T n
 -- OpenCL Function
 -- =================================================================================================
 
-namespace OpenCLFunction
--- -- todo: decide what variants are actually needed
--- inductive ArgKind where
---   | input  -- e.g. const float x
---   | output  -- e.g. float * x
---   | ref  -- e.g. const float * x
--- deriving BEq, Inhabited
+-- namespace OpenCLFunction
+-- -- -- todo: decide what variants are actually needed
+-- -- inductive ArgKind where
+-- --   | input  -- e.g. const float x
+-- --   | output  -- e.g. float * x
+-- --   | ref  -- e.g. const float * x
+-- -- deriving BEq, Inhabited
 
--- structure Argument where
---   typeName : String
+-- -- structure Argument where
+-- --   typeName : String
+-- --   name : String
+-- --   kind : ArgKind
+-- -- deriving BEq, Inhabited
+
+-- inductive FunKind where
+--   | normal
+--   | infix (priority : Nat := 100)
+--   | prefix
+--   | postfix
+--   | constructor
+--   | elemget
+--   | elemset
+-- deriving BEq, Inhabited, Lean.ToExpr
+
+-- -- inductive Body where
+-- --   | builtin
+-- --   | code (s : String)
+-- -- deriving BEq, Inhabited
+
+-- end OpenCLFunction
+
+-- open OpenCLFunction in
+-- class OpenCLFunction {F : Type} (f : F) where
 --   name : String
---   kind : ArgKind
+--   kind : FunKind := .normal
+--   definition? : Option String := none
 -- deriving BEq, Inhabited
-
-inductive FunKind where
-  | normal
-  | infix (priority : Nat := 100)
-  | prefix
-  | postfix
-  | constructor
-  | elemget
-  | elemset
-deriving BEq, Inhabited, Lean.ToExpr
-
--- inductive Body where
---   | builtin
---   | code (s : String)
--- deriving BEq, Inhabited
-
-end OpenCLFunction
-
-open OpenCLFunction in
-class OpenCLFunction {F : Type} (f : F) where
-  name : String
-  kind : FunKind := .normal
-  definition? : Option String := none
-deriving BEq, Inhabited
 
 -- todo: replace `Inhabited type` with `spec : type`. The issue is that the compile time simp
 --       get's into infinite recursion as it keeps on simplifying `spec`
-noncomputable
-opaque oclFunction (type : Type) [Inhabited type] (name : String) (kind : OpenCLFunction.FunKind := .normal) : type
+-- noncomputable
+-- opaque oclFunction (type : Type) [Inhabited type] (name : String) (kind : OpenCLFunction.FunKind := .normal) : type
 
 
 
@@ -234,63 +234,63 @@ opaque oclFunction (type : Type) [Inhabited type] (name : String) (kind : OpenCL
 -- =========================
 
 
-section ArithmeticOperations
+-- section ArithmeticOperations
 
-variable {α}
+-- variable {α}
 
-instance [AtomicOpenCLType α] [Add α] : OpenCLFunction (@HAdd.hAdd α α α _) where
-  name := " + "
-  kind := .infix
+-- instance [AtomicOpenCLType α] [Add α] : OpenCLFunction (@HAdd.hAdd α α α _) where
+--   name := " + "
+--   kind := .infix
 
-instance [AtomicOpenCLType α] [Sub α] : OpenCLFunction (@HSub.hSub α α α _) where
-  name := " - "
-  kind := .infix
+-- instance [AtomicOpenCLType α] [Sub α] : OpenCLFunction (@HSub.hSub α α α _) where
+--   name := " - "
+--   kind := .infix
 
-instance [AtomicOpenCLType α] [Mul α] : OpenCLFunction (@HMul.hMul α α α _) where
-  name := " * "
-  kind := .infix
+-- instance [AtomicOpenCLType α] [Mul α] : OpenCLFunction (@HMul.hMul α α α _) where
+--   name := " * "
+--   kind := .infix
 
-instance [AtomicOpenCLType α] [Div α] : OpenCLFunction (@HDiv.hDiv α α α _) where
-  name := " / "
-  kind := .infix
+-- instance [AtomicOpenCLType α] [Div α] : OpenCLFunction (@HDiv.hDiv α α α _) where
+--   name := " / "
+--   kind := .infix
 
-instance [AtomicOpenCLType α] [Neg α] : OpenCLFunction (@Neg.neg α _) where
-  name := " -"
-  kind := .prefix
+-- instance [AtomicOpenCLType α] [Neg α] : OpenCLFunction (@Neg.neg α _) where
+--   name := " -"
+--   kind := .prefix
 
-instance [AtomicOpenCLType α] [HAnd α α α] : OpenCLFunction (HAnd.hAnd : α → α → α) where
-  name := " & "
-  kind := .infix
+-- instance [AtomicOpenCLType α] [HAnd α α α] : OpenCLFunction (HAnd.hAnd : α → α → α) where
+--   name := " & "
+--   kind := .infix
 
-instance [AtomicOpenCLType α] [HShiftRight α α α] : OpenCLFunction (HShiftRight.hShiftRight : α → α → α) where
-  name := " >> "
-  kind := .infix
-
-
-variable {n}
-
-instance [AtomicOpenCLType α] [AllowedVectorSize n] [Add α] :
-    OpenCLFunction (@HAdd.hAdd (Vector α n) (Vector α n) (Vector α n) _) where
-  name := " + "
-  kind := .infix
-
-instance [AtomicOpenCLType α] [AllowedVectorSize n] [Sub α] :
-    OpenCLFunction (@HSub.hSub (Vector α n) (Vector α n) (Vector α n) _) where
-  name := " - "
-  kind := .infix
-
-instance [AtomicOpenCLType α] [AllowedVectorSize n] [Mul α] :
-    OpenCLFunction (@HMul.hMul α (Vector α n) (Vector α n) _) where
-  name := " * "
-  kind := .infix
-
-instance [AtomicOpenCLType α] [AllowedVectorSize n] [Neg α] :
-    OpenCLFunction (@Neg.neg (Vector α n) _) where
-  name := " -"
-  kind := .prefix
+-- instance [AtomicOpenCLType α] [HShiftRight α α α] : OpenCLFunction (HShiftRight.hShiftRight : α → α → α) where
+--   name := " >> "
+--   kind := .infix
 
 
-end ArithmeticOperations
+-- variable {n}
+
+-- instance [AtomicOpenCLType α] [AllowedVectorSize n] [Add α] :
+--     OpenCLFunction (@HAdd.hAdd (Vector α n) (Vector α n) (Vector α n) _) where
+--   name := " + "
+--   kind := .infix
+
+-- instance [AtomicOpenCLType α] [AllowedVectorSize n] [Sub α] :
+--     OpenCLFunction (@HSub.hSub (Vector α n) (Vector α n) (Vector α n) _) where
+--   name := " - "
+--   kind := .infix
+
+-- instance [AtomicOpenCLType α] [AllowedVectorSize n] [Mul α] :
+--     OpenCLFunction (@HMul.hMul α (Vector α n) (Vector α n) _) where
+--   name := " * "
+--   kind := .infix
+
+-- instance [AtomicOpenCLType α] [AllowedVectorSize n] [Neg α] :
+--     OpenCLFunction (@Neg.neg (Vector α n) _) where
+--   name := " -"
+--   kind := .prefix
+
+
+-- end ArithmeticOperations
 
 
 -- =================================================================================================
@@ -337,21 +337,22 @@ opaque Pointer.vstore [AtomicOpenCLType α] [AllowedVectorSize n] (val : Vector 
 
 variable [AtomicOpenCLType α]
 
-instance : OpenCLFunction (Pointer.get (α:=α)) where
-  name := ""
-  kind := .elemget
 
-instance : OpenCLFunction (Pointer.set (α:=α)) where
-  name := ""
-  kind := .elemset
+-- instance : OpenCLFunction (Pointer.get (α:=α)) where
+--   name := ""
+--   kind := .elemget
 
-variable [AllowedVectorSize n]
+-- instance : OpenCLFunction (Pointer.set (α:=α)) where
+--   name := ""
+--   kind := .elemset
 
-instance : OpenCLFunction (Pointer.vload (α:=α) (n:=n)) where
-  name := s!"vload{n}"
+-- variable [AllowedVectorSize n]
 
-instance : OpenCLFunction (Pointer.vstore (α:=α) (n:=n)) where
-  name := s!"vstore{n}"
+-- instance : OpenCLFunction (Pointer.vload (α:=α) (n:=n)) where
+--   name := s!"vload{n}"
+
+-- instance : OpenCLFunction (Pointer.vstore (α:=α) (n:=n)) where
+--   name := s!"vstore{n}"
 
 
 -- =================================================================================================

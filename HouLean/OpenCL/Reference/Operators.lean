@@ -7,6 +7,7 @@ open Math
 
 variable {R} {m n : Nat} (x y z : R) (u v : Vector R n) (a b : Bool)
 
+
 -- '+'
 impl_by [AtomicOpenCLType R] [Add R] : x + y ==> x + y
 impl_by [AtomicOpenCLType R] [AllowedVectorSize n] [Add R] : u + v ==> u + v

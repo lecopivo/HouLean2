@@ -5,7 +5,7 @@ import HouLean.Meta.RewriteBy
 
 open HouLean OpenCL Compiler Lean
 
-namespace Test.OpenCL.Compiler
+namespace Test.OpenCL.Compiler2
 
 
 open Lean Elab Term Meta in
@@ -83,7 +83,7 @@ impl_by {α : Type} (m : Type → Type) [Monad m] (x : α) : pure (f:=m) x ==> x
 
 /--
 info: {
-      const uint id = get_global_id(n);
+      const size_t id = get_global_id(0);
       if (10 > id)
         {
               return x;
@@ -105,7 +105,7 @@ info: {
 
 /--
 info: {
-      const uint id = get_global_id(n);
+      const size_t id = get_global_id(0);
       const double w = x;
       if (10 > id)
         {
@@ -127,7 +127,25 @@ info: {
 
 impl_by {α : Type} (x : α) : ForInStep.yield x ==> x
 
-set_option trace.HouLean.OpenCL.compiler true in
+
+/--
+info: {
+      const size_t id = get_global_id(0);
+      const double x1 = x;
+      const double y = x1;
+      MProd_double_double state = (MProd_double_double){x1, y};
+      for (uint i = 0;i < (uint)(id); i += 1)
+        {
+              const double x2 = state.fst;
+              const double y1 = state.snd;
+              const double x3 = x2 + x2 * x2 + (double)(i);
+              const double y2 = x3 + y1;
+              state = (MProd_double_double){x3, y2};
+        }
+      return state.fst * state.snd;
+}
+-/
+#guard_msgs in
 #ocl_compile (fun x : Float => do
   let id ← getGlobalId 0
   let mut x := x
@@ -146,7 +164,7 @@ def foo (x y : Float) :=
   a + x * y / b
 
 /--
-info: double test_opencl_compiler_foo(double x, double y){
+info: double test_opencl_compiler2_foo(double x, double y){
       const double a = x * y;
       const double b = a - x + y;
       return a + x * y / b;
@@ -159,7 +177,7 @@ run_meta
 
 /--
 info: {
-      return test_opencl_compiler_foo(x, y);
+      return test_opencl_compiler2_foo(x, y);
 }
 -/
 #guard_msgs in
@@ -179,40 +197,3 @@ inductive AttrClass where
 #ocl_compile fun (x y : Float) (cls : AttrClass) => AttrClass.rec x y cls
 
 #ocl_compile fun (x y : Float) (cls : AttrClass) => match cls with | .point => x | .primitive => y
-
-
-
-
-def bar {R} [FloatType R] (x y : R) :=
-  let a := x * y
-  let b := a - x + y
-  a + x * y / b
-
-variable (x y : Float)
-
-#opencl_sas (bar x y)
-
-
-set_option pp.funBinderTypes true
-
-open Lean Meta Qq
-run_meta
-  let (t,_) ← compileType q(Nat × (Float × Float) × (Float × Float)) {} {}
-  logInfo m!"{t}"
-
-
-#ocl_compile fun x y : Float × Float =>
-  let p := x
-  let q := (x.1,x.1)
-  x.1 + x.2
-
-
-open Lean Meta Qq
-run_meta
-  let (t,_) ← compileType q(MProd Nat (Float × Float) × (Float × Float)) {} {}
-  logInfo m!"{t}"
-
-open Lean Meta Qq
-run_meta
-  let (t,_) ← compileType q(Vector (Vector (Vector Float32 4) 4) 4) {} {}
-  logInfo m!"{t}"

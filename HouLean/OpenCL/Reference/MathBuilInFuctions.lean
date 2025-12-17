@@ -10,8 +10,8 @@ variable {R} [FloatType R] (x y : R)
 
 
 impl_by : acos x ==> acos(x)
---impl_by : acosh x ==> acosh(x)
---impl_by : acospi x ==> acospi(x)
+-- impl_by : acosh x ==> acosh(x)
+-- impl_by : acospi x ==> acospi(x)
 impl_by : asin x ==> asin(x)
 -- impl_by : asinh x ==> asinh(x)
 -- impl_by : asinpi x =>> asin(x)
