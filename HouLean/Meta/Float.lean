@@ -114,17 +114,27 @@ instance : ToExpr Float where
   toExpr x :=
     match x.toScientific with
     | some (neg, m, e) =>
-      let (expSign, expAbs) := if e < 0 then (true, (-e).toNat) else (false, e.toNat)
-      let pos := mkApp5 (mkConst ``OfScientific.ofScientific [levelZero])
-        (.const ``Float [])
-        (.const ``instOfScientificFloat [])
-        (.lit (.natVal m))
-        (toExpr expSign)
-        (.lit (.natVal expAbs))
-      if neg then
-        mkApp3 (mkConst ``Neg.neg [levelZero]) (mkConst ``Float) (mkConst ``instNegFloat) pos
+      if 0 ≤ e && e < 1000000 then
+        let n := mkApp3 (mkConst ``OfNat.ofNat [levelZero])
+                         (.const ``Float [])
+                         (.lit (.natVal (m * 10^e.toNat)))
+                         ((Expr.const ``instOfNatFloat []).app (.lit (.natVal (m * 10^e.toNat))))
+        if neg then
+          mkApp3 (mkConst ``Neg.neg [levelZero]) (mkConst ``Float) (mkConst ``instNegFloat) n
+        else
+          n
       else
-        pos
+        let (expSign, expAbs) := if e < 0 then (true, (-e).toNat) else (false, e.toNat)
+        let pos := mkApp5 (mkConst ``OfScientific.ofScientific [levelZero])
+          (.const ``Float [])
+          (.const ``instOfScientificFloat [])
+          (.lit (.natVal m))
+          (toExpr expSign)
+          (.lit (.natVal expAbs))
+        if neg then
+          mkApp3 (mkConst ``Neg.neg [levelZero]) (mkConst ``Float) (mkConst ``instNegFloat) pos
+        else
+          pos
     | none =>
       if x.isNaN then mkConst ``Float.NaN
       else if x > 0 then mkConst ``Float.inf
@@ -137,17 +147,27 @@ instance : ToExpr Float32 where
   toExpr x :=
     match x.toScientific with
     | some (neg, m, e) =>
-      let (expSign, expAbs) := if e < 0 then (true, (-e).toNat) else (false, e.toNat)
-      let pos := mkApp5 (mkConst ``OfScientific.ofScientific [levelZero])
-        (.const ``Float32 [])
-        (.const ``instOfScientificFloat32 [])
-        (.lit (.natVal m))
-        (toExpr expSign)
-        (.lit (.natVal expAbs))
-      if neg then
-        mkApp3 (mkConst ``Neg.neg [levelZero]) (mkConst ``Float32) (mkConst ``instNegFloat32) pos
+      if 0 ≤ e && e < 1000000 then
+        let n := mkApp3 (mkConst ``OfNat.ofNat [levelZero])
+                         (.const ``Float32 [])
+                         (.lit (.natVal (m * 10^e.toNat)))
+                         ((Expr.const ``instOfNatFloat32 []).app (.lit (.natVal (m * 10^e.toNat))))
+        if neg then
+          mkApp3 (mkConst ``Neg.neg [levelZero]) (mkConst ``Float32) (mkConst ``instNegFloat32) n
+        else
+          n
       else
-        pos
+        let (expSign, expAbs) := if e < 0 then (true, (-e).toNat) else (false, e.toNat)
+        let pos := mkApp5 (mkConst ``OfScientific.ofScientific [levelZero])
+          (.const ``Float32 [])
+          (.const ``instOfScientificFloat32 [])
+          (.lit (.natVal m))
+          (toExpr expSign)
+          (.lit (.natVal expAbs))
+        if neg then
+          mkApp3 (mkConst ``Neg.neg [levelZero]) (mkConst ``Float32) (mkConst ``instNegFloat32) pos
+        else
+          pos
     | none =>
       if x.isNaN then mkConst ``Float32.NaN
       else if x > 0 then mkConst ``Float32.inf

@@ -12,13 +12,13 @@ variable (A B : Matrix Float32 3 3) (s : Float32) (u v : Vector Float32 3)
   (A2 B2 : Matrix Float32 2 2) (A4 B4 : Matrix Float32 4 4)
 
 
+
 /--
 info: Resulting specialization:
   (A.row 0 ⋯)[1]
 -/
 #guard_msgs in
 #opencl_sas A[0,1]
-
 
 /--
 info: def HouLean.Matrix.col_Float32_3_3_1 := ⏎
@@ -29,7 +29,6 @@ Resulting specialization:
 -/
 #guard_msgs in
 #opencl_sas A.col 1
-
 
 /--
 info: def HouLean.Matrix.add_Float32_3_3 := ⏎
@@ -48,9 +47,10 @@ Resulting specialization:
 #opencl_sas A + B
 
 
+
 /--
 info: def Inv.inv_Float32 := ⏎
-fun a => 1e0 / a
+fun a => 1 / a
 
 def HouLean.Matrix.sdiv_Float32_3_3 := ⏎
 fun a s =>
@@ -155,7 +155,7 @@ info: def HouLean.Matrix.det2_Float32 := ⏎
 fun a => (a.row 0 ⋯)[0] * (a.row 1 ⋯)[1] - (a.row 0 ⋯)[1] * (a.row 1 ⋯)[0]
 
 def Inv.inv_Float32 := ⏎
-fun a => 1e0 / a
+fun a => 1 / a
 
 def HouLean.Matrix.inv2_Float32 := ⏎
 fun a =>
@@ -178,7 +178,7 @@ fun a =>
     (a.row 0 ⋯)[2] * ((a.row 1 ⋯)[0] * (a.row 2 ⋯)[1] - (a.row 1 ⋯)[1] * (a.row 2 ⋯)[0])
 
 def Inv.inv_Float32 := ⏎
-fun a => 1e0 / a
+fun a => 1 / a
 
 def HouLean.Matrix.inv3_Float32 := ⏎
 fun a =>
@@ -205,7 +205,7 @@ Resulting specialization:
 
 /--
 info: def Inv.inv_Float32 := ⏎
-fun a => 1e0 / a
+fun a => 1 / a
 
 def HouLean.Matrix.inv4_Float32 := ⏎
 fun a =>
@@ -249,7 +249,6 @@ Resulting specialization:
 #opencl_sas (A4.inv4)
 
 
-attribute [opencl_csimp] Matrix.fromRows Matrix.mapRows₂ Matrix.ofFn
 
 /--
 info: def HouLean.Matrix.col_Float32_3_3_0 := ⏎
@@ -291,14 +290,24 @@ Resulting specialization:
 
 /--
 info: def HouLean.Matrix.identity_Float_3 := ⏎
-{
-  data :=
-    #v[#v[if ↑0 = ↑0 then 1 else 0, if ↑0 = ↑1 then 1 else 0, if ↑0 = ↑2 then 1 else 0],
-      #v[if ↑1 = ↑0 then 1 else 0, if ↑1 = ↑1 then 1 else 0, if ↑1 = ↑2 then 1 else 0],
-      #v[if ↑2 = ↑0 then 1 else 0, if ↑2 = ↑1 then 1 else 0, if ↑2 = ↑2 then 1 else 0]] }
+{ data := #v[#v[1, 0, 0], #v[0, 1, 0], #v[0, 0, 1]] }
 
 Resulting specialization:
   Matrix.identity_Float_3
 -/
 #guard_msgs in
 #opencl_sas Matrix.identity Float 3 -- does not reduce element of matrix
+
+
+def _root_.Vector.basis (T : Type) [One T] [Zero T] (n : Nat) (i : Nat) : Vector T n :=
+  Vector.ofFn (fun j : Fin n => if j = i then (1:T) else (0:T))
+
+/--
+info: def Vector.basis_Float32_3_1 := ⏎
+#v[0, 1, 0]
+
+Resulting specialization:
+  Vector.basis_Float32_3_1
+-/
+#guard_msgs in
+#opencl_sas Vector.basis Float32 3 1

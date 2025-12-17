@@ -32,7 +32,10 @@ def specializeImplementedBy (e : Expr) : M (Option Expr) := do
       if skip then
         continue
 
-      let xs' ← xs.mapM specializeExpr
+      trace[HouLean.specialize] "custom speclization for {e} has args: {xs}"
+      let xs' ← xs.mapM fun x =>do
+        trace[HouLean.specialize] "calling speclAndSimp on {x}"
+        specializeAndSimp x
       let e' := c.beta xs'
       return e'
   return none

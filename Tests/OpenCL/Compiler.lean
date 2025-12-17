@@ -148,12 +148,6 @@ info: Prod_matrix33float_matrix33float main(matrix44float A, float3 x){
   c)
 
 
-/-- error: Don't know how to compile type: (i j : Nat) → i < 3 ∧ j < 3 → Float32 -/
-#guard_msgs in
-#opencl_compile (fun (A : Matrix Float32 4 4) => A.split1)
-
-attribute [opencl_csimp] Matrix.ofFn
-
 /--
 info: Prod_Prod_matrix33float_float3_Prod_float3_float houlean_matrix_split1_3_float32(matrix44float a){
       return
@@ -202,53 +196,11 @@ info: Prod_float_Prod_float_float main(float x){
 
 
 /--
-info: Prod_Prod_matrix33float_float3_Prod_float3_float houlean_matrix_split1_3_float32(matrix44float a){
-      return
-        (Prod_Prod_matrix33float_float3_Prod_float3_float){(Prod_matrix33float_float3){(matrix33float){(float3){a.row0.x,
-                      a.row0.y, a.row0.z},
-                  (float3){a.row1.x, a.row1.y, a.row1.z}, (float3){a.row2.x, a.row2.y, a.row2.z}},
-              (float3){a.row0.w, a.row1.w, a.row2.w}},
-          (Prod_float3_float){(float3){a.row3.x, a.row3.y, a.row3.z}, a.row3.w}};
-}
-
-float vector_dot_float32_3(float3 u, float3 v){
-      const float a = u.x * v.x;
-      const float a1 = a + u.y * v.y;
-      const float a2 = a1 + u.z * v.z;
-      return a2;
-}
-
-float3 houlean_matrix_mulvec_float32_3_3(matrix33float a, float3 v){
-      return
-        (float3){vector_dot_float32_3(a.row0, v), vector_dot_float32_3(a.row1, v), vector_dot_float32_3(a.row2, v)};
-}
-
-float3 hmul_hmul_matrix_float32_3_3_vector_float32_3_vector_float32_3(matrix33float a, float3 a1){
-      return houlean_matrix_mulvec_float32_3_3(a, a1);
-}
-
-float inv_inv_float32(float a){
-      return 1.0 / a;
-}
-
-float3 hdiv_hdiv_vector_float32_3_float32_vector_float32_3(float3 a, float a1){
-      const float is = inv_inv_float32(a1);
-      return is * a;
-}
-
-float3 houlean_matrix_transformpointright_float32_3(matrix44float transform, float3 point){
-      const Prod_Prod_matrix33float_float3_Prod_float3_float tmp = houlean_matrix_split1_3_float32(transform);
-      const float w = vector_dot_float32_3(point, tmp.snd.fst) + tmp.snd.snd;
-      return
-        hdiv_hdiv_vector_float32_3_float32_vector_float32_3(hmul_hmul_matrix_float32_3_3_vector_float32_3_vector_float32_3(tmp.fst.fst,
-              point) +
-            tmp.fst.snd,
-          w);
-}
-
-float3 main(matrix44float A, float3 x){
-      return houlean_matrix_transformpointright_float32_3(A, x);
-}
+error: TODO: implement match compilation:
+match tmp with
+| ((a, u), v, s) =>
+  have w := point.dot v + s;
+  (a * point + u) / w
 -/
 #guard_msgs in
 #opencl_compile (fun (A : Matrix Float32 4 4) (x : Vector Float32 3) => A.transformPointRight x)
@@ -268,12 +220,12 @@ HouLean_Vector3 hmul_hmul_float_vector3_vector3(double a, HouLean_Vector3 a1){
       return houlean_vector3_smul1(a1, a);
 }
 
-HouLean_Vector3 houlean_vector3_smul_2e0(HouLean_Vector3 a){
+HouLean_Vector3 houlean_vector3_smul_2(HouLean_Vector3 a){
       return (HouLean_Vector3){2.0 * a.x, 2.0 * a.y, 2.0 * a.z};
 }
 
-HouLean_Vector3 hmul_hmul_float_vector3_vector3_2e0(HouLean_Vector3 a){
-      return houlean_vector3_smul_2e0(a);
+HouLean_Vector3 hmul_hmul_float_vector3_vector3_2(HouLean_Vector3 a){
+      return houlean_vector3_smul_2(a);
 }
 
 HouLean_Vector3 houlean_vector4_quatrotate1(HouLean_Vector4 q, HouLean_Vector3 v){
@@ -281,7 +233,7 @@ HouLean_Vector3 houlean_vector4_quatrotate1(HouLean_Vector4 q, HouLean_Vector3 v
       const HouLean_Vector3 uv = houlean_vector3_cross1(qv, v);
       const HouLean_Vector3 uuv = houlean_vector3_cross1(qv, uv);
       const HouLean_Vector3 uv_scaled = hmul_hmul_float_vector3_vector3(2.0 * q.w, uv);
-      const HouLean_Vector3 uuv_scaled = hmul_hmul_float_vector3_vector3_2e0(uuv);
+      const HouLean_Vector3 uuv_scaled = hmul_hmul_float_vector3_vector3_2(uuv);
       return
         (HouLean_Vector3){v.x + uv_scaled.x + uuv_scaled.x, v.y + uv_scaled.y + uuv_scaled.y,
           v.z + uv_scaled.z + uuv_scaled.z};
@@ -350,8 +302,6 @@ info: double main(double x){
 
 
 
-
-
 /--
 info: float vector_length2_float32_3(float3 u){
       const float a = u.x * u.x;
@@ -364,7 +314,7 @@ float vector_length_float32_3(float3 u){
       return sqrt(vector_length2_float32_3(u));
 }
 
-bool houlean_math_approxequal_approxequal_float32_float32_0e0_1e_9(float x){
+bool houlean_math_approxequal_approxequal_float32_float32_0_1e_9(float x){
       return 1e-10 >= fabs(x - 0.0);
 }
 

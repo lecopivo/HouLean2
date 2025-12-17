@@ -51,7 +51,7 @@ info: Resulting specialization:
 
 /--
 info: Resulting specialization:
-  !(decide (y > x) && decide (x > 0e0))
+  !(decide (y > x) && decide (x > 0))
 -/
 #guard_msgs in
 #opencl_sas decide (¬(x < y ∧ 0 < x))
@@ -68,7 +68,7 @@ info: def HouLean.Math.CatmullRom.catmullRom_Float_Float := ⏎
 fun p0 p1 p2 p3 t =>
   let t2 := t * t;
   let t3 := t2 * t;
-  0.5 * (2e0 * p1 + (-p0 + p2) * t + (2e0 * p0 - 5e0 * p1 + 4e0 * p2 - p3) * t2 + (-p0 + 3e0 * p1 - 3e0 * p2 + p3) * t3)
+  0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3)
 
 Resulting specialization:
   CatmullRom.catmullRom_Float_Float (exp (sin x)) x y (x + y) x
@@ -88,11 +88,11 @@ fun u =>
 def Vector.length_Float_3 := ⏎
 fun u => sqrt u.length2_Float_3
 
-def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0e0_1e_6 := ⏎
-fun x => decide (1e-6 ≥ abs (x - 0e0))
+def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_6 := ⏎
+fun x => decide (1e-6 ≥ abs (x - 0))
 
 def Inv.inv_Float := ⏎
-fun a => 1e0 / a
+fun a => 1 / a
 
 def HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 := ⏎
 fun a a_1 =>
@@ -102,7 +102,7 @@ fun a a_1 =>
 def Vector.normalize_Float_3 := ⏎
 fun u =>
   let len := u.length_Float_3;
-  if ApproxEqual.approxEqual_Float_Float_0e0_1e_6 len = true then (u, 0e0)
+  if ApproxEqual.approxEqual_Float_Float_0_1e_6 len = true then (u, 0)
   else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
 
 def HouLean.Math.Normalize.normalize_Vector_Float_3_Float := ⏎
@@ -120,9 +120,9 @@ info: def HouLean.Math.Hermite.hermite_Float_Float := ⏎
 fun p0 p1 t0 t1 t =>
   let t2 := t * t;
   let t3 := t2 * t;
-  let h00 := 2e0 * t3 - 3e0 * t2 + 1e0;
-  let h10 := t3 - 2e0 * t2 + t;
-  let h01 := -2e0 * t3 + 3e0 * t2;
+  let h00 := 2 * t3 - 3 * t2 + 1;
+  let h10 := t3 - 2 * t2 + t;
+  let h01 := -2 * t3 + 3 * t2;
   let h11 := t3 - t2;
   h00 * p0 + h10 * t0 + h01 * p1 + h11 * t1
 
@@ -135,7 +135,7 @@ def HouLean.Math.Hermite.hermite_Vector_Float_3_Float := ⏎
 fun p0 p1 t0 t1 t => p0.hermite_Float_3 p1 t0 t1 t
 
 Resulting specialization:
-  Hermite.hermite_Vector_Float_3_Float u v (u + v) (3e0 * u) x
+  Hermite.hermite_Vector_Float_3_Float u v (u + v) (3 * u) x
 -/
 #guard_msgs in
 #opencl_sas (hermite u v (u+v) ((3.0:Float)*u) x)
@@ -162,13 +162,13 @@ info: Resulting specialization:
 
 /--
 info: def Vector.zero_Float_3 := ⏎
-#v[0e0, 0, 0]
+#v[0, 0, 0]
 
-def Zero.«zero_Vector_Float_(instOfNatNat_3)_1» := ⏎
+def Zero.zero_Vector_Float_3 := ⏎
 Vector.zero_Float_3
 
 def OfNat.ofNat_Vector_Float_3_0 := ⏎
-Zero.«zero_Vector_Float_(instOfNatNat_3)_1»
+Zero.zero_Vector_Float_3
 
 Resulting specialization:
   OfNat.ofNat_Vector_Float_3_0
@@ -179,7 +179,7 @@ Resulting specialization:
 
 /--
 info: Resulting specialization:
-  #v[1e0, 1, 1]
+  #v[1, 1, 1]
 -/
 #guard_msgs in
 #opencl_sas (.replicate _ 1 : Vector Float 3)
@@ -216,8 +216,11 @@ info: Resulting specialization:
 #opencl_sas (u.sum)
 
 /--
-info: Resulting specialization:
-  #v[10 * ↑0, 10 * ↑1, 10 * ↑2, 10 * ↑3, 10 * ↑4, 10 * ↑5, 10 * ↑6, 10 * ↑7, 10 * ↑8, 10 * ↑9]
+info: def List.«toArray_Nat_[0,_10,_20,_30,_40,_50,_60,_70,_80,_90]» := ⏎
+{ toList := [0, 10, 20, 30, 40, 50, 60, 70, 80, 90] }
+
+Resulting specialization:
+  Vector.mk List.«toArray_Nat_[0,_10,_20,_30,_40,_50,_60,_70,_80,_90]» ⋯
 -/
 #guard_msgs in
 #opencl_sas (Vector.ofFn (fun i : Fin 10 => 10*i.1))
@@ -244,12 +247,21 @@ fun u v =>
   let a := a + u[2] * v[2];
   a
 
+def Vector.zero_Float_3 := ⏎
+#v[0, 0, 0]
+
+def Zero.zero_Vector_Float_3 := ⏎
+Vector.zero_Float_3
+
+def OfNat.ofNat_Vector_Float_3_0 := ⏎
+Zero.zero_Vector_Float_3
+
 def Vector.refract_Float_3 := ⏎
 fun v normal eta =>
   let dt := v.dot_Float_3 normal;
-  let k := 1e0 - eta * eta * (1e0 - dt * dt);
+  let k := 1 - eta * eta * (1 - dt * dt);
   let s := eta * dt + sqrt k;
-  if k < 0e0 then 0 else eta * v - s * normal
+  if k < 0 then OfNat.ofNat_Vector_Float_3_0 else eta * v - s * normal
 
 def HouLean.Math.Refract.refract_Vector_Float_3_Float := ⏎
 fun v n eta => v.refract_Float_3 n eta
@@ -286,11 +298,11 @@ fun u =>
 def Vector.length_Float_3 := ⏎
 fun u => sqrt u.length2_Float_3
 
-def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0e0_1e_6 := ⏎
-fun x => decide (1e-6 ≥ abs (x - 0e0))
+def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_6 := ⏎
+fun x => decide (1e-6 ≥ abs (x - 0))
 
 def Inv.inv_Float := ⏎
-fun a => 1e0 / a
+fun a => 1 / a
 
 def HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 := ⏎
 fun a a_1 =>
@@ -300,7 +312,7 @@ fun a a_1 =>
 def Vector.normalize_Float_3 := ⏎
 fun u =>
   let len := u.length_Float_3;
-  if ApproxEqual.approxEqual_Float_Float_0e0_1e_6 len = true then (u, 0e0)
+  if ApproxEqual.approxEqual_Float_Float_0_1e_6 len = true then (u, 0)
   else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
 
 def Vector.normalized_Float_3 := ⏎
@@ -316,12 +328,12 @@ fun u v =>
 def Vector.slerp_Float_3 := ⏎
 fun v w t =>
   let d := v.normalized_Float_3.dot_Float_3 w.normalized_Float_3;
-  let d := clamp d (-1e0) 1e0;
+  let d := clamp d (-1) 1;
   let theta := acos d;
   let s := sin theta;
-  let a := sin ((1e0 - t) * theta) / s;
+  let a := sin ((1 - t) * theta) / s;
   let b := sin (t * theta) / s;
-  if ApproxEqual.approxEqual_Float_Float_0e0_1e_6 theta = true then lerp v w t else a * v + b * w
+  if ApproxEqual.approxEqual_Float_Float_0_1e_6 theta = true then lerp v w t else a * v + b * w
 
 def HouLean.Math.Slerp.slerp_Vector_Float_3_Float := ⏎
 fun x y t => x.slerp_Float_3 y t
@@ -363,7 +375,7 @@ def Vector.projectToSegment_Float_3 := ⏎
 fun point a b =>
   let ab := b - a;
   let ap := point - a;
-  let t := clamp (ap.dot_Float_3 ab / ab.length2_Float_3) 0e0 1e0;
+  let t := clamp (ap.dot_Float_3 ab / ab.length2_Float_3) 0 1;
   a + t * ab
 
 def HouLean.Math.ProjectToSegment.projectToSegment_Vector_Float_3 := ⏎
@@ -379,11 +391,11 @@ Resulting specialization:
 private def foo (x y : Float) := x + y
 
 /--
-info: def _private.Tests.OpenCL.Vector.0.Test.OpenCL.SpecAndSimp.foo_0e0 := ⏎
-fun y => 0e0 + y
+info: def _private.Tests.OpenCL.Vector.0.Test.OpenCL.SpecAndSimp.foo_0 := ⏎
+fun y => y
 
 Resulting specialization:
-  foo_0e0 x
+  foo_0 x
 -/
 #guard_msgs in
 #opencl_sas (foo 0 x)
