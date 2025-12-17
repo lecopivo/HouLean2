@@ -189,11 +189,7 @@ info: {
 inductive AttrClass where
   | point | primitive
 
-
 #ocl_compile fun x y : Float => (x,y)
-
 #ocl_compile fun x y : Float => AttrClass.point
-
 #ocl_compile fun (x y : Float) (cls : AttrClass) => AttrClass.rec x y cls
-
 #ocl_compile fun (x y : Float) (cls : AttrClass) => match cls with | .point => x | .primitive => y
