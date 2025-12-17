@@ -95,9 +95,9 @@ def appCase (e : Expr) : MetaM AppCase := do
   if e.isAppOfArity ``forIn 9 then
     let range := e.getRevArg! 2
     return .forLoop
-      (← mkAppM ``Std.Range.start #[range])
-      (← mkAppM ``Std.Range.stop #[range])
-      (← mkAppM ``Std.Range.step #[range])
+      (← mkAppM ``Std.Range.start #[range] >>= whnf)
+      (← mkAppM ``Std.Range.stop #[range] >>= whnf)
+      (← mkAppM ``Std.Range.step #[range] >>= whnf)
       (e.getRevArg! 1)  -- init
       (e.getRevArg! 0)  -- f
 
@@ -243,6 +243,7 @@ def shouldInlineLet (type : Expr) : CompileM Bool := do
 def finishBlockDefault (x : TSyntax `clExpr) : CompileM Unit := do
   addStatement (← `(clStmtLike| return $x;))
 
+
 mutual
 
 /-- Compile a block of statements with a continuation for the final value. -/
@@ -276,7 +277,32 @@ partial def compileBlock (e : Expr) (cont : TSyntax `clExpr → CompileM Unit :=
             addStatement (← `(clStmtLike| $c:clTypeQ $t':ident $varId:ident = $mx':clExpr;))
             compileBlock (body.instantiate1 var) cont
 
-    | .forLoop .. => throwError "TODO: implement for loop compilation"
+    | .forLoop start stop step init f =>
+
+      forallTelescope (← inferType f) fun xs _ => do
+        let idx := xs[0]!
+        let state := xs[1]!
+
+        withFVar idx fun idxId => do
+        withFVar state fun stateId => do
+
+          let init' ← compileExpr init
+          let initType' ← compileType (← inferType init)
+          addStatement (← `(clStmtLike| $initType':ident $stateId:ident = $init':clExpr;))
+
+          let start' ← compileExpr start
+          let stop' ← compileExpr stop
+          let step' ← compileExpr step
+
+          let body := f.beta xs
+          let body' ← compileScope body (fun r => do
+            addStatement (← `(clStmtLike| $stateId:ident = $r:clExpr;)))
+
+          addStatement (← `(clStmtLike|
+            for (uint $idxId:ident = $start':clExpr; $idxId:ident < $stop'; $idxId:ident += $step') $body' ))
+
+          cont (← `(clExpr| $stateId:ident))
+
     | .ite cond t e =>
       let decCond ← mkAppOptM ``decide #[cond, none]
       let cond' ← compileExpr decCond
@@ -286,6 +312,7 @@ partial def compileBlock (e : Expr) (cont : TSyntax `clExpr → CompileM Unit :=
     | .matchE => throwError "TODO: implement match compilation"
     | .app => cont (← compileExpr e)
     | .value e => cont (← compileExpr e)
+
 
 /-- Compile a scoped block, saving and restoring statement state. -/
 partial def compileScope (e : Expr) (cont : TSyntax `clExpr → CompileM Unit) : CompileM (TSyntax `clStmt) := do

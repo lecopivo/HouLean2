@@ -13,8 +13,11 @@ open Lean Elab Term Meta in
 elab c:"#ocl_compile_expr" f:term : command => do
   Command.runTermElabM fun _ => do
     let f ← elabTermAndSynthesize f none
-    lambdaTelescope f fun _ b => do
-      let (stx,_) ← compileExpr b {} {}
+    lambdaTelescope f fun xs b => do
+      let go := do
+        withFVars xs fun _ => do
+          compileExpr b
+      let (stx,_) ← go {} {}
       logInfoAt c stx
 
 

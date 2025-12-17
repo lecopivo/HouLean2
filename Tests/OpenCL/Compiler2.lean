@@ -126,7 +126,16 @@ info: {
   return w)
   rewrite_by
     simp -zeta only [pure_bind, bind_pure, bind_assoc]
-  --   simp -zeta only [pure_bind, bind_pure, bind_assoc]
+
+
+-- #ocl_compile (fun x : Float => do
+--   let id ← getGlobalId 0
+--   let mut x := x
+--   for i in [0:id.toNat] do
+--     x := x + x*x
+--   return x)
+--   rewrite_by
+--     simp -zeta only [pure_bind, bind_pure, bind_assoc]
 
 
 def foo (x y : Float) :=
