@@ -124,18 +124,20 @@ info: {
   if id < 10 then
     w := w + y
   return w)
+
+impl_by {α : Type} (x : α) : ForInStep.yield x ==> x
+
+set_option trace.HouLean.OpenCL.compiler true in
+#ocl_compile (fun x : Float => do
+  let id ← getGlobalId 0
+  let mut x := x
+  let mut y := x
+  for i in [0:id.toNat] do
+    x := x + x*x + i.toFloat
+    y := x + y
+  return x*y)
   rewrite_by
     simp -zeta only [pure_bind, bind_pure, bind_assoc]
-
-
--- #ocl_compile (fun x : Float => do
---   let id ← getGlobalId 0
---   let mut x := x
---   for i in [0:id.toNat] do
---     x := x + x*x
---   return x)
---   rewrite_by
---     simp -zeta only [pure_bind, bind_pure, bind_assoc]
 
 
 def foo (x y : Float) :=

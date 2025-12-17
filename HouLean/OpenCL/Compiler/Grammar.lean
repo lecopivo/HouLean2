@@ -729,7 +729,7 @@ syntax (name := clWhileStmt) "while " "(" clExpr,+ ") " clStmt : clStmt
 syntax (name := clDoWhileStmt) "do " clStmt "while " "(" clExpr,+ ")" : clStmt
 
 /-- A for loop. -/
-syntax clForStmt := "for " "(" ((atomic(clDeclaration) clCheckSemi) <|> (clExpr,* ";")) clExpr,* ";" clExpr,* ") " clStmt
+syntax clForStmt := "for " "(" ((atomic(clDeclaration) clCheckSemi) <|> (clExpr,* "; ")) clExpr,* "; " clExpr,* ") " clStmt
 attribute [clStmt_parser] clForStmt
 
 /-! ### Selection Statements -/

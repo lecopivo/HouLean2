@@ -7,6 +7,8 @@ namespace HouLean.OpenCL.Compiler
 
 open Lean Meta Qq
 
+initialize registerTraceClass `HouLean.OpenCL.compiler
+
 /-! # Utility Functions -/
 
 /-- Convert a Lean name to a valid OpenCL identifier by replacing dots with underscores. -/
@@ -76,7 +78,7 @@ Classification of application expressions for compilation.
 -/
 inductive AppCase where
   | bind (mx f : Expr)
-  | forLoop (start stop step init f : Expr)
+  | forLoop (start stop step init f rest : Expr)
   | ite (cond t e : Expr)
   | app
   | value (e : Expr)
@@ -90,16 +92,23 @@ def etaExpand1 (e : Expr) : MetaM Expr := do
 /-- Classify an application expression to determine compilation strategy. -/
 def appCase (e : Expr) : MetaM AppCase := do
   if e.isAppOfArity ``bind 6 then
-    return .bind e.appFn!.appArg! (← etaExpand1 e.appArg!)
+    let mx := e.appFn!.appArg!
+    let f := (← etaExpand1 e.appArg!)
 
-  if e.isAppOfArity ``forIn 9 then
-    let range := e.getRevArg! 2
-    return .forLoop
-      (← mkAppM ``Std.Range.start #[range] >>= whnf)
-      (← mkAppM ``Std.Range.stop #[range] >>= whnf)
-      (← mkAppM ``Std.Range.step #[range] >>= whnf)
-      (e.getRevArg! 1)  -- init
-      (e.getRevArg! 0)  -- f
+    if mx.isAppOfArity ``forIn 9 then
+      let range := mx.getRevArg! 2
+      let init := mx.getRevArg! 1
+      let loop := mx.getRevArg! 0
+      return .forLoop
+        (← mkAppM ``Std.Range.start #[range] >>= whnfI)
+        (← mkAppM ``Std.Range.stop #[range] >>= whnfI)
+        (← mkAppM ``Std.Range.step #[range] >>= whnfI)
+        init
+        loop
+        f
+    else
+      return .bind mx f
+
 
   if e.isAppOfArity ``ite 5 then
     return .ite (e.getRevArg! 3) (e.getRevArg! 1) (e.getRevArg! 0)
@@ -243,6 +252,21 @@ def shouldInlineLet (type : Expr) : CompileM Bool := do
 def finishBlockDefault (x : TSyntax `clExpr) : CompileM Unit := do
   addStatement (← `(clStmtLike| return $x;))
 
+inductive BindCase where
+  | normal | statement | remove
+
+def bindCase (val : Expr) : MetaM BindCase := do
+  let type ← inferType val
+  let m ← mkFreshExprMVarQ q(Type → Type)
+  if ← isDefEq type q($m Unit) then
+    let _ ← mkFreshExprMVarQ q(Monad $m)
+    let pureUnit := q(pure (f:=$m) ())
+    if ← isDefEq val pureUnit then
+      return .remove
+    else
+      return .statement
+  else
+    return .normal
 
 mutual
 
@@ -265,43 +289,48 @@ partial def compileBlock (e : Expr) (cont : TSyntax `clExpr → CompileM Unit :=
     match ← appCase e with
     | .bind mx f =>
       let .lam name t body _ := f | throwError "Invalid bind: expected lambda, got {f}"
+      let t' ← compileType t
       let mx' ← compileExpr mx
-      if ← isDefEq t q(Unit) then
+      match ← bindCase mx with
+      | .remove =>
+        compileBlock (body.instantiate1 q(())) cont
+      | .statement =>
         addStatement (← `(clStmtLike| $mx':clExpr;))
         compileBlock (body.instantiate1 q(())) cont
-      else
-        let t' ← compileType t
+      | .normal =>
         withLocalDeclD name t fun var => do
           withFVar var fun varId => do
             let c ← `(clTypeQ| const)
             addStatement (← `(clStmtLike| $c:clTypeQ $t':ident $varId:ident = $mx':clExpr;))
             compileBlock (body.instantiate1 var) cont
 
-    | .forLoop start stop step init f =>
+    | .forLoop start stop step init f rest =>
 
-      forallTelescope (← inferType f) fun xs _ => do
-        let idx := xs[0]!
-        let state := xs[1]!
+      let initType ← inferType init
+      let initType' ← compileType initType
+      let init' ← compileExpr init
 
-        withFVar idx fun idxId => do
-        withFVar state fun stateId => do
+      withLocalDeclD `state initType fun state => do
+      withFVar state fun stateId => do
 
-          let init' ← compileExpr init
-          let initType' ← compileType (← inferType init)
-          addStatement (← `(clStmtLike| $initType':ident $stateId:ident = $init':clExpr;))
+      addStatement (← `(clStmtLike| $initType':ident $stateId:ident = $init':clExpr;))
+
+      let _ ← forallBoundedTelescope (← inferType f) (some 1) fun xs _ => do
+          let idx := xs[0]!
+          withFVar idx fun idxId => do
+
+          let body := f.beta #[idx, state]
+          let body' ← compileScope body (fun r => do
+            addStatement (← `(clStmtLike| $stateId:ident = $r:clExpr;)))
 
           let start' ← compileExpr start
           let stop' ← compileExpr stop
           let step' ← compileExpr step
 
-          let body := f.beta xs
-          let body' ← compileScope body (fun r => do
-            addStatement (← `(clStmtLike| $stateId:ident = $r:clExpr;)))
-
           addStatement (← `(clStmtLike|
             for (uint $idxId:ident = $start':clExpr; $idxId:ident < $stop'; $idxId:ident += $step') $body' ))
 
-          cont (← `(clExpr| $stateId:ident))
+      compileBlock (rest.beta #[state]) cont
 
     | .ite cond t e =>
       let decCond ← mkAppOptM ``decide #[cond, none]
@@ -309,7 +338,7 @@ partial def compileBlock (e : Expr) (cont : TSyntax `clExpr → CompileM Unit :=
       let thnBody ← compileScope t cont
       let elseBody ← compileScope e cont
       addStatement (← `(clStmtLike| if ($cond') $thnBody else $elseBody))
-    | .matchE => throwError "TODO: implement match compilation"
+    | .matchE => throwError "TODO: implement match compilation:\n{e}"
     | .app => cont (← compileExpr e)
     | .value e => cont (← compileExpr e)
 
