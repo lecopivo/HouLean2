@@ -23,9 +23,6 @@ def mk' (real : R) (imag : Vector R 3) : Quaternion R := .mk #v[imag.x, imag.y, 
 def real (q : Quaternion R) : R := q.w
 def imag (q : Quaternion R) : Vector R 3 := #v[q.x, q.y, q.z]
 
--- instance : Coe (Vector R 4) (Quaterion R) := ⟨fun x => ⟨x⟩⟩
--- instance : Coe (Quaterion R) (Vector R 4) := ⟨fun x => x.toVector⟩
-
 def identity : Quaternion R := .mk #v[0,0,0,1]
 
 instance [ToString R] : ToString (Quaternion R) := ⟨fun q => s!"quat({q.x}, {q.y}, {q.z}, {q.w})"⟩
