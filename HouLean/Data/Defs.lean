@@ -49,6 +49,10 @@ structure Matrix4 where
 deriving Repr, ProdLike
 instance : Inhabited Matrix4 := ⟨{}⟩
 
+structure Quaternion (R : Type) where
+  toVector : Vector R 4
+deriving Inhabited
+
 -- todo: Use module system to ensure that the implementation of Matrix does not leak to userspace
 --       At some point we might want to use Lean runtime and we might have to completaly change this
 --       implementations
