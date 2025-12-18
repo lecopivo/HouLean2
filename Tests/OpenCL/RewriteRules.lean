@@ -31,7 +31,6 @@ macro "#ocl_compile_expr_with_csimp" f:term : command =>
 #guard_msgs in
 #ocl_compile_expr fun x y : Float => x + y
 
-
 /-- info: (float2){x, y + x} -/
 #guard_msgs in
 #ocl_compile_expr fun x y : Float32 => #v[x,y + x]

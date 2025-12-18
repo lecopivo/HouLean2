@@ -20,6 +20,7 @@ structure ImplementedByBuilder where
   lhs : Expr
   declName : Name
   arity : Nat
+  typeBuilder : Bool
 deriving Inhabited, BEq
 
 structure OpenCLFunction where
@@ -27,9 +28,15 @@ structure OpenCLFunction where
   clName : Name
   leanName : Name
 
+structure OpenCLTypeSyntax where
+  quals : Array (TSyntax `clTypeQ) := #[]
+  name : Name
+  pointer : Bool := false
+deriving Inhabited, BEq
+
 structure OpenCLType where
   typeDef? : Option (TSyntax `clTypeSpec)
-  clType : Name
+  clType : OpenCLTypeSyntax
   leanType : Expr
 
 inductive SingleExtension where
@@ -66,6 +73,34 @@ initialize compilerExt : CompilerExt ←
         {es with clTypes := es.clTypes.insert x.leanType x}
   }
 
+def OpenCLTypeSyntax.mkDeclaration (t : OpenCLTypeSyntax) (varId : Ident) (val : TSyntax `clExpr)
+    (const := false) :
+    CompileM (TSyntax `clStmtLike) := do
+  let spec ← `(clTypeSpec| $(mkIdent t.name):ident)
+  let mut quals := t.quals
+  if const then
+    quals := quals.push (← `(clTypeQ| const))
+  if t.pointer then
+    `(clStmtLike| $[$quals:clTypeQ]* $spec:clTypeSpec * $varId:ident = $val:clExpr;)
+  else
+    `(clStmtLike| $[$quals:clTypeQ]* $spec:clTypeSpec $varId:ident = $val:clExpr;)
+
+def OpenCLTypeSyntax.mkParamDecl (t : OpenCLTypeSyntax) (varId : Ident) :
+    CompileM (TSyntax ``clParamDecl) := do
+  let spec ← `(clTypeSpec| $(mkIdent t.name):ident)
+  if t.pointer then
+    `(clParamDecl| $[$(t.quals):clTypeQ]* $spec:clTypeSpec * $varId:ident)
+  else
+    `(clParamDecl| $[$(t.quals):clTypeQ]* $spec:clTypeSpec $varId:ident)
+
+def OpenCLTypeSyntax.mkFunction (r : OpenCLTypeSyntax) (funId : Ident)
+    (params : Array (TSyntax ``clParamDecl)) (stmts : Array (TSyntax `clStmtLike)) :
+    CompileM (TSyntax ``clFunction) := do
+  let spec ← `(clTypeSpec| $(mkIdent r.name):ident)
+  if r.pointer then
+    `(clFunction| $spec:clTypeSpec * $funId:ident($params:clParamDecl,*) { $stmts:clStmtLike* })
+  else
+    `(clFunction| $spec:clTypeSpec $funId:ident($params:clParamDecl,*) { $stmts:clStmtLike* })
 
 open Lean Meta
 def addImplementedBy (lhs : Expr) (rhs : TSyntax `clExpr) (argsToCompile : Array (TSyntax `clExpr × Nat)) : MetaM ImplementedBy := do
@@ -80,19 +115,6 @@ def addImplementedBy (lhs : Expr) (rhs : TSyntax `clExpr) (argsToCompile : Array
   if lhs.hasFVar then
     let fvars ← lhs.getFVars
     throwError m!"Can't add implemented_by `{lhs} ==> {rhs}`. Lhs contains mvars: {fvars}"
-
-  -- -- figure out which arguments of lhs appear on the rhs
-  -- -- store their name and index
-  -- let argsToCompile ←
-  --   forallTelescope type fun args _ => do
-  --     args.zip (.range args.size)
-  --       |>.filterMapM (fun (arg,i) => do
-  --         if arg.isFVar then
-  --           let name ← arg.fvarId!.getUserName
-  --           -- arguments that appear on the rhs should be compiled!
-  --           if rhs.raw.hasIdent name then
-  --             return some (name, i)
-  --         return none)
 
   trace[HouLean.OpenCL.compiler] "Added implemented by\n{lhs} ==> {rhs}\nargs to compile: {argsToCompile}"
 
@@ -111,16 +133,19 @@ def addImplementedBy (lhs : Expr) (rhs : TSyntax `clExpr) (argsToCompile : Array
 
   return impl
 
-def addOpenCLType (type : Expr) (clTypeName : String) (definition : TSyntax `clTypeSpec) : MetaM Unit := do
+def addOpenCLType (type : Expr) (clTypeName : String) (definition : Option (TSyntax `clTypeSpec)) : MetaM Unit := do
+
+  let type ← whnfR type
 
   compilerExt.add (.clTypeDef {
     typeDef? := definition
-    clType := .mkSimple clTypeName
+    clType := {
+      quals := #[]
+      name := .mkSimple clTypeName
+      pointer := false
+    }
     leanType := type
   })
-
-  let clId := mkIdent (.mkSimple clTypeName)
-  let _ ← addImplementedBy type (← `(clExpr| $clId:ident)) #[]
 
 open Qq in
 unsafe def getBuilder (declName : Name) : CompileM (Array Expr → CompileM (TSyntax `clExpr)) := do
@@ -134,7 +159,22 @@ unsafe def getBuilder (declName : Name) : CompileM (Array Expr → CompileM (TSy
     else
       throwError m!"ImplementedByBuilder `{privateToUserName declName}` has an unexpected type: Expected `ImplementedByBuilder`, but found `{info.type}`"
 
+open Qq in
+unsafe def getTypeBuilder (declName : Name) : CompileM (Array Expr → CompileM OpenCLTypeSyntax) := do
+  let env ← getEnv
+  let opts ← getOptions
+  match env.find? declName with
+  | none      => throwError m!"Unknown constant `{declName}`"
+  | some info =>
+    if ← isDefEq q(Array Expr → CompileM OpenCLTypeSyntax) info.type then
+      return (← IO.ofExcept <| env.evalConst (Array Expr → CompileM OpenCLTypeSyntax) opts declName)
+    else
+      throwError m!"ImplementedByBuilder `{privateToUserName declName}` has an unexpected type: Expected `ImplementedByBuilder`, but found `{info.type}`"
 
 def runBuilder (xs : Array Expr) (builder : ImplementedByBuilder) : CompileM (TSyntax `clExpr) := do
   let b ← unsafe getBuilder builder.declName
-  return ← b xs
+  return ← b (← xs.mapM instantiateMVars)
+
+def runTypeBuilder (xs : Array Expr) (builder : ImplementedByBuilder) : CompileM OpenCLTypeSyntax := do
+  let b ← unsafe getTypeBuilder builder.declName
+  return ← b (← xs.mapM instantiateMVars)

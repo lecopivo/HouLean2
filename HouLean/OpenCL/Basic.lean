@@ -13,7 +13,8 @@ instance OpenCL.RealWorld.instNonempty : Nonempty OpenCL.RealWorld :=
 
 
 /-- OpenCL Context/Monad. This is the context in which kernels are executed, -/
-abbrev OpenCLM := StateM OpenCL.RealWorld
+def OpenCLM := StateM OpenCL.RealWorld
+instance : Monad OpenCLM := inferInstanceAs (Monad (StateM OpenCL.RealWorld))
 
 namespace OpenCL
 

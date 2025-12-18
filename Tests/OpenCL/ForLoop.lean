@@ -1,4 +1,5 @@
 import HouLean.OpenCL.Compiler
+import HouLean.OpenCL.Data.Init
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.ArrayType
 import HouLean.Meta.DoNotation
@@ -10,8 +11,7 @@ namespace Tests.OpenCL.ForLoop
 
 attribute [opencl_csimp] Id.run
 impl_by {α : Type} (a : α) : ForInStep.yield a ==> a
-impl_by {α : Type} : Id α ==> α
-impl_by {α : Type} : OpenCLM α ==> α
+
 
 
 /--
@@ -108,7 +108,6 @@ double main(uint n){
 #opencl_compile fib (α:=Float)
 
 
-
 def foo (res : Vector Nat 3) (idx : Vector Nat 3) (mass : ArrayPointer Float) (vel : ArrayPointer (Vector Float 3)) := do
   let mut m := 0.0
   let mut p := #v[0.0,0,0]
@@ -122,6 +121,6 @@ def foo (res : Vector Nat 3) (idx : Vector Nat 3) (mass : ArrayPointer Float) (v
         p += mi * vi
   return (m, p / m)
 
-/-- error: Don't know how to compile type: OpenCLM (Float × Vector Float 3) -/
+/-- error: Don't know how to compile type: Pointer Float -/
 #guard_msgs in
 #opencl_compile foo

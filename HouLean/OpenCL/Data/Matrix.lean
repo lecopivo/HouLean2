@@ -15,9 +15,9 @@ open Lean Meta Qq Math Compiler
 namespace Matrix
 
 open Lean  in
-def matrixTypeIdent (elem : Ident) (m n : Nat) : Ident :=
-  let elem := elem.getId.toString
-  mkIdent <| .mkSimple <| s!"matrix{m}{n}{elem}"
+def matrixTypeName (elem : Name) (m n : Nat) : Name :=
+  let elem := elem.toString
+  .mkSimple <| s!"matrix{m}{n}{elem}"
 
 /- `Matrix T m n` is compiled to `Tn` e.g. `Vector Float32 3 ==> float3` -/
 impl_by {m n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Matrix T m n ==> do
@@ -27,10 +27,9 @@ impl_by {m n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Matrix T m 
   let some n ← runInterpreter? Nat n
     | throwError m!"Number of columns {n} of a matrix has to be known at compile time!"
   let type ← compileType T
+  let name := matrixTypeName type.name m n
 
-  let id := matrixTypeIdent type m n
-
-  return ← `(clExpr| $id:ident)
+  return { name }
 
 
 /- Matrix contructor rule  e.g. #m[row0,row1,row2] ==> (matrix33){row0,row1,row2}  -/
@@ -45,7 +44,7 @@ impl_by {m n : Nat} {α : Type} [AtomicOpenCLType α] (l : List (Vector α n)) (
     | throwError m!"Number of rows {m} of a matrix has to be known at compile time!"
   let some n ← runInterpreter? Nat n
     | throwError m!"Number of columns {n} of a matrix has to be known at compile time!"
-  let matrixId := matrixTypeIdent t m n
+  let matrixId := mkIdent (matrixTypeName t.name m n)
 
   return ← `(clExpr| ($matrixId:ident){$[$xs:clExpr],*} )
 

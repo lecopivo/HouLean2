@@ -1,4 +1,5 @@
 import HouLean.OpenCL.Basic
+import HouLean.OpenCL.Compiler
 import HouLean.Math
 
 namespace HouLean.OpenCL
@@ -79,3 +80,14 @@ instance [t : OpenCLType α] : OpenCLType (Id α) := t
 attribute [opencl_csimp] Id.run
 
 attribute [opencl_csimp] sum
+
+
+
+open Compiler
+impl_by {α : Type} : Id α ==> do
+  let t ← compileType α
+  return t
+
+impl_by {α : Type} : OpenCLM α ==> do
+  let t ← compileType α
+  return t

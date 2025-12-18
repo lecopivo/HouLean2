@@ -216,11 +216,8 @@ info: Resulting specialization:
 #opencl_sas (u.sum)
 
 /--
-info: def List.«toArray_Nat_[0,_10,_20,_30,_40,_50,_60,_70,_80,_90]» := ⏎
-{ toList := [0, 10, 20, 30, 40, 50, 60, 70, 80, 90] }
-
-Resulting specialization:
-  Vector.mk List.«toArray_Nat_[0,_10,_20,_30,_40,_50,_60,_70,_80,_90]» ⋯
+info: Resulting specialization:
+  Vector.mk { toList := [0, 10, 20, 30, 40, 50, 60, 70, 80, 90] } ⋯
 -/
 #guard_msgs in
 #opencl_sas (Vector.ofFn (fun i : Fin 10 => 10*i.1))
@@ -234,7 +231,7 @@ variable (n : Nat) (i : Fin 3)
 
 /--
 info: Resulting specialization:
-  u[↑i]
+  u[i.1]
 -/
 #guard_msgs in
 #opencl_sas (u[i])
@@ -288,35 +285,8 @@ Resulting specialization:
 
 
 /--
-info: def Vector.length2_Float_3 := ⏎
-fun u =>
-  let a := u[0] * u[0];
-  let a := a + u[1] * u[1];
-  let a := a + u[2] * u[2];
-  a
-
-def Vector.length_Float_3 := ⏎
-fun u => sqrt u.length2_Float_3
-
-def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_6 := ⏎
-fun x => decide (1e-6 ≥ abs (x - 0))
-
-def Inv.inv_Float := ⏎
-fun a => 1 / a
-
-def HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 := ⏎
-fun a a_1 =>
-  let is := Inv.inv_Float a_1;
-  is * a
-
-def Vector.normalize_Float_3 := ⏎
-fun u =>
-  let len := u.length_Float_3;
-  if ApproxEqual.approxEqual_Float_Float_0_1e_6 len = true then (u, 0)
-  else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
-
-def Vector.normalized_Float_3 := ⏎
-fun u => u.normalize_Float_3.fst
+info: def Vector.normalized_Float_3 := ⏎
+fun u => u.normalize.1
 
 def Vector.dot_Float_3 := ⏎
 fun u v =>
@@ -324,6 +294,9 @@ fun u v =>
   let a := a + u[1] * v[1];
   let a := a + u[2] * v[2];
   a
+
+def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_6 := ⏎
+fun x => decide (1e-6 ≥ abs (x - 0))
 
 def Vector.slerp_Float_3 := ⏎
 fun v w t =>

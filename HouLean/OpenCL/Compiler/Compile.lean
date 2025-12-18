@@ -24,18 +24,16 @@ def fullCompile (e : Expr) : MetaM MessageData := do
 
         let rt' ← compileType r
         let ts' ← xs.mapM (fun x => inferType x >>= compileType)
-        let returnType : TSyntax `clDeclSpec ← `(clDeclSpec| $rt':ident)
-        let argTypes ← ts'.mapM fun t => `(clTypeSpec| $t:ident)
+        let args ← (ts'.zip varIds).mapM fun (t,v) => OpenCLTypeSyntax.mkParamDecl t v
         let stmts := (← get).statements
-
         let mainId := mkIdent (.mkSimple "main")
-        `(clFunction| $returnType $mainId:ident($[$argTypes:clTypeSpec $varIds:ident],*) { $stmts* })
+
+        rt'.mkFunction mainId args stmts
 
       let funs ← s.specOrder.mapM compileDecl
       let (main, _) ← go {} {}
 
       let mut msg : MessageData := m!""
-
       for f in funs do
         msg := msg ++ m!"{f}\n\n"
       msg := msg ++ m!"{main}"

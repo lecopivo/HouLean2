@@ -1,11 +1,8 @@
 import HouLean.OpenCL.Compiler
-import HouLean.OpenCL.Compiler.Compile
+import HouLean.OpenCL.Data.Init
 import HouLean.OpenCL.Reference
 
-
 namespace HouLean.OpenCL
-
-
 
 inductive PointerAddressSpace where
   | global | loc | priv | default
@@ -40,49 +37,34 @@ impl_by : DPointer T addr const restrict ==> do
 
   let t ← compileType T
 
+  if t.pointer then
+    throwError m!"Pointer of a pointer is currently not supported!"
+
+  let mut quals : Array (TSyntax `clTypeQ) := #[]
   let some addr ← Meta.runInterpreter? PointerAddressSpace addr
     | throwError m!"Pointer address space, {addr}, needs to be know at compile time!"
-  let gl ← `(clTypeQ| global)
-  let lo ← `(clTypeQ| local)
-  let pr ← `(clTypeQ| private)
-  let a? : Option (TSyntax `clTypeQ)  :=
-    match addr with
-    | PointerAddressSpace.global => some gl
-    | PointerAddressSpace.loc => some lo
-    | PointerAddressSpace.priv => some pr
-    | PointerAddressSpace.default => none
+  match addr with
+    | .global => quals := quals.push (← `(clTypeQ| global))
+    | PointerAddressSpace.loc => quals := quals.push (← `(clTypeQ| local))
+    | .priv =>  quals := quals.push (← `(clTypeQ| private))
+    | _ => pure ()
 
   let some const ← Meta.runInterpreter? Bool const
     | throwError m!"it needs to be known at compile time if a pointer is constant or not!"
-  let c ← `(clTypeQ| const)
-  let c? := if const then some c else none
+  if const then
+    quals := quals.push (← `(clTypeQ| const))
 
-
-  let some restrict ← Meta.runInterpreter? Bool restrict
+  -- todo: somehow use retruct too
+  let some _restrict ← Meta.runInterpreter? Bool restrict
     | throwError m!"it needs to be known at compile time if a pointer is restrict or not!"
-  let r ← `(clTypeQ| restrict)
-  let r? := (if restrict then some r else none)
+  -- let r ← `(clTypeQ| restrict)
+  -- let r? := (if restrict then some r else none)
 
-
-  -- Build specs array
-  let mut specs : Array (TSyntax `clSpec) := #[]
-  if let some a := a? then specs := specs.push ⟨a.raw⟩
-  if let some c := c? then specs := specs.push ⟨c.raw⟩
-  -- Assuming t is a clTypeSpec, coerce it to clSpec:
-  let t ← `(clSpec| $t:ident)
-  specs := specs.push t
-
-  -- Build pointer qualifiers
-  let ptrQuals : Array (TSyntax `clTypeQ) :=
-    if let some r := r? then #[r] else #[]
-
-  -- Build the type with explicit structure
-  let ty ← `(clType| $specs:clSpec* * $ptrQuals:clTypeQ*)
-
-  let ptrId := mkIdent (.mkSimple (s!"{ty.raw.prettyPrint}"))
-
-  -- todo: add option to return type not only expression
-  return ← `(clExpr| $ptrId:ident)
+  return {
+    quals := quals
+    name := t.name
+    pointer := true
+  }
 
 
 
@@ -127,7 +109,8 @@ end DPointer
 
 
 /--
-info: « const  float  * » main(« const  float  * » ptr){
+info: float *
+  main(const float * ptr){
       return ptr;
 }
 -/
@@ -136,7 +119,7 @@ info: « const  float  * » main(« const  float  * » ptr){
 
 
 /--
-info: float main(« float  * » ptr){
+info: float main(float * ptr){
       return ptr[0];
 }
 -/
@@ -145,7 +128,7 @@ info: float main(« float  * » ptr){
 
 
 /--
-info: void main(« global  float  *  restrict » ptr, float x){
+info: void main(global float * ptr, float x){
       const float x0 = ptr[0];
       const float x1 = ptr[1];
       ptr[2] = x0 + x1 + x;

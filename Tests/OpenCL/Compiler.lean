@@ -111,17 +111,11 @@ matrix33float main(matrix33float x, matrix33float y){
 #opencl_compile (fun x y : Matrix Float32 3 3 => x + y)
 
 
-/--
-info: Prod_float2_float vector_split1_2_float32(float3 v){
-      return (Prod_float2_float){(float2){v.x, v.y}, v.z};
-}
-
-Prod_float2_float main(float3 x){
-      return vector_split1_2_float32(x);
-}
--/
+/-- error: Constructor encountered; should compile structure/enum: (#v[v[0], v[1]], v[2]) -/
 #guard_msgs in
-#opencl_compile (fun (x : Vector Float32 3) => x.split1)
+#opencl_compile (fun (x : Vector Float32 3) =>
+  let a := x.split1
+  a)
 
 
 /--
@@ -145,18 +139,12 @@ info: Prod_matrix33float_matrix33float main(matrix44float A, float3 x){
 
 
 /--
-info: Prod_Prod_matrix33float_float3_Prod_float3_float houlean_matrix_split1_3_float32(matrix44float a){
-      return
-        (Prod_Prod_matrix33float_float3_Prod_float3_float){(Prod_matrix33float_float3){(matrix33float){(float3){a.row0.x,
-                      a.row0.y, a.row0.z},
-                  (float3){a.row1.x, a.row1.y, a.row1.z}, (float3){a.row2.x, a.row2.y, a.row2.z}},
-              (float3){a.row0.w, a.row1.w, a.row2.w}},
-          (Prod_float3_float){(float3){a.row3.x, a.row3.y, a.row3.z}, a.row3.w}};
-}
-
-Prod_Prod_matrix33float_float3_Prod_float3_float main(matrix44float A){
-      return houlean_matrix_split1_3_float32(A);
-}
+error: Constructor encountered; should compile structure/enum: (({
+      data :=
+        #v[#v[(a.row 0 ⋯)[0], (a.row 0 ⋯)[1], (a.row 0 ⋯)[2]], #v[(a.row 1 ⋯)[0], (a.row 1 ⋯)[1], (a.row 1 ⋯)[2]],
+          #v[(a.row 2 ⋯)[0], (a.row 2 ⋯)[1], (a.row 2 ⋯)[2]]] },
+    #v[(a.row 0 ⋯)[3], (a.row 1 ⋯)[3], (a.row 2 ⋯)[3]]),
+  #v[(a.row 3 ⋯)[0], (a.row 3 ⋯)[1], (a.row 3 ⋯)[2]], (a.row 3 ⋯)[3])
 -/
 #guard_msgs in
 #opencl_compile (fun (A : Matrix Float32 4 4) => A.split1)
@@ -175,15 +163,15 @@ info: float main(Prod_float_float x){
 
 
 /--
-info: Prod_float_Prod_float_float main(float x){
+info: Prod_float_float main(float x){
       const Prod_float_Prod_float_float a = (Prod_float_Prod_float_float){x, (Prod_float_float){x, x}};
-      return a;
+      return (Prod_float_float){a.fst + a.snd.snd, a.snd.fst};
 }
 -/
 #guard_msgs in
 #opencl_compile (fun x : Float32 =>
   let a := (x,x,x)
-  a)
+  (a.1 + a.2.2, a.2.1))
 
 
 /-- error: Constructor encountered; should compile structure/enum: (x, x) -/
@@ -192,53 +180,12 @@ info: Prod_float_Prod_float_float main(float x){
 
 
 /--
-info: Prod_Prod_matrix33float_float3_Prod_float3_float houlean_matrix_split1_3_float32(matrix44float a){
-      return
-        (Prod_Prod_matrix33float_float3_Prod_float3_float){(Prod_matrix33float_float3){(matrix33float){(float3){a.row0.x,
-                      a.row0.y, a.row0.z},
-                  (float3){a.row1.x, a.row1.y, a.row1.z}, (float3){a.row2.x, a.row2.y, a.row2.z}},
-              (float3){a.row0.w, a.row1.w, a.row2.w}},
-          (Prod_float3_float){(float3){a.row3.x, a.row3.y, a.row3.z}, a.row3.w}};
-}
-
-float vector_dot_float32_3(float3 u, float3 v){
-      const float a = u.x * v.x;
-      const float a1 = a + u.y * v.y;
-      const float a2 = a1 + u.z * v.z;
-      return a2;
-}
-
-float3 houlean_matrix_mulvec_float32_3_3(matrix33float a, float3 v){
-      return
-        (float3){vector_dot_float32_3(a.row0, v), vector_dot_float32_3(a.row1, v), vector_dot_float32_3(a.row2, v)};
-}
-
-float3 hmul_hmul_matrix_float32_3_3_vector_float32_3_vector_float32_3(matrix33float a, float3 a1){
-      return houlean_matrix_mulvec_float32_3_3(a, a1);
-}
-
-float inv_inv_float32(float a){
-      return 1.0 / a;
-}
-
-float3 hdiv_hdiv_vector_float32_3_float32_vector_float32_3(float3 a, float a1){
-      const float is = inv_inv_float32(a1);
-      return is * a;
-}
-
-float3 houlean_matrix_transformpointright_float32_3(matrix44float transform, float3 point){
-      const Prod_Prod_matrix33float_float3_Prod_float3_float tmp = houlean_matrix_split1_3_float32(transform);
-      const float w = vector_dot_float32_3(point, tmp.snd.fst) + tmp.snd.snd;
-      return
-        hdiv_hdiv_vector_float32_3_float32_vector_float32_3(hmul_hmul_matrix_float32_3_3_vector_float32_3_vector_float32_3(tmp.fst.fst,
-              point) +
-            tmp.fst.snd,
-          w);
-}
-
-float3 main(matrix44float A, float3 x){
-      return houlean_matrix_transformpointright_float32_3(A, x);
-}
+error: Constructor encountered; should compile structure/enum: (({
+      data :=
+        #v[#v[(a.row 0 ⋯)[0], (a.row 0 ⋯)[1], (a.row 0 ⋯)[2]], #v[(a.row 1 ⋯)[0], (a.row 1 ⋯)[1], (a.row 1 ⋯)[2]],
+          #v[(a.row 2 ⋯)[0], (a.row 2 ⋯)[1], (a.row 2 ⋯)[2]]] },
+    #v[(a.row 0 ⋯)[3], (a.row 1 ⋯)[3], (a.row 2 ⋯)[3]]),
+  #v[(a.row 3 ⋯)[0], (a.row 3 ⋯)[1], (a.row 3 ⋯)[2]], (a.row 3 ⋯)[3])
 -/
 #guard_msgs in
 #opencl_compile (fun (A : Matrix Float32 4 4) (x : Vector Float32 3) => A.transformPointRight x)
@@ -340,76 +287,6 @@ info: double main(double x){
 
 
 
-/--
-info: float vector_length2_float32_3(float3 u){
-      const float a = u.x * u.x;
-      const float a1 = a + u.y * u.y;
-      const float a2 = a1 + u.z * u.z;
-      return a2;
-}
-
-float vector_length_float32_3(float3 u){
-      return sqrt(vector_length2_float32_3(u));
-}
-
-bool houlean_math_approxequal_approxequal_float32_float32_0_1e_9(float x){
-      return 1e-10 >= fabs(x - 0.0);
-}
-
-float inv_inv_float32(float a){
-      return 1.0 / a;
-}
-
-float3 hdiv_hdiv_vector_float32_3_float32_vector_float32_3(float3 a, float a1){
-      const float is = inv_inv_float32(a1);
-      return is * a;
-}
-
-Prod_float3_float vector_normalize_float32_3(float3 u){
-      const float len = vector_length_float32_3(u);
-      if (a == b)
-        {
-              return (Prod_float3_float){u, 0.0};
-        } else
-        {
-              return (Prod_float3_float){hdiv_hdiv_vector_float32_3_float32_vector_float32_3(u, len), len};
-        }
-}
-
-float3 vector_normalized_float32_3(float3 u){
-      return vector_normalize_float32_3(u).fst;
-}
-
-float vector_dot_float32_3(float3 u, float3 v){
-      const float a = u.x * v.x;
-      const float a1 = a + u.y * v.y;
-      const float a2 = a1 + u.z * v.z;
-      return a2;
-}
-
-float3 vector_slerp_float32_3(float3 v, float3 w, float t){
-      const float d = vector_dot_float32_3(vector_normalized_float32_3(v), vector_normalized_float32_3(w));
-      const float d1 = clamp(d, -1.0, 1.0);
-      const float theta = acos(d1);
-      const float s = sin(theta);
-      const float a = sin(1.0 - t * theta) / s;
-      const float b = sin(t * theta) / s;
-      if (a == b)
-        {
-              return mix(v, w, t);
-        } else
-        {
-              return a * v + b * w;
-        }
-}
-
-float3 houlean_math_slerp_slerp_vector_float32_3_float32(float3 x, float3 y, float t){
-      return vector_slerp_float32_3(x, y, t);
-}
-
-float3 main(float3 x, float3 y, float w){
-      return houlean_math_slerp_slerp_vector_float32_3_float32(x, y, w);
-}
--/
+/-- error: Don't know how to compile: u.normalize.1 -/
 #guard_msgs in
 #opencl_compile (fun (x y : Vector Float32 3) (w : Float32) => Math.slerp x y w)

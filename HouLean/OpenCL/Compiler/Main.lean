@@ -139,9 +139,20 @@ where
 partial def tryImplementedByBuilder (e : Expr) : CompileM (Option (TSyntax `clExpr)) := do
   let builders := (compilerExt.getState (← getEnv)).implementedByBuilders
   for builder in ← builders.getMatch e do
+    if builder.typeBuilder then continue
     let (args, _, _) ← forallMetaTelescope (← inferType builder.lhs)
     if ← isDefEq (builder.lhs.beta args) e then
       return some (← runBuilder args builder)
+  return none
+
+/-- Try to find and run an `implemented_by` builder for the expression. -/
+partial def tryTypeImplementedByBuilder (e : Expr) : CompileM (Option OpenCLTypeSyntax) := do
+  let builders := (compilerExt.getState (← getEnv)).implementedByBuilders
+  for builder in ← builders.getMatch e do
+    unless builder.typeBuilder do continue
+    let (args, _, _) ← forallMetaTelescope (← inferType builder.lhs)
+    if ← isDefEq (builder.lhs.beta args) e then
+      return some (← runTypeBuilder args builder)
   return none
 
 /-- Compile a Lean expression to OpenCL syntax. -/
@@ -180,12 +191,12 @@ end
 mutual
 
 /-- Compile a structure type with concrete parameters. -/
-partial def compileStructure (type : Expr) (structName : Name) (params : Array Expr) : CompileM Ident := do
+partial def compileStructure (type : Expr) (structName : Name) (params : Array Expr) : CompileM OpenCLTypeSyntax := do
   let ps ← params.mapM compileType
   let name := ps.foldl (init := nameToString structName)
-    fun s p => s ++ "_" ++ (toString (Syntax.prettyPrint p)).replace " " ""
+    fun s p => s ++ "_" ++ (toString p.name).replace " " ""
   let clId := mkIdent (.mkSimple name)
-  let _ ← addImplementedBy type (← `(clExpr| $clId:ident)) #[]
+  addOpenCLType type name none -- todo: add definition
   -- Generate projection implementations
   let info := getStructureInfo (← getEnv) structName
   withLocalDeclD `x type fun x => do
@@ -203,19 +214,25 @@ partial def compileStructure (type : Expr) (structName : Name) (params : Array E
   let args ← argNames.mapM (fun n => `(clExpr| $(mkIdent n):ident))
   let mkRhs ← `(clExpr| ($clId){$[$args:clExpr],*})
   let _ ← addImplementedBy mkLhs mkRhs (args.zip (.range args.size))
-  return clId
+  return {
+    quals := #[]
+    name := .mkSimple name
+    pointer := false
+  }
 
 /-- Compile a Lean type to an OpenCL type identifier. -/
-partial def compileType (e : Expr) : CompileM Ident := do
-  try
-    match ← compileExpr e with
-    | `(clExpr| $id:ident) => return id
-    | stx => throwError "Unexpected non-identifier when compiling type: {stx}"
-  catch _ =>
-    if let some fname := e.getAppFn.constName? then
-      if isStructure (← getEnv) fname then
-        return ← compileStructure e fname e.getAppArgs
-    throwError "Don't know how to compile type: {e}"
+partial def compileType (e : Expr) : CompileM OpenCLTypeSyntax := do
+  let e ← instantiateMVars e
+  let e ← liftM <| e.withApp fun fn args => do pure ((← whnfR fn).beta (← args.mapM whnfR))
+  let s := (compilerExt.getState (← getEnv)).clTypes
+  if let some t := s[e]? then
+    return t.clType
+  if let some t ← tryTypeImplementedByBuilder e then
+    return t
+  if let some fname := e.getAppFn.constName? then
+    if isStructure (← getEnv) fname then
+      return ← compileStructure e fname e.getAppArgs
+  throwError "Don't know how to compile type: {e}"
 
 end
 
@@ -244,8 +261,7 @@ partial def compileBlock (e : Expr) (cont : TSyntax `clExpr → CompileM Unit :=
       let t' ← compileType t
       let v' ← compileExpr v
       withLetDecl n t v fun var => withFVar var fun varId => do
-        let c ← `(clTypeQ| const)
-        addStatement (← `(clStmtLike| $c:clTypeQ $t':ident $varId:ident = $v':clExpr;))
+        addStatement (← t'.mkDeclaration (const:=true) varId v')
         compileBlock (b.instantiate1 var) cont
   | _ => compileAppCase e cont
 
@@ -271,8 +287,7 @@ partial def compileBind (mx f : Expr) (cont : TSyntax `clExpr → CompileM Unit)
     let t' ← compileType t
     let mx' ← compileExpr mx
     withLocalDeclD name t fun var => withFVar var fun varId => do
-      let c ← `(clTypeQ| const)
-      addStatement (← `(clStmtLike| $c:clTypeQ $t':ident $varId:ident = $mx':clExpr;))
+      addStatement (← t'.mkDeclaration (const:=true) varId mx')
       compileBlock (body.instantiate1 var) cont
 
 /-- Compile a for loop. -/
@@ -282,7 +297,7 @@ partial def compileForLoop (start stop step init f rest : Expr)
   let initType' ← compileType initType
   let init' ← compileExpr init
   withLocalDeclD `state initType fun state => withFVar state fun stateId => do
-    addStatement (← `(clStmtLike| $initType':ident $stateId:ident = $init':clExpr;))
+    addStatement (← initType'.mkDeclaration stateId init' (const:=false))
     let _ ← forallBoundedTelescope (← inferType f) (some 1) fun xs _ => do
       let idx := xs[0]!
       withFVar idx fun idxId => do
@@ -346,12 +361,12 @@ def compileDecl (declName : Name) : MetaM (TSyntax ``clFunction) := do
   forallTelescope (← inferType val) fun xs _ => do
     let body := val.beta xs
     let go : CompileM (TSyntax ``clFunction) := withFVars xs fun varIds => do
-      let rt' ← compileType (← inferType body)
       let ts' ← xs.mapM (inferType · >>= compileType)
       compileBlock body
       let stmts := (← get).statements
-      let argTypes ← ts'.mapM fun t => `(clTypeSpec| $t:ident)
-      `(clFunction| $rt':ident $funId:ident($[$argTypes:clTypeSpec $varIds:ident],*) { $stmts* })
+      let args ← (ts'.zip varIds).mapM fun (t,v) => t.mkParamDecl v
+      let rt' ← compileType (← inferType body)
+      rt'.mkFunction funId args stmts
     let (fundef, _) ← go {} {}
     addOpenCLFunDef declName funName fundef
     return fundef

@@ -12,21 +12,21 @@ variable {α : Type} [AtomicOpenCLType α] {n : Nat}
 -- Built-in Scalar Data Types ----------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
 
-impl_by : Bool ==> bool
---impl_by : Char ==> char
-impl_by : Int16 ==> short
-impl_by : UInt16 ==> ushort
-impl_by : Int32 ==> int
-impl_by : UInt32 ==> uint
-impl_by : Int ==> int
-impl_by : Nat ==> uint
-impl_by : Int64 ==> long
-impl_by : UInt64 ==> uong
-impl_by : Float32 ==> float
-impl_by : Float64 ==> double
--- impl_by : Float16 ==> half
-impl_by : USize ==> size_t
-impl_by : Unit ==> void
+impl_type_by Bool ==> bool
+--impl_type_by Char ==> char
+impl_type_by Int16 ==> short
+impl_type_by UInt16 ==> ushort
+impl_type_by Int32 ==> int
+impl_type_by UInt32 ==> uint
+impl_type_by Int ==> int
+impl_type_by Nat ==> uint
+impl_type_by Int64 ==> long
+impl_type_by UInt64 ==> uong
+impl_type_by Float32 ==> float
+impl_type_by Float64 ==> double
+-- impl_type_by Float16 ==> half
+impl_type_by USize ==> size_t
+impl_type_by Unit ==> void
 
 
 
@@ -34,16 +34,21 @@ impl_by : Unit ==> void
 -- Built-in Vector Data Types ----------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------
 
+
 /- `Vector T n` is compiled to `Tn` e.g. `Vector Float32 3 ==> float3` -/
-impl_by {n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Vector T n ==> do
+impl_by {n : Nat} {T} [AtomicOpenCLType T] [AllowedVectorSize n] : Vector T n ==> do do
 
   let some n ← runInterpreter? Nat n
     | throwError m!"Size {n} of vector has to be known at compile time!"
   let type ← compileType T
 
-  let name := mkIdent <| type.getId.appendAfter (toString n)
+  let name := type.name.appendAfter (toString n)
 
-  return ← `(clExpr| $name:ident)
+  return {
+    quals := #[]
+    name := name
+    pointer := false
+  }
 
 
 /- Vector contructor rule  e.g. #v[x,y,z] ==> (float3){x,y,z}
@@ -61,6 +66,6 @@ impl_by {n : Nat} {α : Type} [AtomicOpenCLType α] [AllowedVectorSize n] (l : L
 
   let some n ← runInterpreter? Nat n
     | throwError m!"Size {n} of vector has to be known at compile time!"
-  let name := mkIdent <| type.getId.appendAfter (toString n)
+  let name := mkIdent <| type.name.appendAfter (toString n)
 
   return ← `(clExpr| ($name){$[$xs:clExpr],*} )

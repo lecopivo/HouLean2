@@ -4,12 +4,10 @@ open HouLean.Meta
 
 namespace HouLean.OpenCL.Compiler
 
-open Lean Meta
+open Lean Meta Elab Term Command Qq
 
 syntax "impl_by" bracketedBinder* " : " term " ==> " clExpr : command
 
-
-open Lean Elab Term Command Syntax in
 elab_rules : command
 | `(impl_by $bs:bracketedBinder*  :  $lhs:term  ==> $rhs:clExpr) => do
 
@@ -43,24 +41,38 @@ elab_rules : command
       let _ ← addImplementedBy e rhs argsToCompile
 
 
-open Lean Elab Term Command Qq
+syntax "impl_type_by" term " ==> " ident : command
+
+elab_rules : command
+| `(impl_type_by  $lhs:term  ==> $rhs:ident) => do
+  runTermElabM fun _ => do
+    let type ← elabTermAndSynthesize lhs none
+    let name := rhs.getId.eraseMacroScopes.toString
+    addOpenCLType type name none
+
+
+
 elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " "do" rhs:doElem* : command => do
 
   runTermElabM fun ctx => do
     elabBinders bs fun xs => do
       let e ← elabTerm lhs none
+      let type ← inferType e
+      let typeBuilder := if type.isType then true else false
 
       let e ← mkLambdaFVars xs e >>= instantiateMVars
       let ctx' := ctx.filter (fun c => e.containsFVar c.fvarId!)
       let e ← mkLambdaFVars ctx' e >>= instantiateMVars
       let lhs ← instantiateMVars e
 
+      let expectedType := if typeBuilder then q(CompileM OpenCLTypeSyntax) else q(CompileM (TSyntax `clExpr))
+
       -- Declare implemented_by builder
       let decls ← (ctx'++xs).mapM (fun x => do
         return (← x.fvarId!.getUserName, .default, fun _ => pure q(Expr)))
       let builder ← liftM <|
         withLocalDecls decls fun ys => do
-          let rhs ← elabTermAndSynthesize (← `(term| do $[$rhs:doElem]*)) q(CompileM (TSyntax `clExpr))
+          let rhs ← elabTermAndSynthesize (← `(term| do $[$rhs:doElem]*)) expectedType
           mkLambdaFVars ys rhs
       let builder ← arrayUncurry q(Expr) builder >>= instantiateMVars
       let builderType ← inferType builder >>= instantiateMVars
@@ -87,6 +99,7 @@ elab "impl_by" bs:bracketedBinder* " : " lhs:term  " ==> " "do" rhs:doElem* : co
         lhs := lhs
         declName := builderDeclName
         arity := decls.size
+        typeBuilder := typeBuilder
       }
 
       if lhs.hasMVar then

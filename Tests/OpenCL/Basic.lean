@@ -1,4 +1,5 @@
 import HouLean.Data.Vector
+import HouLean.OpenCL.Reference
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Compiler.Main
@@ -107,9 +108,9 @@ info: double tests_opencl_basic_foo1(uint n, double x){
       return a;
 }
 
-double main(uint n, double x){
-      return tests_opencl_basic_foo1(n, x);
+double main(uint x, double x1){
+      return tests_opencl_basic_foo1(x, x1);
 }
 -/
 #guard_msgs in
-#opencl_compile foo
+#opencl_compile fun x => foo x

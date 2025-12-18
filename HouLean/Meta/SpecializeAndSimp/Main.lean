@@ -134,6 +134,8 @@ def specializeArgsOnly (funName : Name) : MetaM Bool := do
 
 def inline? (e : Expr) : MetaM (Option Expr) := do
   if let some fname := e.getAppFn.constName? then
+    if ← isReducible fname then
+      return (← unfold e fname).expr
     if ← specializeArgsOnly fname then
       return none
     if let some e ← letBindMatchDiscrs? e (doUnfold:=true) then
