@@ -114,3 +114,60 @@ double main(uint x, double x1){
 -/
 #guard_msgs in
 #opencl_compile fun x => foo x
+
+
+/--
+info: uint main(bool b){
+      if (b == true✝)
+        {
+              return 1;
+        } else
+        {
+              return 0;
+        }
+}
+-/
+#guard_msgs in
+#opencl_compile (fun b : Bool => if b then 1 else 0)
+
+/--
+info: uint main(bool b, bool c){
+      if (b == c)
+        {
+              return 1;
+        } else
+        {
+              return 0;
+        }
+}
+-/
+#guard_msgs in
+#opencl_compile (fun b c : Bool => if b = c then 1 else 0)
+
+/--
+info: uint main(uint x, uint y){
+      if (x == y)
+        {
+              return 1;
+        } else
+        {
+              return 0;
+        }
+}
+-/
+#guard_msgs in
+#opencl_compile (fun x y : Nat => if x = y then 1 else 0)
+
+/--
+info: uint main(uint x, uint y){
+      if (x == y == true✝)
+        {
+              return 1;
+        } else
+        {
+              return 0;
+        }
+}
+-/
+#guard_msgs in
+#opencl_compile (fun x y : Nat => if x == y then 1 else 0)

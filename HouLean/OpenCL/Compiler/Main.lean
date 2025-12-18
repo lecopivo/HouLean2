@@ -176,25 +176,46 @@ partial def compileExpr (e : Expr) : CompileM (TSyntax `clExpr) := do
       if let some fname := e.getAppFn.constName? then
         if ← isProjectionFn fname then
           throwError "Projection encountered; should compile structure: {e}"
-        if ← isConstructorApp e then
-          throwError "Constructor encountered; should compile structure/enum: {e}"
+        if let some info ← isConstructorApp? e then
+          let type ← whnfR (← inferType e)
+          let (sname, params) := type.getAppFnArgs
+          if isStructure (← getEnv) sname then
+            let _ ← compileStructure type sname params
+            return ← compileExpr e
+          else
+            throwError "Type {info.name} is not supported!"
         if ← isMatcher fname then
           return ← compileExpr (← unfold e fname).expr
         if isCasesOnRecursor (← getEnv) fname then
           throwError "Cases-on recursor not supported: {e}"
+
+      if let .proj sname _ s := e then
+        if isStructure (← getEnv) sname then
+          let type ← whnfR (←inferType s)
+          trace[HouLean.OpenCL.compiler] "unknown projection {e}, comping the type {type}"
+          let _ ← compileStructure type sname type.getAppArgs
+          return ← compileExpr e
       throwError "Don't know how to compile: {e}"
 
-end
-
-/-! # Type Compilation -/
-
-mutual
 
 /-- Compile a structure type with concrete parameters. -/
 partial def compileStructure (type : Expr) (structName : Name) (params : Array Expr) : CompileM OpenCLTypeSyntax := do
-  let ps ← params.mapM compileType
+
+  trace[HouLean.OpenCL.compiler] "compiling type {type}"
+
+  -- convert parameters to names
+  -- we should probably do something more sophisticated
+  let ps ← params.mapM fun p => do
+    let t ← inferType p
+    if t.isType then
+      let t' ← compileType p
+      pure t'.name
+    else
+      let p' ← compileExpr p
+      pure (.mkSimple (toString s!"{p'}"))
+
   let name := ps.foldl (init := nameToString structName)
-    fun s p => s ++ "_" ++ (toString p.name).replace " " ""
+    fun s p => s ++ "_" ++ (toString p).replace " " ""
   let clId := mkIdent (.mkSimple name)
   addOpenCLType type name none -- todo: add definition
   -- Generate projection implementations

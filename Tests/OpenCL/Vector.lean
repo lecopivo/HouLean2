@@ -285,8 +285,35 @@ Resulting specialization:
 
 
 /--
-info: def Vector.normalized_Float_3 := ⏎
-fun u => u.normalize.1
+info: def Vector.length2_Float_3 := ⏎
+fun u =>
+  let a := u[0] * u[0];
+  let a := a + u[1] * u[1];
+  let a := a + u[2] * u[2];
+  a
+
+def Vector.length_Float_3 := ⏎
+fun u => sqrt u.length2_Float_3
+
+def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_6 := ⏎
+fun x => decide (1e-6 ≥ abs (x - 0))
+
+def Inv.inv_Float := ⏎
+fun a => 1 / a
+
+def HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 := ⏎
+fun a a_1 =>
+  let is := Inv.inv_Float a_1;
+  is * a
+
+def Vector.normalize_Float_3 := ⏎
+fun u =>
+  let len := u.length_Float_3;
+  if ApproxEqual.approxEqual_Float_Float_0_1e_6 len = true then (u, 0)
+  else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
+
+def Vector.normalized_Float_3 := ⏎
+fun u => u.normalize_Float_3.1
 
 def Vector.dot_Float_3 := ⏎
 fun u v =>
@@ -294,9 +321,6 @@ fun u v =>
   let a := a + u[1] * v[1];
   let a := a + u[2] * v[2];
   a
-
-def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_6 := ⏎
-fun x => decide (1e-6 ≥ abs (x - 0))
 
 def Vector.slerp_Float_3 := ⏎
 fun v w t =>

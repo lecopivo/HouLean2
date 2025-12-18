@@ -111,7 +111,16 @@ matrix33float main(matrix33float x, matrix33float y){
 #opencl_compile (fun x y : Matrix Float32 3 3 => x + y)
 
 
-/-- error: Constructor encountered; should compile structure/enum: (#v[v[0], v[1]], v[2]) -/
+/--
+info: Prod_float2_float vector_split1_2_float32(float3 v){
+      return (Prod_float2_float){(float2){v.x, v.y}, v.z};
+}
+
+Prod_float2_float main(float3 x){
+      const Prod_float2_float a = vector_split1_2_float32(x);
+      return a;
+}
+-/
 #guard_msgs in
 #opencl_compile (fun (x : Vector Float32 3) =>
   let a := x.split1
@@ -139,12 +148,18 @@ info: Prod_matrix33float_matrix33float main(matrix44float A, float3 x){
 
 
 /--
-error: Constructor encountered; should compile structure/enum: (({
-      data :=
-        #v[#v[(a.row 0 ⋯)[0], (a.row 0 ⋯)[1], (a.row 0 ⋯)[2]], #v[(a.row 1 ⋯)[0], (a.row 1 ⋯)[1], (a.row 1 ⋯)[2]],
-          #v[(a.row 2 ⋯)[0], (a.row 2 ⋯)[1], (a.row 2 ⋯)[2]]] },
-    #v[(a.row 0 ⋯)[3], (a.row 1 ⋯)[3], (a.row 2 ⋯)[3]]),
-  #v[(a.row 3 ⋯)[0], (a.row 3 ⋯)[1], (a.row 3 ⋯)[2]], (a.row 3 ⋯)[3])
+info: Prod_Prod_matrix33float_float3_Prod_float3_float houlean_matrix_split1_3_float32(matrix44float a){
+      return
+        (Prod_Prod_matrix33float_float3_Prod_float3_float){(Prod_matrix33float_float3){(matrix33float){(float3){a.row0.x,
+                      a.row0.y, a.row0.z},
+                  (float3){a.row1.x, a.row1.y, a.row1.z}, (float3){a.row2.x, a.row2.y, a.row2.z}},
+              (float3){a.row0.w, a.row1.w, a.row2.w}},
+          (Prod_float3_float){(float3){a.row3.x, a.row3.y, a.row3.z}, a.row3.w}};
+}
+
+Prod_Prod_matrix33float_float3_Prod_float3_float main(matrix44float A){
+      return houlean_matrix_split1_3_float32(A);
+}
 -/
 #guard_msgs in
 #opencl_compile (fun (A : Matrix Float32 4 4) => A.split1)
@@ -174,18 +189,63 @@ info: Prod_float_float main(float x){
   (a.1 + a.2.2, a.2.1))
 
 
-/-- error: Constructor encountered; should compile structure/enum: (x, x) -/
+/--
+info: Prod_float_float main(float x){
+      return (Prod_float_float){x, x};
+}
+-/
 #guard_msgs in
 #opencl_compile (fun x : Float32 => (x,x))
 
 
 /--
-error: Constructor encountered; should compile structure/enum: (({
-      data :=
-        #v[#v[(a.row 0 ⋯)[0], (a.row 0 ⋯)[1], (a.row 0 ⋯)[2]], #v[(a.row 1 ⋯)[0], (a.row 1 ⋯)[1], (a.row 1 ⋯)[2]],
-          #v[(a.row 2 ⋯)[0], (a.row 2 ⋯)[1], (a.row 2 ⋯)[2]]] },
-    #v[(a.row 0 ⋯)[3], (a.row 1 ⋯)[3], (a.row 2 ⋯)[3]]),
-  #v[(a.row 3 ⋯)[0], (a.row 3 ⋯)[1], (a.row 3 ⋯)[2]], (a.row 3 ⋯)[3])
+info: Prod_Prod_matrix33float_float3_Prod_float3_float houlean_matrix_split1_3_float32(matrix44float a){
+      return
+        (Prod_Prod_matrix33float_float3_Prod_float3_float){(Prod_matrix33float_float3){(matrix33float){(float3){a.row0.x,
+                      a.row0.y, a.row0.z},
+                  (float3){a.row1.x, a.row1.y, a.row1.z}, (float3){a.row2.x, a.row2.y, a.row2.z}},
+              (float3){a.row0.w, a.row1.w, a.row2.w}},
+          (Prod_float3_float){(float3){a.row3.x, a.row3.y, a.row3.z}, a.row3.w}};
+}
+
+float vector_dot_float32_3(float3 u, float3 v){
+      const float a = u.x * v.x;
+      const float a1 = a + u.y * v.y;
+      const float a2 = a1 + u.z * v.z;
+      return a2;
+}
+
+float3 houlean_matrix_mulvec_float32_3_3(matrix33float a, float3 v){
+      return
+        (float3){vector_dot_float32_3(a.row0, v), vector_dot_float32_3(a.row1, v), vector_dot_float32_3(a.row2, v)};
+}
+
+float3 hmul_hmul_matrix_float32_3_3_vector_float32_3_vector_float32_3(matrix33float a, float3 a1){
+      return houlean_matrix_mulvec_float32_3_3(a, a1);
+}
+
+float inv_inv_float32(float a){
+      return 1.0 / a;
+}
+
+float3 hdiv_hdiv_vector_float32_3_float32_vector_float32_3(float3 a, float a1){
+      const float is = inv_inv_float32(a1);
+      return is * a;
+}
+
+float3 houlean_matrix_transformpointright_float32_3(matrix44float transform, float3 point){
+      const Prod_Prod_matrix33float_float3_Prod_float3_float tmp = houlean_matrix_split1_3_float32(transform);
+      const float w = vector_dot_float32_3(point, tmp.snd.fst) + tmp.snd.snd;
+      return
+        hdiv_hdiv_vector_float32_3_float32_vector_float32_3(hmul_hmul_matrix_float32_3_3_vector_float32_3_vector_float32_3(tmp.fst.fst,
+              point) +
+            tmp.fst.snd,
+          w);
+}
+
+float3 main(matrix44float A, float3 x){
+      return houlean_matrix_transformpointright_float32_3(A, x);
+}
 -/
 #guard_msgs in
 #opencl_compile (fun (A : Matrix Float32 4 4) (x : Vector Float32 3) => A.transformPointRight x)
@@ -286,7 +346,59 @@ info: double main(double x){
 #opencl_compile (fun x : Float => Math.acos x)
 
 
+/--
+info: def Vector.length2_Float32_3 := ⏎
+fun u =>
+  let a := u[0] * u[0];
+  let a := a + u[1] * u[1];
+  let a := a + u[2] * u[2];
+  a
 
-/-- error: Don't know how to compile: u.normalize.1 -/
+def Vector.length_Float32_3 := ⏎
+fun u => sqrt u.length2_Float32_3
+
+def HouLean.Math.ApproxEqual.approxEqual_Float32_Float32_0_1e_9 := ⏎
+fun x => decide (1e-9 ≥ abs (x - 0))
+
+def Inv.inv_Float32 := ⏎
+fun a => 1 / a
+
+def HDiv.hDiv_Vector_Float32_3_Float32_Vector_Float32_3 := ⏎
+fun a a_1 =>
+  let is := Inv.inv_Float32 a_1;
+  is * a
+
+def Vector.normalize_Float32_3 := ⏎
+fun u =>
+  let len := u.length_Float32_3;
+  if ApproxEqual.approxEqual_Float32_Float32_0_1e_9 len = true then (u, 0)
+  else (HDiv.hDiv_Vector_Float32_3_Float32_Vector_Float32_3 u len, len)
+
+def Vector.normalized_Float32_3 := ⏎
+fun u => u.normalize_Float32_3.1
+
+def Vector.dot_Float32_3 := ⏎
+fun u v =>
+  let a := u[0] * v[0];
+  let a := a + u[1] * v[1];
+  let a := a + u[2] * v[2];
+  a
+
+def Vector.slerp_Float32_3 := ⏎
+fun v w t =>
+  let d := v.normalized_Float32_3.dot_Float32_3 w.normalized_Float32_3;
+  let d := clamp d (-1) 1;
+  let theta := acos d;
+  let s := sin theta;
+  let a := sin ((1 - t) * theta) / s;
+  let b := sin (t * theta) / s;
+  if ApproxEqual.approxEqual_Float32_Float32_0_1e_9 theta = true then lerp v w t else a * v + b * w
+
+def HouLean.Math.Slerp.slerp_Vector_Float32_3_Float32 := ⏎
+fun x y t => x.slerp_Float32_3 y t
+
+Resulting specialization:
+  fun x y w => Slerp.slerp_Vector_Float32_3_Float32 x y w
+-/
 #guard_msgs in
-#opencl_compile (fun (x y : Vector Float32 3) (w : Float32) => Math.slerp x y w)
+#opencl_sas (fun (x y : Vector Float32 3) (w : Float32) => Math.slerp x y w)

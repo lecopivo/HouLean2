@@ -297,6 +297,9 @@ partial def specializeAndSimpImpl (e : Expr) : M Expr := do
     | _ =>
       throwError "specializeAndSimpImpl: unhandled case {e.ctorName}"
 
+  | .proj sname i x =>
+    return .proj sname i (← specializeAndSimp x)
+
   | _ => return e
 where
   simplify (e : Expr) : M Expr := do

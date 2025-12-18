@@ -1,5 +1,6 @@
 import HouLean.OpenCL.Compiler
 import HouLean.OpenCL.Basic
+import HouLean.OpenCL.Reference.DataTypes
 
 namespace HouLean.OpenCL
 
@@ -39,11 +40,13 @@ impl_by : a == b ==> a == b
 impl_by [AtomicOpenCLType R] [BEq R] : x == y ==> x == y
 impl_by [AtomicOpenCLType R] [AllowedVectorSize n] [BEq R] : u == v ==> u == v
 
+-- todo: these needs fixing as often we end up with `x = y   ==>  x == y == true`
 impl_by : decide (b = true) ==> b
 impl_by : decide (b = false) ==> !b
 impl_by : decide (a = b) ==> a == b
-impl_by [AtomicOpenCLType R] [DecidableEq R] : decide (x = y) ==> a == b
+impl_by [AtomicOpenCLType R] [DecidableEq R] : decide (x = y) ==> x == y
 impl_by [AtomicOpenCLType R] [AllowedVectorSize n] [DecidableEq R] : decide (u = v) ==> u == v
+
 
 -- `!=`
 impl_by (a b : Bool) : a != b ==> a != b
