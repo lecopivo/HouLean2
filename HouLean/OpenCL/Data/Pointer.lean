@@ -28,7 +28,7 @@ instance : Nonempty (DPointer T addr const restrict) :=
 opaque get [Inhabited T] (a : DPointer T addr const restrict) (offset : USize) : OpenCLM T
 opaque set (a : DPointer T addr (const := false) restrict) (offset : USize) (val : T) : OpenCLM Unit
 
-opaque vload [Inhabited T] (a : DPointer T addr const restrict) (offset : USize) (n : Nat) : OpenCLM (Vector T n)
+opaque vload [Inhabited T] (a : DPointer T addr const restrict) (n : Nat) (offset : USize) : OpenCLM (Vector T n)
 opaque vstore {n} (a : DPointer T addr (const := false) restrict) (offset : USize) (val : Vector T n) : OpenCLM Unit
 
 
@@ -96,7 +96,7 @@ impl_by (ptr : DPointer T addr (const:=false) restrict) (off : USize) (val : T) 
 
 
 impl_by (ptr : DPointer T addr const restrict) (off : USize) (n : Nat) :
-    ptr.vload off n ==> do
+    ptr.vload n off ==> do
 
   let some n ← Meta.runInterpreter? Nat n
     | throwError "Function `vload` needs to know the vector size, {n}, at compile time!"

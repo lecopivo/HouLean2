@@ -96,7 +96,7 @@ instance [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] :
 def vload' [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] {addr const restrict}
     (ptr : DPointer α addr const restrict) (off : USize) : OpenCLM (Matrix α m n) := do
   return Matrix.mk (← Vector.ofFnM fun i =>
-    ptr.vload ((off + i.1.toUSize) * n.toUSize) n)
+    ptr.vload n ((off + i.1.toUSize) * n.toUSize))
 
 def vstore' [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] {addr restrict}
     (ptr : DPointer α addr (const:=false) restrict) (off : USize) (value : Matrix α m n) : OpenCLM Unit := do
@@ -109,15 +109,6 @@ def vstore' [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
 -- #opencl_compile vstore' (α:=Float32) (m:=3) (n:=3) (addr:=.global) (restrict:=true)
 -- #opencl_compile vload' (α:=Float32) (m:=4) (n:=3) (addr:=.global) (restrict:=true) (const:=true)
 
-
-#exit
-#check ArrayPointer (Matrix Float32 3 3)
-
-#opencl_compile (fun ptr : ArrayPointer (Matrix Float32 3 3) => ptr)
-
-#opencl_compile (fun ptr : DPointer Float32 (addr:=.global) (restrict:=true) => do
-  let v0 ← ptr.vload 0 3
-  return v0)
 
 -- -- vecMul
 -- /-- Likely a better implementation of `vecMul` for OpenCL -/
