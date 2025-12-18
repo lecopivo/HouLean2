@@ -25,7 +25,7 @@ def imag (q : Quaternion R) : Vector R 3 := #v[q.x, q.y, q.z]
 
 def identity : Quaternion R := .mk #v[0,0,0,1]
 
-instance [ToString R] : ToString (Quaternion R) := ⟨fun q => s!"quat({q.x}, {q.y}, {q.z}, {q.w})"⟩
+instance [ToString R] : ToString (Quaternion R) := ⟨fun q => s!"{q.w} + {q.x}𝕚 + {q.y}𝕛 + {q.z}𝕜"⟩
 
 
 -- ============================================================================
