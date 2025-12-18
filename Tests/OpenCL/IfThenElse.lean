@@ -1,12 +1,17 @@
-#exit
-import HouLean.OpenCL.Compiler.Main
-import HouLean.OpenCL.Data.Float
+import HouLean.OpenCL.Compiler
+import HouLean.OpenCL.Reference
+-- import HouLean.OpenCL.Data.Float
 import HouLean.OpenCL.Data.Init
-import HouLean.OpenCL.Data.Int
+-- import HouLean.OpenCL.Data.Int
+
+
+import HouLean.Meta.RewriteBy
 
 open HouLean Math
 
 namespace Tests.OpenCL.IfThenElse
+
+#exit
 
 /--
 info:

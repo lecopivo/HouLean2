@@ -1,29 +1,32 @@
-#exit
-import HouLean.OpenCL.Compiler.Main
-import HouLean.OpenCL.Data.Int
+import HouLean.OpenCL.Compiler
 import HouLean.OpenCL.Data.Vector
-import HouLean.OpenCL.Data.MProd
-import HouLean.OpenCL.Data.Prod
 import HouLean.OpenCL.Data.ArrayType
 import HouLean.Meta.DoNotation
+import HouLean.OpenCL.Reference
 
 open HouLean OpenCL
 
 namespace Tests.OpenCL.ForLoop
 
+attribute [opencl_csimp] Id.run
+impl_by {α : Type} (a : α) : ForInStep.yield a ==> a
+impl_by {α : Type} : Id α ==> α
+impl_by {α : Type} : OpenCLM α ==> α
+
+
 /--
-info:
-double3 (anonymous)(double a)
-{
-    double state = a;
-    for (uint i = 0; i < 10; i += 2)
-    {
-        double x = (state * state) * (double)(i);
-        double x1 = x + x;
-        state = x1;
-    }
-    double r = state;
-    return (double3){r + r, r * r, 5.0d * r};
+info: double3 main(double a){
+      const double x = a;
+      double state = x;
+      for (uint✝ i = 0;i < 10; i += 2)
+        {
+              const double x1 = state;
+              const double x2 = x1 * x1 * (double)(i);
+              const double x3 = x2 + x2;
+              state = x3;
+        }
+      const double x1 = state;
+      return (double3){x1 + x1, x1 * x1, 5.0 * x1};
 }
 -/
 #guard_msgs in
@@ -37,24 +40,25 @@ double3 (anonymous)(double a)
 
 
 /--
-info:
-double3 (anonymous)(double a)
-{
-    double state = a;
-    for (uint i = 0; i < 10; i += 2)
-    {
-        double state1 = state;
-        for (uint j = 5; j < 20; j += 1)
+info: double3 main(double a){
+      const double x = a;
+      double state = x;
+      for (uint✝ i = 0;i < 10; i += 2)
         {
-            double x = ((state1 * state1) * (double)(i)) * (double)(j);
-            double x1 = x + x;
-            state1 = x1;
+              const double x1 = state;
+              double state1 = x1;
+              for (uint✝ j = 5;j < 20; j += 1)
+                {
+                      const double x2 = state1;
+                      const double x3 = x2 * x2 * (double)(i) * (double)(j);
+                      const double x4 = x3 + x3;
+                      state1 = x4;
+                }
+              const double x2 = state1;
+              state = x2;
         }
-        double r = state1;
-        state = r;
-    }
-    double r = state;
-    return (double3){r + r, r * r, 5.0d * r};
+      const double x1 = state;
+      return (double3){x1 + x1, x1 * x1, 5.0 * x1};
 }
 -/
 #guard_msgs in
@@ -80,26 +84,24 @@ def fib {α} [Add α] [One α] [Zero α] (n : Nat) := Id.run do
 
 
 /--
-info:
-double tests_opencl_forloop_fib_d(uint n)
-{
-    double a = 0.0d;
-    double b = 1.0d;
-    mprod_d_d state = (mprod_d_d){a, b};
-    for (uint x = 0; x < n; x += 1)
-    {
-        double a1 = state.fst;
-        double b1 = state.snd;
-        double b2 = a1 + b1;
-        state = (mprod_d_d){b1, b2};
-    }
-    mprod_d_d r = state;
-    return r.snd;
+info: double tests_opencl_forloop_fib_float(uint n){
+      const double a = 0.0;
+      const double b = 1.0;
+      MProd_double_double state = (MProd_double_double){a, b};
+      for (uint✝ x = 0;x < n; x += 1)
+        {
+              const double a1 = state.fst;
+              const double b1 = state.snd;
+              const double tmp = b1;
+              const double b2 = a1 + b1;
+              const double a2 = tmp;
+              state = (MProd_double_double){a2, b2};
+        }
+      return state.snd;
 }
 
-double (anonymous)(uint n)
-{
-    return tests_opencl_forloop_fib_d(n);
+double main(uint n){
+      return tests_opencl_forloop_fib_float(n);
 }
 -/
 #guard_msgs in
@@ -120,94 +122,6 @@ def foo (res : Vector Nat 3) (idx : Vector Nat 3) (mass : ArrayPointer Float) (v
         p += mi * vi
   return (m, p / m)
 
-/--
-info:
-uint vector_x_ui3(uint3 a)
-{
-    return a.x;
-}
-
-uint vector_y_ui3(uint3 a)
-{
-    return a.y;
-}
-
-uint vector_z_ui3(uint3 a)
-{
-    return a.z;
-}
-
-double houlean_opencl_arraytype_get_dpd(double * a, ulong a1)
-{
-    return a[a1];
-}
-
-double getelem_pduid(double * xs, uint i)
-{
-    return houlean_opencl_arraytype_get_dpd(xs, (ulong)(i));
-}
-
-double3 houlean_opencl_arraytype_get_d3pd(double * a, ulong a1)
-{
-    return vload3(a1, a);
-}
-
-double3 getelem_pduid3(double * xs, uint i)
-{
-    return houlean_opencl_arraytype_get_d3pd(xs, (ulong)(i));
-}
-
-double inv_d(double a)
-{
-    return 1.0d / a;
-}
-
-double3 hdiv_d3dd3(double3 a, double a1)
-{
-    double is = inv_d(a1);
-    return (double3){is * a.x, is * a.y, is * a.z};
-}
-
-prod_d_d3 tests_opencl_forloop_foo(uint3 res, uint3 idx, double * mass, double * vel)
-{
-    double m = 0.0d;
-    double3 p = (double3){0.0d, 0.0d, 0.0d};
-    mprod_d_d3 state = (mprod_d_d3){m, p};
-    for (uint i = 0; i < 3; i += 1)
-    {
-        double m1 = state.fst;
-        double3 p1 = state.snd;
-        mprod_d_d3 state1 = (mprod_d_d3){m1, p1};
-        for (uint j = 0; j < 3; j += 1)
-        {
-            double m2 = state1.fst;
-            double3 p2 = state1.snd;
-            mprod_d_d3 state2 = (mprod_d_d3){m2, p2};
-            for (uint k = 0; k < 3; k += 1)
-            {
-                double m3 = state2.fst;
-                double3 p3 = state2.snd;
-                uint linIdx = ((vector_x_ui3(idx) + i) + (vector_x_ui3(res) * (vector_y_ui3(idx) + j))) + ((vector_x_ui3(res) * vector_y_ui3(res)) * (vector_z_ui3(idx) + k));
-                double mi = getelem_pduid(mass, linIdx);
-                double3 vi = getelem_pduid3(vel, linIdx);
-                double m4 = m3 + mi;
-                double3 p4 = p3 + (mi * vi);
-                state2 = (mprod_d_d3){m4, p4};
-            }
-            mprod_d_d3 r = state2;
-            state1 = (mprod_d_d3){r.fst, r.snd};
-        }
-        mprod_d_d3 r = state1;
-        state = (mprod_d_d3){r.fst, r.snd};
-    }
-    mprod_d_d3 r = state;
-    return (prod_d_d3){r.fst, hdiv_d3dd3(r.snd, r.fst)};
-}
-
-prod_d_d3 (anonymous)(uint3 res, uint3 idx, double * mass, double * vel)
-{
-    return tests_opencl_forloop_foo(res, idx, mass, vel);
-}
--/
+/-- error: Don't know how to compile type: OpenCLM (Float × Vector Float 3) -/
 #guard_msgs in
 #opencl_compile foo

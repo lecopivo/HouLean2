@@ -4,6 +4,8 @@ open HouLean Apex Std
 
 namespace Tests.Visualize
 
+set_option linter.floatUsage false
+
 @[apex]
 def t1 (m : HashMap String Float) := m.alter "foo" (fun v? => some ((v?.getD 0) + 0.1))
 

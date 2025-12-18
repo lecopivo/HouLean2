@@ -115,8 +115,27 @@ def shouldInline (fname : Name) (args : Array Expr) : MetaM Bool := do
       return true
   return false
 
+def specializeArgsOnly (funName : Name) : MetaM Bool := do
+  if [``ite, ``dite, ``forIn, ``LT.lt, ``LE.le, ``Bind.bind].contains funName then
+    return true
+
+  if let some info ← getProjectionFnInfo? funName then
+    if ¬info.fromClass then
+      return true
+
+  if ← isMatcher funName then
+    return true
+
+  if let .defnInfo _ ← getConstInfo funName then
+    return false
+
+  return true
+
+
 def inline? (e : Expr) : MetaM (Option Expr) := do
   if let some fname := e.getAppFn.constName? then
+    if ← specializeArgsOnly fname then
+      return none
     if let some e ← letBindMatchDiscrs? e (doUnfold:=true) then
       return some e
     let args := e.getAppArgs
@@ -177,21 +196,6 @@ private def skipSpecialization (e : Expr) : M Bool := do
   return false
 
 
-def specializeArgsOnly (funName : Name) : M Bool := do
-  if [``ite, ``dite, ``forIn, ``LT.lt, ``LE.le, ``Bind.bind].contains funName then
-    return true
-
-  if let some info ← getProjectionFnInfo? funName then
-    if ¬info.fromClass then
-      return true
-
-  if ← isMatcher funName then
-    return true
-
-  if let .defnInfo _ ← getConstInfo funName then
-    return false
-
-  return true
 
 /-- Specialize a function application. -/
 partial def specializeApp (fn : Expr) (args : Array Expr) : M Expr := do

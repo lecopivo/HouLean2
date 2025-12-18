@@ -4,6 +4,7 @@ open HouLean Apex Compiler
 
 open Qq
 
+set_option linter.floatUsage false
 
 /--
 info: Nodes:
