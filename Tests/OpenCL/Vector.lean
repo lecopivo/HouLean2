@@ -48,7 +48,6 @@ info: Resulting specialization:
 #guard_msgs in
 #opencl_sas (decide (x > y))
 
-
 /--
 info: Resulting specialization:
   !(decide (y > x) && decide (x > 0))
@@ -62,6 +61,13 @@ info: Resulting specialization:
 -/
 #guard_msgs in
 #opencl_sas (-134.3e-3 : Float)
+
+/--
+info: Resulting specialization:
+  1230
+-/
+#guard_msgs in
+#opencl_sas (1.23e3 : Float)
 
 /--
 info: def HouLean.Math.CatmullRom.catmullRom_Float_Float := ⏎
