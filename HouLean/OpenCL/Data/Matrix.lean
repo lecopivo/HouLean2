@@ -95,22 +95,32 @@ instance [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] :
 def vload' [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] {addr const restrict}
     (ptr : DPointer α addr const restrict) (off : USize) : OpenCLM (Matrix α m n) := do
   return Matrix.mk (← Vector.ofFnM fun i =>
-    ptr.vload n ((off + i.1.toUSize) * n.toUSize))
+    ptr.vload n ((off + i.1.toUSize) * m.toUSize))
 
 def vstore' [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] {addr restrict}
     (ptr : DPointer α addr (const:=false) restrict) (off : USize) (value : Matrix α m n) : OpenCLM Unit := do
   Fin.foldlM m (init:=()) fun _ i =>
   -- unroll for h : i in [0:m] do
-    ptr.vstore ((off + i.1.toUSize) * n.toUSize) (value.row i)
+    ptr.vstore ((off + i.1.toUSize) * m.toUSize) (value.row i)
 
 -- set_option pp.funBinderTypes true in
 -- set_option trace.HouLean.OpenCL.compiler true in
--- #opencl_compile vstore' (α:=Float32) (m:=3) (n:=3) (addr:=.global) (restrict:=true)
+
+
+/--
+info: void
+        houlean_opencl_matrix_vstore'_float32_3_3_pointeraddressspace_global_true(global float * ptr, size_t off,
+    matrix33float value){
+      vstore3(value.row0, (off + 0) * 3, ptr);
+      vstore3(value.row1, (off + 1) * 3, ptr);
+      vstore3(value.row2, (off + 2) * 3, ptr);
+      return null✝;
+}
+
+void main(global float * ptr, size_t off, matrix33float value){
+      return houlean_opencl_matrix_vstore'_float32_3_3_pointeraddressspace_global_true(ptr, off, value);
+}
+-/
+#guard_msgs in
+#opencl_compile vstore' (α:=Float32) (m:=3) (n:=3) (addr:=.global) (restrict:=true)
 -- #opencl_compile vload' (α:=Float32) (m:=4) (n:=3) (addr:=.global) (restrict:=true) (const:=true)
-
-
--- -- vecMul
--- /-- Likely a better implementation of `vecMul` for OpenCL -/
--- def _root_.HouLean.Matrix.vecMul_sum_rows [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : Vector α n :=
---   sum fun j : Fin m => v[j] * a.row j
--- implemented_by [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : a.vecMul v = a.vecMul_sum_rows v

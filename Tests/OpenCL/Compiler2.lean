@@ -82,18 +82,20 @@ info: {
   let a := x * y
   a + x * y
 
+
 /--
 info: {
       const double a = x * y;
       const double b = a - x + y;
-      return a + x * y / b;
+      return (a + x) * (y / b);
 }
 -/
 #guard_msgs in
 #ocl_compile fun x y : Float =>
   let a := x * y
   let b := a - x + y
-  a + x * y / b
+  (a + x) * (y / b)
+
 
 /--
 info: {

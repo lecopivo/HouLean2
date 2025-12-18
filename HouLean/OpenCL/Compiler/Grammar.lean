@@ -878,3 +878,25 @@ end PP
 
 /-- An OpenCL program (sequence of top-level commands). -/
 syntax clProgram := clCmd*
+
+
+
+open PrettyPrinter Parenthesizer in
+@[category_parenthesizer clExpr]
+def clExprParenthesizer : CategoryParenthesizer := fun prec ↦
+  maybeParenthesize
+    `clExpr
+    false
+    (fun stx ↦ Unhygienic.run `(clExpr|($(⟨stx⟩):clExpr)))
+    prec
+    (parenthesizeCategoryCore `clExpr prec)
+
+-- open PrettyPrinter Parenthesizer in
+-- @[category_parenthesizer clStmtLike]
+-- def clStmtLikeParenthesizer : CategoryParenthesizer := fun prec ↦
+--   maybeParenthesize
+--     `clStmtLike
+--     false
+--     (fun stx ↦ Unhygienic.run `(clStmtLike|($(⟨stx⟩):clStmtLike)))
+--     prec
+--     (parenthesizeCategoryCore `clStmtLike prec)
