@@ -131,7 +131,7 @@ Outputs:
 Wires:
 
 Literals:
-  0: float 0.000000 -> /array_GetFloat/default[in]
+  0: float 0.0 -> /array_GetFloat/default[in]
 -/
 #guard_msgs in
 #apex_graph fun (x : Array Float) (i : Nat) => x[i]!

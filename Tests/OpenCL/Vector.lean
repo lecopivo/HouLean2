@@ -94,8 +94,8 @@ fun u =>
 def Vector.length_Float_3 := ⏎
 fun u => sqrt u.length2_Float_3
 
-def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_6 := ⏎
-fun x => decide (1e-6 ≥ abs (x - 0))
+def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_9 := ⏎
+fun x => decide (1e-9 ≥ abs (x - 0))
 
 def Inv.inv_Float := ⏎
 fun a => 1 / a
@@ -108,7 +108,7 @@ fun a a_1 =>
 def Vector.normalize_Float_3 := ⏎
 fun u =>
   let len := u.length_Float_3;
-  if ApproxEqual.approxEqual_Float_Float_0_1e_6 len = true then (u, 0)
+  if ApproxEqual.approxEqual_Float_Float_0_1e_9 len = true then (u, 0)
   else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
 
 def HouLean.Math.Normalize.normalize_Vector_Float_3_Float := ⏎
@@ -301,8 +301,8 @@ fun u =>
 def Vector.length_Float_3 := ⏎
 fun u => sqrt u.length2_Float_3
 
-def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_6 := ⏎
-fun x => decide (1e-6 ≥ abs (x - 0))
+def HouLean.Math.ApproxEqual.approxEqual_Float_Float_0_1e_9 := ⏎
+fun x => decide (1e-9 ≥ abs (x - 0))
 
 def Inv.inv_Float := ⏎
 fun a => 1 / a
@@ -315,7 +315,7 @@ fun a a_1 =>
 def Vector.normalize_Float_3 := ⏎
 fun u =>
   let len := u.length_Float_3;
-  if ApproxEqual.approxEqual_Float_Float_0_1e_6 len = true then (u, 0)
+  if ApproxEqual.approxEqual_Float_Float_0_1e_9 len = true then (u, 0)
   else (HDiv.hDiv_Vector_Float_3_Float_Vector_Float_3 u len, len)
 
 def Vector.normalized_Float_3 := ⏎
@@ -336,7 +336,7 @@ fun v w t =>
   let s := sin theta;
   let a := sin ((1 - t) * theta) / s;
   let b := sin (t * theta) / s;
-  if ApproxEqual.approxEqual_Float_Float_0_1e_6 theta = true then lerp v w t else a * v + b * w
+  if ApproxEqual.approxEqual_Float_Float_0_1e_9 theta = true then lerp v w t else a * v + b * w
 
 def HouLean.Math.Slerp.slerp_Vector_Float_3_Float := ⏎
 fun x y t => x.slerp_Float_3 y t

@@ -71,7 +71,7 @@ instance : FloatType Float where
   round := .round
   decLt := by infer_instance
   decLe := by infer_instance
-  prec := .single
+  prec := .double
   toNat x := x.toUInt64.toNat
   toInt x := x.toInt64.toInt
 
@@ -99,7 +99,7 @@ instance : FloatType Float32 where
   round := .round
   decLt := by infer_instance
   decLe := by infer_instance
-  prec := .double
+  prec := .single
   toNat x := x.toUInt64.toNat
   toInt x := x.toInt64.toInt
 

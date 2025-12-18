@@ -14,7 +14,7 @@ structure Foo (α : Type u) where
 deriving ProdLike
 
 
-/-- info: (1.000000, (2.000000, "adsf"), #[1, 2, 3], ()) -/
+/-- info: (1, (2, "adsf"), #[1, 2, 3], ()) -/
 #guard_msgs in
 #eval (toProdType (Foo.mk 1.0 2.0 "adsf" #[1,2,3] ()))
 

@@ -1,5 +1,6 @@
 import Lean
 import Qq
+import HouLean.Meta.Float
 
 namespace HouLean
 

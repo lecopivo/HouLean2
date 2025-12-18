@@ -787,7 +787,7 @@ Literals:
   8: int 0 -> /AddInt1/a[in] ⏎
   9: int 0 -> /value/parm[in] ⏎
   10: str "P" -> /geo_PointAttribValueVector3/attribname[in] ⏎
-  11: float 0.000000 -> /GreaterThanFloat/b[in] ⏎
+  11: float 0.0 -> /GreaterThanFloat/b[in] ⏎
   12: int 0 -> /TwoWaySwitchInt/a[in] ⏎
   13: int 1 -> /TwoWaySwitchInt/b[in] ⏎
   14: int 1 -> /EqualsInt/b[in] ⏎

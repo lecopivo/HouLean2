@@ -224,7 +224,7 @@ Wires:
   5: /AddFloat/[anonymous][out] -> /MultiplyFloat1/b[0][in]
 
 Literals:
-  0: float 0.300000 -> /value/parm[in]
+  0: float 0.3 -> /value/parm[in]
 -/
 #guard_msgs in
 #apex_graph fun x : Float => let y := x/x; y* Math.lerp x y 0.3
@@ -572,7 +572,7 @@ Wires:
 Literals:
   0: int 0 -> /fst/parm[in] ⏎
   1: str "hello" -> /snd.fst/parm[in] ⏎
-  2: float 3.141590 -> /snd.snd.fst/parm[in] ⏎
+  2: float 3.14159 -> /snd.snd.fst/parm[in] ⏎
   3: bool "true" -> /snd.snd.snd/parm[in]
 -/
 #guard_msgs in
@@ -613,7 +613,7 @@ Wires:
 Literals:
   0: int 0 -> /fst/parm[in] ⏎
   1: str "hello" -> /snd.fst/parm[in] ⏎
-  2: float 3.141590 -> /snd.snd.fst/parm[in] ⏎
+  2: float 3.14159 -> /snd.snd.fst/parm[in] ⏎
   3: bool "true" -> /snd.snd.snd/parm[in]
 -/
 #guard_msgs in

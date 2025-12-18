@@ -357,8 +357,8 @@ fun u =>
 def Vector.length_Float32_3 := ⏎
 fun u => sqrt u.length2_Float32_3
 
-def HouLean.Math.ApproxEqual.approxEqual_Float32_Float32_0_1e_9 := ⏎
-fun x => decide (1e-9 ≥ abs (x - 0))
+def HouLean.Math.ApproxEqual.approxEqual_Float32_Float32_0_1e_6 := ⏎
+fun x => decide (1e-6 ≥ abs (x - 0))
 
 def Inv.inv_Float32 := ⏎
 fun a => 1 / a
@@ -371,7 +371,7 @@ fun a a_1 =>
 def Vector.normalize_Float32_3 := ⏎
 fun u =>
   let len := u.length_Float32_3;
-  if ApproxEqual.approxEqual_Float32_Float32_0_1e_9 len = true then (u, 0)
+  if ApproxEqual.approxEqual_Float32_Float32_0_1e_6 len = true then (u, 0)
   else (HDiv.hDiv_Vector_Float32_3_Float32_Vector_Float32_3 u len, len)
 
 def Vector.normalized_Float32_3 := ⏎
@@ -392,7 +392,7 @@ fun v w t =>
   let s := sin theta;
   let a := sin ((1 - t) * theta) / s;
   let b := sin (t * theta) / s;
-  if ApproxEqual.approxEqual_Float32_Float32_0_1e_9 theta = true then lerp v w t else a * v + b * w
+  if ApproxEqual.approxEqual_Float32_Float32_0_1e_6 theta = true then lerp v w t else a * v + b * w
 
 def HouLean.Math.Slerp.slerp_Vector_Float32_3_Float32 := ⏎
 fun x y t => x.slerp_Float32_3 y t

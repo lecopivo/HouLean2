@@ -68,9 +68,12 @@ defun normalized (q : Quaternion R) : Quaternion R := q.normalize.1
 
 instance : Inv (Quaternion R) := ⟨fun q =>
   let len2 := q.length2
-  if len2 ≈ 0 then q
+  let tol := ApproxEqual.defaultTol R
+  if len2 ≈[tol*tol] 0 then q
   else q.conj / len2⟩
 
+#eval ApproxEqual.defaultTol Float
+#eval (Quaternion.mk' 0.0 #v[0.00,0,0.000000001])⁻¹
 
 -- ============================================================================
 -- Rotation Constructors

@@ -384,8 +384,8 @@ Wires:
   32: /IfBegin1/snd[5][out] -> /IfEnd1/spare[5][in]
 
 Literals:
-  0: float 0.000000 -> /value/parm[in] ⏎
-  1: float 0.000000 -> /value/parm[in] ⏎
+  0: float 0.0 -> /value/parm[in] ⏎
+  1: float 0.0 -> /value/parm[in] ⏎
   2: bool "true" -> /TwoWaySwitchBool/a[in] ⏎
   3: bool "false" -> /TwoWaySwitchBool/b[in]
 -/
@@ -493,8 +493,8 @@ Literals:
   0: int 0 -> /EqualsInt/b[in] ⏎
   1: str "" -> /sop_fractal/group[in] ⏎
   2: int 3 -> /sop_fractal/divs[in] ⏎
-  3: float 0.500000 -> /sop_fractal/smooth[in] ⏎
-  4: float 1.000000 -> /sop_fractal/scale[in] ⏎
+  3: float 0.5 -> /sop_fractal/smooth[in] ⏎
+  4: float 1.0 -> /sop_fractal/scale[in] ⏎
   5: int 0 -> /sop_fractal/seed[in] ⏎
   6: int 0 -> /sop_fractal/fixed[in] ⏎
   7: int 0 -> /sop_fractal/vtxnms[in] ⏎
@@ -506,12 +506,12 @@ Literals:
   13: str "" -> /sop_subdivide/creases[in] ⏎
   14: int 1 -> /sop_subdivide/iterations[in] ⏎
   15: int 0 -> /sop_subdivide/overridecrease[in] ⏎
-  16: float 0.000000 -> /sop_subdivide/creaseweight[in] ⏎
+  16: float 0.0 -> /sop_subdivide/creaseweight[in] ⏎
   17: int 0 -> /sop_subdivide/outputcrease[in] ⏎
   18: str "creases" -> /sop_subdivide/outcreasegroup[in] ⏎
   19: int 1 -> /sop_subdivide/closeholes[in] ⏎
   20: int 1 -> /sop_subdivide/surroundpoly[in] ⏎
-  21: float 1.000000 -> /sop_subdivide/bias[in] ⏎
+  21: float 1.0 -> /sop_subdivide/bias[in] ⏎
   22: int 1 -> /sop_subdivide/smoothvertex[in] ⏎
   23: int 0 -> /sop_subdivide/consisttopology[in] ⏎
   24: int 0 -> /sop_subdivide/linearcreases[in] ⏎
@@ -819,8 +819,8 @@ Literals:
   1: int 0 -> /EqualsInt/b[in] ⏎
   2: str "" -> /sop_fractal/group[in] ⏎
   3: int 3 -> /sop_fractal/divs[in] ⏎
-  4: float 0.500000 -> /sop_fractal/smooth[in] ⏎
-  5: float 1.000000 -> /sop_fractal/scale[in] ⏎
+  4: float 0.5 -> /sop_fractal/smooth[in] ⏎
+  5: float 1.0 -> /sop_fractal/scale[in] ⏎
   6: int 0 -> /sop_fractal/seed[in] ⏎
   7: int 0 -> /sop_fractal/fixed[in] ⏎
   8: int 0 -> /sop_fractal/vtxnms[in] ⏎
@@ -830,8 +830,8 @@ Literals:
   12: int 1 -> /EqualsInt1/b[in] ⏎
   13: str "" -> /sop_fractal1/group[in] ⏎
   14: int 3 -> /sop_fractal1/divs[in] ⏎
-  15: float 0.500000 -> /sop_fractal1/smooth[in] ⏎
-  16: float 1.000000 -> /sop_fractal1/scale[in] ⏎
+  15: float 0.5 -> /sop_fractal1/smooth[in] ⏎
+  16: float 1.0 -> /sop_fractal1/scale[in] ⏎
   17: int 0 -> /sop_fractal1/seed[in] ⏎
   18: int 0 -> /sop_fractal1/fixed[in] ⏎
   19: int 0 -> /sop_fractal1/vtxnms[in] ⏎
@@ -843,12 +843,12 @@ Literals:
   25: str "" -> /sop_subdivide/creases[in] ⏎
   26: int 1 -> /sop_subdivide/iterations[in] ⏎
   27: int 0 -> /sop_subdivide/overridecrease[in] ⏎
-  28: float 0.000000 -> /sop_subdivide/creaseweight[in] ⏎
+  28: float 0.0 -> /sop_subdivide/creaseweight[in] ⏎
   29: int 0 -> /sop_subdivide/outputcrease[in] ⏎
   30: str "creases" -> /sop_subdivide/outcreasegroup[in] ⏎
   31: int 1 -> /sop_subdivide/closeholes[in] ⏎
   32: int 1 -> /sop_subdivide/surroundpoly[in] ⏎
-  33: float 1.000000 -> /sop_subdivide/bias[in] ⏎
+  33: float 1.0 -> /sop_subdivide/bias[in] ⏎
   34: int 1 -> /sop_subdivide/smoothvertex[in] ⏎
   35: int 0 -> /sop_subdivide/consisttopology[in] ⏎
   36: int 0 -> /sop_subdivide/linearcreases[in] ⏎
@@ -867,12 +867,12 @@ Literals:
   49: str "" -> /sop_subdivide1/creases[in] ⏎
   50: int 1 -> /sop_subdivide1/iterations[in] ⏎
   51: int 0 -> /sop_subdivide1/overridecrease[in] ⏎
-  52: float 0.000000 -> /sop_subdivide1/creaseweight[in] ⏎
+  52: float 0.0 -> /sop_subdivide1/creaseweight[in] ⏎
   53: int 0 -> /sop_subdivide1/outputcrease[in] ⏎
   54: str "creases" -> /sop_subdivide1/outcreasegroup[in] ⏎
   55: int 1 -> /sop_subdivide1/closeholes[in] ⏎
   56: int 1 -> /sop_subdivide1/surroundpoly[in] ⏎
-  57: float 1.000000 -> /sop_subdivide1/bias[in] ⏎
+  57: float 1.0 -> /sop_subdivide1/bias[in] ⏎
   58: int 1 -> /sop_subdivide1/smoothvertex[in] ⏎
   59: int 0 -> /sop_subdivide1/consisttopology[in] ⏎
   60: int 0 -> /sop_subdivide1/linearcreases[in] ⏎
@@ -889,8 +889,8 @@ Literals:
   71: int 1 -> /EqualsInt2/b[in] ⏎
   72: str "" -> /sop_fractal2/group[in] ⏎
   73: int 3 -> /sop_fractal2/divs[in] ⏎
-  74: float 0.500000 -> /sop_fractal2/smooth[in] ⏎
-  75: float 1.000000 -> /sop_fractal2/scale[in] ⏎
+  74: float 0.5 -> /sop_fractal2/smooth[in] ⏎
+  75: float 1.0 -> /sop_fractal2/scale[in] ⏎
   76: int 0 -> /sop_fractal2/seed[in] ⏎
   77: int 0 -> /sop_fractal2/fixed[in] ⏎
   78: int 0 -> /sop_fractal2/vtxnms[in] ⏎
@@ -902,12 +902,12 @@ Literals:
   84: str "" -> /sop_subdivide2/creases[in] ⏎
   85: int 1 -> /sop_subdivide2/iterations[in] ⏎
   86: int 0 -> /sop_subdivide2/overridecrease[in] ⏎
-  87: float 0.000000 -> /sop_subdivide2/creaseweight[in] ⏎
+  87: float 0.0 -> /sop_subdivide2/creaseweight[in] ⏎
   88: int 0 -> /sop_subdivide2/outputcrease[in] ⏎
   89: str "creases" -> /sop_subdivide2/outcreasegroup[in] ⏎
   90: int 1 -> /sop_subdivide2/closeholes[in] ⏎
   91: int 1 -> /sop_subdivide2/surroundpoly[in] ⏎
-  92: float 1.000000 -> /sop_subdivide2/bias[in] ⏎
+  92: float 1.0 -> /sop_subdivide2/bias[in] ⏎
   93: int 1 -> /sop_subdivide2/smoothvertex[in] ⏎
   94: int 0 -> /sop_subdivide2/consisttopology[in] ⏎
   95: int 0 -> /sop_subdivide2/linearcreases[in] ⏎
