@@ -228,9 +228,9 @@ r.1 + r.2
 which preserves the let binding of the original expression
 
  -/
-partial def letBindMatchDiscrs (e : Expr) (doUnfold := false) : MetaM Expr := do
+partial def letBindMatchDiscrs? (e : Expr) (doUnfold := false) : MetaM (Option Expr) := do
   let some info := isMatcherAppCore? (← getEnv) e
-    | return e
+    | return none
   let (fn, args) := e.withApp (fun fn args => (fn,args))
   go fn args info 0 #[]
 where
@@ -253,6 +253,8 @@ where
           let xs := xs.push xvar
           go fn args info (i+1) xs
 
+partial def letBindMatchDiscrs (e : Expr) (doUnfold := false) : MetaM Expr := do
+  return (← letBindMatchDiscrs? e doUnfold).getD e
 
 partial def splitList (list : Expr) : MetaM (Array Expr) := do
   let list ← instantiateMVars list

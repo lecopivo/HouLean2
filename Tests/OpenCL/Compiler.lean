@@ -116,16 +116,12 @@ info: Prod_float2_float vector_split1_2_float32(float3 v){
       return (Prod_float2_float){(float2){v.x, v.y}, v.z};
 }
 
-Prod_float2_float main(matrix44float A, float3 x){
+Prod_float2_float main(float3 x){
       return vector_split1_2_float32(x);
 }
----
-warning: unused variable `A`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
 -/
 #guard_msgs in
-#opencl_compile (fun (A : Matrix Float32 4 4) (x : Vector Float32 3) => x.split1)
+#opencl_compile (fun (x : Vector Float32 3) => x.split1)
 
 
 /--
@@ -196,11 +192,53 @@ info: Prod_float_Prod_float_float main(float x){
 
 
 /--
-error: TODO: implement match compilation:
-match tmp with
-| ((a, u), v, s) =>
-  have w := point.dot v + s;
-  (a * point + u) / w
+info: Prod_Prod_matrix33float_float3_Prod_float3_float houlean_matrix_split1_3_float32(matrix44float a){
+      return
+        (Prod_Prod_matrix33float_float3_Prod_float3_float){(Prod_matrix33float_float3){(matrix33float){(float3){a.row0.x,
+                      a.row0.y, a.row0.z},
+                  (float3){a.row1.x, a.row1.y, a.row1.z}, (float3){a.row2.x, a.row2.y, a.row2.z}},
+              (float3){a.row0.w, a.row1.w, a.row2.w}},
+          (Prod_float3_float){(float3){a.row3.x, a.row3.y, a.row3.z}, a.row3.w}};
+}
+
+float vector_dot_float32_3(float3 u, float3 v){
+      const float a = u.x * v.x;
+      const float a1 = a + u.y * v.y;
+      const float a2 = a1 + u.z * v.z;
+      return a2;
+}
+
+float3 houlean_matrix_mulvec_float32_3_3(matrix33float a, float3 v){
+      return
+        (float3){vector_dot_float32_3(a.row0, v), vector_dot_float32_3(a.row1, v), vector_dot_float32_3(a.row2, v)};
+}
+
+float3 hmul_hmul_matrix_float32_3_3_vector_float32_3_vector_float32_3(matrix33float a, float3 a1){
+      return houlean_matrix_mulvec_float32_3_3(a, a1);
+}
+
+float inv_inv_float32(float a){
+      return 1.0 / a;
+}
+
+float3 hdiv_hdiv_vector_float32_3_float32_vector_float32_3(float3 a, float a1){
+      const float is = inv_inv_float32(a1);
+      return is * a;
+}
+
+float3 houlean_matrix_transformpointright_float32_3(matrix44float transform, float3 point){
+      const Prod_Prod_matrix33float_float3_Prod_float3_float tmp = houlean_matrix_split1_3_float32(transform);
+      const float w = vector_dot_float32_3(point, tmp.snd.fst) + tmp.snd.snd;
+      return
+        hdiv_hdiv_vector_float32_3_float32_vector_float32_3(hmul_hmul_matrix_float32_3_3_vector_float32_3_vector_float32_3(tmp.fst.fst,
+              point) +
+            tmp.fst.snd,
+          w);
+}
+
+float3 main(matrix44float A, float3 x){
+      return houlean_matrix_transformpointright_float32_3(A, x);
+}
 -/
 #guard_msgs in
 #opencl_compile (fun (A : Matrix Float32 4 4) (x : Vector Float32 3) => A.transformPointRight x)

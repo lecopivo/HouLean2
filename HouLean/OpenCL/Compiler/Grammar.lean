@@ -37,15 +37,15 @@ open OpenCL
 --------------------------------------------------------------------------------
 
 /-- A `specifier-qualifier` of the OpenCL grammar. -/
-declare_syntax_cat clSpec (behavior := symbol)
+declare_syntax_cat clSpec (behavior := both)
 
 /-- A `type-specifier` of the OpenCL grammar. -/
-declare_syntax_cat clTypeSpec (behavior := symbol)
+declare_syntax_cat clTypeSpec (behavior := both)
 
 syntax clTypeSpec : clSpec
 
 /-- A `type-qualifier` of the OpenCL grammar. -/
-declare_syntax_cat clTypeQ (behavior := symbol)
+declare_syntax_cat clTypeQ (behavior := both)
 
 syntax clTypeQ : clSpec
 
@@ -53,10 +53,10 @@ syntax clTypeQ : clSpec
 syntax clPointer := (" * " clTypeQ*)+
 
 /-- A `direct-declarator` of the OpenCL grammar. -/
-declare_syntax_cat clDirectDeclarator (behavior := symbol)
+declare_syntax_cat clDirectDeclarator (behavior := both)
 
 /-- A `direct-abstract-declarator` of the OpenCL grammar. -/
-declare_syntax_cat clDirectAbsDeclarator (behavior := symbol)
+declare_syntax_cat clDirectAbsDeclarator (behavior := both)
 
 /-- A `declarator` of the OpenCL grammar. -/
 syntax clDeclarator := (clPointer)? clDirectDeclarator
@@ -68,7 +68,7 @@ syntax clAbsDeclarator := (clPointer (clDirectAbsDeclarator)?) <|> clDirectAbsDe
 syntax clType := clSpec+ optional(clAbsDeclarator)
 
 /-- An `assignment-expression` of the OpenCL grammar. -/
-declare_syntax_cat clExpr (behavior := symbol)
+declare_syntax_cat clExpr (behavior := both)
 
 /-- A `constant-expression` of the OpenCL grammar. -/
 syntax clConstExpr := clExpr:20
@@ -95,10 +95,10 @@ syntax clInitializerElem := optional(clDesignator+ "=") clInitializer
 syntax "{" clInitializerElem,*,? "}" : clInitializer
 
 /-- A `statement` of the OpenCL grammar. -/
-declare_syntax_cat clStmt (behavior := symbol)
+declare_syntax_cat clStmt (behavior := both)
 
 /-- A top-level OpenCL command (preprocessor directive or external declaration). -/
-declare_syntax_cat clCmd (behavior := symbol)
+declare_syntax_cat clCmd (behavior := both)
 
 --------------------------------------------------------------------------------
 /-! ## Comments                                                               -/
@@ -398,7 +398,7 @@ syntax "__attribute__" noWs "(" "(" (rawIdent ("(" clExpr,* ")")?),* ")" ")" : c
 /-! #### Storage Class Specifiers -/
 
 /-- A storage class specifier. -/
-declare_syntax_cat clStorageClassSpec (behavior := symbol)
+declare_syntax_cat clStorageClassSpec (behavior := both)
 
 syntax "auto" : clStorageClassSpec
 syntax "extern" : clStorageClassSpec
@@ -412,7 +412,7 @@ syntax clStorageClassSpec : clDeclSpec
 /-! #### Function Specifiers -/
 
 /-- A function specifier. -/
-declare_syntax_cat clFunSpec (behavior := symbol)
+declare_syntax_cat clFunSpec (behavior := both)
 
 syntax "inline" : clFunSpec
 syntax "_Noreturn" : clFunSpec

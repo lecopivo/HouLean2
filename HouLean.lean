@@ -118,6 +118,7 @@ import HouLean.Meta.SpecializeAndSimp.Extension
 import HouLean.Meta.SpecializeAndSimp.Main
 import HouLean.Meta.SpecializeAndSimp.Types
 import HouLean.Meta.Structure
+import HouLean.Meta.TypeEncoding
 import HouLean.Meta.TypeOf
 import HouLean.OpenCL.Basic
 import HouLean.OpenCL.Compiler
@@ -134,11 +135,9 @@ import HouLean.OpenCL.Data.Attribute
 import HouLean.OpenCL.Data.Fin
 import HouLean.OpenCL.Data.Init
 import HouLean.OpenCL.Data.InlinedLoop
-import HouLean.OpenCL.Data.MProd
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Data.NanoVDB
 import HouLean.OpenCL.Data.Pointer
-import HouLean.OpenCL.Data.Prod
 import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Volume
 import HouLean.OpenCL.Kernel.Basic

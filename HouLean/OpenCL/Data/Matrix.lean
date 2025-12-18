@@ -1,9 +1,12 @@
-import HouLean.OpenCL.Data.Vector
-import HouLean.OpenCL.Data.Fin
--- import HouLean.OpenCL.Data.ArrayType
-import HouLean.OpenCL.Reference
-import HouLean.OpenCL.Compiler
 import HouLean.Data.Matrix
+import HouLean.OpenCL.Compiler
+import HouLean.OpenCL.Data.ArrayType
+import HouLean.OpenCL.Data.Fin
+import HouLean.OpenCL.Data.Vector
+import HouLean.OpenCL.Reference
+
+import HouLean.OpenCL.Data.Pointer
+import HouLean.OpenCL.Compiler
 
 namespace HouLean.OpenCL
 
@@ -72,9 +75,8 @@ theorem matrix_mapRowsFinIdx (f : (i : Nat) →  Vector α n → (h : i < m) →
 
 
 
-#exit
+
 -- why do we have to unfold this?
-@[opencl_csimp]
 def vload [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
     (ptr : Pointer α) (off : UInt64) : OpenCLM (Matrix α m n) := do
   return Matrix.mk (← Vector.ofFnM fun i =>
@@ -85,96 +87,40 @@ def vstore [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n]
   Fin.foldlM m (init:=()) (fun _ i =>
     ArrayType.set ptr ((off.toUInt32 * m.toUInt32 + i.1.toUInt32).toUInt64) (value.row i))
 
--- why do we have to unfold this?
-@[reducible]
 instance [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] :
     ArrayType (Matrix α m n) (Pointer α) where
   get := vload
   set := vstore
 
--- constructor
-implemented_by [t : AtomicOpenCLType α] [Inhabited α] (n) (xs : List (Vector α n)) (h) :
-  Matrix.mk (m:=m) (n:=n) (Vector.mk xs.toArray h)
-  =
-  (oclFunction (List (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
-  (argList xs)
 
--- ofFn
-attribute [opencl_csimp] Matrix.ofFn
-implemented_by [t : AtomicOpenCLType α] [Inhabited α] (f : Fin m → Vector α n) :
-  Matrix.mk (m:=m) (n:=n) (.ofFn f)
-  =
-  (oclFunction (List (Vector α n) → Matrix α m n) s!"(matrix{m}{n}{t.shortName})" .constructor)
-  (argList (List.ofFn f))
+def vload' [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] {addr const restrict}
+    (ptr : DPointer α addr const restrict) (off : USize) : OpenCLM (Matrix α m n) := do
+  return Matrix.mk (← Vector.ofFnM fun i =>
+    ptr.vload ((off + i.1.toUSize) * n.toUSize) n)
 
+def vstore' [Inhabited α] [Zero α] [AtomicOpenCLType α] [AllowedVectorSize n] {addr restrict}
+    (ptr : DPointer α addr (const:=false) restrict) (off : USize) (value : Matrix α m n) : OpenCLM Unit := do
+  Fin.foldlM m (init:=()) fun _ i =>
+  -- unroll for h : i in [0:m] do
+    ptr.vstore ((off + i.1.toUSize) * n.toUSize) (value.row i)
 
-open Lean Elab Term Meta in
-elab c:"#ocl_compile_expr" f:term : command => do
-  Command.runTermElabM fun _ => do
-    let f ← elabTermAndSynthesize f none
-    lambdaTelescope f fun _ b => do
-      let stx ← Compiler3.compileExpr b
-      logInfoAt c stx
+-- set_option pp.funBinderTypes true in
+-- set_option trace.HouLean.OpenCL.compiler true in
+-- #opencl_compile vstore' (α:=Float32) (m:=3) (n:=3) (addr:=.global) (restrict:=true)
+-- #opencl_compile vload' (α:=Float32) (m:=4) (n:=3) (addr:=.global) (restrict:=true) (const:=true)
 
 
+#exit
+#check ArrayPointer (Matrix Float32 3 3)
 
-/-- Same as `Matrix.col` but `i` is implicit argument thus forced to be compile time evaluated.
+#opencl_compile (fun ptr : ArrayPointer (Matrix Float32 3 3) => ptr)
 
-todo: maybe have a separate mechanism for compile time arguemnts ... -/
-def _root_.HouLean.Matrix.colI {j : Nat} (a : Matrix α m n) (h : j < n := by get_elem_tactic) : Vector α m :=
-  .ofFn fun i => a[i.1,j]
+#opencl_compile (fun ptr : DPointer Float32 (addr:=.global) (restrict:=true) => do
+  let v0 ← ptr.vload 0 3
+  return v0)
 
-@[opencl_csimp]
-theorem opencl_rewrite_matrix_row [Inhabited α] (a : Matrix α m n) (i : Nat) (h) :
-    a.row i h
-    =
-    (oclFunction (type := Matrix α m n → Vector α n) s!".row{i}" (kind := .postfix))
-    a := sorry_proof
-
-@[opencl_csimp]
-theorem opencl_rewrite_matrix_col (a : Matrix α m n) (j : Nat) (h) :
-    a.col j h
-    =
-    a.colI (j:=j) h := by rfl
-
--- It is very important to have `↓` here to prevent the simplifier to turn the
--- index product `id : Nat×Nat` into OpenCL implementation.
-@[opencl_csimp ↓]
-theorem opencl_rewrite_matrix_getElem (a : Matrix α m n) (ij : Nat×Nat) (h) :
-    a[ij]'h
-    =
-    (a.row ij.1)[ij.2] := by rfl
-
--- map
-implemented_by (a : Matrix α m n) (f : (i : Nat) → Vector α n → (i < m)→ Vector β n) :
-    a.mapRowsFinIdx f = let a := a; .mk (.ofFn fun i => f i (a.row i) (by grind))
-
-attribute [opencl_csimp]
-  Matrix.mapRowsIdx Matrix.mapRows Matrix.mapRows₂
-  Matrix.mapFinIdx Matrix.mapIdx Matrix.map
-
--- identity
-def _root_.HouLean.Matrix.identityN {α} [Zero α] [One α] {n : Nat} : Matrix α n n :=
-  .ofFn (fun i j _ => if i = j then 1 else 0)
-
-implemented_by {α} [Zero α] [One α] : Matrix.identity α n = Matrix.identityN (n:=n) := by rfl
-implemented_by {α} [Zero α] [One α] : (1 : Matrix α n n) = Matrix.identityN (n:=n) := by rfl
-
--- zero
-def _root_.HouLean.Matrix.zeroN {α} [Zero α] {m n : Nat} : Matrix α m n :=
-  .mk (.ofFn fun _ => 0)
-
-implemented_by {α} [Zero α] : Matrix.zero α m n = Matrix.zeroN (α := α) (m:=m) (n:=n) := by rfl
-implemented_by {α} [Zero α] : (0 : Matrix α m n) = Matrix.zeroN (α := α) (m:=m) (n:=n) := by rfl
-
--- add works
--- sub works
--- smul works
--- sdiv works
--- matMul works
-
--- vecMul
-/-- Likely a better implementation of `vecMul` for OpenCL -/
-def _root_.HouLean.Matrix.vecMul_sum_rows [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : Vector α n :=
-  sum fun j : Fin m => v[j] * a.row j
-implemented_by [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : a.vecMul v = a.vecMul_sum_rows v
+-- -- vecMul
+-- /-- Likely a better implementation of `vecMul` for OpenCL -/
+-- def _root_.HouLean.Matrix.vecMul_sum_rows [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : Vector α n :=
+--   sum fun j : Fin m => v[j] * a.row j
+-- implemented_by [Add α] [Zero α] [Mul α] (v : Vector α m) (a : Matrix α m n) : a.vecMul v = a.vecMul_sum_rows v

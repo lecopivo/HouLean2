@@ -102,10 +102,10 @@ impl_by (ptr : DPointer T addr const restrict) (off : USize) (n : Nat) :
     | throwError "Function `vload` needs to know the vector size, {n}, at compile time!"
 
   let vloadId := mkIdent (.mkSimple s!"vload{n}")
-  let ptrId := mkIdent `ptr
-  let offId := mkIdent `off
+  let ptr ← compileExpr ptr
+  let off ← compileExpr off
 
-  return ← `(clExpr| $vloadId:ident($offId:ident, $ptrId:ident))
+  return ← `(clExpr| $vloadId:ident($off, $ptr))
 
 impl_by {n} (ptr : DPointer T addr (const:=false) restrict) (off : USize) (val : Vector T n) :
     ptr.vstore off val ==> do
@@ -114,11 +114,11 @@ impl_by {n} (ptr : DPointer T addr (const:=false) restrict) (off : USize) (val :
     | throwError "Function `vload` needs to know the vector size, {n}, at compile time!"
 
   let vstoreId := mkIdent (.mkSimple s!"vstore{n}")
-  let ptrId := mkIdent `ptr
-  let offId := mkIdent `off
-  let valId := mkIdent `val
+  let ptr ← compileExpr ptr
+  let off ← compileExpr off
+  let val ← compileExpr val
 
-  return ← `(clExpr| $vstoreId:ident($valId:ident, $offId:ident, $ptrId:ident))
+  return ← `(clExpr| $vstoreId:ident($val, $off, $ptr))
 
 
 

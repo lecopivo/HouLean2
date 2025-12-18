@@ -32,12 +32,13 @@ elab_rules : command
         throwError s!"Bug in {decl_name%}, failed to build lhs expression! fvars: {fvars}, mvars: {mvars}, {e} : {← inferType e}"
 
       let args := ctx' ++ xs
-      let mut argsToCompile : Array (Name × Nat) := #[]
+      let mut argsToCompile : Array (TSyntax `clExpr × Nat) := #[]
       for arg in args, i in [0:args.size] do
         let id := arg.fvarId!
         let name ← id.getUserName
         if rhs.raw.hasIdent name then
-          argsToCompile := argsToCompile.push (name, i)
+          let id := mkIdent name
+          argsToCompile := argsToCompile.push (← `(clExpr| $id:ident), i)
 
       let _ ← addImplementedBy e rhs argsToCompile
 

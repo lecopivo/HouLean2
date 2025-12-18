@@ -123,14 +123,16 @@ partial def tryImplementedBy (e : Expr) : CompileM (Option (TSyntax `clExpr)) :=
   return none
 where
   applyRule (impl : ImplementedBy) (args : Array Expr) (e : Expr) : CompileM (TSyntax `clExpr) := do
-    let mut compiledArgs : NameMap (TSyntax `clExpr) := {}
+    let mut compiledArgs : Array ((TSyntax `clExpr)×(TSyntax `clExpr)) := {}
     for (n, i) in impl.argsToCompile do
       let some arg := args[i]? | throwError "Invalid argument index {i} in implemented_by for {e}"
-      compiledArgs := compiledArgs.insert n (← compileExpr arg)
-    let compiled ← impl.rhs.raw.replaceM fun
-      | `(clExpr| $id:ident) => return compiledArgs.get? id.getId
-      | _ => return none
-    trace[HouLean.OpenCL.compiler] "Applying implemented_by: {e} ==> {compiled}\n  args: {compiledArgs.toArray}"
+      let arg' ← compileExpr arg
+      compiledArgs := compiledArgs.push (n,arg')
+    let compiled ← impl.rhs.raw.replaceM fun s => do
+      let some (_,r) := compiledArgs.find? (·.1 == s)
+        | return none
+      return r
+    trace[HouLean.OpenCL.compiler] "Applying implemented_by: {e} ==> {compiled}\n  args: {compiledArgs}\n{impl.rhs} ==> {compiled}"
     return ⟨compiled⟩
 
 /-- Try to find and run an `implemented_by` builder for the expression. -/
@@ -190,16 +192,17 @@ partial def compileStructure (type : Expr) (structName : Name) (params : Array E
     for fieldName in info.fieldNames, i in [0:info.fieldNames.size] do
       let projExpr := x.proj structName i
       let lhs ← mkLambdaFVars #[x] projExpr
-      let rhs ← `(clExpr| $(mkIdent `x):ident.$(mkIdent fieldName):ident)
-      let _ ← addImplementedBy lhs rhs #[(`x, 0)]
+      let e ← `(clExpr| $(mkIdent `x):ident)
+      let rhs ← `(clExpr| $e.$(mkIdent fieldName):ident)
+      let _ ← addImplementedBy lhs rhs #[(e, 0)]
   -- Generate constructor implementation
   let ctor := getStructureCtor (← getEnv) structName
   let mkLhs ← mkAppOptM ctor.name (params.map some)
   let argNames ← forallTelescope (← inferType mkLhs) fun xs _ =>
     xs.mapM fun x => x.fvarId!.getUserName
-  let argIds := argNames.map mkIdent
-  let mkRhs ← `(clExpr| ($clId){$[$argIds:ident],*})
-  let _ ← addImplementedBy mkLhs mkRhs (argNames.zip (.range argNames.size))
+  let args ← argNames.mapM (fun n => `(clExpr| $(mkIdent n):ident))
+  let mkRhs ← `(clExpr| ($clId){$[$args:clExpr],*})
+  let _ ← addImplementedBy mkLhs mkRhs (args.zip (.range args.size))
   return clId
 
 /-- Compile a Lean type to an OpenCL type identifier. -/
@@ -225,7 +228,9 @@ def shouldInlineLet (type : Expr) : CompileM Bool := do
 
 /-- Default continuation: emit a return statement. -/
 def finishBlockDefault (x : TSyntax `clExpr) : CompileM Unit := do
-  addStatement (← `(clStmtLike| return $x;))
+  let x := ⟨← PrettyPrinter.parenthesizeTerm x⟩
+  let stmt ← `(clStmtLike| return $x:clExpr;)
+  addStatement stmt
 
 mutual
 
@@ -318,16 +323,17 @@ def addOpenCLFunDef (leanName : Name) (clName : Name) (funDef : TSyntax ``clFunc
   compilerExt.add (.clFunDef { funDef, clName, leanName })
   let namesAndBinders ← forallTelescope info.type fun xs _ =>
     xs.mapM fun x => do return (← x.fvarId!.getUserName, ← x.fvarId!.getBinderInfo)
-  let mut argsToCompile : Array (Name × Nat) := #[]
+  let mut argsToCompile : Array (TSyntax `clExpr × Nat) := #[]
   for (n, bi) in namesAndBinders, i in [0:namesAndBinders.size] do
     if bi.isExplicit then
-      let n := if argsToCompile.any (·.1 == n.eraseMacroScopes)
-        then n.eraseMacroScopes.appendAfter (toString i)
-        else n.eraseMacroScopes
-      argsToCompile := argsToCompile.push (n, i)
-  let argIds := argsToCompile.map fun (n, _) => mkIdent n
-  let rhs ← `(clExpr| $(mkIdent clName):ident($[$argIds:ident],*))
-  let lhs ← mkConstWithFreshMVarLevels leanName >>= etaExpand
+      let mut e ← `(clExpr| $(mkIdent n):ident)
+      e ← if argsToCompile.any (·.1 == e)
+        then `(clExpr| $(mkIdent (n.appendAfter (toString i))):ident)
+        else `(clExpr| $(mkIdent n):ident)
+      argsToCompile := argsToCompile.push (e, i)
+  let args := argsToCompile.map (·.1)
+  let rhs ← `(clExpr| $(mkIdent clName):ident($[$args:clExpr],*))
+  let lhs ← mkConstWithFreshMVarLevels leanName
   let _ ← addImplementedBy lhs rhs argsToCompile
 
 /-- Compile a Lean declaration to an OpenCL function. -/

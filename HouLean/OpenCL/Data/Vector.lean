@@ -37,3 +37,21 @@ theorem vector_sum [Add α] [Zero α] (u : Vector α n) :
 @[opencl_csimp]
 theorem vector_replicate {α} {n : Nat} (a : α) :
     Vector.replicate n a = .ofFn fun _ => a := by ext i; simp
+
+
+-- how can we generalize this?
+@[opencl_csimp]
+theorem vector_ofFnM1 {m} [Monad m] {α} (f : Fin 1 → m α) :
+    Vector.ofFnM f = do return #v[← f 0] := sorry_proof
+
+@[opencl_csimp]
+theorem vector_ofFnM2 {m} [Monad m] {α} (f : Fin 2 → m α) :
+    Vector.ofFnM f = do return #v[← f 0, ← f 1] := sorry_proof
+
+@[opencl_csimp]
+theorem vector_ofFnM3 {m} [Monad m] {α} (f : Fin 3 → m α) :
+    Vector.ofFnM f = do return #v[← f 0, ← f 1, ← f 2] := sorry_proof
+
+@[opencl_csimp]
+theorem vector_ofFnM4 {m} [Monad m] {α} (f : Fin 4 → m α) :
+    Vector.ofFnM f = do return #v[← f 0, ← f 1, ← f 2, ← f 3] := sorry_proof

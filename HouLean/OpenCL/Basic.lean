@@ -88,7 +88,7 @@ class OpenCLType (α : Type u) where
 
 These are the types we can have pointers to and can have short vector version of, like `float3` -/
 class AtomicOpenCLType (α : Type) extends OpenCLType α where
-  valid : (α = Char) ∨
+  valid : (α = Char) ∨ (α = USize) ∨
           (α = Int16) ∨ (α = UInt16) ∨
           (α = Int32) ∨ (α = UInt32) ∨
           (α = Int64) ∨ (α = UInt64) ∨
@@ -106,6 +106,11 @@ instance [inst : OpenCLType α] : OpenCLType (OpenCLM α) where
 instance : AtomicOpenCLType Char where
   name := "char"
   shortName := "c"
+  valid := by simp
+
+instance : AtomicOpenCLType USize where
+  name := "size_t"
+  shortName := "st"
   valid := by simp
 
 instance : AtomicOpenCLType Int16 where

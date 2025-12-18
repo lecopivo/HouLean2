@@ -2,7 +2,6 @@ import HouLean.Meta.AnonymousStruct
 import HouLean.Meta.ProdLike
 import HouLean.Meta.RewriteBy
 import HouLean.OpenCL.Basic
-import HouLean.OpenCL.Data.Prod
 
 namespace HouLean.OpenCL
 

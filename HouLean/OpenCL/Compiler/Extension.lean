@@ -10,7 +10,7 @@ open Lean Meta
 
 structure ImplementedBy where
   keys : Array DiscrTree.Key
-  argsToCompile : Array (Name × Nat)
+  argsToCompile : Array (TSyntax `clExpr × Nat)
   lhs : Expr
   rhs : TSyntax `clExpr
 deriving Inhabited, BEq
@@ -68,7 +68,7 @@ initialize compilerExt : CompilerExt ←
 
 
 open Lean Meta
-def addImplementedBy (lhs : Expr) (rhs : TSyntax `clExpr) (argsToCompile : Array (Name × Nat)) : MetaM ImplementedBy := do
+def addImplementedBy (lhs : Expr) (rhs : TSyntax `clExpr) (argsToCompile : Array (TSyntax `clExpr × Nat)) : MetaM ImplementedBy := do
 
   let lhs ← instantiateMVars lhs
   -- let type ← inferType lhs

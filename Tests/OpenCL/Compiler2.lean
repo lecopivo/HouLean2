@@ -7,7 +7,7 @@ open HouLean OpenCL Compiler Lean
 
 namespace Test.OpenCL.Compiler2
 
-
+open Compiler Lean.Parser.Category
 open Lean Elab Term Meta in
 elab c:"#ocl_compile" f:term : command => do
   withoutModifyingEnv do
@@ -20,6 +20,56 @@ elab c:"#ocl_compile" f:term : command => do
       let (_,s) ← go {} {}
       let stx ← `(clCompStmt| { $s.statements* })
       logInfoAt c stx
+
+
+
+elab c:"#ocl_check" e:clExpr : command => do
+  Elab.Command.liftTermElabM do
+  let stx ← Lean.PrettyPrinter.parenthesizeCategory ``clExpr e.raw
+  logInfoAt c stx
+
+elab c:"#term_check" e:term : command => do
+  Elab.Command.liftTermElabM do
+  let stx ← Lean.PrettyPrinter.parenthesizeTerm e.raw
+  logInfoAt c stx
+
+
+
+-- declare_syntax_cat myterm (behavior:=both)
+
+-- syntax ident : myterm
+-- syntax num : myterm
+-- syntax:70 myterm:70 " * " myterm:71 : myterm
+-- syntax:65 myterm:65 " + " myterm:66 : myterm
+-- syntax "(" myterm ")" : myterm
+-- syntax:min "return " myterm:min : myterm
+
+
+-- open Lean PrettyPrinter Syntax in
+-- run_meta
+--   let x ← `(clExpr| a + b + a)
+--   let stx ← `(clExpr| $x * d)
+--   let stx := ⟨← parenthesizeTerm stx⟩
+--   let r ← `(clStmt| return $stx:clExpr;)
+--   logInfo m!"before: {stx}"
+--   logInfo m!"after: {r}"
+
+-- set_option trace.HouLean.OpenCL.compiler true in
+-- #ocl_compile fun x y : Float => (x + y) * x
+
+-- #term_check a * b * c
+
+-- #ocl_check ((a + b)) * (c)
+
+
+/--
+info: {
+      return (x + y) * x;
+}
+-/
+#guard_msgs in
+#ocl_compile fun x y : Float => (x + y) * x
+
 
 /--
 info: {
@@ -134,7 +184,7 @@ info: {
       const double x1 = x;
       const double y = x1;
       MProd_double_double state = (MProd_double_double){x1, y};
-      for (uint i = 0;i < (uint)(id); i += 1)
+      for (uint✝ i = 0;i < (uint)(id); i += 1)
         {
               const double x2 = state.fst;
               const double y1 = state.snd;
