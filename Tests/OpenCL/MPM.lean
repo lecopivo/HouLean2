@@ -26,7 +26,7 @@ def getGridIdx (tilestartsxyx : DPointer (Vector Int32 3)) : OpenCLM (Vector Int
 
   return #v[gidx, gidy, gidz]
 
-#opencl_compile getGridIdx
+-- #opencl_compile getGridIdx
 
 noncomputable
 def clearSurfaces
@@ -76,7 +76,7 @@ def deformationGradientUpdate
   let I := Matrix.identity Float32 3
   F * (I + dt * C)
 
-#opencl_compile deformationGradientUpdate
+-- #opencl_compile deformationGradientUpdate
 
 open Math
 
@@ -94,6 +94,7 @@ def getLameParameters
     (lambda, nu)
 
 
+set_option linter.unusedVariables false
 
 -- #ifdef HAS_global_airresist
 --         int global_airresist_length,
