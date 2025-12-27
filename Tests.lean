@@ -17,6 +17,7 @@ import Tests.Meta.FloatLinter
 import Tests.Meta.OverloadedFunction
 import Tests.Meta.ProdLike
 import Tests.Meta.SpecAndSimp
+import Tests.Meta.SpecAndSimp2
 import Tests.OpenCL.ArrayType
 import Tests.OpenCL.Attribute
 import Tests.OpenCL.Basic

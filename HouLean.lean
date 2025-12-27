@@ -74,6 +74,7 @@ import HouLean.Data.Matrix3
 import HouLean.Data.Matrix3LinearAlgebra
 import HouLean.Data.Matrix4
 import HouLean.Data.Prod
+import HouLean.Data.Quaternion
 import HouLean.Data.RigidScaleTransform
 import HouLean.Data.RigidScaleVelocity
 import HouLean.Data.RigidTransform
@@ -117,8 +118,15 @@ import HouLean.Meta.SimpTheoremName
 import HouLean.Meta.SpecializeAndSimp.Extension
 import HouLean.Meta.SpecializeAndSimp.Main
 import HouLean.Meta.SpecializeAndSimp.Types
+import HouLean.Meta.SpecializeAndSimp2.Init
+import HouLean.Meta.SpecializeAndSimp2.Main
+import HouLean.Meta.SpecializeAndSimp2.Types
+import HouLean.Meta.SpecializeAndSimp2.Util
 import HouLean.Meta.Structure
+import HouLean.Meta.TimeIt
 import HouLean.Meta.TypeEncoding
+import HouLean.Meta.TypeEncoding2
+import HouLean.Meta.TypeEncodingInit
 import HouLean.Meta.TypeOf
 import HouLean.OpenCL.Basic
 import HouLean.OpenCL.Compiler
