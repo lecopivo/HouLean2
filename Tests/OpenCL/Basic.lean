@@ -4,11 +4,47 @@ import HouLean.OpenCL.Data.Vector
 import HouLean.OpenCL.Data.Matrix
 import HouLean.OpenCL.Compiler.Main
 import HouLean.OpenCL.WorkItemFunctions
+import Lean.Elab.Tactic.Unfold
+import HouLean.Meta.FloatPolynomial
 
-open HouLean OpenCL
+open HouLean OpenCL Math
 
 namespace Tests.OpenCL.Basic
 
+
+open Lean Meta
+simproc interpreter_simp (_) := fun e => do
+  if let some val ← Meta.runInterpreterForPrimitiveTypes? e then
+    return .visit { expr := toExpr val }
+  return .continue
+
+
+open NormalMatrixVecMul
+#check fun (x : Vector Float 2) =>
+  #v[-32e-3 + 0.896 * x[↑0], 96e-3 + 0.896 * x[↑1]]
+
+
+def force (x v : Vector Float 3)
+  (field? : Option (Vector Float 3 → Vector Float 3))
+  (mass? : Option Float) (drag? : Option Float) : Vector Float 3 := Id.run do
+
+  let mut f : Vector Float 3 := 0
+
+  if let some field := field? then
+    f := f + field x
+
+  if let some mass := mass? then
+    f := f + mass * #v[0, -9.81, 0]
+
+  if let some drag := drag? then
+    f := f - drag * v
+
+  return f
+
+#check fun (x v : Vector Float 3) (mass drag : Float) =>
+  force x v none mass drag
+    rewrite_by
+      simp [force]
 
 
 /--

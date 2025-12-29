@@ -1,4 +1,5 @@
 import HouLean.Meta.SpecializeAndSimp2.Main
+import HouLean.Meta.FloatPolynomial
 
 namespace Test.Meta.Sas2
 
@@ -67,13 +68,43 @@ def integrateParticle {α n} [One α] [Sub α] [Add α] [Mul α]
 
 def foo {α n} (x : Vector α n) : Option (Vector α n) := some x
 
+def bar {α} (x : α) : Option α := some x
+
+set_option pp.funBinderTypes true
+
+#check Vector.zipWith
+
+#sas fun (x y : Vector Float 3) => x.add y
+
+
 #sas fun (x y : Vector Float 3) (a : Float) =>
   addVectors x y (some a)
 
+#sas fun (x v f : Vector Float 3) (d : Float) =>
+  integrateParticle x (addVectors v v (some 2)) 0.1 (foo f) (bar d)
 
-#sas fun (x v f : Vector Float 3) =>
-  integrateParticle x (addVectors v v (some 2)) 0.1 (foo f) none
+#sas fun (x : Vector Float 3) =>
+  some (x[0] + x[1] + x[2])
+
+
+set_option trace.HouLean.sas true in
+set_option trace.HouLean.sas.simp true in
+#sas fun (x : Vector Float 3) => x[0] + x[1]
 
 #check foo.spec_Float_3
-
 #check integrateParticle.spec_Float_3_0_1_default_false
+
+
+
+structure Particle (X : Type) where
+  position : X
+  velocity : X
+
+def system [Add X] [HMul R X X] [Zero X]
+    (force? : Option (X → X)) (drag? : Option R) (x v : X) : X × X := Id.run do
+  let mut force : X := 0
+  if let some f := force? then
+    force := force + f x
+  if let some drag := drag? then
+    force := force + drag * v
+  return (v, force)
