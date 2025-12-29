@@ -125,7 +125,6 @@ import HouLean.Meta.SpecializeAndSimp2.Util
 import HouLean.Meta.Structure
 import HouLean.Meta.TimeIt
 import HouLean.Meta.TypeEncoding
-import HouLean.Meta.TypeEncoding2
 import HouLean.Meta.TypeEncodingInit
 import HouLean.Meta.TypeOf
 import HouLean.OpenCL.Basic

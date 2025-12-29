@@ -1,5 +1,8 @@
 import HouLean.Meta.SpecializeAndSimp2.Main
+import HouLean.Meta.SpecializeAndSimp2.Command
 import HouLean.Meta.FloatPolynomial
+import HouLean.Data.Vector
+import HouLean.Meta.RewriteBy
 
 namespace Test.Meta.Sas2
 
@@ -7,13 +10,6 @@ open Lean Elab Command Term
 
 open HouLean.Meta.Sas
 
-
-elab "#sas " e:term : command =>
-  runTermElabM fun _ctx => do
-    let e ← elabTermAndSynthesize e none
-    let e ← sas e #[`simp]
-    logInfo e
-    pure ()
 
 set_option trace.HouLean.sas true
 set_option trace.HouLean.sas.simp true
@@ -33,6 +29,12 @@ simproc ↓ binder_backstop (_) := fun e => do
   let b := x * y
   a + b + y
 
+#sas fun x : Nat => x + 0
+
+
+
+@[simp]
+theorem add_self (x : Nat) : x + x = 2 * x := by grind
 
 #sas fun x : Nat =>
   let a := x*x + 0
@@ -50,6 +52,7 @@ def addVectors {α n} [Add α] (x y : Vector α n) (bias? : Option α) :=
     (x + y).map (·+bias)
   else
     (x + y)
+
 
 
 def integrateParticle {α n} [One α] [Sub α] [Add α] [Mul α]
@@ -74,7 +77,7 @@ set_option pp.funBinderTypes true
 
 #check Vector.zipWith
 
-#sas fun (x y : Vector Float 3) => x.add y
+#sas fun (x y : Vector Float 3) => x + y
 
 
 #sas fun (x y : Vector Float 3) (a : Float) =>
@@ -108,3 +111,26 @@ def system [Add X] [HMul R X X] [Zero X]
   if let some drag := drag? then
     force := force + drag * v
   return (v, force)
+
+
+
+#print TypeEncoding
+
+
+def bar' (x : Float) (a? b? : Option Float) := Id.run do
+  let mut x := x
+  if let some a := a? then
+    x := x + a
+  if let some b := b? then
+    x := x + b
+  return x
+
+
+variable (x a : Float)
+
+#sas (bar' x (some a) none)
+  rewrite_by
+    unfold bar' pure
+
+
+#sas (fun x : Float => x + 0)
