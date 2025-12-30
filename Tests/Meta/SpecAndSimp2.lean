@@ -73,12 +73,14 @@ def foo {α n} (x : Vector α n) : Option (Vector α n) := some x
 
 def bar {α} (x : α) : Option α := some x
 
-set_option pp.funBinderTypes true
+-- set_option pp.funBinderTypes true
 
 #check Vector.zipWith
+#check VectorFloat3.fromVector
 
-#sas fun (x y : Vector Float 3) => x + y
+set_option trace.HouLean.sas true
 
+#sas fun (x y : VectorFloat3) => -x.toVector
 
 #sas fun (x y : Vector Float 3) (a : Float) =>
   addVectors x y (some a)
@@ -130,7 +132,7 @@ variable (x a : Float)
 
 #sas (bar' x (some a) none)
   rewrite_by
-    unfold bar' pure
+    unfold bar'
 
 
 #sas (fun x : Float => x + 0)

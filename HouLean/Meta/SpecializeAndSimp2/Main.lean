@@ -3,6 +3,8 @@ import Qq
 import HouLean.Meta.Basic
 import HouLean.Meta.RunInterpreter
 import HouLean.Meta.SpecializeAndSimp2.Types
+import HouLean.Meta.SpecializeAndSimp2.Encoding
+import HouLean.Meta.SpecializeAndSimp2.Encoding.Vector
 
 namespace HouLean.Meta.Sas
 
@@ -54,21 +56,6 @@ def withMaybeLetDecl (name : Name) (val : Expr) (k : Expr → SasM α) : SasM α
     if doBind then withLetVars #[var] (k var) else k var
 
 /-! ## Option Encoding -/
-
-
-structure VectorFloat3 where
-  x : Float
-  y : Float
-  z : Float
-deriving Inhabited
-
-def VectorFloat3.toVector (v : VectorFloat3) : Vector Float 3 := #v[v.x, v.y, v.z]
-def VectorFloat3.fromVector (v : Vector Float 3) : VectorFloat3 := ⟨v[0], v[1], v[2]⟩
-
-@[simp] theorem getElem_toVector_0 (v : VectorFloat3) : v.toVector[0] = v.x := by rfl
-@[simp] theorem getElem_toVector_1 (v : VectorFloat3) : v.toVector[1] = v.y := by rfl
-@[simp] theorem getElem_toVector_2 (v : VectorFloat3) : v.toVector[2] = v.z := by rfl
-
 def Option.decode (x : α) (valid : Bool) : Option α :=
   if valid then some x else none
 
@@ -88,6 +75,7 @@ def Option.decode (x : α) (valid : Bool) : Option α :=
 
 open Qq in
 partial def typeEncoding (type : Expr) : SasM (Array Expr × Expr) := do
+
   if type.isAppOfArity ``Option 1 then
     return ← withLocalDeclD `x type fun x => do
       let t := type.appArg!
@@ -102,8 +90,13 @@ partial def typeEncoding (type : Expr) : SasM (Array Expr × Expr) := do
           mkLambdaFVars (xs.push valid) body
       return (encodings.push valid, decode)
 
-  if (← isDefEq type q(Vector Float 3)) then
-    return (#[.const ``VectorFloat3.fromVector []], .const ``VectorFloat3.toVector [])
+  if type.isAppOfArity ``Vector 2 then
+    if let some n ← runInterpreter? Nat type.appArg! then
+      let type ← whnf (type.getArg! 0)
+      let sname := Name.append `HouLean.Meta.Sas (← vectorStructName type n)
+      return (#[.const (sname.append `fromVector) []], .const (sname.append `toVector) [])
+    else
+      throwError s!"size of the vector has to be known! got {← whnf type.appArg!}"
 
   return (#[mkIdentity type], mkIdentity type)
 
@@ -158,6 +151,7 @@ def withVarsToSpecialize (yss : Array (Array Expr)) (decodes : Array Expr)
 def requestSpecialization (funToSpecialize : Expr) (funName : Name) (specSuffix : String) : SasM Expr := do
   let specName := funName.append (.mkSimple <| "spec" ++ specSuffix.replace "." "_" |>.replace " " "_")
   let specType ← inferType funToSpecialize
+  trace[HouLean.sas] m!"specialization request:\n{specName}\n{funToSpecialize}\n{← isTypeCorrect funToSpecialize}"
   if !(← getEnv).contains specName then
     let decl : Declaration := .opaqueDecl {
       name := specName
@@ -172,9 +166,27 @@ def requestSpecialization (funToSpecialize : Expr) (funName : Name) (specSuffix 
 def shouldSpecialize (fname : Name) : SasM Bool := do
   match ← getConstInfo fname with
   | .ctorInfo _ => return false
-  | _ => return true
+  | _ =>
+    if let some info ← getProjectionFnInfo? fname then
+      return info.fromClass
+    return true
+
 
 /-! ## Main Transformation -/
+
+partial def forallEncodedTelescope (type : Expr) (k : Array (Array Expr) → Array Expr → Expr → SasM Expr) : SasM Expr := do
+  go type #[] #[]
+where
+  go (t : Expr) (ys : Array (Array Expr)) (xs : Array Expr) : SasM Expr := do
+    match t with
+    | .forallE n t b _ =>
+      withLocalDeclD `x t fun x => do
+      let (encodings, decode) ← typeEncoding t
+      let decls ← encodings.mapM (fun enc => do pure (n, (← inferType (enc.app x))))
+      withLocalDeclsDND decls fun ys' => do
+        let x' := decode.beta ys'
+        go (b.instantiate1 x') (ys.push ys') (xs.push x')
+    | _ => k ys xs type
 
 def withEncodedVal (val : Expr) (k : Array Expr → Expr → SasM α) : SasM α := do
   let type ← liftM <| inferType val >>= whnf
@@ -187,6 +199,8 @@ partial def main (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM Ex
   let type ← inferType e
   let id' := mkIdentity type
 
+  -- trace[HouLean.sas] m!"processing {e}"
+
   -- Try interpreter for primitive types
   if let some val ← runInterpreterForPrimitiveTypes? e then
     return ← cont #[toExpr val] id'
@@ -198,6 +212,9 @@ partial def main (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM Ex
   -- custom call
 
   let e ← simplify e
+
+
+  -- trace[HouLean.sas] m!"proceeding to cases"
 
   match e with
   | .bvar .. | .fvar .. | .sort .. | .lit .. => withEncodedVal e cont
@@ -221,7 +238,9 @@ where
     let rec go : List Expr → Array (Array Expr) → Array Expr → SasM Expr
       | [], xs', decodes => k xs' decodes
       | x :: xs, xs', decodes =>
-        main x fun x' decode => go xs (xs'.push x') (decodes.push decode)
+        main x fun x' decode => do
+          -- trace[HouLean.sas] m!"processed arg {x} : {← inferType x} ==> {x'} : {← liftM <| x'.mapM inferType} / {decode}"
+          go xs (xs'.push x') (decodes.push decode)
     go xs.toList #[] #[]
 
   appCase (fn : Expr) (xs : Array Expr) : SasM Expr := do
@@ -231,19 +250,19 @@ where
           return ← withVarsToSpecialize yss decodes fun vars vals xs' specSuffix => do
             let body := fn.beta xs'
             let (encode, _) ← uncurriedTypeEncoding (← inferType body)
+            let (encodings, decode) ← typeEncoding (← inferType body)
             let body ← simplify <| encode.beta #[body]
 
             -- if `fname` has been eliminated by simp then we do not specialize
             if (body.find? (·.constName? == some fname)).isNone then
-              return ← withEncodedVal (body.replaceFVars vars vals) cont
+              return ← cont #[body.replaceFVars vars vals] decode
 
             let funToSpecialize ← mkLambdaFVars vars body
-            -- logInfo m!"specializing {e}\nencoding: {yss}\nnew vars: {vars}\nxs': {xs'}\nto spec: {funToSpecialize}"
             let fn'' ← requestSpecialization funToSpecialize fname specSuffix
-            let (encodings, decode) ← typeEncoding (← inferType body)
             withMaybeLetDecl `tmp (fn''.beta vals) fun body => do
               let e ← mkProdSplitElem body encodings.size
               cont e decode
+
       -- Fallback: decode and re-encode
       let xs' := (yss.zip decodes).map fun (ys, decode) => decode.beta ys
       withEncodedVal (fn.beta xs') cont
@@ -254,8 +273,7 @@ where
         main body fun es decode => do
           mkLetFVars (← read).letVars (decode.beta es) (generalizeNondepLet := false)
       mkLambdaFVars xs body' (generalizeNondepLet := false)
-    let id' := mkIdentity (← inferType e)
-    cont #[e] id'
+    withEncodedVal e cont
 
   letCase (e : Expr) : SasM Expr := do
     let .letE n _t v b _nondep := e | panic! "expected let expression"
@@ -267,15 +285,18 @@ where
 
   projCase (e : Expr) : SasM Expr := do
     let e' := (← reduceProj? e).getD e
-    let id' := mkIdentity (← inferType e')
-    cont #[e'] id'
+    withEncodedVal e' cont
 
 /-! ## Entry Point -/
 
 def sas (e : Expr) (attrs : Array Name) : MetaM Expr := do
-  let result ← (withTimeIt `main do
-    main e fun es decode => do
-      mkLetFVars (← read).letVars (decode.beta es) (generalizeNondepLet := false)
+  let result ← (show SasM Expr from do
+    forallEncodedTelescope (← inferType e) fun ys xs _ => do
+      let body := e.beta xs
+      let body' ←
+        main body fun es decode => do
+          mkLetFVars (← read).letVars (← mkProdElem es) (generalizeNondepLet := false)
+      pure (← mkLambdaFVars ys.flatten body')
   ).run attrs
   return result
 
