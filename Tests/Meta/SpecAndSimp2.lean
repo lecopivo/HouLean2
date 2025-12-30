@@ -40,19 +40,22 @@ theorem add_self (x : Nat) : x + x = 2 * x := by grind
   let a := x*x + 0
   a + x
 
+def id' {α} (a : α) := a
+
 #sas fun x : Nat =>
   let a := some x
   let a := a.map (·+1)
   a.getD 0 + x
 
+def f1 {α} [Inhabited α] (x : Option α) := x.getD default
 
+#sas fun x : Option Float => f1 x
 
 def addVectors {α n} [Add α] (x y : Vector α n) (bias? : Option α) :=
   if let some bias := bias? then
     (x + y).map (·+bias)
   else
     (x + y)
-
 
 
 def integrateParticle {α n} [One α] [Sub α] [Add α] [Mul α]

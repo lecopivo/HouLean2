@@ -5,6 +5,7 @@ import HouLean.Meta.RunInterpreter
 import HouLean.Meta.SpecializeAndSimp2.Types
 import HouLean.Meta.SpecializeAndSimp2.Encoding
 import HouLean.Meta.SpecializeAndSimp2.Encoding.Vector
+import HouLean.Meta.SpecializeAndSimp2.Encoding.Option
 
 namespace HouLean.Meta.Sas
 
@@ -54,22 +55,6 @@ def withNewScope (x : SasM α) : SasM α :=
 def withMaybeLetDecl (name : Name) (val : Expr) (k : Expr → SasM α) : SasM α :=
   maybeLetBindValue name val fun doBind var =>
     if doBind then withLetVars #[var] (k var) else k var
-
-/-! ## Option Encoding -/
-def Option.decode (x : α) (valid : Bool) : Option α :=
-  if valid then some x else none
-
-@[simp] theorem decode_true (x : α) : Option.decode x true = some x := by simp [Option.decode]
-@[simp] theorem decode_false (x : α) : Option.decode x false = none := by simp [Option.decode]
-@[simp] theorem decode_getD (x y : α) (valid : Bool) :
-    (Option.decode x valid).getD y = if valid then x else y := by
-  cases valid <;> simp [Option.decode]
-@[simp] theorem decode_isSome (x : α) (valid : Bool) :
-    (Option.decode x valid).isSome = valid := by
-  cases valid <;> simp [Option.decode]
-@[simp] theorem decode_isNone (x : α) (valid : Bool) :
-    (Option.decode x valid).isNone = !valid := by
-  cases valid <;> simp [Option.decode]
 
 /-! ## Type Encoding -/
 
@@ -130,10 +115,13 @@ private def withVarsToSpecializeSingle (ys : Array Expr) (decode : Expr)
         let suffix := if (← isClass? type).isSome || (← inferType type).isProp || type.isForall then suffix else suffix ++ s
         go ys vars vals (ys'.push y) suffix
       else
+        -- todo: somehow handle dependent types here
+        --       the newly introduced fvar might have to appear in types of some `ys`
         withLocalDeclD `a (← inferType y) fun var =>
           go ys (vars.push var) (vals.push y) (ys'.push var) suffix
   go ys.toList #[] #[] #[] ""
 
+-- todo: somehow handle dependent types
 def withVarsToSpecialize (yss : Array (Array Expr)) (decodes : Array Expr)
     (k : Array Expr → Array Expr → Array Expr → String → SasM α) : SasM α := do
   unless yss.size == decodes.size do
@@ -149,7 +137,11 @@ def withVarsToSpecialize (yss : Array (Array Expr)) (decodes : Array Expr)
 /-! ## Specialization Request -/
 
 def requestSpecialization (funToSpecialize : Expr) (funName : Name) (specSuffix : String) : SasM Expr := do
-  let specName := funName.append (.mkSimple <| "spec" ++ specSuffix.replace "." "_" |>.replace " " "_")
+  if funToSpecialize.hasFVar then
+    let fvars := (← funToSpecialize.collectFVars.run {}).2.fvarIds.map (Expr.fvar ·)
+    throwError m!"can't specialize {funToSpecialize} it has fvars: {fvars}"
+
+  let specName := funName.append (.mkSimple <| specSuffix.dropWhile (·=='_') |>.replace "." "_" |>.replace " " "_")
   let specType ← inferType funToSpecialize
   trace[HouLean.sas] m!"specialization request:\n{specName}\n{funToSpecialize}\n{← isTypeCorrect funToSpecialize}"
   if !(← getEnv).contains specName then
@@ -169,6 +161,8 @@ def shouldSpecialize (fname : Name) : SasM Bool := do
   | _ =>
     if let some info ← getProjectionFnInfo? fname then
       return info.fromClass
+    if fname == ``ite then
+      return false
     return true
 
 
@@ -255,9 +249,16 @@ where
 
             -- if `fname` has been eliminated by simp then we do not specialize
             if (body.find? (·.constName? == some fname)).isNone then
-              return ← cont #[body.replaceFVars vars vals] decode
+              return ← withEncodedVal (body.replaceFVars vars vals) cont
 
             let funToSpecialize ← mkLambdaFVars vars body
+
+            -- logInfo m!"specializing: {e}\n\
+            --            yss: {yss}\n\
+            --            spec vars: {vars}\n\
+            --            args: {xs} ==> {xs'}\n\
+            --            to specialize: {funToSpecialize}"
+
             let fn'' ← requestSpecialization funToSpecialize fname specSuffix
             withMaybeLetDecl `tmp (fn''.beta vals) fun body => do
               let e ← mkProdSplitElem body encodings.size
