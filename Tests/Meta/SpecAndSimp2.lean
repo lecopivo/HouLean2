@@ -31,8 +31,6 @@ simproc ↓ binder_backstop (_) := fun e => do
 
 #sas fun x : Nat => x + 0
 
-
-
 @[simp]
 theorem add_self (x : Nat) : x + x = 2 * x := by grind
 
@@ -92,8 +90,12 @@ set_option trace.HouLean.sas true
   integrateParticle x (addVectors v v (some 2)) 0.1 (foo f) (bar d)
 
 #sas fun (x : Vector Float 3) =>
-  some (x[0] + x[1] + x[2])
+  if x[0] + x[1] > 0 then
+    some (x[0] + x[1] + x[2])
+  else
+    none
 
+#check @ite
 
 set_option trace.HouLean.sas true in
 set_option trace.HouLean.sas.simp true in

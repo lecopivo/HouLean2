@@ -143,8 +143,9 @@ def requestSpecialization (funToSpecialize : Expr) (funName : Name) (specSuffix 
 
   let specName := funName.append (.mkSimple <| specSuffix.dropWhile (·=='_') |>.replace "." "_" |>.replace " " "_")
   let specType ← inferType funToSpecialize
-  trace[HouLean.sas] m!"specialization request:\n{specName}\n{funToSpecialize}\n{← isTypeCorrect funToSpecialize}"
+
   if !(← getEnv).contains specName then
+    trace[HouLean.sas] m!"specialization request:\n{specName}\n{funToSpecialize}\n{← isTypeCorrect funToSpecialize}"
     let decl : Declaration := .opaqueDecl {
       name := specName
       levelParams := []
@@ -153,6 +154,12 @@ def requestSpecialization (funToSpecialize : Expr) (funName : Name) (specSuffix 
       isUnsafe := false
     }
     addDecl decl
+    let req : SpecializationRequest := {
+      funName := funName
+      specName := specName
+      funToSpecialize := funToSpecialize
+    }
+    modify (fun s => {s with requests := req :: s.requests })
   return .const specName []
 
 def shouldSpecialize (fname : Name) : SasM Bool := do
@@ -263,6 +270,18 @@ where
             withMaybeLetDecl `tmp (fn''.beta vals) fun body => do
               let e ← mkProdSplitElem body encodings.size
               cont e decode
+
+        if fname == ``ite then
+          let c := xs[1]!
+          let t := xs[3]!
+          let e := xs[4]!
+          -- todo: we need to deal with dependent types
+          -- let c' ← main (← mkAppOptM ``decide #[c,none]) cont
+          -- let c' ← mkAppM ``Eq #[c', (.const ``Bool.true [])]
+          let c' ← main c cont
+          let t' ← main t cont
+          let e' ← main e cont
+          return ← mkAppM ``ite #[c',t',e']
 
       -- Fallback: decode and re-encode
       let xs' := (yss.zip decodes).map fun (ys, decode) => decode.beta ys

@@ -7,11 +7,21 @@ namespace HouLean.Meta.Sas
 
 open Lean Meta
 
+structure SpecializationRequest where
+  funName : Name
+  specName : Name
+  funToSpecialize : Expr
+
+structure Specialization where
+  req : SpecializationRequest
+  implName : Name
+
 structure Context where
   letVars : Array Expr := #[]
 
 structure State where
   timer : TimeItState := {}
+  requests : List SpecializationRequest := []
 
 abbrev SasM := ReaderT Context <| StateT State <| SimpM
 
