@@ -307,6 +307,7 @@ where
     let e' := (← reduceProj? e).getD e
     withEncodedVal e' cont
 
+
 /-! ## Entry Point -/
 
 def sas (e : Expr) (attrs : Array Name) : MetaM Expr := do
@@ -314,10 +315,26 @@ def sas (e : Expr) (attrs : Array Name) : MetaM Expr := do
     forallEncodedTelescope (← inferType e) fun ys xs _ => do
       let body := e.beta xs
       let body' ←
-        main body fun es decode => do
+        main body fun es _decode => do
           mkLetFVars (← read).letVars (← mkProdElem es) (generalizeNondepLet := false)
       pure (← mkLambdaFVars ys.flatten body')
   ).run attrs
   return result
 
 end HouLean.Meta.Sas
+
+-- open Lean Meta
+-- run_meta
+--   let mut i : Nat := 0
+--   while i < 10 do
+--     logInfo m!"{i}"
+--     i := i + 1
+
+-- open Lean Meta
+-- run_meta
+--   let mut i? : Option Nat := some 0
+--   while i?.isSome do
+--     logInfo m!"{i?}"
+--     i? := i?.map (·+1)
+--     if i? == some 10 then
+--       i? := none

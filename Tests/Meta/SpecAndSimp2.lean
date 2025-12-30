@@ -101,10 +101,6 @@ set_option trace.HouLean.sas true in
 set_option trace.HouLean.sas.simp true in
 #sas fun (x : Vector Float 3) => x[0] + x[1]
 
-#check foo.spec_Float_3
-#check integrateParticle.spec_Float_3_0_1_default_false
-
-
 
 structure Particle (X : Type) where
   position : X
@@ -119,11 +115,6 @@ def system [Add X] [HMul R X X] [Zero X]
     force := force + drag * v
   return (v, force)
 
-
-
-#print TypeEncoding
-
-
 def bar' (x : Float) (a? b? : Option Float) := Id.run do
   let mut x := x
   if let some a := a? then
@@ -131,7 +122,6 @@ def bar' (x : Float) (a? b? : Option Float) := Id.run do
   if let some b := b? then
     x := x + b
   return x
-
 
 variable (x a : Float)
 
