@@ -66,13 +66,13 @@ def defVectorStruct (type : Expr) (n : Nat) : CommandElabM Unit := do
 open Qq
 
 -- todo: tag these with `opencl_csimp` such that they are applicable only during SAS for opencl
-run_cmd defVectorStruct q(Float32) 2
-run_cmd defVectorStruct q(Float32) 3
-run_cmd defVectorStruct q(Float32) 4
+-- run_cmd defVectorStruct q(Float32) 2
+-- run_cmd defVectorStruct q(Float32) 3
+-- run_cmd defVectorStruct q(Float32) 4
 
-run_cmd defVectorStruct q(Float) 2
-run_cmd defVectorStruct q(Float) 3
-run_cmd defVectorStruct q(Float) 4
+-- run_cmd defVectorStruct q(Float) 2
+-- run_cmd defVectorStruct q(Float) 3
+-- run_cmd defVectorStruct q(Float) 4
 
 -- #check VectorFloat3.vector_mk
 -- #check #v[1.0, 2.0, 3.0] rewrite_by simp

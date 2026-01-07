@@ -102,31 +102,43 @@ def withMaybeLetDecl (name : Name) (val : Expr) (k : Expr → SasM α) : SasM α
 /-! ## Type Encoding -/
 
 open Qq in
-partial def typeEncoding (type : Expr) : SasM (Array Expr × Expr) := do
+partial def typeEncoding (type : Expr) : SasM (Expr × Expr) := do
+  -- let type ← simplify type
+  try
+    let X := type
+    let Y ← mkFreshTypeMVar
+    let cls ← mkAppM ``TypeEncoding #[X,Y]
+    let inst ← synthInstance cls
 
-  if type.isAppOfArity ``Option 1 then
-    return ← withLocalDeclD `x type fun x => do
-      let t := type.appArg!
-      let (encodings, decode) ← typeEncoding t
-      let encodings ← encodings.mapM fun encode => do
-        let body := encode.beta #[← mkAppM ``Option.encodeVal #[x]]
-        mkLambdaFVars #[x] body
-      let valid ← liftM <| mkAppM ``Option.encodeValid #[x] >>= mkLambdaFVars #[x]
-      let decode ← forallTelescope (← inferType decode) fun xs _ =>
-        withLocalDeclD `valid q(Bool) fun valid => do
-          let body ← mkAppM ``Option.decode #[decode.beta xs, valid]
-          mkLambdaFVars (xs.push valid) body
-      return (encodings.push valid, decode)
+    let encode ← mkAppOptM ``TypeEncoding.encode #[X, Y, inst]
+    let decode ← mkAppOptM ``TypeEncoding.decode #[X, Y, inst]
 
-  if type.isAppOfArity ``Vector 2 then
-    if let some n ← runInterpreter? Nat type.appArg! then
-      let type ← whnf (type.getArg! 0)
-      let sname := Name.append `HouLean.Meta.Sas (← vectorStructName type n)
-      return (#[.const (sname.append `fromVector) []], .const (sname.append `toVector) [])
-    else
-      throwError s!"size of the vector has to be known! got {← whnf type.appArg!}"
+    return (encode, decode)
+  catch _ =>
+    return (mkIdentity type, mkIdentity type)
 
-  return (#[mkIdentity type], mkIdentity type)
+  -- if type.isAppOfArity ``Option 1 then
+  --   return ← withLocalDeclD `x type fun x => do
+  --     let t := type.appArg!
+  --     let (encodings, decode) ← typeEncoding t
+  --     let encodings ← encodings.mapM fun encode => do
+  --       let body := encode.beta #[← mkAppM ``Option.encodeVal #[x]]
+  --       mkLambdaFVars #[x] body
+  --     let valid ← liftM <| mkAppM ``Option.encodeValid #[x] >>= mkLambdaFVars #[x]
+  --     let decode ← forallTelescope (← inferType decode) fun xs _ =>
+  --       withLocalDeclD `valid q(Bool) fun valid => do
+  --         let body ← mkAppM ``Option.decode #[decode.beta xs, valid]
+  --         mkLambdaFVars (xs.push valid) body
+  --     return (encodings.push valid, decode)
+
+  -- if type.isAppOfArity ``Vector 2 then
+  --   if let some n ← runInterpreter? Nat type.appArg! then
+  --     let type ← whnf (type.getArg! 0)
+  --     let sname := Name.append `HouLean.Meta.Sas (← vectorStructName type n)
+  --     return (#[.const (sname.append `fromVector) []], .const (sname.append `toVector) [])
+  --   else
+  --     throwError s!"size of the vector has to be known! got {← whnf type.appArg!}"
+
 
 def mkUncurryFun (f : Expr) : MetaM Expr := do
   forallTelescope (← inferType f) fun xs _ => do
@@ -135,41 +147,38 @@ def mkUncurryFun (f : Expr) : MetaM Expr := do
       let xs ← mkProdSplitElem x xs.size
       mkLambdaFVars #[x] (f.beta xs)
 
-def uncurriedTypeEncoding (type : Expr) : SasM (Expr × Expr) := do
-  let (encodings, decode) ← typeEncoding type
-  let decode ← mkUncurryFun decode
-  unless encodings.size > 0 do
-    throwError "Unexpected empty type encoding for {type}!"
-  forallTelescope (← inferType encodings[0]!) fun xs _ => do
-    let e ← mkProdElem (encodings.map (·.beta xs))
-    let encode ← mkLambdaFVars xs e
-    return (encode, decode)
+-- def uncurriedTypeEncoding (type : Expr) : SasM (Expr × Expr) := do
+--   let (encodings, decode) ← typeEncoding type
+--   let decode ← mkUncurryFun decode
+--   unless encodings.size > 0 do
+--     throwError "Unexpected empty type encoding for {type}!"
+--   forallTelescope (← inferType encodings[0]!) fun xs _ => do
+--     let e ← mkProdElem (encodings.map (·.beta xs))
+--     let encode ← mkLambdaFVars xs e
+--     return (encode, decode)
 
 /-! ## Specialization Variables -/
 
-private def withVarsToSpecializeSingle (ys : Array Expr) (decode : Expr)
+private def withVarsToSpecializeSingle (y : Expr) (decode : Expr)
     (k : Array Expr → Array Expr → Expr → String → SasM α) : SasM α := do
-  let rec go : List Expr → Array Expr → Array Expr → Array Expr → String → SasM α
-    | [], vars, vals, ys', suffix => do k vars vals (← simplify <| decode.beta ys') suffix
-    | y :: ys, vars, vals, ys', suffix => do
       if !y.hasFVar then
         let type ← inferType y
         let s := s!"_{← ppExpr y}"
-        let suffix := if (← isClass? type).isSome || (← inferType type).isProp || type.isForall then suffix else suffix ++ s
-        go ys vars vals (ys'.push y) suffix
+        let suffix := if (← isClass? type).isSome || (← inferType type).isProp || type.isForall then "" else s
+        k #[] #[] (decode.beta #[y]) suffix
       else
         -- todo: somehow handle dependent types here
         --       the newly introduced fvar might have to appear in types of some `ys`
         withLocalDeclD `a (← inferType y) fun var =>
-          go ys (vars.push var) (vals.push y) (ys'.push var) suffix
-  go ys.toList #[] #[] #[] ""
+           k #[var] #[y] (decode.beta #[var]) ""
+
 
 -- todo: somehow handle dependent types
-def withVarsToSpecialize (yss : Array (Array Expr)) (decodes : Array Expr)
+def withVarsToSpecialize (yss : Array Expr) (decodes : Array Expr)
     (k : Array Expr → Array Expr → Array Expr → String → SasM α) : SasM α := do
   unless yss.size == decodes.size do
     throwError "`yss` and `decodes` must have the same length!"
-  let rec go : List (Array Expr) → List Expr → Array Expr → Array Expr → Array Expr → String → SasM α
+  let rec go : List Expr → List Expr → Array Expr → Array Expr → Array Expr → String → SasM α
     | [], [], vars, vals, xs, suffix => k vars vals xs suffix
     | ys :: yss, decode :: decodes, vars, vals, xs, suffix =>
       withVarsToSpecializeSingle ys decode fun vars' vals' x suffix' =>
@@ -188,11 +197,12 @@ def requestSpecialization (specType funToSpecialize : Expr) (funName : Name) (sp
   -- let specType ← inferType funToSpecialize
 
   if !(← getEnv).contains specName then
-    -- trace[HouLean.sas] m!"specialization request:\n{specName}\n{funToSpecialize}\n{← isTypeCorrect funToSpecialize}"
+    trace[HouLean.sas] m!"specialization request:\n{specName}\n{funToSpecialize}\n{← isTypeCorrect funToSpecialize}"
     let decl : Declaration := .opaqueDecl {
       name := specName
       levelParams := []
       type := specType
+      -- todo: generate a message if this fails, as random "can't syntasize `Inhabited ...`" error is very confusing
       value := ← mkAppOptM ``default #[specType, none]
       isUnsafe := false
     }
@@ -205,7 +215,16 @@ def requestSpecialization (specType funToSpecialize : Expr) (funName : Name) (sp
     modify (fun s => {s with requests := req :: s.requests })
   return .const specName []
 
-def shouldSpecialize (fname : Name) : SasM Bool := do
+def shouldSpecialize (fname : Name) : MetaM Bool := do
+  if fname == ``TypeEncoding.decode then
+    return false
+
+  if fname == ``TypeEncoding.encode then
+    return false
+
+  if fname == ``getElem then
+    return false
+
   if let .defnInfo _info ← getConstInfo fname then
 
     if let some info ← getProjectionFnInfo? fname then
@@ -216,11 +235,11 @@ def shouldSpecialize (fname : Name) : SasM Bool := do
     if ← isMatcher fname then
       return false
 
-    if fname == ``VectorFloat3.toVector then
-      return false
+    -- if fname == ``VectorFloat3.toVector then
+    --   return false
 
-    if fname == ``VectorFloat2.toVector then
-      return false
+    -- if fname == ``VectorFloat2.toVector then
+    --   return false
 
     if fname == ``Option.decode then
       return false
@@ -228,26 +247,26 @@ def shouldSpecialize (fname : Name) : SasM Bool := do
     return true
   return false
 
-partial def forallEncodedTelescope (type : Expr) (k : Array (Array Expr) → Array Expr → Expr → SasM Expr) : SasM Expr := do
+
+partial def forallEncodedTelescope (type : Expr) (k : Array Expr → Array Expr → Expr → SasM Expr) : SasM Expr := do
   go type #[] #[]
 where
-  go (t : Expr) (ys : Array (Array Expr)) (xs : Array Expr) : SasM Expr := do
+  go (t : Expr) (ys : Array Expr) (xs : Array Expr) : SasM Expr := do
     match t with
     | .forallE n t b _ =>
       withLocalDeclD `x t fun x => do
-      let (encodings, decode) ← typeEncoding t
-      let decls ← encodings.mapM (fun enc => do pure (n, (← inferType (enc.app x))))
-      withLocalDeclsDND decls fun ys' => do
-        let x' := decode.beta ys'
-        go (b.instantiate1 x') (ys.push ys') (xs.push x')
+      let (encode, decode) ← typeEncoding t
+      let t' ← inferType (encode.app x)
+      withLocalDeclD n t' fun y' => do
+        let x' := decode.beta #[y']
+        go (b.instantiate1 x') (ys.push y') (xs.push x')
     | _ => k ys xs type
 
-def withEncodedVal (val : Expr) (k : Array Expr → Expr → SasM α) : SasM α := do
+def withEncodedVal (val : Expr) (k : Expr → Expr → SasM α) : SasM α := do
   let type ← liftM <| inferType val >>= whnf
-  let (encodings, decode) ← typeEncoding type
+  let (encode, decode) ← typeEncoding type
   -- Note: simplify here may need different settings than the main simp pass
-  let vals ← encodings.mapM fun enc => simplify (enc.beta #[val])
-  k vals decode
+  k (← simplify (encode.beta #[val])) decode
 
 /-! ## Specialize only args -/
 open Qq
@@ -285,6 +304,7 @@ def overrideTree : MetaM (DiscrTree Override) :=
   >>= addIdentityOverride q(fun x y : Float32 => x * y)
   >>= addIdentityOverride q(fun x y : Float32 => x / y)
   >>= addIdentityOverride q(fun (n i : Nat) [OfNat (Fin n) i] => OfNat.ofNat (α := Fin n) i)
+  >>= addIdentityOverride q(fun (i : Nat) [OfNat Nat i] => OfNat.ofNat (α := Nat) i)
 
 
 def applyOverride? (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM (Option Expr) := do
@@ -338,7 +358,6 @@ where
     return true
 
 
-
 /-- Unfold a definition, handling projections specially. -/
 private def unfoldDef (e : Expr) (declName : Name) : SasM Expr := do
   let unfolded := (← unfold e declName).expr
@@ -352,20 +371,25 @@ private def unfoldDef (e : Expr) (declName : Name) : SasM Expr := do
 
 /-! ## Main Transformation -/
 
-partial def main (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM Expr := do
+partial def main (e : Expr) (cont : Expr → Expr → SasM Expr) : SasM Expr := do
   -- withIncRecDepth do
   let type ← inferType e
   let id' := mkIdentity type
 
+  withTraceNode `HouLean.sas (collapsed := false) (fun r => do return m!"[{exceptEmoji r}] {e}") do
+
   -- Try interpreter for primitive types
   if let some val ← runInterpreterForPrimitiveTypes? e then
-    return ← cont #[toExpr val] id'
+    return ← cont (toExpr val) id'
 
   -- Early exits for types and typeclasses
-  if type.isSort then return ← cont #[e] id'
-  if (← isClass? type).isSome then return ← cont #[e] id'
+  if type.isSort then return ← cont e id'
+  if (← isClass? type).isSome then return ← cont e id'
 
+  let e' := e
   let e ← simplify e
+
+  trace[HouLean.sas] "hihi: {e'} ==> {e}"
 
   match e with
   | .bvar .. | .fvar .. | .sort .. | .lit .. => withEncodedVal e cont
@@ -384,8 +408,8 @@ partial def main (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM Ex
   | .letE .. => letCase e
   | .proj .. => projCase e
 where
-  processArgs (xs : Array Expr) (k : Array (Array Expr) → Array Expr → SasM Expr) : SasM Expr := do
-    let rec go : List Expr → Array (Array Expr) → Array Expr → SasM Expr
+  processArgs (xs : Array Expr) (k : Array Expr → Array Expr → SasM Expr) : SasM Expr := do
+    let rec go : List Expr → Array Expr → Array Expr → SasM Expr
       | [], xs', decodes => k xs' decodes
       | x :: xs, xs', decodes =>
         main x fun x' decode => do
@@ -396,23 +420,24 @@ where
   processArgs' (xs : Array Expr) (k : Array Expr → SasM Expr) : SasM Expr := do
     let rec go (i : Nat) (xs' : Array Expr) : SasM Expr := do
       if h : i < xs.size then
-        main xs[i] fun ys decode => do
-          go (i+1) (xs'.push (decode.beta ys))
+        main xs[i] fun y decode => do
+          go (i+1) (xs'.push (decode.beta #[y]))
       else
         k xs'
     go 0 #[]
 
   appCase (fn : Expr) (xs : Array Expr) : SasM Expr := do
     -- let funInfo ← getFunInfo fn -- will be usefull at some point
-    processArgs xs fun yss decodes => do
+    processArgs xs fun ys decodes => do
       if let some fname := fn.constName? then
+        trace[HouLean.sas] m!"should specialize {fname}: {← shouldSpecialize fname}"
         if ← shouldSpecialize fname then
-          return ← withVarsToSpecialize yss decodes fun vars vals xs' specSuffix => do
+          return ← withVarsToSpecialize ys decodes fun vars vals xs' specSuffix => do
             let body := fn.beta xs'
             let funToSpecialize ← mkLambdaFVars vars body
 
             trace[HouLean.sas] "specializing: {e}\n\
-                       yss: {yss}\n\
+                       yss: {ys}\n\
                        spec vars: {vars}\n\
                        args: {xs} ==> {xs'}\n\
                        to specialize: {funToSpecialize}"
@@ -420,8 +445,7 @@ where
             unless ← isTypeCorrect funToSpecialize do
               throwError m!"function to specialize is not type correct{indentExpr funToSpecialize}"
 
-            let (encode, _) ← uncurriedTypeEncoding (← inferType body)
-            let (encodings, decode) ← typeEncoding (← inferType body)
+            let (encode, decode) ← typeEncoding (← inferType body)
             let body ← simplify <| encode.beta #[body]
 
             -- -- if `fname` has been eliminated by simp then we do not specialize
@@ -438,8 +462,7 @@ where
 
             let fn'' ← requestSpecialization specType funToSpecialize fname specSuffix
             withMaybeLetDecl `tmp (fn''.beta vals) fun body => do
-              let e ← mkProdSplitElem body encodings.size
-              cont e decode
+              cont body decode
 
         if fname == ``ite then
           let c := xs[1]!
@@ -448,8 +471,8 @@ where
           -- todo: we need to deal with dependent types
           -- let c' ← main (← mkAppOptM ``decide #[c,none]) cont
           -- let c' ← mkAppM ``Eq #[c', (.const ``Bool.true [])]
-          let c' ← main c fun es decode => do
-             mkLetFVars (← read).letVars (decode.beta es) (generalizeNondepLet := false)
+          let c' ← main c fun e decode => do
+             mkLetFVars (← read).letVars (decode.beta #[e]) (generalizeNondepLet := false)
           let t' ← main t cont
           let e' ← main e cont
           return ← mkAppM ``ite #[c',t',e']
@@ -460,7 +483,7 @@ where
 
 
       -- Fallback: decode and re-encode
-      let xs' := (yss.zip decodes).map fun (ys, decode) => decode.beta ys
+      let xs' := (ys.zip decodes).map fun (y, decode) => decode.beta #[y]
       withEncodedVal (fn.beta xs') cont
 
   -- custom override for `e`
@@ -472,17 +495,17 @@ where
   lamCase (e : Expr) : SasM Expr := do
     let e ← lambdaTelescope e fun xs body => do
       let body' ← withNewScope do
-        main body fun es decode => do
-          mkLetFVars (← read).letVars (decode.beta es) (generalizeNondepLet := false)
+        main body fun e decode => do
+          mkLetFVars (← read).letVars (decode.beta #[e]) (generalizeNondepLet := false)
       mkLambdaFVars xs body' (generalizeNondepLet := false)
     withEncodedVal e cont
 
   letCase (e : Expr) : SasM Expr := do
     let .letE n _t v b _nondep := e | panic! "expected let expression"
-    main v fun ys decode =>
-      maybeLetBindVals (.replicate ys.size n) ys fun letVars ys' =>
+    main v fun v' decode =>
+      maybeLetBindVal n v' fun letVars v'' =>
         withLetVars letVars do
-          let v' := decode.beta ys'
+          let v' := decode.beta #[v'']
           main (b.instantiate1 v') cont
 
   projCase (e : Expr) : SasM Expr := do
@@ -499,9 +522,9 @@ def processRequest (req : SpecializationRequest) : SasM Unit := do
 
     let body ← unfoldDef (req.funToSpecialize.beta xs) req.funName
     let type ← inferType body
-    let (encode, decode) ← uncurriedTypeEncoding type
-    let body ← main body fun es _decode => do
-          mkLetFVars (← read).letVars (← mkProdElem es) (generalizeNondepLet := false)
+    let (encode, decode) ← typeEncoding type
+    let body ← main body fun e _decode => do
+          mkLetFVars (← read).letVars e (generalizeNondepLet := false)
 
     let implValue ← mkLambdaFVars xs body >>= instantiateMVars
     let implType ← inferType implValue
@@ -528,12 +551,12 @@ def processRequest (req : SpecializationRequest) : SasM Unit := do
 def sas (e : Expr) (attrs : Array Name) : MetaM (Expr × Array Specialization) := do
 
   let go : SasM _ := do
-    let result ← forallEncodedTelescope (← inferType e) fun ys xs _ => do
+    let result ← forallEncodedTelescope (← inferType e) fun ys xs _r => do
       let body := e.beta xs
       let body' ←
-        main body fun es _decode => do
-          mkLetFVars (← read).letVars (← mkProdElem es) (generalizeNondepLet := false)
-      pure (← mkLambdaFVars ys.flatten body')
+        main body fun e _decode => do
+          mkLetFVars (← read).letVars e (generalizeNondepLet := false)
+      pure (← mkLambdaFVars ys body')
 
     while !(← get).requests.isEmpty do
       let req :: requests := (← get).requests | continue

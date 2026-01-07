@@ -31,11 +31,12 @@ def HouLean.basisVector (R : Type) [FloatType R] (n : Nat) (i : Nat) : Vector R 
 
 namespace Vector
 
+
 def split1 (v : Vector T (n+1)) : Vector T n × T :=
   (.ofFn fun i => v[i], v[n])
 
-def split (v : Vector T (n+n')) : Vector T n × Vector T n' :=
-  (.ofFn fun i => v[i], .ofFn fun i => v[n+i.1])
+def split (v : Vector T n) (a b : Nat) (h : n = a + b := by omega) : Vector T a × Vector T b :=
+  (.ofFn fun i => v[i], .ofFn fun i => v[a+i.1])
 
 
 -- Implementation of HouLean.Math interface

@@ -5,6 +5,7 @@ import HouLean.Meta.RunInterpreter
 import HouLean.Meta.SpecializeAndSimp2.Types
 import HouLean.Meta.RewriteBy
 import HouLean.Data.Defs
+import HouLean.Data.Matrix
 
 namespace HouLean.Meta.Sas
 
@@ -32,29 +33,49 @@ theorem uncurry_eval_succ (f : X → F) (xs) : uncurry f xs = uncurry (f xs.1) x
 end Uncurry
 
 
-class TypeEncoding (X : Type) (Y : outParam Type) where
+class TypeEncoding (X : Sort u) (Y : outParam (Sort v)) where
   encode : X → Y
   decode : Y → X
   decode_encode : ∀ x, decode (encode x) = x
 
-attribute [simp] TypeEncoding.decode_encode
-
 open TypeEncoding
+
+class TypeIsomorphism (X : Type) (Y : outParam Type) [TypeEncoding X Y] where
+  encode_decode : ∀ y : Y, encode (decode (X:=X) y) = y
+
+attribute [simp] TypeEncoding.decode_encode TypeIsomorphism.encode_decode
 
 instance [TypeEncoding X Y] [TypeEncoding X' Y'] : TypeEncoding (X×X') (Y×Y') where
   encode x := (encode x.1, encode x.2)
   decode x := (decode x.1, decode x.2)
   decode_encode := by simp
 
+variable [TypeEncoding X Y] [TypeEncoding X' Y']
+@[simp] theorem encode_prod_mk (x : X) (x' : X') : encode (x,x') = (encode x, encode x') := by rfl
+@[simp] theorem decode_prod_mk (y : Y) (y' : Y') : decode (y,y') = (decode (X:=X) y, decode (X:=X') y') := by rfl
+
+instance [TypeEncoding X Y] [TypeEncoding X' Y'] [TypeIsomorphism X Y] [TypeIsomorphism X' Y']
+    : TypeIsomorphism (X×X') (Y×Y') where
+ encode_decode := by simp[encode,decode]
+
 instance : TypeEncoding Float Float where
   encode x := x
   decode x := x
   decode_encode := by simp
 
+instance : TypeIsomorphism Float Float where
+  encode_decode := by simp[encode, decode]
+
+@[simp] theorem float_encode_id (x : Float) : encode x = x := by rfl
+@[simp] theorem float_decode_id (x : Float) : decode x = x := by rfl
+
 instance : TypeEncoding Float32 Float32 where
   encode x := x
   decode x := x
   decode_encode := by simp
+
+instance : TypeIsomorphism Float32 Float32 where
+  encode_decode := by simp[encode, decode]
 
 instance : TypeEncoding Nat Nat where
   encode x := x
@@ -108,32 +129,79 @@ instance [TypeEncoding X Y] [Inhabited X] : TypeEncoding (Option X) (Y × Bool) 
 
 structure Vector2 (X : Type) where
   (x0 x1 : X)
+deriving Inhabited
 
 instance [TypeEncoding X Y] : TypeEncoding (Vector X 2) (Vector2 Y) where
   encode u := { x0 := encode u[0], x1 := encode u[1] }
   decode u := #v[decode u.x0, decode u.x1 ]
   decode_encode := sorry_proof
 
+instance [TypeEncoding X Y] [TypeIsomorphism X Y] : TypeIsomorphism (Vector X 2) (Vector2 Y) where
+  encode_decode := by simp[encode, decode]
+
+variable {X Y} [TypeEncoding X Y]
+@[simp] theorem Vector2.decode_getElem_0 (u : Vector2 Y) : (decode (X:=Vector X 2) u)[0] = decode u.x0 := by rfl
+@[simp] theorem Vector2.decode_getElem_1 (u : Vector2 Y) : (decode (X:=Vector X 2) u)[1] = decode u.x1 := by rfl
+@[simp] theorem Vector2.encode_vector_mk (a : Array X) (h : a.size = 2) : Vector.mk a h = decode ⟨encode a[0], encode a[1]⟩ := by ext i; match i with | 0 | 1 => simp
+@[simp] theorem Vector2.toArray_explicit (u : Vector X 2) : u.toArray = #[u[0], u[1]] := by ext i; simp; match i with | 0 | 1 => simp
+
 structure Vector3 (X : Type) where
   (x0 x1 x2 : X)
+deriving Inhabited
 
 instance [TypeEncoding X Y] : TypeEncoding (Vector X 3) (Vector3 Y) where
   encode u := { x0 := encode u[0], x1 := encode u[1], x2 := encode u[2] }
   decode u := #v[decode u.x0, decode u.x1, decode u.x2]
   decode_encode := sorry_proof
 
-variable {X Y} [TypeEncoding X Y]
+instance [TypeEncoding X Y] [TypeIsomorphism X Y] : TypeIsomorphism (Vector X 3) (Vector3 Y) where
+  encode_decode := by simp[encode, decode]
+
 @[simp] theorem Vector3.decode_getElem_0 (u : Vector3 Y) : (decode (X:=Vector X 3) u)[0] = decode u.x0 := by rfl
 @[simp] theorem Vector3.decode_getElem_1 (u : Vector3 Y) : (decode (X:=Vector X 3) u)[1] = decode u.x1 := by rfl
 @[simp] theorem Vector3.decode_getElem_2 (u : Vector3 Y) : (decode (X:=Vector X 3) u)[2] = decode u.x2 := by rfl
-@[simp] theorem Vector3.encode_vector_mk (x y z : X) : encode #v[x,y,z] = ⟨encode x, encode y, encode z⟩ := by rfl
+@[simp] theorem Vector3.encode_vector_mk (a : Array X) (h : a.size = 3) :
+  Vector.mk a h = decode ⟨encode a[0], encode a[1], encode a[2]⟩ := by ext i; match i with | 0 | 1 | 2 => simp
+@[simp] theorem Vector3.toArray_explicit (u : Vector X 3) : u.toArray = #[u[0], u[1], u[2]] := by ext i; simp; match i with | 0 | 1 | 2 => simp
+
 
 structure Vector4 (X : Type) where
   (x0 x1 x2 x3 : X)
+deriving Inhabited
 
 instance [TypeEncoding X Y] : TypeEncoding (Vector X 4) (Vector4 Y) where
   encode u := { x0 := encode u[0], x1 := encode u[1], x2 := encode u[2], x3 := encode u[3] }
   decode u := #v[decode u.x0, decode u.x1, decode u.x2, decode u.x3]
   decode_encode := sorry_proof
 
--- #check (by infer_instance : TypeEncoding (Vector (Vector Float 3) 2) _)
+instance [TypeEncoding X Y] [TypeIsomorphism X Y] : TypeIsomorphism (Vector X 4) (Vector4 Y) where
+  encode_decode := by simp[encode, decode]
+
+@[simp] theorem Vector4.decode_getElem_0 (u : Vector4 Y) : (decode (X:=Vector X 4) u)[0] = decode u.x0 := by rfl
+@[simp] theorem Vector4.decode_getElem_1 (u : Vector4 Y) : (decode (X:=Vector X 4) u)[1] = decode u.x1 := by rfl
+@[simp] theorem Vector4.decode_getElem_2 (u : Vector4 Y) : (decode (X:=Vector X 4) u)[2] = decode u.x2 := by rfl
+@[simp] theorem Vector4.decode_getElem_3 (u : Vector4 Y) : (decode (X:=Vector X 4) u)[3] = decode u.x3 := by rfl
+@[simp] theorem Vector4.encode_vector_mk (a : Array X) (h : a.size = 4) : Vector.mk a h = decode ⟨encode a[0], encode a[1], encode a[2], encode a[3]⟩ :=
+  by ext i; match i with | 0 | 1 | 2 | 3 => simp
+@[simp] theorem Vector4.toArray_explicit (u : Vector X 4) : u.toArray = #[u[0], u[1], u[2], u[3]] := by ext i; simp; match i with | 0 | 1 | 2 | 3 => simp
+
+
+instance {X} {m n : Nat} [TypeEncoding (Vector (Vector X n) m) M] : TypeEncoding (Matrix X m n) M where
+  encode A := encode A.data
+  decode A := ⟨decode A⟩
+  decode_encode := by simp
+
+instance {X} {m n : Nat} [TypeEncoding (Vector (Vector X n) m) M] [TypeIsomorphism (Vector (Vector X n) m) M] :
+    TypeIsomorphism (Matrix X m n) M where
+  encode_decode := by simp[decode, encode]
+
+@[simp]
+theorem matrix_decode_data {X} {m n : Nat} [TypeEncoding (Vector (Vector X n) m) M] (A : M) :
+  (decode (X:=Matrix X m n) A).data = decode (X:=(Vector (Vector X n) m)) A := by rfl
+
+@[simp]
+theorem encode_matrix_mk {X} {m n : Nat} [TypeEncoding (Vector (Vector X n) m) M] (data : (Vector (Vector X n) m)) :
+  (encode (Matrix.mk data)) = encode data := by rfl
+
+@[simp]
+theorem matrix_getElem {α} {m n} (A : Matrix α m n) (i j : Nat) (hi : i < m) (hj : j < n) : A[i,j] = A.data[i][j] := by rfl
