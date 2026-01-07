@@ -122,3 +122,50 @@ fun A v =>
 -/
 #guard_msgs in
 #sas fun (A : Matrix Float 2 2) (v : Vector Float 2) => v * A
+
+
+#check Matrix.matMul
+
+/--
+info: def HouLean.Matrix.row.Float_2_3_0 := ⏎
+  fun a => a.x0
+
+def HouLean.Matrix.col.Float_3_2_0 := ⏎
+  fun a => { x0 := a.x0.x0, x1 := a.x1.x0, x2 := a.x2.x0 }
+
+def Vector.dot.Float_3 := ⏎
+  fun a a_1 => 0 + a.x0 * a_1.x0 + a.x1 * a_1.x1 + a.x2 * a_1.x2
+
+def HouLean.Matrix.col.Float_3_2_1 := ⏎
+  fun a => { x0 := a.x0.x1, x1 := a.x1.x1, x2 := a.x2.x1 }
+
+def HouLean.Matrix.row.Float_2_3_1 := ⏎
+  fun a => a.x1
+
+def HouLean.Matrix.matMul.Float_2_3_2 := ⏎
+  fun a a_1 =>
+    let tmp := Matrix.row.Float_2_3_0 a;
+    let tmp_1 := Matrix.col.Float_3_2_0 a_1;
+    let tmp := Vector.dot.Float_3 tmp tmp_1;
+    let tmp_2 := Matrix.row.Float_2_3_0 a;
+    let tmp_3 := Matrix.col.Float_3_2_1 a_1;
+    let tmp_4 := Vector.dot.Float_3 tmp_2 tmp_3;
+    let tmp_5 := Matrix.row.Float_2_3_1 a;
+    let tmp_6 := Matrix.col.Float_3_2_0 a_1;
+    let tmp_7 := Vector.dot.Float_3 tmp_5 tmp_6;
+    let tmp_8 := Matrix.row.Float_2_3_1 a;
+    let tmp_9 := Matrix.col.Float_3_2_1 a_1;
+    let tmp_10 := Vector.dot.Float_3 tmp_8 tmp_9;
+    { x0 := { x0 := tmp, x1 := tmp_4 }, x1 := { x0 := tmp_7, x1 := tmp_10 } }
+
+def HMul.hMul.Matrix_Float_2_3_Matrix_Float_3_2_Matrix_Float_2_2 := ⏎
+  fun a a_1 =>
+    let tmp := Matrix.matMul.Float_2_3_2 a a_1;
+    tmp
+
+fun A B =>
+  let tmp := HMul.hMul.Matrix_Float_2_3_Matrix_Float_3_2_Matrix_Float_2_2 A B;
+  tmp
+-/
+#guard_msgs in
+#sas fun (A : Matrix Float 2 3) (B : Matrix Float 3 2) => A * B
