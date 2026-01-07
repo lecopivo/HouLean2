@@ -228,7 +228,7 @@ def fromMatrix3 (m : Matrix R 3 3) : Quaternion R :=
 
 /-- Create quaternion from 4x4 transformation matrix (extracts rotation) -/
 def fromMatrix4 (m : Matrix R 4 4) : Quaternion R :=
-  fromMatrix3 (Matrix.ofFn fun i j _ => m[i,j])
+  fromMatrix3 (Matrix.ofFn fun i j => m[i,j])
 
 
 -- ============================================================================

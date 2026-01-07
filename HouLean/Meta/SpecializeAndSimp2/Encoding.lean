@@ -40,10 +40,15 @@ class TypeEncoding (X : Sort u) (Y : outParam (Sort v)) where
 
 open TypeEncoding
 
-class TypeIsomorphism (X : Type) (Y : outParam Type) [TypeEncoding X Y] where
+class TypeIsomorphism (X : Type) (Y : outParam Type) [TypeEncoding X Y] : Prop where
   encode_decode : ∀ y : Y, encode (decode (X:=X) y) = y
 
+class TypeEncodingIdentity (X : Type) [TypeEncoding X X] : Prop extends TypeIsomorphism X X where
+  encode_eq_id : ∀ x : X, encode x = x
+  decode_eq_id : ∀ x : X, decode x = x
+
 attribute [simp] TypeEncoding.decode_encode TypeIsomorphism.encode_decode
+  TypeEncodingIdentity.encode_eq_id TypeEncodingIdentity.decode_eq_id
 
 instance [TypeEncoding X Y] [TypeEncoding X' Y'] : TypeEncoding (X×X') (Y×Y') where
   encode x := (encode x.1, encode x.2)
@@ -63,29 +68,40 @@ instance : TypeEncoding Float Float where
   decode x := x
   decode_encode := by simp
 
-instance : TypeIsomorphism Float Float where
+instance : TypeEncodingIdentity Float where
   encode_decode := by simp[encode, decode]
-
-@[simp] theorem float_encode_id (x : Float) : encode x = x := by rfl
-@[simp] theorem float_decode_id (x : Float) : decode x = x := by rfl
+  encode_eq_id := by simp[encode]
+  decode_eq_id := by simp[decode]
 
 instance : TypeEncoding Float32 Float32 where
   encode x := x
   decode x := x
   decode_encode := by simp
 
-instance : TypeIsomorphism Float32 Float32 where
+instance : TypeEncodingIdentity Float32 where
   encode_decode := by simp[encode, decode]
+  encode_eq_id := by simp[encode]
+  decode_eq_id := by simp[decode]
 
 instance : TypeEncoding Nat Nat where
   encode x := x
   decode x := x
   decode_encode := by simp
 
+instance : TypeEncodingIdentity Nat where
+  encode_decode := by simp[encode, decode]
+  encode_eq_id := by simp[encode]
+  decode_eq_id := by simp[decode]
+
 instance : TypeEncoding Int Int where
   encode x := x
   decode x := x
   decode_encode := by simp
+
+instance : TypeEncodingIdentity Int where
+  encode_decode := by simp[encode, decode]
+  encode_eq_id := by simp[encode]
+  decode_eq_id := by simp[decode]
 
 instance : TypeEncoding UInt64 UInt64 where
   encode x := x
@@ -204,4 +220,4 @@ theorem encode_matrix_mk {X} {m n : Nat} [TypeEncoding (Vector (Vector X n) m) M
   (encode (Matrix.mk data)) = encode data := by rfl
 
 @[simp]
-theorem matrix_getElem {α} {m n} (A : Matrix α m n) (i j : Nat) (hi : i < m) (hj : j < n) : A[i,j] = A.data[i][j] := by rfl
+theorem matrix_getElem {α} {m n} (A : Matrix α m n) (ij : Nat × Nat) (h) : A[ij]'h = A.data[ij.1][ij.2] := by rfl

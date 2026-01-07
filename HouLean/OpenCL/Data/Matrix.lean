@@ -70,7 +70,7 @@ theorem matrix_getElem_fin_fin (a : Matrix T m n) (ij : Fin m'×Fin n') (h) : a[
 
 @[opencl_csimp]
 theorem matrix_mapRowsFinIdx (f : (i : Nat) →  Vector α n → (h : i < m) → Vector β n') (a : Matrix α m n) :
-  a.mapRowsFinIdx f = Matrix.fromRows fun i h => f i (a.row i) h := by sorry_proof
+  a.mapRowsFinIdx f = Matrix.fromRows fun i => f i (a.row i) i.2 := by sorry_proof
 
 
 

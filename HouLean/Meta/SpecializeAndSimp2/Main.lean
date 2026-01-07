@@ -376,15 +376,16 @@ partial def main (e : Expr) (cont : Expr → Expr → SasM Expr) : SasM Expr := 
   let type ← inferType e
   let id' := mkIdentity type
 
-  withTraceNode `HouLean.sas (collapsed := false) (fun r => do return m!"[{exceptEmoji r}] {e}") do
-
   -- Try interpreter for primitive types
   if let some val ← runInterpreterForPrimitiveTypes? e then
     return ← cont (toExpr val) id'
 
-  -- Early exits for types and typeclasses
+  -- Early exits for types, typeclasses and proofs
   if type.isSort then return ← cont e id'
   if (← isClass? type).isSome then return ← cont e id'
+  if (← inferType type).isProp then return ← cont e id'
+
+  withTraceNode `HouLean.sas (collapsed := false) (fun r => do return m!"[{exceptEmoji r}] {e}") do
 
   let e' := e
   let e ← simplify e

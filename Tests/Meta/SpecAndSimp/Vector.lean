@@ -205,6 +205,7 @@ fun (x : Vector3 Float) =>
 
 -- Vector.foldl and Vector.fodlr
 
--- for some reason `simp` is not doing the same work in `sas` as normally and this case this failure
+-- -- for some reason `simp` is not doing the same work in `sas` as normally and this case this failure
 -- #sas fun x : Vector Float 3 => x.foldr (·+·) 0
+-- -- this works but in the above
 -- #check (fun x : Vector Float 3 => x.foldr (·+·) 0) rewrite_by simp

@@ -44,11 +44,11 @@ instance {α} {m n : Nat} : SetElem? (Matrix α m n) (Nat×Nat) α (fun _ ij => 
 namespace Matrix
 
 @[simp]
-theorem getElem_fin_nat_normalize (A : Matrix α m n) (ij : Fin m × Nat) (h : ij.2 < n) : A[ij] = A[ij.1.1,ij.2] := by rfl
+theorem getElem_fin_nat_normalize (A : Matrix α m n) (ij : Fin m' × Nat) (h) : A[ij]'h = A[ij.1.1,ij.2] := by rfl
 @[simp]
-theorem getElem_nat_fin_normalize (A : Matrix α m n) (ij : Nat × Fin n) (h : ij.1 < m) : A[ij] = A[ij.1,ij.2.1] := by rfl
+theorem getElem_nat_fin_normalize (A : Matrix α m n) (ij : Nat × Fin n') (h) : A[ij]'h = A[ij.1,ij.2.1] := by rfl
 @[simp]
-theorem getElem_fin_fin_normalize (A : Matrix α m n) (ij : Fin m × Fin n) : A[ij] = A[ij.1.1,ij.2.1] := by rfl
+theorem getElem_fin_fin_normalize (A : Matrix α m n) (ij : Fin m' × Fin n') (h) : A[ij]'h = A[ij.1.1,ij.2.1] := by rfl
 
 
 -- Row and column extraction
@@ -97,14 +97,14 @@ macro_rules
    `(#m[$rows,*])
 
 -- Matrix operations
-def ofFn (f : (i j : Nat) → (h : i < m ∧ j < n) → α) : Matrix α m n :=
-  ⟨.ofFn (fun i => .ofFn fun j => f i j (by grind))⟩
+def ofFn (f : Fin m → Fin n → α) : Matrix α m n :=
+  ⟨.ofFn (fun i => .ofFn fun j => f i j)⟩
 
-def fromRows (f : (i : Nat) → (h : i < m) → Vector α n) : Matrix α m n :=
-  ⟨.ofFn (fun i => f i.1 i.2)⟩
-
+def fromRows (f : Fin m → Vector α n) : Matrix α m n :=
+  ⟨.ofFn f⟩
 
 variable {n' : Nat}
+
 
 def mapRowsFinIdx (f : (i : Nat) →  Vector α n → (h : i < m) → Vector β n') (a : Matrix α m n) : Matrix β m n' :=
   { data := a.data.mapFinIdx f }
@@ -130,15 +130,18 @@ def mapRows₂ (f : Vector α n → Vector β n → Vector γ n)
   a.mapRowsFinIdx (fun i v _ => f v (b.row i))
 
 def transpose (a : Matrix α m n) : Matrix α n m :=
-  ofFn (fun j i _ => a[i,j])
+  ofFn (fun j i => a[i,j])
 
 -- Identity matrix
 def identity (α : Type) [Zero α] [One α] (n : Nat) : Matrix α n n :=
-  ofFn (fun i j _ => if i = j then 1 else 0)
+  ofFn (fun i j => if i = j then 1 else 0)
 
 -- Zero matrix
 def zero (α : Type) [Zero α] (m n : Nat) : Matrix α m n :=
   .mk (.ofFn (fun _ => 0))
+
+def neg [Neg α] (a : Matrix α m n) : Matrix α m n :=
+  mapRows (-·) a
 
 def add [Add α] (a b : Matrix α m n) : Matrix α m n :=
   mapRows₂ (· + ·) a b
@@ -154,7 +157,7 @@ def sdiv [Mul α] [Inv α] (a : Matrix α m n) (s : α) : Matrix α m n :=
   mapRows (is*·) a
 
 def matMul [Add α] [Mul α] [Zero α] (a : Matrix α m k) (b : Matrix α k n) : Matrix α m n :=
-  ofFn (fun i j _ => (a.row i).dot (b.col j))
+  ofFn (fun i j => (a.row i).dot (b.col j))
 
 def vecMul [Add α] [Mul α] [Zero α] (v : Vector α m) (a : Matrix α m n) : Vector α n :=
   .ofFn fun j => v.dot (a.col j)
@@ -163,6 +166,7 @@ def mulVec [Add α] [Mul α] [Zero α] (a : Matrix α m n) (v : Vector α n) : V
   .ofFn fun i => (a.row i).dot v
 
 -- Instances
+instance [Neg α] : Neg (Matrix α m n) := ⟨neg⟩
 instance [Add α] : Add (Matrix α m n) := ⟨add⟩
 instance [Sub α] : Sub (Matrix α m n) := ⟨sub⟩
 instance [Mul α] : HMul α (Matrix α m n) (Matrix α m n) := ⟨smul⟩
@@ -296,10 +300,10 @@ defun step [Step α] (edge v : Matrix α m n) : Matrix α m n :=
   v.mapRowsFinIdx (fun i vi _ => Vector.step (edge.row i) vi)
 
 defun hermite [Hermite α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Matrix α m n :=
-  .ofFn fun i j _ => Math.hermite p0[i,j] p1[i,j] t0[i,j] t1[i,j] t
+  .ofFn fun i j => Math.hermite p0[i,j] p1[i,j] t0[i,j] t1[i,j] t
 
 defun catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Matrix α m n :=
-  .ofFn fun i j _ => Math.catmullRom p0[i,j] p1[i,j] t0[i,j] t1[i,j] t
+  .ofFn fun i j => Math.catmullRom p0[i,j] p1[i,j] t0[i,j] t1[i,j] t
 
 
 -- ============================================================================
@@ -307,12 +311,12 @@ defun catmullRom [CatmullRom α α] (p0 p1 t0 t1 : Matrix α m n) (t : α) : Mat
 -- ============================================================================
 
 def split1 (a : Matrix T (n+1) (n+1)) : (Matrix T n n × Vector T n) × (Vector T n × T) :=
-  ((.ofFn fun i j _ => a[i,j], .ofFn fun i => a[i,n]),
+  ((.ofFn fun i j => a[i,j], .ofFn fun i => a[i,n]),
    (.ofFn fun j => a[n,j], a[n,n]))
 
 def split (a : Matrix T (m+m') (n+n')) : (Matrix T m n × Matrix T m n') × (Matrix T m' n × Matrix T m' n') :=
-  ((.ofFn fun i j _ => a[i,j], .ofFn fun i j _ => a[i,n+j]),
-   (.ofFn fun i j _ => a[m+i,j], .ofFn fun i j _ => a[m+i,n+j]))
+  ((.ofFn fun i j => a[i,j], .ofFn fun i j => a[i,n+j]),
+   (.ofFn fun i j => a[m+i,j], .ofFn fun i j => a[m+i,n+j]))
 
 
 variable [One α] [Div α] [Inv α]

@@ -40,7 +40,7 @@ def SasM.run {α} (x : SasM α) (attrs : Array Name) : MetaM α := do
   let s : State := {}
 
   let simpCtx ← Simp.mkContext
-    (config := { zeta := false, zetaDelta := false, iota := false })
+    (config := { zeta := false, zetaDelta := false, iota := true })
     (simpTheorems := ← attrs.mapM getSimpTheorems')
   let simpState : Simp.State := {}
   let simprocs ← attrs.mapM getSimprocs
