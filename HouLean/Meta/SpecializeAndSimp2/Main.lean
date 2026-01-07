@@ -29,22 +29,65 @@ def mkIdentity (type : Expr) : Expr :=
 
 /-! ## Let Binding Helpers -/
 
-def maybeLetBindValue (name : Name) (val : Expr) (k : Bool → Expr → SasM α) : SasM α := do
-  if val.isFVar || !val.hasFVar then
-    k false val
+def getForallNames (t : Expr) : Array Name :=
+  go t #[]
+where
+  go (t : Expr) (ns : Array Name) :=
+    match t with
+    | .forallE n _ b _ => go b (ns.push n)
+    | .mdata _ t => go t ns
+    | _ => ns
+
+mutual
+
+/-- Maybe bind `val` into a let fvar(s) then runs
+```
+k letVars x
+```
+where `letVars` are newly introduced fvars and `x` uses them and is equal to `val` -/
+partial def maybeLetBindVal (name : Name) (val : Expr) (k : Array Expr → Expr → SasM α) : SasM α := do
+  if val.isFVar || !val.hasFVar || (← inferType val).isForall then
+    k #[] val
+  else if let some (ctor, xs) ← constructorApp? val then
+    let params := xs[0:ctor.numParams]
+    let xs := xs[ctor.numParams:]
+    let fn := val.getAppFn'
+    let names := (getForallNames (← inferType fn))[ctor.numParams:].toArray
+    let names := names.map (fun n => name.append n)
+    maybeLetBindVals names xs fun letVars xs' => k letVars (fn.beta (params ++ xs'))
   else
     let type ← inferType val
-    withLetDecl name type val fun var => k true var
+    withLetDecl name type val fun var => k #[var] var
 
-def maybeLetBindValues (name : Name) (vals : Array Expr)
-    (k : Array Expr → Array Expr → SasM α) : SasM α := do
-  let rec go (i : Nat) : List Expr → Array Expr → Array Expr → SasM α
-    | [], vars, xs' => k vars xs'
-    | x :: xs, vars, xs' =>
-      maybeLetBindValue (name.appendAfter (toString i)) x fun didBind x' =>
-        let vars' := if didBind then vars.push x' else vars
-        go (i + 1) xs vars' (xs'.push x')
-  go 0 vals.toList #[] #[]
+partial def maybeLetBindVals (names : Array Name) (vals : Array Expr) (k : Array Expr → Array Expr → SasM α) := do
+  go 0 (.emptyWithCapacity names.size) (.emptyWithCapacity vals.size)
+where
+  go (i : Nat) (letVars xs : Array Expr) : SasM α := do
+    if h : i < vals.size ∧ i < names.size then
+      maybeLetBindVal names[i] vals[i] (fun letVars' x' =>
+        go (i+1) (letVars ++ letVars') (xs.push x'))
+    else
+      k letVars xs
+
+end
+
+-- /-- Maybe bind `val` into a let fvar(s) -/
+-- def maybeLetBindValue (name : Name) (val : Expr) (k : Bool → Expr → SasM α) : SasM α := do
+--   if val.isFVar || !val.hasFVar || (← inferType val).isForall then
+--     k false val
+--   else
+--     let type ← inferType val
+--     withLetDecl name type val fun var => k true var
+
+-- def maybeLetBindValues (name : Name) (vals : Array Expr)
+--     (k : Array Expr → Array Expr → SasM α) : SasM α := do
+--   let rec go (i : Nat) : List Expr → Array Expr → Array Expr → SasM α
+--     | [], vars, xs' => k vars xs'
+--     | x :: xs, vars, xs' =>
+--       maybeLetBindValue (name.appendAfter (toString i)) x fun didBind x' =>
+--         let vars' := if didBind then vars.push x' else vars
+--         go (i + 1) xs vars' (xs'.push x')
+--   go 0 vals.toList #[] #[]
 
 def withLetVars (vars : Array Expr) (x : SasM α) : SasM α :=
   withReader (fun ctx => { ctx with letVars := ctx.letVars ++ vars }) x
@@ -53,8 +96,8 @@ def withNewScope (x : SasM α) : SasM α :=
   withReader ({ · with letVars := #[] }) x
 
 def withMaybeLetDecl (name : Name) (val : Expr) (k : Expr → SasM α) : SasM α :=
-  maybeLetBindValue name val fun doBind var =>
-    if doBind then withLetVars #[var] (k var) else k var
+  maybeLetBindVal name val fun letVars val' =>
+    withLetVars letVars (k val')
 
 /-! ## Type Encoding -/
 
@@ -66,9 +109,9 @@ partial def typeEncoding (type : Expr) : SasM (Array Expr × Expr) := do
       let t := type.appArg!
       let (encodings, decode) ← typeEncoding t
       let encodings ← encodings.mapM fun encode => do
-        let body := encode.beta #[← mkAppM ``Option.getD #[x, ← mkAppOptM ``default #[t, none]]]
+        let body := encode.beta #[← mkAppM ``Option.encodeVal #[x]]
         mkLambdaFVars #[x] body
-      let valid ← liftM <| mkAppM ``Option.isSome #[x] >>= mkLambdaFVars #[x]
+      let valid ← liftM <| mkAppM ``Option.encodeValid #[x] >>= mkLambdaFVars #[x]
       let decode ← forallTelescope (← inferType decode) fun xs _ =>
         withLocalDeclD `valid q(Bool) fun valid => do
           let body ← mkAppM ``Option.decode #[decode.beta xs, valid]
@@ -136,16 +179,16 @@ def withVarsToSpecialize (yss : Array (Array Expr)) (decodes : Array Expr)
 
 /-! ## Specialization Request -/
 
-def requestSpecialization (funToSpecialize : Expr) (funName : Name) (specSuffix : String) : SasM Expr := do
+def requestSpecialization (specType funToSpecialize : Expr) (funName : Name) (specSuffix : String) : SasM Expr := do
   if funToSpecialize.hasFVar then
     let fvars := (← funToSpecialize.collectFVars.run {}).2.fvarIds.map (Expr.fvar ·)
     throwError m!"can't specialize {funToSpecialize} it has fvars: {fvars}"
 
   let specName := funName.append (.mkSimple <| specSuffix.dropWhile (·=='_') |>.replace "." "_" |>.replace " " "_")
-  let specType ← inferType funToSpecialize
+  -- let specType ← inferType funToSpecialize
 
   if !(← getEnv).contains specName then
-    trace[HouLean.sas] m!"specialization request:\n{specName}\n{funToSpecialize}\n{← isTypeCorrect funToSpecialize}"
+    -- trace[HouLean.sas] m!"specialization request:\n{specName}\n{funToSpecialize}\n{← isTypeCorrect funToSpecialize}"
     let decl : Declaration := .opaqueDecl {
       name := specName
       levelParams := []
@@ -163,17 +206,27 @@ def requestSpecialization (funToSpecialize : Expr) (funName : Name) (specSuffix 
   return .const specName []
 
 def shouldSpecialize (fname : Name) : SasM Bool := do
-  match ← getConstInfo fname with
-  | .ctorInfo _ => return false
-  | _ =>
+  if let .defnInfo _info ← getConstInfo fname then
+
     if let some info ← getProjectionFnInfo? fname then
       return info.fromClass
     if fname == ``ite then
       return false
+
+    if ← isMatcher fname then
+      return false
+
+    if fname == ``VectorFloat3.toVector then
+      return false
+
+    if fname == ``VectorFloat2.toVector then
+      return false
+
+    if fname == ``Option.decode then
+      return false
+
     return true
-
-
-/-! ## Main Transformation -/
+  return false
 
 partial def forallEncodedTelescope (type : Expr) (k : Array (Array Expr) → Array Expr → Expr → SasM Expr) : SasM Expr := do
   go type #[] #[]
@@ -196,11 +249,113 @@ def withEncodedVal (val : Expr) (k : Array Expr → Expr → SasM α) : SasM α 
   let vals ← encodings.mapM fun enc => simplify (enc.beta #[val])
   k vals decode
 
+/-! ## Specialize only args -/
+open Qq
+
+/-- Replace `lhs` with `rhs` and specialize its arguments. -/
+structure Override where
+  keys : Array DiscrTree.Key
+  lhs : Expr -- fun x₁ ... xₙ => e
+  rhs : Expr -- fun x₁ ... xₙ => e'
+  -- maybe store proof? that `e = e'`
+  priority : Nat := eval_prio default
+deriving BEq
+
+def addIdentityOverride (e : Expr) (t : DiscrTree Override) : MetaM (DiscrTree Override) := do
+  let (_,_,b) ← lambdaMetaTelescope e
+  let keys ← DiscrTree.mkPath b
+
+  let ovrd : Override := {
+    keys := keys
+    lhs := e
+    rhs := e
+  }
+  return t.insertCore keys ovrd
+
+def overrideTree : MetaM (DiscrTree Override) :=
+  pure DiscrTree.empty
+  >>= addIdentityOverride q(fun x : Float => -x)
+  >>= addIdentityOverride q(fun x y : Float => x + y)
+  >>= addIdentityOverride q(fun x y : Float => x - y)
+  >>= addIdentityOverride q(fun x y : Float => x * y)
+  >>= addIdentityOverride q(fun x y : Float => x / y)
+  >>= addIdentityOverride q(fun x : Float32 => -x)
+  >>= addIdentityOverride q(fun x y : Float32 => x + y)
+  >>= addIdentityOverride q(fun x y : Float32 => x - y)
+  >>= addIdentityOverride q(fun x y : Float32 => x * y)
+  >>= addIdentityOverride q(fun x y : Float32 => x / y)
+  >>= addIdentityOverride q(fun (n i : Nat) [OfNat (Fin n) i] => OfNat.ofNat (α := Fin n) i)
+
+
+def applyOverride? (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM (Option Expr) := do
+
+  let tree ← overrideTree
+  let candidates ← tree.getMatch e
+
+  trace[HouLean.sas] "override candidates for {e}: {candidates.map (fun c => c.lhs)}"
+
+  for c in candidates do
+
+    trace[HouLean.sas] "trying candidate {c.lhs}"
+
+    let (xs,_,lhs) ← lambdaMetaTelescope c.lhs
+
+    -- does `e` unify with `lhs`?
+    unless ← isDefEq e lhs do
+      continue
+
+    trace[HouLean.sas] "does unify"
+
+    -- ensure that all arguments are infered
+    unless ← synthArgs xs do
+      continue
+
+    trace[HouLean.sas] "all arguments are good!"
+
+    return ← cont xs c.rhs
+
+  return none
+where
+  synthArgs (xs : Array Expr) : MetaM Bool := do
+    for x in xs do
+      let x ← instantiateMVars x
+      if ¬x.isMVar then
+        continue
+      let t ← inferType x
+
+      -- only class arguments can be automatically synthesized right now
+      unless (← isClass? t).isSome do
+        return false
+
+      -- find an instance
+      let some inst ← synthInstance? t
+        | return false
+
+      -- assign instance to `x`
+      if ¬(← isDefEq x inst) then
+        return false
+
+    return true
+
+
+
+/-- Unfold a definition, handling projections specially. -/
+private def unfoldDef (e : Expr) (declName : Name) : SasM Expr := do
+  let unfolded := (← unfold e declName).expr
+  if ← isProjectionFn declName then
+    unfolded.withApp fun fn args => do
+      let fn ← whnfI fn
+      return fn.beta args
+  else
+    return unfolded
+
+
+/-! ## Main Transformation -/
+
 partial def main (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM Expr := do
+  -- withIncRecDepth do
   let type ← inferType e
   let id' := mkIdentity type
-
-  -- trace[HouLean.sas] m!"processing {e}"
 
   -- Try interpreter for primitive types
   if let some val ← runInterpreterForPrimitiveTypes? e then
@@ -210,12 +365,7 @@ partial def main (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM Ex
   if type.isSort then return ← cont #[e] id'
   if (← isClass? type).isSome then return ← cont #[e] id'
 
-  -- custom call
-
   let e ← simplify e
-
-
-  -- trace[HouLean.sas] m!"proceeding to cases"
 
   match e with
   | .bvar .. | .fvar .. | .sort .. | .lit .. => withEncodedVal e cont
@@ -225,9 +375,8 @@ partial def main (e : Expr) (cont : Array Expr → Expr → SasM Expr) : SasM Ex
   | .forallE .. => withEncodedVal e cont
   | .app .. =>
 
-    -- if let some e' ← customSpec e then
-    --   trace[HouLean.specialize] m!"custom specialization {e} ==> {e'}"
-    --   return e'
+    if let some e' ← appOverride? e then
+      return ← withEncodedVal e cont
 
     let (fn, args) :=  e.withApp fun fn args => (fn, args)
     appCase fn args
@@ -244,21 +393,42 @@ where
           go xs (xs'.push x') (decodes.push decode)
     go xs.toList #[] #[]
 
+  processArgs' (xs : Array Expr) (k : Array Expr → SasM Expr) : SasM Expr := do
+    let rec go (i : Nat) (xs' : Array Expr) : SasM Expr := do
+      if h : i < xs.size then
+        main xs[i] fun ys decode => do
+          go (i+1) (xs'.push (decode.beta ys))
+      else
+        k xs'
+    go 0 #[]
+
   appCase (fn : Expr) (xs : Array Expr) : SasM Expr := do
+    -- let funInfo ← getFunInfo fn -- will be usefull at some point
     processArgs xs fun yss decodes => do
       if let some fname := fn.constName? then
         if ← shouldSpecialize fname then
           return ← withVarsToSpecialize yss decodes fun vars vals xs' specSuffix => do
             let body := fn.beta xs'
+            let funToSpecialize ← mkLambdaFVars vars body
+
+            trace[HouLean.sas] "specializing: {e}\n\
+                       yss: {yss}\n\
+                       spec vars: {vars}\n\
+                       args: {xs} ==> {xs'}\n\
+                       to specialize: {funToSpecialize}"
+
+            unless ← isTypeCorrect funToSpecialize do
+              throwError m!"function to specialize is not type correct{indentExpr funToSpecialize}"
+
             let (encode, _) ← uncurriedTypeEncoding (← inferType body)
             let (encodings, decode) ← typeEncoding (← inferType body)
             let body ← simplify <| encode.beta #[body]
 
-            -- if `fname` has been eliminated by simp then we do not specialize
-            if (body.find? (·.constName? == some fname)).isNone then
-              return ← withEncodedVal (body.replaceFVars vars vals) cont
+            -- -- if `fname` has been eliminated by simp then we do not specialize
+            -- if (body.find? (·.constName? == some fname)).isNone then
+            --   return ← withEncodedVal (decode.beta #[body.replaceFVars vars vals]) cont
 
-            let funToSpecialize ← mkLambdaFVars vars body
+            let specType ← mkForallFVars vars (← inferType body)
 
             -- logInfo m!"specializing: {e}\n\
             --            yss: {yss}\n\
@@ -266,7 +436,7 @@ where
             --            args: {xs} ==> {xs'}\n\
             --            to specialize: {funToSpecialize}"
 
-            let fn'' ← requestSpecialization funToSpecialize fname specSuffix
+            let fn'' ← requestSpecialization specType funToSpecialize fname specSuffix
             withMaybeLetDecl `tmp (fn''.beta vals) fun body => do
               let e ← mkProdSplitElem body encodings.size
               cont e decode
@@ -278,14 +448,26 @@ where
           -- todo: we need to deal with dependent types
           -- let c' ← main (← mkAppOptM ``decide #[c,none]) cont
           -- let c' ← mkAppM ``Eq #[c', (.const ``Bool.true [])]
-          let c' ← main c cont
+          let c' ← main c fun es decode => do
+             mkLetFVars (← read).letVars (decode.beta es) (generalizeNondepLet := false)
           let t' ← main t cont
           let e' ← main e cont
           return ← mkAppM ``ite #[c',t',e']
 
+        -- custom call
+        if let some e ← letBindMatchDiscrs? (fn.beta xs) (doUnfold:=true) then
+          trace[HouLean.sas] m!"potentialy match simplification:{indentExpr (fn.beta xs)}\n==>{indentExpr e}"
+
+
       -- Fallback: decode and re-encode
       let xs' := (yss.zip decodes).map fun (ys, decode) => decode.beta ys
       withEncodedVal (fn.beta xs') cont
+
+  -- custom override for `e`
+  appOverride? (e : Expr) : SasM (Option Expr) := do
+    applyOverride? e fun xs rhs => do
+      processArgs' xs fun xs' => do
+        return rhs.beta xs'
 
   lamCase (e : Expr) : SasM Expr := do
     let e ← lambdaTelescope e fun xs body => do
@@ -298,7 +480,7 @@ where
   letCase (e : Expr) : SasM Expr := do
     let .letE n _t v b _nondep := e | panic! "expected let expression"
     main v fun ys decode =>
-      maybeLetBindValues n ys fun letVars ys' =>
+      maybeLetBindVals (.replicate ys.size n) ys fun letVars ys' =>
         withLetVars letVars do
           let v' := decode.beta ys'
           main (b.instantiate1 v') cont
@@ -308,17 +490,63 @@ where
     withEncodedVal e' cont
 
 
+
+def processRequest (req : SpecializationRequest) : SasM Unit := do
+
+  withTraceNode `HouLean.sas (fun r => do return m!"[{exceptEmoji r} {req.specName}{indentExpr req.funToSpecialize}]") do
+
+  forallTelescope (← inferType req.funToSpecialize) fun xs _ => do
+
+    let body ← unfoldDef (req.funToSpecialize.beta xs) req.funName
+    let type ← inferType body
+    let (encode, decode) ← uncurriedTypeEncoding type
+    let body ← main body fun es _decode => do
+          mkLetFVars (← read).letVars (← mkProdElem es) (generalizeNondepLet := false)
+
+    let implValue ← mkLambdaFVars xs body >>= instantiateMVars
+    let implType ← inferType implValue
+    let implName := req.specName.append `impl
+
+    let decl : Declaration := .defnDecl {
+      name := implName
+      levelParams := []
+      type := implType
+      value := implValue
+      hints := .regular implValue.approxDepth
+      safety := .safe
+    }
+
+    addDecl decl
+
+    modify (fun s => {s with specs := s.specs.push {req, implName}})
+
+    trace[HouLean.sas] "result: {implValue}"
+
+
 /-! ## Entry Point -/
 
-def sas (e : Expr) (attrs : Array Name) : MetaM Expr := do
-  let result ← (show SasM Expr from do
-    forallEncodedTelescope (← inferType e) fun ys xs _ => do
+def sas (e : Expr) (attrs : Array Name) : MetaM (Expr × Array Specialization) := do
+
+  let go : SasM _ := do
+    let result ← forallEncodedTelescope (← inferType e) fun ys xs _ => do
       let body := e.beta xs
       let body' ←
         main body fun es _decode => do
           mkLetFVars (← read).letVars (← mkProdElem es) (generalizeNondepLet := false)
       pure (← mkLambdaFVars ys.flatten body')
-  ).run attrs
+
+    while !(← get).requests.isEmpty do
+      let req :: requests := (← get).requests | continue
+      modify (fun s => {s with requests := requests})
+      processRequest req
+
+      -- match (← get).requests with
+      -- | [] => pure ()
+
+
+    return (result, (← get).specs)
+
+  let result ← go.run attrs
   return result
 
 end HouLean.Meta.Sas

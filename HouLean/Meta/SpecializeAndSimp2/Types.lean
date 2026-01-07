@@ -22,6 +22,7 @@ structure Context where
 structure State where
   timer : TimeItState := {}
   requests : List SpecializationRequest := []
+  specs : Array Specialization := #[]
 
 abbrev SasM := ReaderT Context <| StateT State <| SimpM
 

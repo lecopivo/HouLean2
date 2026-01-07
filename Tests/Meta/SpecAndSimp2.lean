@@ -29,7 +29,7 @@ simproc ↓ binder_backstop (_) := fun e => do
   let b := x * y
   a + b + y
 
-#sas fun x : Nat => x + 0
+#sas fun x : Float => x + 0
 
 @[simp]
 theorem add_self (x : Nat) : x + x = 2 * x := by grind
@@ -69,6 +69,7 @@ def integrateParticle {α n} [One α] [Sub α] [Add α] [Mul α]
   x := x + dt * v
   return (x,v)
 
+#print integrateParticle
 
 def foo {α n} (x : Vector α n) : Option (Vector α n) := some x
 
@@ -83,11 +84,11 @@ set_option trace.HouLean.sas true
 
 #sas fun (x y : VectorFloat3) => -x.toVector
 
-#sas fun (x y : Vector Float 3) (a : Float) =>
-  addVectors x y (some a)
+-- #sas fun (x y : Vector Float 3) (a : Float) =>
+--   addVectors x y (some a)
 
-#sas fun (x v f : Vector Float 3) (d : Float) =>
-  integrateParticle x (addVectors v v (some 2)) 0.1 (foo f) (bar d)
+-- #sas fun (x v f : Vector Float 3) (d : Float) =>
+--   integrateParticle x (addVectors v v (some 2)) 0.1 (foo f) (bar d)
 
 #sas fun (x : Vector Float 3) =>
   if x[0] + x[1] > 0 then
@@ -123,11 +124,32 @@ def bar' (x : Float) (a? b? : Option Float) := Id.run do
     x := x + b
   return x
 
-variable (x a : Float)
+#print bar'
 
-#sas (bar' x (some a) none)
-  rewrite_by
-    unfold bar'
+variable (x a : Float) (b? : Option Float)
 
+@[simp]
+theorem bind_id (x : Id α) (f : α → Id β) : bind x f = let y := x.run; f x := by rfl
+
+@[simp]
+theorem pure_id (x : α) : pure (f:=Id) x = x := by rfl
+
+attribute [simp] Id.run
+set_option trace.HouLean.sas.simp false
+#sas (fun (x : Float) (b? : Option Float) => (bar' x (some a) b?))
 
 #sas (fun x : Float => x + 0)
+
+#sas (fun x y : Nat => x + y)
+
+#check (fun x y : Nat => Add.add x y) rewrite_by simp
+
+
+def f2 (x y : Vector Float 3) := x[0] + y[0]
+
+set_option pp.funBinderTypes true in
+set_option trace.HouLean.sas true in
+#sas fun (x y : Vector Float 3) => f2 x y
+
+
+#sas fun (x : Option Nat) => x.getD 0

@@ -49,7 +49,13 @@ def vectorStructCmds (type : Expr) (n : Nat) : MetaM (Array (TSyntax `command)) 
   let fromToVecId := mkIdent (name.append `fromVector_toVector)
   let fromToVec ← `(command| @[simp] theorem $fromToVecId:ident ($v : $id) : $fromVecId ($toVecId $v) = $v := sorry_proof)
 
-  return #[cmd, toVec, fromVec, toFromVec, fromToVec] ++ simpThrms
+  let vectorMkId := mkIdent (name.append `vector_mk)
+  let elems ← Array.range n |>.mapM (fun i => `(term| $v:ident[$(Syntax.mkNatLit i)]))
+  let vectorMk ← `(command| @[simp] theorem $vectorMkId:ident ($v : Array $typeStx) (h : Array.size $v = $nStx) :
+      Vector.mk $v h = $toVecId ($(mkIdent (name.append `mk)) $elems*) := sorry_proof)
+
+
+  return #[cmd, toVec, fromVec, toFromVec, fromToVec, vectorMk] ++ simpThrms
 
 -- todo: add simp attributes that should be attached to the simpe theorems!
 def defVectorStruct (type : Expr) (n : Nat) : CommandElabM Unit := do
@@ -67,3 +73,10 @@ run_cmd defVectorStruct q(Float32) 4
 run_cmd defVectorStruct q(Float) 2
 run_cmd defVectorStruct q(Float) 3
 run_cmd defVectorStruct q(Float) 4
+
+-- #check VectorFloat3.vector_mk
+-- #check #v[1.0, 2.0, 3.0] rewrite_by simp
+
+-- #check VectorFloat323.toVector_getElem_0
+-- theorem vector3_mk (x y z : Float32) :
+--   #v[x,y,z] = VectorFloat323.toVector (.mk x y z) := by ext i; simp
